@@ -18,6 +18,15 @@ import {
   type RefinementSlotChange,
   type SimulateStats,
 } from "../lib/api";
+import {
+  EMPTY_RECOMMENDATION_FILTERS,
+  filterRecommendations,
+  formatDiscoveryLaneLabel,
+  type RecommendationFilters,
+  summarizePortfolioResults,
+} from "../lib/portfolioAnalytics";
+import CrewComparisonPanel from "./results/CrewComparisonPanel";
+import PortfolioAnalyticsBar from "./results/PortfolioAnalyticsBar";
 
 const PER_PAGE_OPTIONS = [50, 100, 200, 500] as const;
 const DEFAULT_PER_PAGE = 50;
@@ -105,11 +114,6 @@ const styles = {
     borderRadius: "var(--radius-1)",
     color: "var(--text)",
   },
-  sectionLabel: {
-    fontSize: "0.75rem",
-    color: "var(--text-muted)",
-    marginBottom: "var(--space-4)",
-  },
 } satisfies Record<string, CSSProperties>;
 
 /** Normalize captain/bridge/below_decks for display: API may return string[]; join with ", ". */
@@ -141,28 +145,7 @@ function formatExpectedHullDamage(value: number | undefined): string {
 }
 
 function formatMethodProvenance(value: string | undefined): string {
-  const map: Record<string, string> = {
-    beam_diversity: "Beam",
-    curated_warm_start: "Curated",
-    exhaustive_mc: "Exhaustive MC",
-    exhaustive_two_phase: "Two-phase MC",
-    genetic: "Genetic",
-    heuristic_seed: "Heuristic seed",
-    heuristics: "Heuristics",
-    large_neighborhood_repair: "Rebuilt seats",
-    linear_eval: "Linear eval",
-    local_captain_swap: "Captain swap",
-    local_swap: "Seat swap",
-    monte_carlo: "Monte Carlo",
-    portfolio: "Portfolio",
-    portfolio_neighbor: "Neighbor swap",
-    qd_archive: "Archive",
-    random_stratified: "Stratified random",
-    seeded_genetic: "Seeded GA",
-    tiered_confirmed: "Tiered",
-    warm_start: "Warm start",
-  };
-  return value != null ? (map[value] ?? value.replace(/_/g, " ")) : "";
+  return formatDiscoveryLaneLabel(value);
 }
 
 function fidelityBadgeStyle(grade: string): CSSProperties {
@@ -330,68 +313,6 @@ interface ComparisonState {
   error: string | null;
 }
 
-function SideBySideHistograms({
-  crews,
-  title,
-  getCounts,
-}: {
-  crews: CompareCrewDistribution[];
-  title: string;
-  getCounts: (c: CompareCrewDistribution) => number[];
-}) {
-  const series = crews.map(getCounts);
-  const max = Math.max(1, ...series.flat());
-  return (
-    <div style={{ marginTop: 12 }}>
-      <div style={styles.sectionLabel}>{title}</div>
-      <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
-        {crews.map((c, ci) => {
-          const vals = getCounts(c);
-          return (
-            <div key={`${c.captain}-${ci}`} style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: "0.7rem",
-                  marginBottom: 4,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {c.captain}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-end",
-                  gap: 1,
-                  height: 80,
-                }}
-              >
-                {vals.map((count, i) => (
-                  <div
-                    key={i}
-                    title={String(count)}
-                    style={{
-                      flex: 1,
-                      minWidth: 2,
-                      height: `${(count / max) * 100}%`,
-                      minHeight: count > 0 ? 2 : 0,
-                      background: "var(--accent)",
-                      opacity: 0.88,
-                      borderRadius: 1,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 interface SimResultsProps {
   simResult: SimulateStats | null;
   recommendations: CrewRecommendation[];
@@ -440,6 +361,24 @@ export default memo(function SimResults({
     selection.recommendations === recommendations
       ? selection.indices
       : EMPTY_SELECTED_ROWS;
+  const [filterState, setFilterState] = useState<{
+    recommendations: CrewRecommendation[];
+    filters: RecommendationFilters;
+  }>(() => ({
+    recommendations,
+    filters: EMPTY_RECOMMENDATION_FILTERS,
+  }));
+  const filters =
+    filterState.recommendations === recommendations
+      ? filterState.filters
+      : EMPTY_RECOMMENDATION_FILTERS;
+  const setFilters = useCallback(
+    (next: RecommendationFilters) => {
+      setFilterState({ recommendations, filters: next });
+      setPage(1);
+    },
+    [recommendations],
+  );
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
   const [comparison, setComparison] = useState<ComparisonState | null>(null);
@@ -540,13 +479,21 @@ export default memo(function SimResults({
     [linearEvalMode, chainMode, chainWinHeader, chainR1Header, chainHullHeader],
   );
 
-  const total = recommendations.length;
+  const portfolioSummary = useMemo(
+    () => summarizePortfolioResults(recommendations),
+    [recommendations],
+  );
+  const filteredRows = useMemo(
+    () => filterRecommendations(recommendations, filters),
+    [recommendations, filters],
+  );
+  const total = filteredRows.length;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const safePage = Math.min(page, totalPages);
   const start = (safePage - 1) * perPage;
   const pageRecs = useMemo(
-    () => recommendations.slice(start, start + perPage),
-    [recommendations, start, perPage],
+    () => filteredRows.slice(start, start + perPage),
+    [filteredRows, start, perPage],
   );
 
   // Reset to page 1 when recommendations change (e.g. new optimize run) or when current page is out of range
@@ -560,10 +507,25 @@ export default memo(function SimResults({
         ? current
         : { recommendations, indices: new Set<number>() },
     );
+    setFilterState((current) =>
+      current.recommendations === recommendations
+        ? current
+        : { recommendations, filters: EMPTY_RECOMMENDATION_FILTERS },
+    );
     setComparison((current) =>
       current?.recommendations === recommendations ? current : null,
     );
   }, [recommendations]);
+
+  const selectDiverseTop = useCallback(
+    (indices: number[]) => {
+      setSelection({
+        recommendations,
+        indices: new Set(indices.slice(0, 5)),
+      });
+    },
+    [recommendations],
+  );
 
   const toggleSelect = useCallback(
     (i: number) => {
@@ -904,6 +866,14 @@ export default memo(function SimResults({
               </>
             )}
           </p>
+          <PortfolioAnalyticsBar
+            summary={portfolioSummary}
+            filteredCount={total}
+            filters={filters}
+            onChangeFilters={setFilters}
+            onSelectDiverseTop={selectDiverseTop}
+            linearEvalMode={linearEvalMode}
+          />
           <div
             style={{
               display: "flex",
@@ -943,7 +913,9 @@ export default memo(function SimResults({
               </select>
             </label>
             <span style={{ color: "var(--text-muted)" }}>
-              Showing {start + 1}–{Math.min(start + perPage, total)} of {total}
+              {total === 0
+                ? "Showing 0 of 0"
+                : `Showing ${start + 1}–${Math.min(start + perPage, total)} of ${total}`}
             </span>
             <span style={{ color: "var(--text-muted)" }}>
               Selected {totalSelected}/5
@@ -1047,8 +1019,8 @@ export default memo(function SimResults({
                 </tr>
               </thead>
               <tbody>
-                {pageRecs.map((r, i) => {
-                  const globalIndex = start + i;
+                {pageRecs.map(({ rec: r, originalIndex }, i) => {
+                  const globalIndex = originalIndex;
                   const isSelected = selected.has(globalIndex);
                   const crewDisabled = !isSelected && totalSelected >= 5;
                   const rowBg =
@@ -1211,180 +1183,21 @@ export default memo(function SimResults({
           </div>
 
           {showCompare && (
-            <div
-              style={{
-                marginTop: "1rem",
-                padding: "0.75rem",
-                background: "var(--bg)",
-                border: "1px solid var(--border)",
-                borderRadius: 6,
-              }}
-            >
-              <strong>Compare (delta)</strong>
-              <div
-                style={{
-                  marginTop: 8,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
-                }}
-              >
-                {selectedList.map((idx, j) => {
-                  const r = recommendations[idx];
-                  const prev =
-                    j === 0 ? null : recommendations[selectedList[j - 1]];
-                  const deltaWin =
-                    prev != null ? (r.win_rate - prev.win_rate) * 100 : 0;
-                  const deltaStall =
-                    prev != null ? (r.stall_rate - prev.stall_rate) * 100 : 0;
-                  const deltaLoss =
-                    prev != null ? (r.loss_rate - prev.loss_rate) * 100 : 0;
-                  const deltaR1 =
-                    prev != null
-                      ? (r.r1_kill_rate - prev.r1_kill_rate) * 100
-                      : 0;
-                  const deltaHull =
-                    prev != null
-                      ? (r.avg_hull_remaining - prev.avg_hull_remaining) * 100
-                      : 0;
-                  const deltaEnemyHull =
-                    prev != null
-                      ? (r.avg_defender_hull_remaining -
-                          prev.avg_defender_hull_remaining) *
-                        100
-                      : 0;
-                  return (
-                    <div key={idx} style={{ fontSize: "0.85rem" }}>
-                      <span style={{ fontWeight: 600 }}>#{idx + 1}</span>{" "}
-                      {formatCrewCell(r.captain)} / {formatCrewCell(r.bridge)} /{" "}
-                      {formatCrewCell(r.below_decks)}
-                      {prev != null && (
-                        <span
-                          style={{ marginLeft: 8, color: "var(--text-muted)" }}
-                        >
-                          Δ {chainMode ? "P(chain)" : "Win"}{" "}
-                          {deltaWin >= 0 ? "+" : ""}
-                          {deltaWin.toFixed(2)}%, Δ Stall{" "}
-                          {deltaStall >= 0 ? "+" : ""}
-                          {deltaStall.toFixed(2)}%, Δ Loss{" "}
-                          {deltaLoss >= 0 ? "+" : ""}
-                          {deltaLoss.toFixed(2)}%, Δ R1{" "}
-                          {deltaR1 >= 0 ? "+" : ""}
-                          {deltaR1.toFixed(2)}%, Δ{" "}
-                          {chainMode ? "Secondary" : "Your hull"}{" "}
-                          {deltaHull >= 0 ? "+" : ""}
-                          {deltaHull.toFixed(2)}%, Δ Enemy hull{" "}
-                          {deltaEnemyHull >= 0 ? "+" : ""}
-                          {deltaEnemyHull.toFixed(2)}%
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              {compareWorkspace?.ship && compareWorkspace.hostile && (
-                <div style={{ marginTop: 12 }}>
-                  <button
-                    type="button"
-                    onClick={() => void runCompareDistributions()}
-                    disabled={loadingCompareDist}
-                    style={{
-                      padding: "0.35rem 0.75rem",
-                      background: "var(--accent)",
-                      border: "none",
-                      borderRadius: 4,
-                      color: "var(--bg)",
-                      cursor: loadingCompareDist ? "wait" : "pointer",
-                      opacity: loadingCompareDist ? 0.7 : 1,
-                    }}
-                  >
-                    {loadingCompareDist
-                      ? "Running compare…"
-                      : "Compare distributions (MC)"}
-                  </button>
-                  <p
-                    style={{
-                      margin: "6px 0 0",
-                      fontSize: "0.75rem",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    Re-runs Monte Carlo for selected crews only. Bars: rounds to
-                    win (1–20, last bucket merges tail), hull remaining on clean
-                    wins (10 bins), plus traced proc sample (~60 trials/crew).
-                  </p>
-                  {compareDistErr != null && (
-                    <p
-                      style={{
-                        margin: "6px 0 0",
-                        fontSize: "0.8rem",
-                        color: "salmon",
-                      }}
-                    >
-                      {compareDistErr}
-                    </p>
-                  )}
-                </div>
+            <CrewComparisonPanel
+              recommendations={recommendations}
+              selectedIndices={selectedList}
+              chainMode={chainMode}
+              canRunDistributions={Boolean(
+                compareWorkspace?.ship && compareWorkspace.hostile,
               )}
-              {compareDist != null && compareDist.length > 0 && (
-                <div style={{ marginTop: 14 }}>
-                  <strong style={{ fontSize: "0.9rem" }}>
-                    Distribution comparison
-                  </strong>
-                  {compareSeed != null && (
-                    <span
-                      style={{
-                        marginLeft: 8,
-                        fontSize: "0.75rem",
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      seed={compareSeed}
-                    </span>
-                  )}
-                  <SideBySideHistograms
-                    crews={compareDist}
-                    title="Rounds to win (clean wins only; bucket 20 = 20+)"
-                    getCounts={(c) => c.rounds_histogram.map(([, n]) => n)}
-                  />
-                  <SideBySideHistograms
-                    crews={compareDist}
-                    title="Attacker hull % on clean wins (10 bins, 0–10% … 90–100%)"
-                    getCounts={(c) => c.hull_remaining_bins}
-                  />
-                  {compareDist.some(
-                    (c) => c.proc_rates && Object.keys(c.proc_rates).length > 0,
-                  ) && (
-                    <div style={{ marginTop: 12 }}>
-                      <div style={styles.sectionLabel}>
-                        Proc-like events (mean count per traced trial)
-                      </div>
-                      <div
-                        style={{ display: "flex", flexWrap: "wrap", gap: 12 }}
-                      >
-                        {compareDist.map((c, i) => (
-                          <div
-                            key={`proc-${i}`}
-                            style={{ fontSize: "0.75rem", minWidth: 120 }}
-                          >
-                            <div style={{ fontWeight: 600 }}>{c.captain}</div>
-                            <ul style={{ margin: "4px 0 0", paddingLeft: 16 }}>
-                              {Object.entries(c.proc_rates ?? {})
-                                .sort(([a], [b]) => a.localeCompare(b))
-                                .map(([k, v]) => (
-                                  <li key={k}>
-                                    {k}: {v.toFixed(2)}
-                                  </li>
-                                ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+              loadingCompareDist={loadingCompareDist}
+              compareDist={compareDist}
+              compareSeed={compareSeed}
+              compareDistErr={compareDistErr}
+              onRunCompareDistributions={() => void runCompareDistributions()}
+              formatParetoTag={formatParetoTag}
+              visibleParetoTags={visibleParetoTags}
+            />
           )}
         </>
       )}
