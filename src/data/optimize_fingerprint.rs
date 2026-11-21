@@ -24,9 +24,14 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::OnceLock;
 
+use crate::combat::effect_spec_compile::compile_officer_combat_spec;
 use crate::combat::{
     simulate_combat, Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant,
     CrewConfiguration, CrewSeat, CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
+};
+use crate::data::combat_effect_spec::{
+    AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec, AbilityTriggerSpec, ChanceSpec,
+    CombatEffectSpec, DurationSpec, EffectSource, ValueSpec,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::data::import::{GlobalBuffEntry, ShipEntry};
@@ -1150,6 +1155,48 @@ fn canary_fights() -> Vec<CanaryFight> {
     let mut building_defender = canary_combatant("generator_hostile");
     building_defender.attack = 83.0;
 
+    let shots_spec = CombatEffectSpec {
+        id: "canary:round_start_shots".into(),
+        source: EffectSource::LcarsOfficer,
+        source_ref: None,
+        text: None,
+        trigger: AbilityTriggerSpec::RoundStart,
+        target: AbilityTargetSpec::AttackerSelf,
+        modifier: AbilityModifierSpec::ShotsBonus,
+        operation: AbilityOperationSpec::Add,
+        value: Some(ValueSpec {
+            scalar: Some(1.0),
+            by_rank: None,
+            unit: None,
+            officer_stat_scaling: None,
+        }),
+        chance: Some(ChanceSpec {
+            scalar: Some(0.30),
+            by_rank: None,
+        }),
+        duration: Some(DurationSpec::Rounds { rounds: 2 }),
+        decay: None,
+        accumulate: None,
+        conditions: Vec::new(),
+        attributes: Default::default(),
+        officer: Default::default(),
+        stacking: None,
+        category: None,
+        confidence: None,
+    };
+    let (timing, effect, condition) =
+        compile_officer_combat_spec(&shots_spec).expect("round-start shot canary compiles");
+    let mut shots = canary_seat(
+        CrewSeat::Bridge,
+        AbilityClass::BridgeAbility,
+        timing,
+        effect,
+    );
+    shots.ability.condition = condition;
+    let mut shots_attacker = canary_combatant("canary_t_attacker");
+    shots_attacker.attack = 31.0;
+    let mut shots_defender = canary_combatant("canary_t_defender");
+    shots_defender.attack = 13.0;
     vec![
         (
             "a_plain",
@@ -1275,6 +1322,13 @@ fn canary_fights() -> Vec<CanaryFight> {
             building_defender,
             canary_config(4, 73),
             CrewConfiguration::default(),
+        ),
+        (
+            "u_recurring_officer_shots",
+            shots_attacker,
+            shots_defender,
+            canary_config(9, 3),
+            CrewConfiguration { seats: vec![shots] },
         ),
     ]
 }
@@ -1930,12 +1984,31 @@ mod tests {
         );
     }
 
+    #[test]
+    fn recurring_shots_canary_detects_old_roll_window_and_chance() {
+        let (_, attacker, defender, config, crew) = canary_fights()
+            .into_iter()
+            .find(|(id, ..)| *id == "u_recurring_officer_shots")
+            .unwrap();
+        let correct = simulate_combat(&attacker, &defender, &config, &crew).total_damage;
+        let mut clipped = crew.clone();
+        clipped.seats[0].ability.condition = Some(AbilityCondition::RoundRange { min: 1, max: 2 });
+        let clipped = simulate_combat(&attacker, &defender, &config, &clipped).total_damage;
+        let mut guaranteed = crew;
+        if let AbilityEffect::ShotsBonus { chance, .. } = &mut guaranteed.seats[0].ability.effect {
+            *chance = 1.0;
+        }
+        let guaranteed = simulate_combat(&attacker, &defender, &config, &guaranteed).total_damage;
+        assert_ne!(correct, clipped);
+        assert_ne!(correct, guaranteed);
+    }
+
     /// A suite whose fights all end the same way would hash the same after most engine changes.
     /// Every fight must reach a distinct outcome, and none may end instantly.
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 21, "expected twenty-one canary fights");
+        assert_eq!(summaries.len(), 22, "expected twenty-two canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),
