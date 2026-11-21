@@ -28,6 +28,14 @@ Implementation needs weapon-level evidence for when the earning hit changes
 damage, whether a stack is earned once per shot or firing volley, and whether
 stacks survive expiry and reapplication of the required status.
 
+Gladius Secret Weapon (`2165876444`) uses the NPC hostile gate for its
+ship-level damage bonus. GS-31 Apex Shred (`1773930736`) and Marked for
+Disposal (`1090374551`) name Apex Raiders (Solo Wave Defense) as their
+target. The cached records identify faction `3505432050` and have no
+encounter tags. The shared `Waves` label covers wave defense generally.
+Both GS-31 rows use `combat_noop` pending a verified target selector.
+[GS-31 source](https://startrekfleetcommand.com/news/sneak-peek-introducing-the-gs-31/)
+
 **Catalog revision (2026-05-19, Track D + D2):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **67** map to `effect_type: combat_noop` (inventory-only in combat). **73** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
 
 **Track E update (2026-06-07):** The two breach-gated cumulative crit proc chains — Hegh'ta "Open the Wound" (`3432906971`) and Rotarran "Bird of Prey" (`2195955652`) — are now **modeled** (see §6.5), dropping the noop inventory from **67 → 65**. An earlier revision of §6.2 mislabeled these proc chains with the ids `2520552521` / `3014221215`; those two ids are in fact economy abilities (transogen loot / tritanium mining) and remain `combat_noop`.

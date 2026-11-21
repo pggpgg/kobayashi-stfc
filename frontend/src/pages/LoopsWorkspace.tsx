@@ -273,7 +273,9 @@ export default function LoopsWorkspace() {
     const specialty = selectedLoop.specialtyShipIds.find((id) =>
       ships.some((ship) => ship.id === id),
     );
-    if (selectedLoop.shipPolicy === "required" || !selectedShipId) {
+    if (selectedLoop.shipPolicy === "required") {
+      setSelectedShipId(specialty ?? selectedLoop.specialtyShipIds[0] ?? "");
+    } else if (!selectedShipId) {
       setSelectedShipId(specialty ?? ships[0]?.id ?? "");
     }
   }, [selectedLoop, ships, goalId, selectedShipId]);
@@ -624,6 +626,9 @@ export default function LoopsWorkspace() {
                   </div>
                   <div className="ladder-targets">
                     {targets.map((hostile) => {
+                      const system = selectedLoop.hostileSystems?.get(
+                        hostile.id,
+                      );
                       const best = getLoopBestRecord(
                         activeProfileId,
                         selectedLoop.id,
@@ -638,6 +643,17 @@ export default function LoopsWorkspace() {
                               <span>
                                 {classLabel(hostile.ship_class)} · {hostile.id}
                               </span>
+                              {system && (
+                                <small>
+                                  <a
+                                    href={`https://stfc.space/systems/${system.id}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    {system.name}
+                                  </a>
+                                </small>
+                              )}
                               <div style={{ marginTop: "0.25rem" }}>
                                 <RungStatusBadge
                                   info={
