@@ -264,6 +264,10 @@ export function buildLevelsFromDetail(detail, opts) {
   if (!detail || !Array.isArray(detail.buffs)) return [];
 
   const { rid, unmappedByBuffId, descriptionByLocaId, projectLocaId, projectNamesByLocaId } = opts;
+  // Fleet Commander projects can be owned while their On Duty, selectable,
+  // or activated buff is absent. The native path uses active buff membership.
+  const requiresActiveGlobalBuff = detail.research_tree?.type === 3 &&
+    /\(\s*on duty\b/i.test(descriptionByLocaId?.get(projectLocaId ?? detail.loca_id) ?? "");
   const buffResolveCtx = {
     ...(opts.buffResolveCtx ?? makeBuffResolveCtx(descriptionByLocaId, projectNamesByLocaId)),
     researchProjectId: rid ?? detail.id,
@@ -275,12 +279,16 @@ export function buildLevelsFromDetail(detail, opts) {
       const mappings = resolveBuffStatMappings(buffResolveCtx, buff, projectLocaId);
       if (mappings.length === 0) {
         addUnmapped(unmappedByBuffId, rid, buff);
+      } else if (requiresActiveGlobalBuff) {
+        addUnmappedReason(unmappedByBuffId, rid, buff, "requires_active_global_buff");
       } else if (buff.value_is_percentage === true && mappings.some(mapping =>
         !["fraction", "absolute", "percentage_points"].includes(mapping.value_unit))) {
         addUnmappedReason(unmappedByBuffId, rid, buff, "percentage_unit_unverified");
       }
     }
   }
+
+  if (requiresActiveGlobalBuff) return [];
 
   const buffValuesLens = detail.buffs.map((b) =>
     Array.isArray(b.values) ? b.values.length : 0

@@ -1265,6 +1265,39 @@ fn canary_fights() -> Vec<CanaryFight> {
     );
     opening_salvo.ability.condition = Some(AbilityCondition::RoundRange { min: 1, max: 1 });
 
+    // Fleet Commander weapon damage uses the unexpired active rank only.
+    let commander_buffs = [
+        GlobalBuffEntry {
+            bid: 251_122_208,
+            level: 1,
+            expiry_time: Some(101),
+        },
+        GlobalBuffEntry {
+            bid: 251_122_208,
+            level: 15,
+            expiry_time: Some(100),
+        },
+    ];
+    let commander_profile = crate::data::profile::PlayerProfile {
+        bonuses: crate::data::native_research_buffs::research_bonuses_for_imported_buffs(
+            &commander_buffs,
+            None,
+            100,
+        )
+        .unwrap_or_default(),
+        ..Default::default()
+    };
+    let mut commander_attacker = canary_combatant("commander_player");
+    commander_attacker.attack = 29.0;
+    let commander_attacker = crate::data::profile::apply_profile_to_attacker(
+        commander_attacker,
+        &commander_profile,
+        None,
+        Default::default(),
+    );
+    let mut commander_defender = canary_combatant("commander_target");
+    commander_defender.hull_health = 20_000.0;
+
     vec![
         (
             "a_plain",
@@ -1413,6 +1446,13 @@ fn canary_fights() -> Vec<CanaryFight> {
             CrewConfiguration {
                 seats: vec![opening_salvo],
             },
+        ),
+        (
+            "x_fleet_commander_active_buff",
+            commander_attacker,
+            commander_defender,
+            canary_config(3, 73),
+            CrewConfiguration::default(),
         ),
     ]
 }
@@ -2092,7 +2132,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 24, "expected twenty-four canary fights");
+        assert_eq!(summaries.len(), 25, "expected twenty-five canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),
