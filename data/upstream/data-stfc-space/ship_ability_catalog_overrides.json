@@ -121,6 +121,13 @@
       "condition_defender_is_npc_hostile": true,
       "duration_rounds": 1
     },
+    "957865248": {
+      "timing": "round_start",
+      "effect_type": "accumulating_attack_multiplier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_hull_breach": true
+    },
     "2195955652": {
       "timing": "attack_phase",
       "effect_type": "cumulative_breach_crit_damage",
