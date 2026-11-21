@@ -293,7 +293,11 @@ describe("OptimizePanel", () => {
     expect(fn).toHaveBeenCalledWith({ enableLearnedPairPrior: false });
   });
   it("offers the refine-finalists toggle on the lanes that support it", () => {
-    for (const optimizerStrategy of ["tiered", "genetic"] as const) {
+    for (const optimizerStrategy of [
+      "tiered",
+      "genetic",
+      "portfolio",
+    ] as const) {
       const view = renderPanel({ optimizerStrategy });
       expect(
         screen.getByRole("checkbox", { name: /Refine finalists/i }),

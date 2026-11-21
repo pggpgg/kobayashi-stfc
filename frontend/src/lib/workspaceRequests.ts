@@ -267,12 +267,14 @@ export function buildWorkspaceOptimizeStartBody(args: {
     ...(args.warmStartCrews && args.warmStartCrews.length > 0
       ? { warm_start_crews: args.warmStartCrews }
       : {}),
-    ...(args.optimizerStrategy === "tiered" &&
+    ...((args.optimizerStrategy === "tiered" ||
+      args.optimizerStrategy === "portfolio") &&
     args.tieredScoutSims != null &&
     args.tieredScoutSims > 0
       ? { tiered_scout_sims: args.tieredScoutSims }
       : {}),
-    ...(args.optimizerStrategy === "tiered" &&
+    ...((args.optimizerStrategy === "tiered" ||
+      args.optimizerStrategy === "portfolio") &&
     args.tieredTopK != null &&
     args.tieredTopK > 0
       ? { tiered_top_k: args.tieredTopK }
@@ -286,7 +288,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
     // body an honest description of what the run will do.
     ...(args.localRefinement === true &&
     (args.optimizerStrategy === "tiered" ||
-      args.optimizerStrategy === "genetic")
+      args.optimizerStrategy === "genetic" ||
+      args.optimizerStrategy === "portfolio")
       ? { local_refinement: true }
       : {}),
     ...(args.fastDiscovery === true ? { fast_discovery: true } : {}),

@@ -863,6 +863,60 @@ async fn optimize_random_stratified_is_deterministic_for_fixed_seed() {
 
 #[serial_test::serial]
 #[tokio::test]
+async fn optimize_portfolio_strategy_returns_fidelity_provenance_and_is_deterministic() {
+    let body = r#"{"ship":"uss_saladin","hostile":"1140710508","sims":120,"seed":7,"max_candidates":32,"strategy":"portfolio","tiered_scout_sims":36,"tiered_top_k":4}"#;
+    let first = route_request_optimize(body).await;
+    let second = route_request_optimize(body).await;
+
+    assert_eq!(first.status_code, 200);
+    assert_eq!(second.status_code, 200);
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&first.body).expect("response should be valid json");
+    let second_payload: serde_json::Value =
+        serde_json::from_str(&second.body).expect("second response should be valid json");
+
+    assert_eq!(payload["engine"], "portfolio");
+    assert_eq!(payload["scenario"]["effective_strategy"], "portfolio");
+    assert_eq!(payload["scenario"]["requested_strategy"], "portfolio");
+    assert_eq!(
+        payload["recommendations"], second_payload["recommendations"],
+        "same seed should reproduce bit-identical portfolio recommendations"
+    );
+
+    let recommendations = payload["recommendations"]
+        .as_array()
+        .expect("recommendations should be an array");
+    assert!(!recommendations.is_empty());
+    assert!(recommendations.len() <= 4);
+
+    for rec in recommendations {
+        let methods = rec["proposing_methods"]
+            .as_array()
+            .expect("portfolio row should report proposing_methods");
+        assert!(!methods.is_empty(), "proposing_methods should be non-empty");
+        assert!(
+            rec["evidence_level"].as_str().is_some(),
+            "row should carry evidence_level"
+        );
+        let fidelity = rec["fidelity"]
+            .as_object()
+            .expect("row should carry seat-accurate fidelity summary");
+        assert!(
+            matches!(fidelity["grade"].as_str(), Some("A" | "B" | "C" | "D")),
+            "unexpected fidelity grade: {:?}",
+            fidelity["grade"]
+        );
+        assert!(
+            rec["qd_cell"].as_str().is_some_and(|s| s.contains('|')),
+            "portfolio row should carry a qd_cell label, got {:?}",
+            rec["qd_cell"]
+        );
+    }
+}
+
+#[serial_test::serial]
+#[tokio::test]
 async fn optimize_tiered_random_exploration_slice_reports_funnel() {
     let body = r#"{"ship":"uss_saladin","hostile":"2918121098","sims":300,"seed":5,"max_candidates":64,"strategy":"tiered","tiered_scout_sims":50,"tiered_top_k":4,"tiered_random_exploration_pct":0.25}"#;
     let response = route_request_optimize(body).await;

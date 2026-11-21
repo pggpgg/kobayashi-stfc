@@ -847,6 +847,9 @@ export function formatOptimizePhaseLabel(
     tiered_scout: "Tiered (scout)",
     tiered_confirm: "Tiered (confirm)",
     linear_eval: "Linear eval",
+    portfolio_race_coarse: "Portfolio (coarse race)",
+    portfolio_race_refine: "Portfolio (refine race)",
+    portfolio_confirm: "Portfolio (confirm)",
   };
   return map[phase] ?? phase.replace(/_/g, " ");
 }
