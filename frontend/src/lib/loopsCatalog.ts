@@ -77,21 +77,35 @@ export const LOOP_GOALS: readonly LoopGoal[] = [
 export type LoopEngagement = "hostile" | "armada" | "solo_armada";
 export type LoopShipPolicy = "required" | "recommended" | "open";
 
-export interface LoopDefinition {
+interface LoopSystem {
+  id: number;
+  name: string;
+}
+
+export type LoopDefinition = {
   id: string;
   name: string;
   summary: string;
   progression: string;
   engagement: LoopEngagement;
   minOps?: number;
-  hostilePatterns: readonly RegExp[];
-  excludePatterns?: readonly RegExp[];
   shipPolicy: LoopShipPolicy;
   specialtyShipIds: readonly string[];
   specialtyShipLabel?: string;
   goals: readonly LoopGoalId[];
   sourceUrl?: string;
-}
+} & (
+  | {
+      hostilePatterns: readonly RegExp[];
+      excludePatterns?: readonly RegExp[];
+      hostileSystems?: never;
+    }
+  | {
+      hostilePatterns?: never;
+      excludePatterns?: never;
+      hostileSystems: ReadonlyMap<string, LoopSystem>;
+    }
+);
 
 export const XINDI_AQUATIC_LOOP_ID = "xindi-aquatic";
 export const XINDI_AQUATIC_ENHANCED_LOOP_ID = "xindi-aquatic-enhanced";
@@ -134,13 +148,9 @@ export const FUTURE_PATTERN_EXEMPTIONS: Record<string, readonly number[]> = {
 };
 
 /**
- * Data-driven loop catalog. Hostile ids are deliberately not embedded here: the
- * ladder is resolved from the installed hostile catalog, so upstream refreshes can
- * add levels without a frontend release.
- *
- * Note what that does *not* cover: it keeps working when upstream adds levels to a
- * family already matched, but a family whose *name* changes (or was never right)
- * silently resolves to nothing. The liveness test above is what catches that.
+ * Ladders resolve against the installed hostile catalog. Name patterns include
+ * new levels added to a family on refresh. System-specific ladders use exact
+ * hostile IDs because the hostile list API omits spawn locations.
  */
 export const LOOP_CATALOG: readonly LoopDefinition[] = [
   {
@@ -403,6 +413,36 @@ export const LOOP_CATALOG: readonly LoopDefinition[] = [
       "https://startrekfleetcommand.com/news/gs-31-ship-parts-refinery-the-best-source-of-ship-parts/",
   },
   {
+    id: "mu-rep-grind",
+    name: "MU Rep Grind",
+    summary:
+      "Hunt Imperial Starfleet Planet Harvesters and Romulan Republic Miners in the Mirror Universe.",
+    progression: "Federation, Klingon, and Romulan reputation",
+    engagement: "hostile",
+    minOps: 45,
+    // Hostile-to-system IDs from the STFC.space system summary.
+    hostileSystems: new Map([
+      ["2016644127", { id: 1578320633, name: "Mirror Tau Ceti" }],
+      ["2013385428", { id: 22288656, name: "Mirror Doloran" }],
+      ["2864818937", { id: 1301278521, name: "Mirror Dessica" }],
+      ["4152973142", { id: 1776591157, name: "Mirror Altanea" }],
+      ["607623533", { id: 538197195, name: "Mirror P'Jem [Extract]" }],
+      ["3496577958", { id: 1901010066, name: "Mirror Rada Ban" }],
+      ["1267206309", { id: 559466032, name: "Mirror Romii [Extract]" }],
+      ["2578891593", { id: 853741050, name: "Mirror Cheron" }],
+      ["3162073836", { id: 929779479, name: "Mirror Pareleon" }],
+      ["1381341814", { id: 2135389091, name: "Mirror Vulcan [Extract]" }],
+      ["2376900965", { id: 790704090, name: "Mirror Terix" }],
+      ["383046647", { id: 1784890032, name: "Mirror Romulus" }],
+    ]),
+    shipPolicy: "required",
+    specialtyShipIds: ["uss_dauntless"],
+    specialtyShipLabel: "USS Dauntless",
+    goals: ALL_GOALS,
+    sourceUrl:
+      "https://startrekfleetcommand.com/news/the-u-s-s-dauntless-revolutionizing-the-hostile-hunt/",
+  },
+  {
     id: "academy-drones",
     name: "Academy drones",
     summary: "Training Drone hostiles tied to Academy Space progression.",
@@ -435,6 +475,7 @@ export function hostileMatchesLoop(
   hostile: HostileListItem,
   loop: LoopDefinition,
 ): boolean {
+  if (loop.hostileSystems) return loop.hostileSystems.has(hostile.id);
   const label = hostileLabel(hostile);
   if (loop.excludePatterns?.some((pattern) => pattern.test(label)))
     return false;
@@ -449,7 +490,9 @@ export function resolveLoopHostiles(
   return hostiles
     .filter((hostile) => hostileMatchesLoop(hostile, loop))
     .filter((hostile) => {
-      const key = `${hostileGroupingLabel(hostile).toLocaleLowerCase()}|${hostile.level}|${hostile.ship_class}`;
+      const key = loop.hostileSystems
+        ? hostile.id
+        : `${hostileGroupingLabel(hostile).toLocaleLowerCase()}|${hostile.level}|${hostile.ship_class}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
