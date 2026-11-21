@@ -103,3 +103,80 @@ fn active_source_replacement_preserves_manual_bonuses_and_excludes_inactive_rese
     let zero = research_bonuses_for_ship(&[entry(1895868262, 99)], None, None, 100).unwrap();
     assert_eq!(zero, HashMap::new(), "explicit trailing zero stays zero");
 }
+
+#[test]
+fn fleet_commander_temporary_weapon_bonus_requires_a_current_active_buff() {
+    use kobayashi::combat::{
+        simulate_combat, Combatant, CrewConfiguration, SimulationConfig, WeaponStats,
+    };
+    use kobayashi::data::profile::{apply_profile_to_attacker, OfficerStatRuntimeBonus};
+
+    let catalog: ResearchCatalog =
+        serde_json::from_str(include_str!("../data/research_catalog.json")).unwrap();
+    let owned = [
+        ResearchEntry {
+            rid: 4126790711,
+            level: 1,
+        }, // Lorca's Fist: +20.0 while active
+        ResearchEntry {
+            rid: 151318080,
+            level: 1,
+        }, // Weapon Intel: +0.65, always on
+    ];
+    let active = GlobalBuffEntry {
+        expiry_time: Some(100),
+        ..entry(251122208, 1)
+    };
+    let current = [active.clone(), entry(3616876360, 1)];
+
+    for (buffs, now, expected) in [
+        (&[][..], 99, 165.0),
+        (std::slice::from_ref(&active), 100, 165.0),
+        (&current[..], 99, 2165.0),
+    ] {
+        let mut profile = PlayerProfile::default();
+        merge_research_bonuses_into_profile(&mut profile, &owned, &catalog, None);
+        if let Some(native) = research_bonuses_for_ship(buffs, None, None, now) {
+            replace_research_setup_bonuses_with_native_snapshot(
+                &mut profile,
+                &owned,
+                &catalog,
+                None,
+                None,
+                None,
+                &native,
+            );
+        }
+        let attacker = apply_profile_to_attacker(
+            Combatant {
+                hull_health: 10_000.0,
+                weapons: vec![WeaponStats {
+                    attack: 100.0,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+            &profile,
+            None,
+            OfficerStatRuntimeBonus::default(),
+        );
+        let defender = Combatant {
+            hull_health: 10_000.0,
+            ..Default::default()
+        };
+        let result = simulate_combat(
+            &attacker,
+            &defender,
+            &SimulationConfig {
+                rounds: 1,
+                ..Default::default()
+            },
+            &CrewConfiguration::default(),
+        );
+        assert!(
+            (result.total_damage - expected).abs() < 1e-9,
+            "buffs={buffs:?}, now={now}: got {}, expected {expected}",
+            result.total_damage,
+        );
+    }
+}
