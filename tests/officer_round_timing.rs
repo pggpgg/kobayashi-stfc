@@ -1,7 +1,9 @@
 //! Validate source-bound officer effects through the combat loop, not only conversion.
 use kobayashi::combat::{
-    build_combat_setup, simulate_combat_from_setup, AbilityCondition, AbilityEffect, Combatant,
-    CrewConfiguration, OpponentFactionTag, ShipType, SimulationConfig, TraceMode, WeaponStats,
+    build_combat_setup, simulate_combat_from_setup,
+    simulate_combat_with_defender_faction_and_defender_crew, AbilityCondition, AbilityEffect,
+    Combatant, CrewConfiguration, OpponentFactionTag, ShipType, SimulationConfig, TraceMode,
+    WeaponStats,
 };
 use kobayashi::lcars::{
     build_officer_model_file_default, index_lcars_officers_by_id, resolve_crew_to_buff_set,
@@ -134,5 +136,105 @@ fn suder_source_crit_bonus_expires_after_five_rounds_in_combat() {
             (multiplier - expected).abs() < 1e-9,
             "round {round}, crit multiplier {multiplier}"
         );
+    }
+}
+
+#[test]
+fn cadet_sulu_and_next_gen_riker_boost_all_first_round_shots_only() {
+    let officers = index_lcars_officers_by_id(build_officer_model_file_default().unwrap().officers);
+    let attacker = Combatant {
+        id: "attacker".into(),
+        hull_health: 10_000.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: Some(2),
+            ..Default::default()
+        }],
+        ..Default::default()
+    };
+    let defender = Combatant {
+        id: "defender".into(),
+        ..attacker.clone()
+    };
+    let empty = CrewConfiguration::default();
+    let mut config = SimulationConfig {
+        rounds: 3,
+        seed: 42,
+        ..Default::default()
+    };
+    for (captain, synergy_officer) in [
+        ("cadet-sulu-784421", "cadet-scotty-b342ae"),
+        ("next-gen-riker-44ccee", "next-gen-la-forge-ee6d76"),
+    ] {
+        // The second entry in each pair shares the captain's group and adds
+        // the source's different-class synergy entry (+10 percentage points).
+        for (bridge, shot_damage) in [(vec![], 105.0), (vec![synergy_officer.into()], 115.0)] {
+            let crew = resolve_crew_to_buff_set(
+                captain,
+                &bridge,
+                &[],
+                &officers,
+                &ResolveOptions::default(),
+            )
+            .crew;
+            config.trace_mode = TraceMode::Events;
+            let npc = simulate_combat_with_defender_faction_and_defender_crew(
+                &attacker,
+                &defender,
+                &config,
+                &crew,
+                OpponentFactionTag::Unknown,
+                ShipType::Battleship,
+                ShipType::Battleship,
+                true,
+                false,
+                &empty,
+            );
+            let shots: Vec<_> = npc
+                .events
+                .iter()
+                .filter(|event| event.event_type == "damage_application" && event.phase == "damage")
+                .map(|event| {
+                    (
+                        event.round_index,
+                        event.values["applied_weapon_damage"].as_f64().unwrap(),
+                    )
+                })
+                .collect();
+            assert_eq!(
+                shots,
+                [
+                    (1, shot_damage),
+                    (1, shot_damage),
+                    (2, 100.0),
+                    (2, 100.0),
+                    (3, 100.0),
+                    (3, 100.0)
+                ],
+                "{captain} with {bridge:?}"
+            );
+            assert_eq!(npc.attacker_hull_remaining, 9_400.0);
+
+            config.trace_mode = TraceMode::Off;
+            let pvp = simulate_combat_with_defender_faction_and_defender_crew(
+                &attacker,
+                &defender,
+                &config,
+                &empty,
+                OpponentFactionTag::Unknown,
+                ShipType::Battleship,
+                ShipType::Battleship,
+                false,
+                true,
+                &crew,
+            );
+            assert_eq!(pvp.total_damage, 600.0);
+            let expected_hull = attacker.hull_health - 400.0 - 2.0 * shot_damage;
+            assert!(
+                (pvp.attacker_hull_remaining - expected_hull).abs() < 1e-9,
+                "{captain} with {bridge:?} on the PvP defender, expected {expected_hull}, got {}",
+                pvp.attacker_hull_remaining
+            );
+        }
     }
 }
