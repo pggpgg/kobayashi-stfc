@@ -668,6 +668,7 @@ pub fn merge_building_bonuses_with_native_snapshot(
         profile,
         imported_buildings,
         bid_to_id,
+        None,
         data_dir,
         context,
         native_bonuses,
@@ -678,6 +679,7 @@ pub(crate) fn merge_building_bonuses_from_sources(
     profile: &mut PlayerProfile,
     imported_buildings: &[BuildingEntry],
     bid_to_id: &HashMap<i64, String>,
+    building_index: Option<&BuildingIndex>,
     data_dir: &Path,
     context: &BuildingBonusContext,
     native_bonuses: Option<&HashMap<String, f64>>,
@@ -694,17 +696,40 @@ pub(crate) fn merge_building_bonuses_from_sources(
         };
         levels_by_id.insert(id.clone(), level);
     }
-    let records: Vec<_> = levels_by_id
-        .keys()
-        .filter_map(|id| building::load_building_record(data_dir, id))
-        .collect();
+    let records: Vec<_> = if levels_by_id.is_empty() {
+        Vec::new()
+    } else {
+        // Public callers can pass partial index hints. Resolve filenames from
+        // disk unless scenario setup already read the index for this directory.
+        let disk_index = if building_index.is_none() {
+            fs::read(data_dir.join("index.json"))
+                .ok()
+                .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        } else {
+            None
+        };
+        let building_index = building_index.or(disk_index.as_ref());
+        std::path::absolute(data_dir)
+            .map(|dir| {
+                levels_by_id
+                    .keys()
+                    .filter_map(|id| {
+                        building::load_building_record_for_combat(&dir, id, building_index)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
 
     let context = BuildingBonusContext {
         syndicate_level: profile.syndicate_level,
         ..*context
     };
-    let mut bonuses =
-        building::cumulative_building_bonuses_with_context(&records, &levels_by_id, &context);
+    let mut bonuses = building::cumulative_building_bonuses_from_records(
+        records.iter().map(|record| record.as_ref()),
+        &levels_by_id,
+        &context,
+    );
 
     if let Some(native) = native_bonuses {
         bonuses.retain(|stat, _| {
