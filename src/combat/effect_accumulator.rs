@@ -435,12 +435,12 @@ impl EffectAccumulator {
     }
 
     /// Sum flat shield restoration from timed effects (used for defender round-start before the main phase accumulator runs).
-    pub(crate) fn sum_shield_regen_from_effects(
-        effects: &[ActiveAbilityEffect],
+    pub(crate) fn sum_shield_regen_from_effects<'a>(
+        effects: impl IntoIterator<Item = &'a ActiveAbilityEffect>,
         assimilated_active: bool,
     ) -> f64 {
         effects
-            .iter()
+            .into_iter()
             .filter_map(|e| {
                 if let AbilityEffect::ShieldRegen(v) = scale_effect(e.effect, assimilated_active) {
                     Some(v)
@@ -452,12 +452,12 @@ impl EffectAccumulator {
     }
 
     /// Sum flat hull restoration from timed effects (not [`AbilityEffect::OnKillHullRegen`]).
-    pub(crate) fn sum_hull_regen_from_effects(
-        effects: &[ActiveAbilityEffect],
+    pub(crate) fn sum_hull_regen_from_effects<'a>(
+        effects: impl IntoIterator<Item = &'a ActiveAbilityEffect>,
         assimilated_active: bool,
     ) -> f64 {
         effects
-            .iter()
+            .into_iter()
             .filter_map(|e| {
                 if let AbilityEffect::HullRegen(v) = scale_effect(e.effect, assimilated_active) {
                     Some(v)
@@ -468,12 +468,12 @@ impl EffectAccumulator {
             .sum()
     }
 
-    pub(crate) fn sum_shield_regen_max_fraction_from_effects(
-        effects: &[ActiveAbilityEffect],
+    pub(crate) fn sum_shield_regen_max_fraction_from_effects<'a>(
+        effects: impl IntoIterator<Item = &'a ActiveAbilityEffect>,
         assimilated_active: bool,
     ) -> f64 {
         effects
-            .iter()
+            .into_iter()
             .filter_map(|e| {
                 if let AbilityEffect::ShieldRegenMaxFraction(f) =
                     scale_active_effect(e, assimilated_active)
@@ -486,12 +486,12 @@ impl EffectAccumulator {
             .sum()
     }
 
-    pub(crate) fn sum_hull_regen_max_fraction_from_effects(
-        effects: &[ActiveAbilityEffect],
+    pub(crate) fn sum_hull_regen_max_fraction_from_effects<'a>(
+        effects: impl IntoIterator<Item = &'a ActiveAbilityEffect>,
         assimilated_active: bool,
     ) -> f64 {
         effects
-            .iter()
+            .into_iter()
             .filter_map(|e| {
                 if let AbilityEffect::HullRegenMaxFraction(f) =
                     scale_effect(e.effect, assimilated_active)
@@ -505,12 +505,12 @@ impl EffectAccumulator {
     }
 
     /// Sum `fraction` values for [`AbilityEffect::HullRegenPrevRoundFraction`] (PIC Hugh–style heal).
-    pub(crate) fn sum_hull_regen_prev_round_fraction(
-        effects: &[ActiveAbilityEffect],
+    pub(crate) fn sum_hull_regen_prev_round_fraction<'a>(
+        effects: impl IntoIterator<Item = &'a ActiveAbilityEffect>,
         assimilated_active: bool,
     ) -> f64 {
         effects
-            .iter()
+            .into_iter()
             .filter_map(|e| {
                 if let AbilityEffect::HullRegenPrevRoundFraction(f) =
                     scale_effect(e.effect, assimilated_active)
@@ -524,12 +524,12 @@ impl EffectAccumulator {
     }
 
     /// Sum `fraction` values for [`AbilityEffect::ShieldRegenPrevRoundFraction`] (Mara Dalen below decks vs armadas).
-    pub(crate) fn sum_shield_regen_prev_round_fraction(
-        effects: &[ActiveAbilityEffect],
+    pub(crate) fn sum_shield_regen_prev_round_fraction<'a>(
+        effects: impl IntoIterator<Item = &'a ActiveAbilityEffect>,
         assimilated_active: bool,
     ) -> f64 {
         effects
-            .iter()
+            .into_iter()
             .filter_map(|e| {
                 if let AbilityEffect::ShieldRegenPrevRoundFraction(f) =
                     scale_effect(e.effect, assimilated_active)
@@ -643,8 +643,8 @@ impl EffectAccumulator {
     }
 
     /// Sum additive max-HP fractions from timed effects (after condition filtering).
-    pub(crate) fn sum_max_hp_multipliers_from_effects(
-        effects: &[ActiveAbilityEffect],
+    pub(crate) fn sum_max_hp_multipliers_from_effects<'a>(
+        effects: impl IntoIterator<Item = &'a ActiveAbilityEffect>,
         assimilated_active: bool,
     ) -> (f64, f64) {
         let mut hull = 0.0_f64;
@@ -837,10 +837,10 @@ impl EffectAccumulator {
         self.stack_resolution_values()
     }
 
-    pub(crate) fn add_effects(
+    pub(crate) fn add_effects<'a>(
         &mut self,
         timing: TimingWindow,
-        effects: &[ActiveAbilityEffect],
+        effects: impl IntoIterator<Item = &'a ActiveAbilityEffect>,
         base_attack: f64,
         assimilated_active: bool,
         round_index: u32,
@@ -2141,12 +2141,12 @@ impl EffectAccumulator {
     }
 }
 
-pub(crate) fn sum_on_kill_hull_regen(
-    effects: &[ActiveAbilityEffect],
+pub(crate) fn sum_on_kill_hull_regen<'a>(
+    effects: impl IntoIterator<Item = &'a ActiveAbilityEffect>,
     assimilated_active: bool,
 ) -> f64 {
     effects
-        .iter()
+        .into_iter()
         .filter_map(|e| {
             if let AbilityEffect::OnKillHullRegen(v) = scale_effect(e.effect, assimilated_active) {
                 Some(v)
@@ -2157,12 +2157,12 @@ pub(crate) fn sum_on_kill_hull_regen(
         .sum()
 }
 
-pub(crate) fn record_ability_activations(
+pub(crate) fn record_ability_activations<'a>(
     trace: &mut TraceCollector,
     round_index: u32,
     phase: &str,
     attacker: &Combatant,
-    effects: &[ActiveAbilityEffect],
+    effects: impl IntoIterator<Item = &'a ActiveAbilityEffect>,
     assimilated_active: bool,
 ) {
     if !trace.is_enabled() {

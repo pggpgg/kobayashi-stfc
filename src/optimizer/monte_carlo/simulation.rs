@@ -1,6 +1,6 @@
 //! Simulation orchestration: run_monte_carlo* and SimulationResult.
 
-use crate::combat::engine::simulate_combat_from_setup_reusing_attacker;
+use crate::combat::engine::{simulate_combat_from_setup_with_scratch, CombatTrialScratch};
 use crate::combat::{
     build_combat_setup_with_officer_stat, simulate_combat_with_defender_faction_and_defender_crew,
     CombatEvent, OpponentFactionTag, SimulationConfig, TraceMode,
@@ -691,7 +691,7 @@ fn run_candidate_monte_carlo(
         &input.defender_crew,
         input.officer_stat_round.clone(),
     );
-    let mut attacker_scratch = setup.attacker.clone();
+    let mut trial_scratch = CombatTrialScratch::for_setup(&setup);
 
     const BATCH_SIZE: usize = 64;
 
@@ -703,11 +703,8 @@ fn run_candidate_monte_carlo(
         // for every 64-trial checkpoint batch. Replay/debug callers retain the public batch API.
         for trial_index in n_done..batch_end {
             let iteration_seed = input.base_seed.wrapping_add(trial_index as u64);
-            let result = simulate_combat_from_setup_reusing_attacker(
-                &setup,
-                iteration_seed,
-                &mut attacker_scratch,
-            );
+            let result =
+                simulate_combat_from_setup_with_scratch(&setup, iteration_seed, &mut trial_scratch);
 
             if result.winner_by_round_limit {
                 stalls += 1;
@@ -717,7 +714,8 @@ fn run_candidate_monte_carlo(
                 losses += 1;
             }
 
-            let hull_draw = surviving_hull_fraction(&result, attacker_scratch.hull_health);
+            let hull_draw =
+                surviving_hull_fraction(&result, trial_scratch.attacker_hull_health(&setup));
             surviving_hull_sum += hull_draw;
             let i = trial_index + 1;
             let delta = hull_draw - hull_mean;
@@ -2044,28 +2042,29 @@ mod tests {
             &CrewConfiguration::default(),
             None,
         );
-        let mut scratch = attacker.clone();
-        let result = simulate_combat_from_setup_reusing_attacker(&setup, 7, &mut scratch);
+        let mut scratch = CombatTrialScratch::for_setup(&setup);
+        let result = simulate_combat_from_setup_with_scratch(&setup, 7, &mut scratch);
         assert!(result.attacker_won);
-        assert_eq!(scratch.hull_health, 2000.0);
-        let score = surviving_hull_fraction(&result, scratch.hull_health);
+        assert_eq!(scratch.attacker_hull_health(&setup), 2000.0);
+        let score = surviving_hull_fraction(&result, scratch.attacker_hull_health(&setup));
         assert!(score > 0.8 && score < 1.0, "{score}");
         assert_eq!(score, result.attacker_hull_remaining / 2000.0);
         let mut overkill = result.clone();
         overkill.total_damage *= 1000.0;
         assert_eq!(
-            surviving_hull_fraction(&overkill, scratch.hull_health),
+            surviving_hull_fraction(&overkill, scratch.attacker_hull_health(&setup)),
             score
         );
+        let effective_hull = scratch.attacker_hull_health(&setup);
         overkill.attacker_hull_remaining *= 0.5;
         assert_eq!(
-            surviving_hull_fraction(&overkill, scratch.hull_health),
+            surviving_hull_fraction(&overkill, effective_hull),
             score * 0.5
         );
         overkill.attacker_won = false;
-        assert_eq!(surviving_hull_fraction(&overkill, scratch.hull_health), 0.0);
+        assert_eq!(surviving_hull_fraction(&overkill, effective_hull), 0.0);
         overkill.winner_by_round_limit = true;
-        assert_eq!(surviving_hull_fraction(&overkill, scratch.hull_health), 0.0);
+        assert_eq!(surviving_hull_fraction(&overkill, effective_hull), 0.0);
     }
 
     #[test]
