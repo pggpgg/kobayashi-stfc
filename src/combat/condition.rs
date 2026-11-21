@@ -131,6 +131,243 @@ pub fn condition_input_unavailable(cond: &AbilityCondition, ctx: &CombatContext)
     }
 }
 
+/// Result of partially evaluating scenario-invariant terms of an [`AbilityCondition`] once at
+/// [`crate::combat::PreCombatSetup`] construction time.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum FoldedCondition {
+    AlwaysTrue,
+    AlwaysFalse,
+    Dynamic(AbilityCondition),
+}
+
+/// True if the condition tree references a scenario-constant input that is absent in `ctx`
+/// (`CombatBattleTypeAny` or `DefenderLevelAtMost` when unavailable). Because
+/// [`evaluate_ability_condition`] fails closed at the root whenever *any* sub-node is unavailable,
+/// the entire tree is guaranteed `AlwaysFalse` across every round of this fight.
+fn has_static_unavailable_input(cond: &AbilityCondition, ctx: &CombatContext) -> bool {
+    match cond {
+        AbilityCondition::CombatBattleTypeAny(ids) => {
+            ids.is_empty() || ctx.combat_battle_type_id.is_none()
+        }
+        AbilityCondition::DefenderLevelAtMost(_) => ctx.defender_level.is_none(),
+        AbilityCondition::Not(inner) => has_static_unavailable_input(inner, ctx),
+        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => parts
+            .iter()
+            .any(|part| has_static_unavailable_input(part, ctx)),
+        _ => false,
+    }
+}
+
+/// True if the tree references `attacker_hull_pct_of_fight_start`, whose availability changes
+/// between timing windows (`Some` at round start when fight-start hull > 0, `None` elsewhere).
+fn has_dynamic_unavailable_input(cond: &AbilityCondition) -> bool {
+    match cond {
+        AbilityCondition::StatBelow { stat, .. } | AbilityCondition::StatAbove { stat, .. } => {
+            stat == "attacker_hull_pct_of_fight_start"
+        }
+        AbilityCondition::Not(inner) => has_dynamic_unavailable_input(inner),
+        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => {
+            parts.iter().any(has_dynamic_unavailable_input)
+        }
+        _ => false,
+    }
+}
+
+fn fold_static_inner(cond: &AbilityCondition, ctx: &CombatContext) -> FoldedCondition {
+    match cond {
+        AbilityCondition::DefenderFactionIs(expected) => {
+            if ctx.defender_faction == *expected {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::AttackerOwnerFactionIs(expected) => {
+            if ctx.attacker_owner_faction == *expected {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::DefenderHullFactionIdIs(expected) => {
+            if ctx.defender_hull_faction_id == *expected {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::DefenderShipTypeIs(expected) => {
+            if ctx.defender_ship_type == *expected {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::AttackerShipTypeIs(expected) => {
+            if ctx.attacker_ship_type == *expected {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::AttackerShipIdIs(expected) => {
+            if *ctx.attacker_ship_id == *expected {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::DefenderIsNpcHostile => {
+            if ctx.defender_is_npc_hostile {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::DefenderIsPlayerShip => {
+            if ctx.defender_is_player_ship {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::AttackerOfficerTalNotOnBridge => {
+            if !ctx.attacker_tal_assigned_captain_or_bridge {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::DefenderHostileTagsAllPresent { required_mask } => {
+            if *required_mask != 0
+                && (ctx.defender_hostile_tag_mask & *required_mask) == *required_mask
+            {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::EngagementIncludes(tag) => {
+            if ctx.engagement_enemy_types.contains(*tag) {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::CombatBattleTypeAny(allowed) => {
+            if !allowed.is_empty()
+                && ctx
+                    .combat_battle_type_id
+                    .is_some_and(|id| allowed.contains(&id))
+            {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::DefenderLevelAtMost(max_level) => {
+            if ctx.defender_level.is_some_and(|level| level <= *max_level) {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::LiteralBool(v) => {
+            if *v {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::Not(inner) => match fold_static_inner(inner, ctx) {
+            FoldedCondition::AlwaysTrue => FoldedCondition::AlwaysFalse,
+            FoldedCondition::AlwaysFalse => FoldedCondition::AlwaysTrue,
+            FoldedCondition::Dynamic(d) => {
+                FoldedCondition::Dynamic(AbilityCondition::Not(Box::new(d)))
+            }
+        },
+        AbilityCondition::And(parts) => {
+            let mut remaining = Vec::with_capacity(parts.len());
+            for part in parts {
+                match fold_static_inner(part, ctx) {
+                    FoldedCondition::AlwaysFalse => return FoldedCondition::AlwaysFalse,
+                    FoldedCondition::AlwaysTrue => {}
+                    FoldedCondition::Dynamic(d) => remaining.push(d),
+                }
+            }
+            match remaining.len() {
+                0 => FoldedCondition::AlwaysTrue,
+                1 => FoldedCondition::Dynamic(remaining.pop().unwrap()),
+                _ => FoldedCondition::Dynamic(AbilityCondition::And(remaining)),
+            }
+        }
+        AbilityCondition::Or(parts) => {
+            let mut remaining = Vec::with_capacity(parts.len());
+            for part in parts {
+                match fold_static_inner(part, ctx) {
+                    FoldedCondition::AlwaysTrue => return FoldedCondition::AlwaysTrue,
+                    FoldedCondition::AlwaysFalse => {}
+                    FoldedCondition::Dynamic(d) => remaining.push(d),
+                }
+            }
+            match remaining.len() {
+                0 => FoldedCondition::AlwaysFalse,
+                1 => FoldedCondition::Dynamic(remaining.pop().unwrap()),
+                _ => FoldedCondition::Dynamic(AbilityCondition::Or(remaining)),
+            }
+        }
+        AbilityCondition::StatBelow { .. }
+        | AbilityCondition::StatAbove { .. }
+        | AbilityCondition::RoundRange { .. }
+        | AbilityCondition::MoraleActive
+        | AbilityCondition::DefenderBurning
+        | AbilityCondition::DefenderHullBreach
+        | AbilityCondition::AttackerBurning
+        | AbilityCondition::AttackerHullBreach
+        | AbilityCondition::DefenderAssimilated => FoldedCondition::Dynamic(cond.clone()),
+    }
+}
+
+/// Partially evaluate all scenario-invariant gates in `cond` against `ctx`.
+///
+/// Exact semantic equivalence: for any runtime context `rctx` sharing the scenario-invariant fields
+/// of `ctx`, `evaluate_ability_condition(cond, &rctx)` equals:
+/// - `true` for [`FoldedCondition::AlwaysTrue`],
+/// - `false` for [`FoldedCondition::AlwaysFalse`],
+/// - `evaluate_ability_condition(&d, &rctx)` for [`FoldedCondition::Dynamic(d)`].
+pub(crate) fn fold_static_condition(
+    cond: &AbilityCondition,
+    ctx: &CombatContext,
+) -> FoldedCondition {
+    if has_static_unavailable_input(cond, ctx) {
+        return FoldedCondition::AlwaysFalse;
+    }
+    if has_dynamic_unavailable_input(cond) {
+        return FoldedCondition::Dynamic(cond.clone());
+    }
+    fold_static_inner(cond, ctx)
+}
+
+/// True if `cond` inspects any status flag that can change during round-start proc/morale rolls
+/// (`attacker_morale_active`, `defender_morale_active`, burning, hull breach, or assimilated).
+/// When false for every row in `round_start_effects`, the post-proc `full_round_start` filter is
+/// guaranteed identical to the pre-proc `bench` filter.
+pub(crate) fn condition_depends_on_post_proc_status(cond: &AbilityCondition) -> bool {
+    match cond {
+        AbilityCondition::MoraleActive
+        | AbilityCondition::DefenderBurning
+        | AbilityCondition::DefenderHullBreach
+        | AbilityCondition::AttackerBurning
+        | AbilityCondition::AttackerHullBreach
+        | AbilityCondition::DefenderAssimilated => true,
+        AbilityCondition::Not(inner) => condition_depends_on_post_proc_status(inner),
+        AbilityCondition::And(parts) | AbilityCondition::Or(parts) => {
+            parts.iter().any(condition_depends_on_post_proc_status)
+        }
+        _ => false,
+    }
+}
+
 /// Hull ability catalog / normalized [`ShipAbility`] → runtime [`AbilityCondition`] (AND of all set gates).
 pub fn ability_condition_from_ship_ability(ability: &ShipAbility) -> Option<AbilityCondition> {
     let mut parts: Vec<AbilityCondition> = Vec::new();
@@ -534,5 +771,68 @@ mod tests {
         assert!(!evaluate_ability_condition(&cond, &ctx));
         ctx.defender_level = None;
         assert!(!evaluate_ability_condition(&cond, &ctx));
+    }
+
+    #[test]
+    fn fold_static_condition_matches_runtime_evaluation_across_variants() {
+        let mut ctx = sample_ctx();
+        ctx.defender_faction = OpponentFactionTag::Klingon;
+        assert_eq!(
+            fold_static_condition(
+                &AbilityCondition::DefenderFactionIs(OpponentFactionTag::Klingon),
+                &ctx
+            ),
+            FoldedCondition::AlwaysTrue
+        );
+        assert_eq!(
+            fold_static_condition(
+                &AbilityCondition::DefenderFactionIs(OpponentFactionTag::Romulan),
+                &ctx
+            ),
+            FoldedCondition::AlwaysFalse
+        );
+        // Compound And with static true + dynamic leaves only dynamic
+        let compound = AbilityCondition::And(vec![
+            AbilityCondition::DefenderIsNpcHostile,
+            AbilityCondition::MoraleActive,
+        ]);
+        assert_eq!(
+            fold_static_condition(&compound, &ctx),
+            FoldedCondition::Dynamic(AbilityCondition::MoraleActive)
+        );
+        // Unavailable CombatBattleTypeAny fails closed even under Not / Or(true, ...)
+        let unavailable = AbilityCondition::CombatBattleTypeAny(vec![4]);
+        assert_eq!(
+            fold_static_condition(&AbilityCondition::Not(Box::new(unavailable.clone())), &ctx),
+            FoldedCondition::AlwaysFalse
+        );
+        assert_eq!(
+            fold_static_condition(
+                &AbilityCondition::Or(vec![AbilityCondition::LiteralBool(true), unavailable]),
+                &ctx
+            ),
+            FoldedCondition::AlwaysFalse
+        );
+        // Dynamic unavailable stat (`attacker_hull_pct_of_fight_start`) stays dynamic even under Or(true, ...)
+        let dyn_unavail = AbilityCondition::Or(vec![
+            AbilityCondition::LiteralBool(true),
+            AbilityCondition::StatBelow {
+                stat: "attacker_hull_pct_of_fight_start".into(),
+                threshold_pct: 0.5,
+            },
+        ]);
+        assert!(matches!(
+            fold_static_condition(&dyn_unavail, &ctx),
+            FoldedCondition::Dynamic(_)
+        ));
+        assert!(condition_depends_on_post_proc_status(
+            &AbilityCondition::And(vec![
+                AbilityCondition::RoundRange { min: 1, max: 3 },
+                AbilityCondition::MoraleActive
+            ])
+        ));
+        assert!(!condition_depends_on_post_proc_status(
+            &AbilityCondition::RoundRange { min: 1, max: 3 }
+        ));
     }
 }

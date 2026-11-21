@@ -664,6 +664,8 @@ export async function getOptimizeEstimate(
      * chain run by that factor.
      */
     chain_kills_target?: number | null;
+    /** Optimizer strategy so multi-fidelity lanes report accurate racing + confirmation costs. */
+    strategy?: OptimizerStrategyType | null;
   },
   profileId?: string | null,
 ): Promise<OptimizeEstimate> {
@@ -693,6 +695,9 @@ export async function getOptimizeEstimate(
   }
   if (params.chain_kills_target != null && params.chain_kills_target > 1) {
     search.set("chain_kills_target", String(params.chain_kills_target));
+  }
+  if (params.strategy) {
+    search.set("strategy", params.strategy);
   }
   if (profileId) search.set("profile", profileId);
   const url = `${API_BASE}/api/optimize/estimate?${search.toString()}`;
@@ -847,6 +852,9 @@ export function formatOptimizePhaseLabel(
     tiered_scout: "Tiered (scout)",
     tiered_confirm: "Tiered (confirm)",
     linear_eval: "Linear eval",
+    portfolio_race_coarse: "Portfolio (coarse race)",
+    portfolio_race_refine: "Portfolio (refine race)",
+    portfolio_confirm: "Portfolio (confirm)",
   };
   return map[phase] ?? phase.replace(/_/g, " ");
 }

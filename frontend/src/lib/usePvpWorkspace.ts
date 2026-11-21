@@ -303,8 +303,8 @@ export function usePvpWorkspace() {
           opponentProfileId,
           defenderCrew,
           simsPerCrew,
-          maxCandidates: 100,
-          optimizerStrategy: "tiered",
+          maxCandidates: 256,
+          optimizerStrategy: "portfolio",
           belowDecksSlots: belowDeckSlotCount(
             attackerShipLevel,
             belowDeckUnlockLevels,

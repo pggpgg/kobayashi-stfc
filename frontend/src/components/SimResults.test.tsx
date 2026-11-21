@@ -693,4 +693,43 @@ describe("SimResults", () => {
       screen.getByText(/Approximate ranking by expected hull damage/i),
     ).toBeTruthy();
   });
+
+  it("renders fidelity grade badge and multi-method provenance tooltip when present", () => {
+    const recs: CrewRecommendation[] = [
+      {
+        ...crewRec({
+          captain: "Kirk",
+          bridge: ["Spock", "McCoy"],
+          below_decks: ["Uhura"],
+          win_rate: 0.94,
+          stall_rate: 0.0,
+          loss_rate: 0.06,
+          avg_hull_remaining: 0.72,
+        }),
+        method_provenance: "beam_diversity",
+        trials_run: 1000,
+        proposing_methods: ["beam_diversity", "qd_archive"],
+        evidence_level: "confirmed",
+        qd_cell: "tos|fast|high_hull",
+        fidelity: {
+          implemented: 4,
+          partial: 1,
+          ignored: 0,
+          total_combat_effects: 5,
+          coverage_pct: 90,
+          grade: "A",
+          caveats: ["Spock (bridge): partial (proxy)"],
+        },
+      },
+    ];
+    render(<SimResults {...baseProps} recommendations={recs} />);
+    expect(screen.getByText("Fidelity")).toBeTruthy();
+    const badge = screen.getByText("A 90%");
+    expect(badge).toBeTruthy();
+    const methodCell = screen.getByText("Beam").closest("td");
+    expect(methodCell?.getAttribute("title")).toContain(
+      "Archive cell: tos|fast|high_hull",
+    );
+    expect(methodCell?.getAttribute("title")).toContain("Beam, Archive");
+  });
 });

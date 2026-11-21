@@ -488,4 +488,16 @@ describe("getOptimizeEstimate chain cost", () => {
       "chain_kills_target",
     );
   });
+
+  it("sends strategy when provided so multi-fidelity estimates match the lane", async () => {
+    const fetchMock = stubEstimate();
+    await getOptimizeEstimate({
+      ship: "saladin",
+      hostile: "2918121098",
+      sims: 5000,
+      max_candidates: 256,
+      strategy: "portfolio",
+    });
+    expect(String(fetchMock.mock.calls[0][0])).toContain("strategy=portfolio");
+  });
 });

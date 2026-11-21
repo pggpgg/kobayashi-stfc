@@ -1,4 +1,5 @@
 pub mod analytical;
+pub mod beam;
 pub mod budget_hints;
 pub mod chain;
 pub mod constraints;
@@ -12,6 +13,9 @@ pub mod method_bench;
 pub mod monte_carlo;
 pub mod officer_learning;
 pub mod pareto;
+pub mod portfolio;
+pub mod qd_archive;
+pub mod racing;
 pub mod random_stratified;
 pub mod ranking;
 pub mod refinement;
@@ -128,7 +132,7 @@ use crate::parallel::batch_ranges;
 /// Number of progress-reporting batches for optimize-with-progress (UI jobs).
 const OPTIMIZE_PROGRESS_BATCH_COUNT: usize = 40;
 
-fn apply_crew_constraints(
+pub(crate) fn apply_crew_constraints(
     mut candidates: Vec<CrewCandidate>,
     scenario: &OptimizationScenario<'_>,
 ) -> Vec<CrewCandidate> {
@@ -518,6 +522,12 @@ pub struct OptimizeRunOutcome {
     /// when it ran and accepted nothing, which is what separates "the finalists were already local
     /// optima at this depth" from "refinement never ran". `None` when it was off or skipped.
     pub refinement_stats: Option<crate::optimizer::refinement::LocalRefinementStats>,
+    /// Multi-lane proposing method provenance per canonical crew hash (populated by `Portfolio`
+    /// and merged with local refinement when enabled). Empty for legacy single-lane runs.
+    pub proposing_methods_by_hash: HashMap<u64, Vec<String>>,
+    /// Quality-Diversity (MAP-Elites) behavioral cell label (`group|speed|survival`) per canonical
+    /// crew hash (populated by `Portfolio`). Empty when no archive ran.
+    pub qd_cells_by_hash: HashMap<u64, String>,
 }
 
 /// Progress update for async optimize jobs (SSE / polling): phase label, counts, optional partial top crews.
@@ -525,12 +535,12 @@ pub struct OptimizeRunOutcome {
 pub struct OptimizeProgressTick {
     pub crews_done: u32,
     pub total_crews: u32,
-    /// Stable labels: `heuristics`, `monte_carlo`, `genetic`, `tiered_scout`, `tiered_scout_refine`, `tiered_confirm`, `exhaustive_scout`, `exhaustive_confirm`, `linear_eval`.
+    /// Stable labels: `heuristics`, `monte_carlo`, `genetic`, `tiered_scout`, `tiered_scout_refine`, `tiered_confirm`, `exhaustive_scout`, `exhaustive_confirm`, `linear_eval`, `portfolio_race_coarse`, `portfolio_race_refine`, `portfolio_confirm`.
     pub phase: &'static str,
     pub partial_top: Option<Vec<RankedCrewResult>>,
 }
 
-/// Optimizer strategy: exhaustive/sampled (candidate generation), genetic, or tiered (scout → confirm).
+/// Optimizer strategy: exhaustive/sampled (candidate generation), genetic, tiered, or portfolio.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OptimizerStrategy {
     /// Current path: CrewGenerator then Monte Carlo then rank.
@@ -546,6 +556,10 @@ pub enum OptimizerStrategy {
     /// captain faction/rarity and below-decks family, then scout → confirm.
     /// Benchmark control; ignores warm-start and skips the analytical prefilter.
     RandomStratified,
+    /// Multi-lane discovery portfolio: 6-beam LCARS diversity beam search + stratified random
+    /// exploration + Hyperband CRN racing + MAP-Elites QD archive + paired-CRN elite neighborhood
+    /// expansion + independent-seed confirmation.
+    Portfolio,
 }
 
 impl OptimizerStrategy {
@@ -558,6 +572,7 @@ impl OptimizerStrategy {
             OptimizerStrategy::Tiered => "tiered",
             OptimizerStrategy::LinearEval => "linear_eval",
             OptimizerStrategy::RandomStratified => "random_stratified",
+            OptimizerStrategy::Portfolio => "portfolio",
         }
     }
 }
@@ -685,12 +700,16 @@ pub struct OptimizationScenario<'a> {
     /// officer sampling instead of stride-based sampling (closes the learning loop).
     pub learned_officer_scores:
         Option<crate::optimizer::officer_learning::OfficerPerformanceScores>,
-    /// Opt-in local-refinement hill-climb for the tiered and genetic strategies: runs after the
-    /// main search finishes, hill-climbing around its top finalists (single-slot swaps, captain
+    /// Opt-in local-refinement hill-climb for tiered, genetic, and portfolio strategies: runs after
+    /// the main search finishes, hill-climbing around its top finalists (single-slot swaps, captain
     /// swaps, and destroy-repair neighborhoods) to spend a small marginal sim budget looking
     /// for nearby improvements the main search happened not to sample. `None` = off (default);
     /// ignored for every other strategy.
     pub local_refinement: Option<crate::optimizer::refinement::LocalRefinementParams>,
+    /// Portfolio strategy only: optional hard total trial budget across multi-fidelity racing
+    /// (initial pool racing + elite neighborhood racing), excluding final confirmation. Used by
+    /// equal-trials benchmarking and budget-bounded runs; `None` runs the full bracket schedule.
+    pub portfolio_racing_trial_budget: Option<u64>,
 }
 
 impl Default for OptimizationScenario<'_> {
@@ -739,6 +758,7 @@ impl Default for OptimizationScenario<'_> {
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
             local_refinement: None,
+            portfolio_racing_trial_budget: None,
         }
     }
 }
@@ -1046,6 +1066,7 @@ pub fn optimize_scenario(scenario: &OptimizationScenario<'_>) -> Vec<RankedCrewR
         OptimizerStrategy::Tiered => optimize_scenario_exhaustive(scenario), // Tiered requires registry; fallback when none
         OptimizerStrategy::LinearEval => optimize_scenario_exhaustive(scenario), // LinearEval requires registry; fallback when none
         OptimizerStrategy::RandomStratified => optimize_scenario_exhaustive(scenario), // Sampler requires registry; fallback when none
+        OptimizerStrategy::Portfolio => optimize_scenario_exhaustive(scenario), // Portfolio requires registry; fallback when none
     }
 }
 
@@ -1153,7 +1174,7 @@ pub fn optimize_scenario_with_registry(
         OptimizerStrategy::LinearEval => {
             linear_eval::run_linear_eval_with_registry(registry, scenario, |_| true, || true)
         }
-        OptimizerStrategy::RandomStratified => {
+        OptimizerStrategy::RandomStratified | OptimizerStrategy::Portfolio => {
             optimize_scenario_with_progress_with_registry(registry, scenario, |_| true, || true)
                 .ranked
         }
@@ -1395,7 +1416,8 @@ where
         // These strategies require a registry; without one fall back to exhaustive with progress.
         OptimizerStrategy::Tiered
         | OptimizerStrategy::LinearEval
-        | OptimizerStrategy::RandomStratified => {
+        | OptimizerStrategy::RandomStratified
+        | OptimizerStrategy::Portfolio => {
             let scenario_ex = OptimizationScenario {
                 strategy: OptimizerStrategy::Exhaustive,
                 ..scenario.clone()
@@ -1843,6 +1865,8 @@ where
                 random_exploration_hashes,
                 refinement_provenance: refinement.provenance,
                 refinement_stats: refinement.stats,
+                proposing_methods_by_hash: HashMap::new(),
+                qd_cells_by_hash: HashMap::new(),
             }
         }
         OptimizerStrategy::Exhaustive => {
@@ -1962,6 +1986,8 @@ where
                     random_exploration_hashes: HashSet::new(),
                     refinement_provenance: HashMap::new(),
                     refinement_stats: None,
+                    proposing_methods_by_hash: HashMap::new(),
+                    qd_cells_by_hash: HashMap::new(),
                 };
             }
 
@@ -2006,6 +2032,8 @@ where
                         random_exploration_hashes: HashSet::new(),
                         refinement_provenance: HashMap::new(),
                         refinement_stats: None,
+                        proposing_methods_by_hash: HashMap::new(),
+                        qd_cells_by_hash: HashMap::new(),
                     };
                 }
                 return OptimizeRunOutcome {
@@ -2019,6 +2047,8 @@ where
                     random_exploration_hashes: HashSet::new(),
                     refinement_provenance: HashMap::new(),
                     refinement_stats: None,
+                    proposing_methods_by_hash: HashMap::new(),
+                    qd_cells_by_hash: HashMap::new(),
                 };
             }
 
@@ -2039,6 +2069,8 @@ where
                     random_exploration_hashes: HashSet::new(),
                     refinement_provenance: HashMap::new(),
                     refinement_stats: None,
+                    proposing_methods_by_hash: HashMap::new(),
+                    qd_cells_by_hash: HashMap::new(),
                 };
             }
 
@@ -2112,6 +2144,8 @@ where
                 random_exploration_hashes: HashSet::new(),
                 refinement_provenance: HashMap::new(),
                 refinement_stats: None,
+                proposing_methods_by_hash: HashMap::new(),
+                qd_cells_by_hash: HashMap::new(),
             }
         }
         OptimizerStrategy::Genetic => {
@@ -2155,6 +2189,8 @@ where
                 random_exploration_hashes: HashSet::new(),
                 refinement_provenance: refinement.provenance,
                 refinement_stats: refinement.stats,
+                proposing_methods_by_hash: HashMap::new(),
+                qd_cells_by_hash: HashMap::new(),
             }
         }
         OptimizerStrategy::LinearEval => {
@@ -2180,6 +2216,8 @@ where
                 random_exploration_hashes: HashSet::new(),
                 refinement_provenance: HashMap::new(),
                 refinement_stats: None,
+                proposing_methods_by_hash: HashMap::new(),
+                qd_cells_by_hash: HashMap::new(),
             }
         }
         OptimizerStrategy::RandomStratified => {
@@ -2257,6 +2295,43 @@ where
                 random_exploration_hashes,
                 refinement_provenance: HashMap::new(),
                 refinement_stats: None,
+                proposing_methods_by_hash: HashMap::new(),
+                qd_cells_by_hash: HashMap::new(),
+            }
+        }
+        OptimizerStrategy::Portfolio => {
+            let mut outcome = portfolio::run_portfolio_with_registry_with_progress(
+                registry,
+                scenario,
+                &mut on_progress,
+                &mut eval_should_continue,
+            );
+            let refinement = run_local_refinement_pass(
+                registry,
+                scenario,
+                &mut outcome.ranked,
+                &mut eval_should_continue,
+            );
+            for (hash, prov) in &refinement.provenance {
+                let entry = outcome.proposing_methods_by_hash.entry(*hash).or_default();
+                let label = prov.kind.method_label();
+                if !entry.iter().any(|m| m == label) {
+                    entry.push(label.to_string());
+                }
+            }
+            OptimizeRunOutcome {
+                ranked: outcome.ranked,
+                candidate_funnel: outcome.candidate_funnel,
+                analytical_prefilter: None,
+                tiered_resolved: Some(outcome.resolved_params),
+                tiered_scout_budget: Some(outcome.scout_budget),
+                exhaustive_adaptive_budget: None,
+                optimize_history_confirm_hits: 0,
+                random_exploration_hashes: outcome.random_exploration_hashes,
+                refinement_provenance: refinement.provenance,
+                refinement_stats: refinement.stats,
+                proposing_methods_by_hash: outcome.proposing_methods_by_hash,
+                qd_cells_by_hash: outcome.qd_cells_by_hash,
             }
         }
     }
@@ -2312,6 +2387,7 @@ pub fn optimize_crew(
         enable_learned_pair_prior: true,
         learned_officer_scores: None,
         local_refinement: None,
+        portfolio_racing_trial_budget: None,
     })
 }
 
@@ -2907,6 +2983,7 @@ mod tests {
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
             local_refinement: None,
+            portfolio_racing_trial_budget: None,
         };
         let results = super::optimize_scenario(&scenario);
         for r in &results {
@@ -3067,6 +3144,7 @@ mod tests {
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
             local_refinement: None,
+            portfolio_racing_trial_budget: None,
         };
         let strat = super::candidate_strategy_from_scenario(&scenario);
         let n = count_effective_optimize_candidates(
@@ -3146,6 +3224,7 @@ mod tests {
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
             local_refinement: None,
+            portfolio_racing_trial_budget: None,
         };
         let out =
             optimize_scenario_with_progress_with_registry(&registry, &scenario, |_| true, || true);
@@ -3219,6 +3298,7 @@ mod tests {
             enable_learned_pair_prior: true,
             learned_officer_scores: None,
             local_refinement: None,
+            portfolio_racing_trial_budget: None,
         };
         let mut adaptive = uniform.clone();
         adaptive.tiered_scout_uniform = false;

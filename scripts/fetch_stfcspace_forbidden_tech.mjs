@@ -15,9 +15,10 @@ import path from "node:path";
 import url from "node:url";
 
 import {
+  idsFromSummaryArray,
+  loadChangedIdsFromDriftFile,
   parseDetailFetchArgs,
   runDetailFetch,
-  idsFromSummaryArray,
 } from "./lib/stfcspace_detail_fetch.mjs";
 
 const REPO_ROOT = path.dirname(path.dirname(url.fileURLToPath(import.meta.url)));
@@ -63,6 +64,11 @@ async function main() {
     process.exit(1);
   }
 
+  const forceRefreshIds =
+    args.sinceDrift && !args.full
+      ? await loadChangedIdsFromDriftFile(args.sinceDrift, "forbidden_tech")
+      : null;
+
   await runDetailFetch({
     repoRoot: REPO_ROOT,
     cacheDir: CACHE_DIR,
@@ -70,6 +76,9 @@ async function main() {
     logStem: "forbidden_tech",
     ids,
     full: args.full,
+    forceRefreshIds,
+    concurrency: args.concurrency,
+    useConditional: !args.noConditional,
   });
 }
 

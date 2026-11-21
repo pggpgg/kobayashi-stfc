@@ -24,6 +24,7 @@ use crate::data::optimize_observations::{
 };
 use crate::data::support_buffs;
 use crate::lcars::LcarsOfficer;
+use crate::mechanics::crew_fidelity::{CrewFidelityEvaluator, CrewFidelitySummary};
 use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
@@ -77,6 +78,7 @@ fn optimizer_strategy_to_api_label(s: OptimizerStrategy) -> &'static str {
         OptimizerStrategy::Tiered => "tiered",
         OptimizerStrategy::LinearEval => "linear_eval",
         OptimizerStrategy::RandomStratified => "random_stratified",
+        OptimizerStrategy::Portfolio => "portfolio",
     }
 }
 
@@ -375,6 +377,25 @@ pub struct CrewRecommendation {
     /// caveat when this row was simulated less deeply than the deepest row in the table.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recommendation_reason: Option<String>,
+    /// All optimizer lanes/generators that proposed or promoted this crew (e.g.
+    /// `["beam_diversity", "qd_archive"]`). Absent on progress previews or when empty.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub proposing_methods: Vec<String>,
+    /// Evidence depth tier behind this row's metrics: `deep_confirmed` (>= 2000 trials),
+    /// `confirmed`, `scout_only`, or `analytical` (0 trials).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub evidence_level: Option<String>,
+    /// Plain-language caveat when a row carries wide statistical variance, shallow trials, or
+    /// dropped/unsupported active seat effects.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uncertainty_reason: Option<String>,
+    /// Seat-accurate modeling fidelity summary across this crew's active abilities.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fidelity: Option<CrewFidelitySummary>,
+    /// Quality-Diversity (MAP-Elites) behavioral cell label (`captain_group|speed|survival`) when
+    /// evaluated by the portfolio archive.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub qd_cell: Option<String>,
 }
 
 /// Counts-only echo of active optimize constraints (for clients / debugging).
@@ -447,6 +468,11 @@ fn crew_recommendation_from_ranked(
         // depend on the other rows, so progress previews (partial sets) stay untagged.
         pareto_tags: Vec::new(),
         recommendation_reason: None,
+        proposing_methods: Vec::new(),
+        evidence_level: None,
+        uncertainty_reason: None,
+        fidelity: None,
+        qd_cell: None,
     }
 }
 
@@ -477,6 +503,7 @@ fn progress_phase_method_provenance(phase: &str) -> &'static str {
         "tiered_scout" | "tiered_scout_refine" | "tiered_confirm" => "tiered_confirmed",
         "exhaustive_scout" | "exhaustive_confirm" => "exhaustive_two_phase",
         "linear_eval" => "linear_eval",
+        "portfolio_race_coarse" | "portfolio_race_refine" | "portfolio_confirm" => "portfolio",
         _ => "monte_carlo",
     }
 }
@@ -662,6 +689,19 @@ fn recommendation_method_provenance(
     if meta.warm_start_hashes.contains(&h) {
         return "warm_start";
     }
+    if meta.strategy == OptimizerStrategy::Portfolio {
+        if let Some(methods) = meta.proposing_methods_by_hash.get(&h) {
+            for label in methods {
+                match label.as_str() {
+                    "beam_diversity" => return "beam_diversity",
+                    "portfolio_neighbor" => return "portfolio_neighbor",
+                    "random_stratified" => return "random_stratified",
+                    _ => {}
+                }
+            }
+        }
+        return "portfolio";
+    }
     if meta.random_exploration_hashes.contains(&h) {
         return "random_stratified";
     }
@@ -680,6 +720,7 @@ fn recommendation_method_provenance(
         OptimizerStrategy::Tiered => "tiered_confirmed",
         OptimizerStrategy::LinearEval => "linear_eval",
         OptimizerStrategy::RandomStratified => "random_stratified",
+        OptimizerStrategy::Portfolio => "portfolio",
     }
 }
 
@@ -1010,6 +1051,11 @@ struct OptimizeGatherMeta {
     /// `large_neighborhood_repair`) and its `refinement` detail object. Empty when refinement did
     /// not run.
     refinement_provenance: HashMap<u64, RefinementProvenance>,
+    /// Multi-lane proposing methods per canonical crew hash (populated by `Portfolio` and merged
+    /// with refinement provenance when enabled).
+    proposing_methods_by_hash: HashMap<u64, Vec<String>>,
+    /// Quality-Diversity (MAP-Elites) behavioral cell label per canonical crew hash.
+    qd_cells_by_hash: HashMap<u64, String>,
     below_decks_slots: usize,
     optimize_constraints: Option<OptimizeConstraintsSummary>,
     optimize_history_confirm_hits: u32,
@@ -1905,6 +1951,8 @@ fn gather_optimize_simulation_results(
     let mut exhaustive_adaptive_budget_for_response: Option<TieredScoutBudgetStats> = None;
     let mut random_exploration_hashes: HashSet<u64> = HashSet::new();
     let mut refinement_provenance: HashMap<u64, RefinementProvenance> = HashMap::new();
+    let mut proposing_methods_by_hash: HashMap<u64, Vec<String>> = HashMap::new();
+    let mut qd_cells_by_hash: HashMap<u64, String> = HashMap::new();
     record_phase_duration(&mut phase_durations_ms, "prepare", prepare_started);
 
     let mut all_results: Vec<SimulationResult> = if heuristics_seeds_nonempty
@@ -1957,7 +2005,7 @@ fn gather_optimize_simulation_results(
         // to stay an unassisted baseline.
         let refinement_supported = matches!(
             strategy,
-            OptimizerStrategy::Tiered | OptimizerStrategy::Genetic
+            OptimizerStrategy::Tiered | OptimizerStrategy::Genetic | OptimizerStrategy::Portfolio
         );
         let local_refinement = if refinement_supported && request.local_refinement == Some(true) {
             let defaults = LocalRefinementParams::default();
@@ -2040,6 +2088,7 @@ fn gather_optimize_simulation_results(
             enable_learned_pair_prior: request.enable_learned_pair_prior.unwrap_or(true),
             learned_officer_scores,
             local_refinement,
+            portfolio_racing_trial_budget: None,
         };
         let cancel_for_eval: Option<Arc<AtomicBool>> = match &*sink {
             OptimizeProgressSink::Job { cancel, .. } => Some(Arc::clone(cancel)),
@@ -2065,6 +2114,8 @@ fn gather_optimize_simulation_results(
         exhaustive_adaptive_budget_for_response = outcome.exhaustive_adaptive_budget;
         random_exploration_hashes = outcome.random_exploration_hashes.clone();
         refinement_provenance = outcome.refinement_provenance.clone();
+        proposing_methods_by_hash = outcome.proposing_methods_by_hash.clone();
+        qd_cells_by_hash = outcome.qd_cells_by_hash.clone();
         let pf = outcome.analytical_prefilter;
         let tiered_scout_allocator = if scenario.tiered_scout_priority_queue {
             2u8
@@ -2127,6 +2178,8 @@ fn gather_optimize_simulation_results(
         curated_warm_start_hashes,
         random_exploration_hashes,
         refinement_provenance,
+        proposing_methods_by_hash,
+        qd_cells_by_hash,
         below_decks_slots,
         optimize_constraints: summarize_constraints(crew_constraints.as_ref()),
         optimize_history_confirm_hits,
@@ -2428,6 +2481,7 @@ fn build_optimize_response(
             OptimizerStrategy::Tiered => "tiered",
             OptimizerStrategy::LinearEval => "linear_eval",
             OptimizerStrategy::RandomStratified => "random_stratified",
+            OptimizerStrategy::Portfolio => "portfolio",
         }
     };
     let mut notes: Vec<&'static str> = if matches!(meta.strategy, OptimizerStrategy::LinearEval) {
@@ -2641,16 +2695,85 @@ fn build_optimize_response(
         ));
     }
 
+    let fidelity_evaluator = CrewFidelityEvaluator::from_registry(registry);
+    let confirm_threshold = ((sims as usize) / 2).clamp(1, (sims as usize).max(1));
+
     let mut recommendations: Vec<CrewRecommendation> = ranked_results
         .iter()
         .map(|r| {
-            crew_recommendation_from_ranked(
+            let h = ranked_crew_hash(r);
+            let primary_method = recommendation_method_provenance(meta, r);
+            let mut rec = crew_recommendation_from_ranked(
                 r,
-                recommendation_method_provenance(meta, r),
+                primary_method,
                 meta.refinement_provenance
-                    .get(&ranked_crew_hash(r))
+                    .get(&h)
                     .map(refinement_detail_from_provenance),
-            )
+            );
+            let mut proposing = meta
+                .proposing_methods_by_hash
+                .get(&h)
+                .cloned()
+                .unwrap_or_default();
+            let should_push_primary = proposing.is_empty()
+                || (!proposing.iter().any(|m| m == primary_method)
+                    && matches!(
+                        primary_method,
+                        "heuristics"
+                            | "heuristic_seed"
+                            | "curated_warm_start"
+                            | "warm_start"
+                            | "local_swap"
+                            | "local_captain_swap"
+                            | "large_neighborhood_repair"
+                    ));
+            if should_push_primary {
+                proposing.push(primary_method.to_string());
+            }
+            rec.proposing_methods = proposing;
+
+            let fidelity = fidelity_evaluator.evaluate(&r.captain, &r.bridge, &r.below_decks);
+            let evidence_level = if r.trials_run == 0 {
+                "analytical"
+            } else if r.trials_run >= 2_000 {
+                "deep_confirmed"
+            } else if r.trials_run >= confirm_threshold {
+                "confirmed"
+            } else {
+                "scout_only"
+            };
+            rec.evidence_level = Some(evidence_level.to_string());
+
+            let mut caveats: Vec<String> = Vec::new();
+            if r.trials_run == 0 {
+                caveats.push("Closed-form analytical estimate (0 Monte Carlo trials)".to_string());
+            } else if r.trials_run < confirm_threshold {
+                caveats.push(format!(
+                    "Scout-only depth ({} trials; below confirmation target)",
+                    r.trials_run
+                ));
+            }
+            let win_ci_span = (r.win_rate_ci_high - r.win_rate_ci_low).max(0.0);
+            if r.trials_run > 0 && win_ci_span > 0.15 {
+                caveats.push(format!(
+                    "Wide 95% win-rate CI ({:.1}% span)",
+                    win_ci_span * 100.0
+                ));
+            }
+            if fidelity.ignored > 0 {
+                caveats.push(format!(
+                    "{} active combat effect(s) ignored or unmodeled",
+                    fidelity.ignored
+                ));
+            } else if r.unsupported_crew_health_effects == Some(true) {
+                caveats.push("Crew includes an unsupported combat or raw-stat effect".to_string());
+            }
+            if !caveats.is_empty() {
+                rec.uncertainty_reason = Some(caveats.join("; "));
+            }
+            rec.fidelity = Some(fidelity);
+            rec.qd_cell = meta.qd_cells_by_hash.get(&h).cloned();
+            rec
         })
         .collect();
     apply_pareto_highlights(&ranked_results, &mut recommendations);
@@ -3044,6 +3167,9 @@ pub fn get_job_status(job_id: &str) -> Result<OptimizeStatusResponse, OptimizeSt
                 | "tiered_confirm"
                 | "exhaustive_scout"
                 | "exhaustive_confirm"
+                | "portfolio_race_coarse"
+                | "portfolio_race_refine"
+                | "portfolio_confirm"
         )
     });
     let (throughput_crews_per_sec, eta_seconds) =

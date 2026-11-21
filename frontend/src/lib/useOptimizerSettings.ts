@@ -60,9 +60,9 @@ export type UpdateOptimizerSettings = (
 
 export function defaultOptimizerSettings(): OptimizerSettings {
   return {
-    maxCandidates: 100,
+    maxCandidates: 256,
     belowDecksPoolMode: "strict",
-    optimizerStrategy: "tiered",
+    optimizerStrategy: "portfolio",
     tieredScoutSims: null,
     tieredTopK: null,
     tieredRandomExplorationPct: null,

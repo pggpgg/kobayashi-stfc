@@ -528,6 +528,15 @@ paths:
             type: integer
             minimum: 1
             maximum: 50
+        - name: strategy
+          in: query
+          description: >
+            Optional optimizer strategy (`portfolio`, `tiered`, `exhaustive`, `genetic`,
+            `linear_eval`, `random_stratified`) so multi-fidelity lanes estimate racing and
+            confirmation trials accurately. Omit for the legacy exhaustive upper-bound estimate.
+          schema:
+            type: string
+            enum: [exhaustive, genetic, tiered, linear_eval, random_stratified, portfolio]
         - $ref: "#/components/parameters/QueryProfile"
         - $ref: "#/components/parameters/HeaderProfileId"
       responses:
@@ -2771,9 +2780,12 @@ components:
           description: >
             Optimizer strategy: `exhaustive` (full Monte Carlo on candidates), `genetic` (GA for huge
             spaces), `tiered` (scout then confirm with MC), `linear_eval` (closed-form expected hull
-            damage only; no Monte Carlo), or `random_stratified` (benchmark-control lane: legal crews
+            damage only; no Monte Carlo), `random_stratified` (benchmark-control lane: legal crews
             sampled at random, stratified by captain faction/rarity and below-decks family, then scout →
-            confirm; ignores warm-start and skips the analytical prefilter). When omitted, server
+            confirm; ignores warm-start and skips the analytical prefilter), or `portfolio` (multi-lane
+            discovery portfolio combining 6-beam LCARS diversity beam search, stratified random
+            exploration, multi-fidelity Hyperband CRN racing, a MAP-Elites QD archive, paired-CRN 1-slot
+            elite neighborhood expansion, and independent-seed confirmation). When omitted, server
             auto-picks tiered vs exhaustive from candidate count.
           enum:
             - exhaustive
@@ -2781,6 +2793,7 @@ components:
             - tiered
             - linear_eval
             - random_stratified
+            - portfolio
             - null
         support_buffs:
           default: null
@@ -3035,11 +3048,19 @@ components:
           type: string
         chain:
           $ref: "#/components/schemas/ChainSimulationSummary"
+        evidence_level:
+          description: >-
+            Evidence depth tier behind this row's metrics: `deep_confirmed` (>= 2000 trials),
+            `confirmed`, `scout_only`, or `analytical` (0 trials).
+          type: string
         expected_hull_damage:
           description: |
             Closed-form expected total hull damage over the fight (linear_eval only).
           format: double
           type: number
+        fidelity:
+          description: Seat-accurate modeling fidelity summary across this crew's active abilities.
+          $ref: "#/components/schemas/CrewFidelitySummary"
         loss_rate:
           format: double
           type: number
@@ -3077,6 +3098,18 @@ components:
               - best_chain
               - most_different
           type: array
+        proposing_methods:
+          description: >-
+            All optimizer lanes/generators that proposed or promoted this crew (e.g. `["beam_diversity",
+            "qd_archive"]`). Absent on progress previews or when empty.
+          items:
+            type: string
+          type: array
+        qd_cell:
+          description: >-
+            Quality-Diversity (MAP-Elites) behavioral cell label (`captain_group|speed|survival`) when
+            evaluated by the portfolio archive.
+          type: string
         r1_kill_rate:
           format: double
           type: number
@@ -3115,6 +3148,11 @@ components:
           format: uint
           minimum: 0
           type: integer
+        uncertainty_reason:
+          description: >-
+            Plain-language caveat when a row carries wide statistical variance, shallow trials, or
+            dropped/unsupported active seat effects.
+          type: string
         win_rate:
           format: double
           type: number
@@ -3604,4 +3642,54 @@ components:
         - refine_pass_trials
         - scout_trials_executed_total
         - scout_trials_final
+      type: object
+
+    CrewFidelitySummary:
+      description: >-
+        Seat-accurate modeling fidelity summary attached to a
+        [`crate::server::api::CrewRecommendation`].
+      properties:
+        caveats:
+          description: Human-readable notes explaining partially modeled, dropped, or unresolved seat effects.
+          items:
+            type: string
+          type: array
+        coverage_pct:
+          description: >-
+            Coverage percentage `(implemented + 0.5 * partial) / total_combat_effects * 100`, rounded to
+            0.1%.
+          format: double
+          type: number
+        grade:
+          description: >-
+            Coarse trust grade: `"A"` (>= 90% and 0 ignored), `"B"` (>= 75%), `"C"` (>= 50%), `"D"` (<
+            50%).
+          type: string
+        ignored:
+          description: Active seat combat-intent effects ignored, dropped, or unresolved.
+          format: uint32
+          minimum: 0
+          type: integer
+        implemented:
+          description: Active seat combat-intent effects fully implemented by the simulator.
+          format: uint32
+          minimum: 0
+          type: integer
+        partial:
+          description: Active seat combat-intent effects partially modeled by the simulator.
+          format: uint32
+          minimum: 0
+          type: integer
+        total_combat_effects:
+          description: Total active seat combat-intent effects inspected (`implemented + partial + ignored`).
+          format: uint32
+          minimum: 0
+          type: integer
+      required:
+        - coverage_pct
+        - grade
+        - ignored
+        - implemented
+        - partial
+        - total_combat_effects
       type: object

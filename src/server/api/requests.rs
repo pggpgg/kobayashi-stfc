@@ -365,7 +365,7 @@ pub fn validate_request(
             errors.push(ValidationIssue {
                 field: "strategy",
                 messages: vec![format!(
-                    "must be one of exhaustive, genetic, tiered, linear_eval, random_stratified; got {strategy:?}"
+                    "must be one of exhaustive, genetic, tiered, linear_eval, random_stratified, portfolio; got {strategy:?}"
                 )],
             });
         }
@@ -943,6 +943,7 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
         Some(v) if v.trim().eq_ignore_ascii_case("random_stratified") => {
             OptimizerStrategy::RandomStratified
         }
+        Some(v) if v.trim().eq_ignore_ascii_case("portfolio") => OptimizerStrategy::Portfolio,
         _ => OptimizerStrategy::Exhaustive,
     }
 }
@@ -950,7 +951,7 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
 fn is_supported_strategy_name(strategy: &str) -> bool {
     matches!(
         strategy.trim().to_ascii_lowercase().as_str(),
-        "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified"
+        "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified" | "portfolio"
     )
 }
 
@@ -969,10 +970,15 @@ pub struct OptimizeEstimateQuery {
     /// on the optimize body). `None` = a single fight per trial, which is what the cost estimate
     /// assumes by default. Clamped to `1..=`[`MAX_CHAIN_KILLS_TARGET`] like the request body.
     pub chain_kills_target: Option<u32>,
+    /// Optional optimizer strategy name (`portfolio`, `tiered`, `exhaustive`, `genetic`,
+    /// `linear_eval`, `random_stratified`) so multi-fidelity lanes report accurate trial costs.
+    /// Absent or unrecognized values preserve the legacy exhaustive upper-bound estimate.
+    pub strategy: Option<OptimizerStrategy>,
 }
 
 /// Parses the query string for optimize estimate: ship, hostile, sims, optional max_candidates,
-/// optional `below_decks_pool_mode`, ship_tier, ship_level, below_decks_slots, chain_kills_target.
+/// optional `below_decks_pool_mode`, ship_tier, ship_level, below_decks_slots, chain_kills_target,
+/// strategy.
 pub fn parse_optimize_estimate_query(
     query: &str,
 ) -> Result<OptimizeEstimateQuery, OptimizePayloadError> {
@@ -985,6 +991,7 @@ pub fn parse_optimize_estimate_query(
     let mut ship_level: Option<u32> = None;
     let mut below_decks_slots: Option<u32> = None;
     let mut chain_kills_target: Option<u32> = None;
+    let mut strategy: Option<OptimizerStrategy> = None;
     for pair in query.split('&') {
         if let Some((key, value)) = pair.split_once('=') {
             let key = key.trim();
@@ -1018,6 +1025,12 @@ pub fn parse_optimize_estimate_query(
                         .ok()
                         .map(|kt| kt.clamp(1, MAX_CHAIN_KILLS_TARGET));
                 }
+                "strategy" => {
+                    if is_supported_strategy_name(value) {
+                        let owned = value.to_string();
+                        strategy = Some(parse_strategy(Some(&owned)));
+                    }
+                }
                 _ => {}
             }
         }
@@ -1036,6 +1049,7 @@ pub fn parse_optimize_estimate_query(
         ship_level,
         below_decks_slots,
         chain_kills_target,
+        strategy,
     })
 }
 
@@ -1187,5 +1201,17 @@ mod parse_optimize_body_tests {
         let q = parse_optimize_estimate_query("ship=s&hostile=h&chain_kills_target=lots")
             .expect("parse");
         assert_eq!(q.chain_kills_target, None);
+    }
+
+    #[test]
+    fn estimate_query_strategy_parses_known_and_ignores_unknown() {
+        use crate::optimizer::OptimizerStrategy;
+        let p =
+            parse_optimize_estimate_query("ship=s&hostile=h&strategy=portfolio").expect("parse");
+        assert_eq!(p.strategy, Some(OptimizerStrategy::Portfolio));
+        let t = parse_optimize_estimate_query("ship=s&hostile=h&strategy=tiered").expect("parse");
+        assert_eq!(t.strategy, Some(OptimizerStrategy::Tiered));
+        let u = parse_optimize_estimate_query("ship=s&hostile=h&strategy=bogus").expect("parse");
+        assert_eq!(u.strategy, None);
     }
 }

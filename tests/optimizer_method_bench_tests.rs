@@ -83,7 +83,7 @@ fn equal_trial_budget_sizes_every_lane_to_the_same_trial_count() {
         "--case",
         "saladin_corvus",
         "--methods",
-        "tiered,random_stratified",
+        "tiered,random_stratified,portfolio",
         "--budget-mode",
         "equal-trials",
         "--trial-budget",

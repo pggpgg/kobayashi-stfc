@@ -1,17 +1,28 @@
-# Scheduled + manual: refresh data.stfc.space caches, run stfc.space normalizers, test, open PR.
+# Scheduled + manual v2 data pipeline:
+# - Concurrent resilient catalog + drift-targeted detail fetch (Node v2 + ETag cache)
+# - Declarative DAG normalization + deterministic data/pipeline_manifest.json
+# - Hard gate on core combat/schema tests (`cargo nextest` + `validate_data`)
+# - Soft triage classification on upstream coverage baselines (opens Draft `[Needs Triage]` PR
+#   with structured checklist instead of failing silently when Scopely adds new opaque buffs)
 # Does not run --stfccommunity (PowerShell); see scripts/data-refresh.mjs.
 name: Data refresh (stfc.space)
 
 on:
   schedule:
-    # Weekly Monday 06:00 UTC — ships use --full; hostiles/research missing-only by default
+    # Weekly Monday 06:00 UTC — ships use --full (with ETag conditional cache);
+    # hostiles/research use missing-only + drift-targeted refresh for stat rebalances;
+    # officers/forbidden_tech use missing-only (preserves existing native byte bindings).
     - cron: "0 6 * * 1"
   workflow_dispatch:
     inputs:
       full_fetch:
-        description: "Pass --full to ship, hostile, and research detail fetchers"
+        description: "Pass --full to ship, hostile, and research detail fetchers (uses ETag conditional cache)"
         type: boolean
         default: false
+      concurrency:
+        description: "Bounded parallel HTTP workers (1-16)"
+        type: string
+        default: "6"
       dry_run:
         description: "Run fetch + normalize + tests but do not open a PR"
         type: boolean
@@ -28,7 +39,10 @@ jobs:
   refresh:
     name: Refresh and validate upstream data
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 120
+    outputs:
+      needs_triage: ${{ steps.triage.outputs.needs_triage }}
+      pr_title: ${{ steps.triage.outputs.pr_title }}
     env:
       CARGO_TERM_COLOR: always
     steps:
@@ -42,16 +56,15 @@ jobs:
         with:
           toolchain: "1.93.1"
 
-      - name: Cache cargo
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: data-refresh-cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            data-refresh-cargo-${{ runner.os }}-
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2
+        with:
+          tool: cargo-nextest
 
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -68,52 +81,156 @@ jobs:
       - name: Install npm dependencies (repo root)
         run: npm ci
 
-      - name: Snapshot summary catalogs (pre-fetch)
+      - name: Snapshot pre-fetch summaries and provenance manifest
         run: |
           set -euo pipefail
           mkdir -p /tmp/before
-          for f in summary-ship.json summary-hostile.json summary-research.json; do
+          for f in \
+            summary-ship.json \
+            summary-hostile.json \
+            summary-research.json \
+            summary-officer.json \
+            summary-building.json \
+            summary-forbidden_tech.json; do
             src="data/upstream/data-stfc-space/${f}"
             if [ -f "$src" ]; then
               cp "$src" "/tmp/before/${f}"
             fi
           done
+          if [ -f data/pipeline_manifest.json ]; then
+            cp data/pipeline_manifest.json /tmp/before_manifest.json
+          else
+            node -e 'import("./scripts/lib/pipeline_manifest.mjs").then(m => console.log(JSON.stringify(m.computePipelineManifest(process.cwd()), null, 2)))' > /tmp/before_manifest.json
+          fi
 
-      - name: Fetch stfc.space catalog (summaries + translations)
-        run: python3 scripts/fetch_stfcspace_page_upstream.py
+      - name: Fetch stfc.space catalog (summaries + translations, concurrent v2)
+        env:
+          FETCH_CONCURRENCY: ${{ github.event.inputs.concurrency || '6' }}
+        run: |
+          set -euo pipefail
+          node scripts/fetch_stfcspace_page_upstream.mjs \
+            --no-sample-ship \
+            --concurrency "${FETCH_CONCURRENCY}" \
+            --json-out /tmp/catalog_fetch.json
 
-      - name: Summary drift report (catalog fetch)
+      - name: Compute content-aware summary drift (all 6 combat domains)
         run: |
           set -euo pipefail
           node scripts/check_stfcspace_summary_drift.mjs \
+            --all-domains \
             --compare-dir /tmp/before \
+            --json-out /tmp/drift.json \
             --markdown-out /tmp/summary_drift.md || true
 
-      - name: Fetch ship / hostile / research detail JSON
+      - name: Fetch ship / hostile / research / officer / forbidden_tech detail JSON
+        env:
+          FETCH_CONCURRENCY: ${{ github.event.inputs.concurrency || '6' }}
+          EVENT_NAME: ${{ github.event_name }}
+          FULL_FETCH: ${{ github.event.inputs.full_fetch }}
         run: |
           set -euo pipefail
-          SHIP_EXTRA=""
-          HOSTILE_EXTRA=""
-          RESEARCH_EXTRA=""
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            SHIP_EXTRA="--full"
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.full_fetch }}" = "true" ]; then
-            SHIP_EXTRA="--full"
-            HOSTILE_EXTRA="--full"
-            RESEARCH_EXTRA="--full"
+          SHIP_ARGS="--since-drift /tmp/drift.json"
+          HOSTILE_ARGS="--since-drift /tmp/drift.json"
+          RESEARCH_ARGS="--since-drift /tmp/drift.json"
+          if [ "${EVENT_NAME}" = "schedule" ]; then
+            SHIP_ARGS="--full"
+          elif [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${FULL_FETCH}" = "true" ]; then
+            SHIP_ARGS="--full"
+            HOSTILE_ARGS="--full"
+            RESEARCH_ARGS="--full"
           fi
-          node scripts/fetch_stfcspace_ships.mjs ${SHIP_EXTRA}
-          node scripts/fetch_stfcspace_hostiles.mjs ${HOSTILE_EXTRA}
-          node scripts/fetch_stfcspace_research.mjs ${RESEARCH_EXTRA}
 
-      - name: Run data refresh (core + stfc.space pipeline)
-        run: npm run data:refresh -- --stfcspace
+          node scripts/fetch_stfcspace_ships.mjs ${SHIP_ARGS} --concurrency "${FETCH_CONCURRENCY}"
+          node scripts/fetch_stfcspace_hostiles.mjs ${HOSTILE_ARGS} --concurrency "${FETCH_CONCURRENCY}"
+          node scripts/fetch_stfcspace_research.mjs ${RESEARCH_ARGS} --concurrency "${FETCH_CONCURRENCY}"
+          # Missing-only for officers & forbidden_tech: picks up brand-new releases while
+          # leaving existing committed officer JSON bytes untouched (native CoreStat SHA bindings).
+          node scripts/fetch_stfcspace_details.mjs \
+            --entities officers,forbidden_tech \
+            --missing-only \
+            --concurrency "${FETCH_CONCURRENCY}"
 
-      - name: cargo test
-        run: cargo test --no-fail-fast
+      - name: Run data refresh DAG (core + stfc.space + provenance manifest)
+        run: |
+          set -euo pipefail
+          npm run data:refresh -- \
+            --stfcspace \
+            --write-manifest \
+            --continue-on-coverage-gap \
+            --skip stfcspace:building_gaps \
+            --json-report /tmp/pipeline_report.json \
+            --markdown-report /tmp/pipeline_report.md
 
-      - name: Strict data validation
-        run: cargo run --bin validate_data
+      - name: Core combat and schema test suite (hard gate)
+        env:
+          CI: true
+        run: |
+          set -euo pipefail
+          cargo nextest run --profile ci \
+            -E 'not (binary(building_opaque_buff_baseline) | binary(hostile_ability_catalog_parity))'
+
+      - name: Strict schema and catalog validation (hard gate)
+        run: |
+          set -euo pipefail
+          cargo run --bin validate_data -- \
+            --json-out /tmp/validate_data.json \
+            --markdown-out /tmp/validate_data.md
+
+      - name: Upstream coverage-baseline checks (soft triage gates)
+        run: |
+          set -uo pipefail
+          B_OK=true
+          B_MSG="Passed within baseline"
+          if ! cargo test --test building_opaque_buff_baseline > /tmp/gate_building.log 2>&1; then
+            B_OK=false
+            B_MSG=$(grep -m1 -E "actionable opaque buff count|exceeds baseline" /tmp/gate_building.log || echo "New actionable opaque building buffs exceeded baseline")
+            cat /tmp/gate_building.log
+          fi
+
+          H_OK=true
+          H_MSG="Passed ability catalog parity"
+          if ! cargo test --test hostile_ability_catalog_parity > /tmp/gate_hostile.log 2>&1; then
+            H_OK=false
+            H_MSG=$(grep -m1 -E "missing|mismatch|parity" /tmp/gate_hostile.log || echo "Hostile ability catalog parity gap detected")
+            cat /tmp/gate_hostile.log
+          fi
+
+          M_OK=true
+          M_MSG="Upstream mapping inventory valid"
+          if ! node scripts/validate_stfcspace_mapping.mjs > /tmp/gate_mapping.log 2>&1; then
+            M_OK=false
+            M_MSG=$(grep -m1 -E "not listed|missing" /tmp/gate_mapping.log || echo "New upstream summary/translation file not yet listed in mapping/upstream_catalog.json")
+            cat /tmp/gate_mapping.log
+          fi
+
+          B_OK="$B_OK" B_MSG="$B_MSG" H_OK="$H_OK" H_MSG="$H_MSG" M_OK="$M_OK" M_MSG="$M_MSG" \
+            node --input-type=module -e '
+              import fs from "node:fs";
+              const gates = [
+                {
+                  id: "building_opaque_buff_baseline",
+                  title: "Building opaque buff baseline",
+                  ok: process.env.B_OK === "true",
+                  summary: process.env.B_MSG,
+                  remediation: "Run `node scripts/seed_building_opaque_allowlist.mjs --write` and `cargo run --bin report_building_mapping_gaps > docs/building_gaps.md`, map new combat buffs in `data/buildings/buff_id_to_stat.json`, then re-run `cargo test --test building_opaque_buff_baseline`."
+                },
+                {
+                  id: "hostile_ability_catalog_parity",
+                  title: "Hostile ability catalog parity",
+                  ok: process.env.H_OK === "true",
+                  summary: process.env.H_MSG,
+                  remediation: "Run `python3 scripts/generate_full_hostile_ability_catalog.py` and review newly added abilities in `data/upstream/data-stfc-space/hostile_ability_catalog.json`."
+                },
+                {
+                  id: "upstream_mapping_inventory",
+                  title: "Upstream mapping catalog inventory",
+                  ok: process.env.M_OK === "true",
+                  summary: process.env.M_MSG,
+                  remediation: "Add new upstream summary/translation files to `data/upstream/data-stfc-space/mapping/upstream_catalog.json` and run `node scripts/validate_stfcspace_mapping.mjs`."
+                }
+              ];
+              fs.writeFileSync("/tmp/coverage_gates.json", JSON.stringify(gates, null, 2) + "\n");
+            '
 
       - name: Check normalized data diff
         run: |
@@ -125,26 +242,23 @@ jobs:
             git diff --stat -- data/ | tail -n 40
           fi
 
-      - name: Assemble Pull Request body
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
+      - name: Assemble Pull Request body and triage metadata
+        id: triage
+        env:
+          FETCH_CONCURRENCY: ${{ github.event.inputs.concurrency || '6' }}
         run: |
           set -euo pipefail
-          {
-            echo "Automated update from workflow **${{ github.workflow }}** ([run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))."
-            echo ""
-            if [ -f /tmp/summary_drift.md ]; then
-              cat /tmp/summary_drift.md
-              echo ""
-            fi
-            echo "## Pipeline"
-            echo ""
-            echo "- Catalog: \`python3 scripts/fetch_stfcspace_page_upstream.py\`"
-            echo "- Detail fetch: \`fetch_stfcspace_ships.mjs\` (scheduled: **--full**), hostiles + research (missing-only unless manual **full_fetch**)"
-            echo "- Normalize: \`npm run data:refresh -- --stfcspace\`"
-            echo "- Verify: \`cargo test --no-fail-fast\` + \`cargo run --bin validate_data\`"
-            echo ""
-            echo "Please review large \`data/\` diffs before merge."
-          } > /tmp/pr_body.md
+          node scripts/generate_refresh_triage.mjs \
+            --drift-json /tmp/drift.json \
+            --pipeline-json /tmp/pipeline_report.json \
+            --validate-json /tmp/validate_data.json \
+            --before-manifest /tmp/before_manifest.json \
+            --gates-json /tmp/coverage_gates.json \
+            --workflow-name "${{ github.workflow }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --fetch-summary "Concurrent Node v2 fetcher (\`--concurrency ${FETCH_CONCURRENCY}\`, ETag conditional cache, drift-targeted hostile/research refresh, missing-only officers/forbidden_tech)" \
+            --pr-body-out /tmp/pr_body.md \
+            --meta-out /tmp/triage_meta.json
 
       - name: Prepare data-only patch for the publishing job
         if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
@@ -160,7 +274,11 @@ jobs:
           path: |
             /tmp/data-refresh.patch
             /tmp/pr_body.md
-          retention-days: 7
+            /tmp/triage_meta.json
+            /tmp/pipeline_report.json
+            /tmp/drift.json
+            /tmp/validate_data.md
+          retention-days: 14
 
   publish_refresh:
     name: Open data refresh PR
@@ -175,10 +293,12 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
+
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: data-refresh-output
           path: ${{ runner.temp }}/refresh-output
+
       - name: Apply validated data changes
         env:
           PATCH: ${{ runner.temp }}/refresh-output/data-refresh.patch
@@ -187,14 +307,16 @@ jobs:
           if [ -s "$PATCH" ]; then
             git apply --include='data/**' --whitespace=nowarn "$PATCH"
           fi
+
       - name: Create Pull Request
         id: cpr
         if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
         uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
           base: ${{ github.ref_name }}
-          commit-message: "chore(data): automated stfc.space refresh"
-          title: "chore(data): automated stfc.space refresh"
+          commit-message: "${{ needs.refresh.outputs.pr_title || 'chore(data): automated stfc.space refresh' }}"
+          title: "${{ needs.refresh.outputs.pr_title || 'chore(data): automated stfc.space refresh' }}"
+          draft: ${{ needs.refresh.outputs.needs_triage == 'true' }}
           body-path: ${{ runner.temp }}/refresh-output/pr_body.md
           branch: automated/data-refresh-${{ github.run_id }}
           delete-branch: true
@@ -202,11 +324,9 @@ jobs:
 
       # Each run opens its own automated/data-refresh-<run_id> branch, so an older unmerged
       # refresh PR is strictly superseded: same pipeline, older upstream snapshot. Left open
-      # they stack up (three deep by 2026-09-06) and actively mislead -- the oldest still
-      # shows a red "Upstream summary drift" check, which reads as the refresh failing when
-      # it only means that snapshot predates the current catalog. Only runs when this run
-      # actually produced a PR: if nothing changed upstream, the existing PR is still the
-      # valid pending refresh and must be left alone.
+      # they stack up and actively mislead -- the oldest still shows a red "Upstream summary drift"
+      # check purely for predating the current catalog. Only runs when this run actually produced
+      # a PR: if nothing changed upstream, the existing PR stays open.
       - name: Close superseded refresh PRs
         if: ${{ steps.cpr.outputs.pull-request-number != '' }}
         env:
@@ -229,8 +349,6 @@ jobs:
             exit 0
           fi
 
-          # Heredoc at the script's base indentation so the rendered comment has no leading
-          # whitespace -- indented markdown would turn the body into a code block.
           cat > /tmp/superseded.md <<EOF
           Superseded by #${NEW_PR} (${NEW_PR_URL}), opened by a later run of the same **Data refresh (stfc.space)** workflow.
 

@@ -1065,6 +1065,8 @@ export interface paths {
                     below_decks_slots?: number;
                     /** @description Consecutive kills per trial when the run this estimates will use chain grind (`chain.kills_target` on the optimize body). A chain trial simulates up to this many fights instead of one, so the estimate scales by it; omit for a single-fight run. Clamped to 1..=50 like the request body. */
                     chain_kills_target?: number;
+                    /** @description Optional optimizer strategy (`portfolio`, `tiered`, `exhaustive`, `genetic`, `linear_eval`, `random_stratified`) so multi-fidelity lanes estimate racing and confirmation trials accurately. Omit for the legacy exhaustive upper-bound estimate. */
+                    strategy?: "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified" | "portfolio";
                     /** @description Profile id (alternative to X-Profile-Id) */
                     profile?: components["parameters"]["QueryProfile"];
                 };
@@ -3044,10 +3046,10 @@ export interface components {
             /** Format: uint32 */
             sims?: number | null;
             /**
-             * @description Optimizer strategy: `exhaustive` (full Monte Carlo on candidates), `genetic` (GA for huge spaces), `tiered` (scout then confirm with MC), `linear_eval` (closed-form expected hull damage only; no Monte Carlo), or `random_stratified` (benchmark-control lane: legal crews sampled at random, stratified by captain faction/rarity and below-decks family, then scout → confirm; ignores warm-start and skips the analytical prefilter). When omitted, server auto-picks tiered vs exhaustive from candidate count.
+             * @description Optimizer strategy: `exhaustive` (full Monte Carlo on candidates), `genetic` (GA for huge spaces), `tiered` (scout then confirm with MC), `linear_eval` (closed-form expected hull damage only; no Monte Carlo), `random_stratified` (benchmark-control lane: legal crews sampled at random, stratified by captain faction/rarity and below-decks family, then scout → confirm; ignores warm-start and skips the analytical prefilter), or `portfolio` (multi-lane discovery portfolio combining 6-beam LCARS diversity beam search, stratified random exploration, multi-fidelity Hyperband CRN racing, a MAP-Elites QD archive, paired-CRN 1-slot elite neighborhood expansion, and independent-seed confirmation). When omitted, server auto-picks tiered vs exhaustive from candidate count.
              * @enum {string|null}
              */
-            strategy?: "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified" | null;
+            strategy?: "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified" | "portfolio" | null;
             /** @default null */
             support_buffs?: string[] | null;
             /**
@@ -3160,11 +3162,15 @@ export interface components {
             bridge: string[];
             captain: string;
             chain?: components["schemas"]["ChainSimulationSummary"];
+            /** @description Evidence depth tier behind this row's metrics: `deep_confirmed` (>= 2000 trials), `confirmed`, `scout_only`, or `analytical` (0 trials). */
+            evidence_level?: string;
             /**
              * Format: double
              * @description Closed-form expected total hull damage over the fight (linear_eval only).
              */
             expected_hull_damage?: number;
+            /** @description Seat-accurate modeling fidelity summary across this crew's active abilities. */
+            fidelity?: components["schemas"]["CrewFidelitySummary"];
             /** Format: double */
             loss_rate: number;
             /** Format: double */
@@ -3175,6 +3181,10 @@ export interface components {
             method_provenance: string;
             /** @description Why this row is worth a look beyond its rank. `pareto_optimal` means no other considered row is at least as good on every metric (win rate, hull left, round-1 kills, damage dealt, and risk — or chain success and its secondary in chain runs). The named views tag at most one row each: `safest` (lowest loss rate), `fastest_farming` (highest round-1 kill rate), `best_chain` (highest chain success, chain runs only), and `most_different` (competitive crew sharing the fewest officers with the top row). Tags never change ordering; the scalar score still sorts the table. Absent on untagged rows, on `linear_eval` runs (no simulated rates to trade off), and past the first 200 rows. */
             pareto_tags?: ("pareto_optimal" | "safest" | "fastest_farming" | "best_chain" | "most_different")[];
+            /** @description All optimizer lanes/generators that proposed or promoted this crew (e.g. `["beam_diversity", "qd_archive"]`). Absent on progress previews or when empty. */
+            proposing_methods?: string[];
+            /** @description Quality-Diversity (MAP-Elites) behavioral cell label (`captain_group|speed|survival`) when evaluated by the portfolio archive. */
+            qd_cell?: string;
             /** Format: double */
             r1_kill_rate: number;
             /** Format: double */
@@ -3196,6 +3206,8 @@ export interface components {
              * @description Monte Carlo trials actually run for this row. Lower than the requested `sims` for rows a scout phase ranked but never promoted to confirmation, so this is the depth of evidence behind the row's rates and intervals. 0 when unknown (synthetic or closed-form rows).
              */
             trials_run: number;
+            /** @description Plain-language caveat when a row carries wide statistical variance, shallow trials, or dropped/unsupported active seat effects. */
+            uncertainty_reason?: string;
             /** Format: double */
             win_rate: number;
             /** Format: double */
@@ -3454,6 +3466,38 @@ export interface components {
              * @description Sum of final per-crew `trials_run` after coarse + refine (used for total scout cost).
              */
             scout_trials_final: number;
+        };
+        /** @description Seat-accurate modeling fidelity summary attached to a [`crate::server::api::CrewRecommendation`]. */
+        CrewFidelitySummary: {
+            /** @description Human-readable notes explaining partially modeled, dropped, or unresolved seat effects. */
+            caveats?: string[];
+            /**
+             * Format: double
+             * @description Coverage percentage `(implemented + 0.5 * partial) / total_combat_effects * 100`, rounded to 0.1%.
+             */
+            coverage_pct: number;
+            /** @description Coarse trust grade: `"A"` (>= 90% and 0 ignored), `"B"` (>= 75%), `"C"` (>= 50%), `"D"` (< 50%). */
+            grade: string;
+            /**
+             * Format: uint32
+             * @description Active seat combat-intent effects ignored, dropped, or unresolved.
+             */
+            ignored: number;
+            /**
+             * Format: uint32
+             * @description Active seat combat-intent effects fully implemented by the simulator.
+             */
+            implemented: number;
+            /**
+             * Format: uint32
+             * @description Active seat combat-intent effects partially modeled by the simulator.
+             */
+            partial: number;
+            /**
+             * Format: uint32
+             * @description Total active seat combat-intent effects inspected (`implemented + partial + ignored`).
+             */
+            total_combat_effects: number;
         };
     };
     responses: never;
