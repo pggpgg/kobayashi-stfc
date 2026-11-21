@@ -100,10 +100,10 @@
       "condition_opponent_ship_class": "battleship"
     },
     "394860549": {
-      "timing": "receive_damage",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_override": 0,
+      "unsupported_reason": "Disintegrator hits against a Hull Breached opponent stack base Energy Weapon Damage."
     },
     "402084217": {
       "timing": "combat_begin",
@@ -113,10 +113,10 @@
       "value_override": 0
     },
     "407462527": {
-      "timing": "receive_damage",
-      "effect_type": "attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_override": 0,
+      "unsupported_reason": "Incinerator hits against a Burning opponent stack base Weapon Damage."
     },
     "448699234": {
       "timing": "round_start",
@@ -1063,11 +1063,10 @@
       "ignore_upstream_value_is_percentage": true
     },
     "4132047263": {
-      "timing": "round_start",
-      "effect_type": "accumulating_attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false,
-      "condition_morale": true
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_override": 0,
+      "unsupported_reason": "Decimator hits while Morale is active stack base Kinetic Weapon Damage."
     },
     "4214885989": {
       "timing": "combat_begin",

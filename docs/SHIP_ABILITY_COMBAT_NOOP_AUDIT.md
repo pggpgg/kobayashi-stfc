@@ -12,6 +12,22 @@ Kelcie Mae `2748355073` remains a no-op because its Capture Node/Takeover/player
 conditions are unsupported. See [combat corrections](MONAVEEN_ENTERPRISE_D_COMBAT.md)
 for source identities, operation order and validation limits.
 
+**Grade 6 named weapon stacks (2026-11):** K'Rencha Disintegrate `394860549`,
+Scimitar Designed For War `407462527`, and Enterprise-E Drawing The Line
+`4132047263` remain catalogued with normalization warnings. Their source
+descriptions require hits from the Disintegrator, Incinerator, and Decimator,
+respectively. Scopely's release notes confirm the status conditions and damage
+types. The cached component localizations identify the named weapons as
+`600012`, `600013`, and `600011`. The raw curves remain in the pinned ship
+details. The previous mappings reacted to incoming damage or a round start.
+[Scopely G6 release notes](https://startrekfleetcommand.com/news/introducing-g6/) ·
+[Cached ability text](../data/upstream/data-stfc-space/translations-ship_buffs.json) ·
+[Cached component names](../data/upstream/data-stfc-space/translations-ship_components.json)
+
+Implementation needs weapon-level evidence for when the earning hit changes
+damage, whether a stack is earned once per shot or firing volley, and whether
+stacks survive expiry and reapplication of the required status.
+
 **Catalog revision (2026-05-19, Track D + D2):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **67** map to `effect_type: combat_noop` (inventory-only in combat). **73** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
 
 **Track E update (2026-06-07):** The two breach-gated cumulative crit proc chains — Hegh'ta "Open the Wound" (`3432906971`) and Rotarran "Bird of Prey" (`2195955652`) — are now **modeled** (see §6.5), dropping the noop inventory from **67 → 65**. An earlier revision of §6.2 mislabeled these proc chains with the ids `2520552521` / `3014221215`; those two ids are in fact economy abilities (transogen loot / tritanium mining) and remain `combat_noop`.
@@ -99,7 +115,7 @@ in [DESIGN.md](DESIGN.md) alongside the combat implementation.
 ## 4. Drift control (regeneration)
 
 1. Run from repo root: `python3 scripts/generate_full_ship_ability_catalog.py` (requires Python 3).
-2. **Overrides:** After heuristics, the script merges `data/upstream/data-stfc-space/ship_ability_catalog_overrides.json` (`entries` object: ability id → full catalog row). Use this for hand-tuned rows that must survive regeneration.
+2. **Overrides:** After heuristics, the script merges `data/upstream/data-stfc-space/ship_ability_catalog_overrides.json` (`entries` object: ability id → full catalog row). Use this for hand-tuned rows that must survive regeneration. Set `unsupported_reason` on an unsupported combat row to report its missing mechanic during ship normalization.
 3. **Diff:** Compare the regenerated `ship_ability_catalog.json` to the previous commit; port any intentional deltas either into the Python classifier or into `ship_ability_catalog_overrides.json`.
 
 Approximations for modeled rows remain summarized in [DESIGN.md](DESIGN.md) §3.6 (Ship hull abilities).

@@ -12,6 +12,9 @@ use serde_json::Value;
 struct AbilityCatalogEntry {
     timing: String,
     effect_type: String,
+    /// Explanation to report when a catalogued ability has no supported combat mapping.
+    #[serde(default)]
+    unsupported_reason: Option<String>,
     #[serde(default)]
     value_is_percentage: bool,
     /// When true, use only catalog `value_is_percentage` (ignore upstream `value_is_percentage`).
@@ -351,6 +354,9 @@ fn raw_to_extended(
             let Some(entry) = catalog.get(&id_str) else {
                 continue;
             };
+            if let Some(reason) = &entry.unsupported_reason {
+                eprintln!("warning: ship ability {id_str} is unsupported: {reason}");
+            }
             let value_is_percentage = if entry.ignore_upstream_value_is_percentage {
                 entry.value_is_percentage
             } else {
