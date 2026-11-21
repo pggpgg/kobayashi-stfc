@@ -365,7 +365,7 @@ pub fn validate_request(
             errors.push(ValidationIssue {
                 field: "strategy",
                 messages: vec![format!(
-                    "must be one of exhaustive, genetic, tiered, linear_eval, random_stratified; got {strategy:?}"
+                    "must be one of exhaustive, genetic, tiered, linear_eval, random_stratified, portfolio; got {strategy:?}"
                 )],
             });
         }
@@ -943,6 +943,7 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
         Some(v) if v.trim().eq_ignore_ascii_case("random_stratified") => {
             OptimizerStrategy::RandomStratified
         }
+        Some(v) if v.trim().eq_ignore_ascii_case("portfolio") => OptimizerStrategy::Portfolio,
         _ => OptimizerStrategy::Exhaustive,
     }
 }
@@ -950,7 +951,7 @@ pub fn parse_strategy(s: Option<&String>) -> OptimizerStrategy {
 fn is_supported_strategy_name(strategy: &str) -> bool {
     matches!(
         strategy.trim().to_ascii_lowercase().as_str(),
-        "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified"
+        "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified" | "portfolio"
     )
 }
 

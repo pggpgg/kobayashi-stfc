@@ -77,6 +77,7 @@ fn optimizer_strategy_to_api_label(s: OptimizerStrategy) -> &'static str {
         OptimizerStrategy::Tiered => "tiered",
         OptimizerStrategy::LinearEval => "linear_eval",
         OptimizerStrategy::RandomStratified => "random_stratified",
+        OptimizerStrategy::Portfolio => "portfolio",
     }
 }
 
@@ -680,6 +681,7 @@ fn recommendation_method_provenance(
         OptimizerStrategy::Tiered => "tiered_confirmed",
         OptimizerStrategy::LinearEval => "linear_eval",
         OptimizerStrategy::RandomStratified => "random_stratified",
+        OptimizerStrategy::Portfolio => "portfolio",
     }
 }
 
@@ -1957,7 +1959,7 @@ fn gather_optimize_simulation_results(
         // to stay an unassisted baseline.
         let refinement_supported = matches!(
             strategy,
-            OptimizerStrategy::Tiered | OptimizerStrategy::Genetic
+            OptimizerStrategy::Tiered | OptimizerStrategy::Genetic | OptimizerStrategy::Portfolio
         );
         let local_refinement = if refinement_supported && request.local_refinement == Some(true) {
             let defaults = LocalRefinementParams::default();
@@ -2040,6 +2042,7 @@ fn gather_optimize_simulation_results(
             enable_learned_pair_prior: request.enable_learned_pair_prior.unwrap_or(true),
             learned_officer_scores,
             local_refinement,
+            portfolio_racing_trial_budget: None,
         };
         let cancel_for_eval: Option<Arc<AtomicBool>> = match &*sink {
             OptimizeProgressSink::Job { cancel, .. } => Some(Arc::clone(cancel)),
@@ -2428,6 +2431,7 @@ fn build_optimize_response(
             OptimizerStrategy::Tiered => "tiered",
             OptimizerStrategy::LinearEval => "linear_eval",
             OptimizerStrategy::RandomStratified => "random_stratified",
+            OptimizerStrategy::Portfolio => "portfolio",
         }
     };
     let mut notes: Vec<&'static str> = if matches!(meta.strategy, OptimizerStrategy::LinearEval) {

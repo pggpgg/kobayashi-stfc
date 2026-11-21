@@ -188,6 +188,78 @@ pub fn plan_flat_equal_trials(trial_budget: u64, sims: usize) -> usize {
         .max(1)
 }
 
+/// Portfolio knobs sized to an equal-trial budget.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct PortfolioTrialPlan {
+    /// Initial multi-lane candidates proposed before multi-fidelity racing.
+    pub candidates: usize,
+    /// Deepest racing bracket trial count.
+    pub scout_cap: usize,
+    /// Independent-seed confirmation trials per finalist.
+    pub confirm_sims: usize,
+    /// Finalists promoted from racing + QD archive into confirmation.
+    pub top_k: usize,
+    /// Hard total trial cap across initial racing + elite neighborhood racing.
+    pub racing_trial_budget: u64,
+    /// Total trials projected (`racing_trial_budget + top_k * confirm_sims <= trial_budget`).
+    pub projected_trials: u64,
+}
+
+/// Size the multi-lane `portfolio` strategy to `trial_budget`.
+///
+/// Reserves `top_k * confirm_sims` for independent confirmation (halving `top_k` only when needed
+/// to preserve racing headroom), then sizes the initial beam + stratified-random candidate pool to
+/// match the expected average trial cost per crew of multi-fidelity Hyperband racing (`~28–35`
+/// trials/crew at `scout_cap = 80`) while leaving ~22% of racing trials for 1-slot elite
+/// neighborhood expansion.
+pub fn plan_portfolio_equal_trials(
+    trial_budget: u64,
+    scout_cap: usize,
+    confirm_sims: usize,
+    top_k: usize,
+) -> PortfolioTrialPlan {
+    let scout_cap = scout_cap.max(1);
+    let confirm_sims = confirm_sims.max(1);
+    let mut top_k = top_k.max(1);
+    let floor_cost = |k: usize| k as u64 * (scout_cap as u64 + confirm_sims as u64);
+    while top_k > 1 && floor_cost(top_k) > trial_budget {
+        top_k /= 2;
+    }
+    let confirm_cost = top_k as u64 * confirm_sims as u64;
+    let racing_trial_budget = trial_budget.saturating_sub(confirm_cost);
+
+    // Estimate average racing trials per initial candidate from the Hyperband bracket geometry.
+    let brackets = crate::optimizer::racing::default_racing_brackets(scout_cap);
+    let mut avg_trials = 0.0_f64;
+    let mut prev = 0usize;
+    let mut survival = 1.0_f64;
+    for &rung in &brackets {
+        let delta = rung.saturating_sub(prev) as f64;
+        avg_trials += survival * delta;
+        prev = rung;
+        survival /= 3.0;
+    }
+    // Account for ~15% CI-overlap + captain-stratum protection overhead on early brackets.
+    let eff_trials_per_crew = (avg_trials * 1.15).max(8.0);
+    let stage2_budget = if racing_trial_budget >= 4_000 {
+        (racing_trial_budget * 78) / 100
+    } else {
+        racing_trial_budget
+    };
+    let candidates = ((stage2_budget as f64 / eff_trials_per_crew).floor() as usize)
+        .max(top_k.saturating_mul(2))
+        .max(1);
+
+    PortfolioTrialPlan {
+        candidates,
+        scout_cap,
+        confirm_sims,
+        top_k,
+        racing_trial_budget,
+        projected_trials: racing_trial_budget.saturating_add(confirm_cost),
+    }
+}
+
 /// Convert a measured probe into a trial budget for a wall-clock target.
 ///
 /// `probe_trials` trials took `probe_ms`; the lane gets whatever it can run in `target_ms` at that
@@ -1197,5 +1269,27 @@ mod tests {
         assert_eq!(aggregates[0].best_win_rate_mean, None);
         assert_eq!(aggregates[0].distinct_best_crews, 0);
         assert_eq!(aggregates[0].modal_best_crew_share, None);
+    }
+
+    #[test]
+    fn portfolio_equal_trials_stays_within_budget_and_scales_breadth() {
+        let plan = plan_portfolio_equal_trials(40_000, 80, 600, 12);
+        assert_eq!(plan.top_k, 12);
+        assert_eq!(plan.confirm_sims, 600);
+        assert_eq!(plan.racing_trial_budget, 32_800);
+        assert_eq!(plan.projected_trials, 40_000);
+        // Multi-fidelity racing screens substantially wider candidate sets than flat 80-sim tiered.
+        let tiered = plan_tiered_equal_trials(40_000, 80, 600, 12);
+        assert!(
+            plan.candidates > tiered.candidates,
+            "portfolio candidates ({}) should exceed flat tiered ({})",
+            plan.candidates,
+            tiered.candidates
+        );
+
+        let tight = plan_portfolio_equal_trials(1_500, 80, 600, 12);
+        assert!(tight.top_k < 12);
+        assert!(tight.projected_trials <= 1_500);
+        assert!(tight.candidates >= 1);
     }
 }

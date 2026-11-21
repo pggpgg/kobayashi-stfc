@@ -845,6 +845,331 @@ fn run_candidate_monte_carlo(
     }
 }
 
+/// Incremental Monte Carlo accumulator for multi-fidelity racing (Hyperband / Successive Halving).
+///
+/// Advances a single candidate across successive trial brackets (`0..r_0`, `r_0..r_1`, ...) under
+/// the shared Common Random Numbers (CRN) scenario seed panel without re-running or discarding
+/// earlier bracket trials. Exact sufficient statistics (counts + Welford mean/M2) match a single
+/// contiguous run over `0..target_trials` bit-for-bit.
+#[derive(Debug, Clone)]
+pub(crate) struct CandidateTrialAccumulator {
+    pub(crate) candidate: CrewCandidate,
+    pub(crate) trials_done: usize,
+    wins: usize,
+    stalls: usize,
+    losses: usize,
+    r1_kills: usize,
+    surviving_hull_sum: f64,
+    hull_mean: f64,
+    hull_m2: f64,
+    def_hull_mean: f64,
+    def_hull_m2: f64,
+    sec_count: usize,
+    sec_mean: f64,
+    sec_m2: f64,
+    unsupported_health: Option<bool>,
+}
+
+impl CandidateTrialAccumulator {
+    pub(crate) fn new(candidate: CrewCandidate) -> Self {
+        Self {
+            candidate,
+            trials_done: 0,
+            wins: 0,
+            stalls: 0,
+            losses: 0,
+            r1_kills: 0,
+            surviving_hull_sum: 0.0,
+            hull_mean: 0.0,
+            hull_m2: 0.0,
+            def_hull_mean: 0.0,
+            def_hull_m2: 0.0,
+            sec_count: 0,
+            sec_mean: 0.0,
+            sec_m2: 0.0,
+            unsupported_health: None,
+        }
+    }
+
+    /// Advance this candidate from `self.trials_done` up to `target_trials` using the shared CRN
+    /// scenario seed panel derived from `seed`. Returns the number of newly executed trials.
+    pub(crate) fn advance_to(
+        &mut self,
+        shared: &SharedScenarioData,
+        seed: u64,
+        target_trials: usize,
+        chain_grind: Option<&ChainGrindParams>,
+    ) -> usize {
+        if target_trials <= self.trials_done {
+            return 0;
+        }
+        let mut input = scenario_to_combat_input_from_shared(shared, &self.candidate, seed);
+        apply_seed_panel_policy(&mut input, shared, seed, SeedPanelPolicy::CommonScenario);
+        if self.unsupported_health.is_none() {
+            self.unsupported_health = Some(unsupported_crew_health_effects(&input));
+        }
+        let start = self.trials_done;
+        let executed = target_trials - start;
+
+        if let Some(chain) = chain_grind {
+            for trial_index in start..target_trials {
+                let trial_seed = input.base_seed.wrapping_add(trial_index as u64);
+                let outcome = run_chain_trial(shared, &input, chain, trial_seed);
+                let i = trial_index + 1;
+                let d = outcome.last_defender_hull_frac;
+                let delta_d = d - self.def_hull_mean;
+                self.def_hull_mean += delta_d / i as f64;
+                let delta_d2 = d - self.def_hull_mean;
+                self.def_hull_m2 += delta_d * delta_d2;
+                if outcome.first_link_r1_clean_win {
+                    self.r1_kills += 1;
+                }
+                if outcome.primary_success {
+                    self.wins += 1;
+                    let hf = outcome.hull_fraction_end.unwrap_or(0.0);
+                    let sdraw = secondary_draw(chain.secondary, chain.kills_target, hf);
+                    self.sec_count += 1;
+                    let j = self.sec_count as f64;
+                    let delta = sdraw - self.sec_mean;
+                    self.sec_mean += delta / j;
+                    let delta2 = sdraw - self.sec_mean;
+                    self.sec_m2 += delta * delta2;
+                } else if outcome.failed_on_stall {
+                    self.stalls += 1;
+                } else {
+                    self.losses += 1;
+                }
+            }
+            self.trials_done = target_trials;
+            return executed;
+        }
+
+        let combat_config = SimulationConfig {
+            rounds: input.rounds,
+            seed: 0,
+            trace_mode: TraceMode::Off,
+            initial_attacker_hull_damage: 0.0,
+            weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
+            profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
+            defender_hull_faction_id: shared
+                .hostile_rec
+                .as_ref()
+                .and_then(|h| h.faction.as_ref().map(|f| f.id))
+                .unwrap_or(0),
+            defender_hostile_tag_mask: shared.defender_hostile_tag_mask_for_combat(),
+            attacker_owner_faction: input.attacker_owner_faction,
+            engagement_enemy_types: input.engagement_enemy_types.clone(),
+            defender_level: input.defender_level,
+            attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
+            incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
+            incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
+            attacker_hyperthermic_decay_fraction: 0.0,
+            emit_state_snapshots: false,
+        };
+        let defender_faction = shared
+            .hostile_rec
+            .as_ref()
+            .map(|h| h.opponent_faction_tag())
+            .unwrap_or(OpponentFactionTag::Unknown);
+        let setup = build_combat_setup_with_officer_stat(
+            &input.attacker,
+            &input.defender,
+            &combat_config,
+            &input.crew,
+            defender_faction,
+            shared.defender_ship_type_for_combat(),
+            shared.attacker_ship_type_for_combat(),
+            shared.defender_opponent.defender_is_npc_hostile(),
+            shared.defender_opponent.defender_is_player_ship(),
+            &input.defender_crew,
+            input.officer_stat_round.clone(),
+        );
+        let mut trial_scratch = CombatTrialScratch::for_setup(&setup);
+        let def_max = input.defender.hull_health.max(1.0);
+
+        for trial_index in start..target_trials {
+            let iteration_seed = input.base_seed.wrapping_add(trial_index as u64);
+            let result =
+                simulate_combat_from_setup_with_scratch(&setup, iteration_seed, &mut trial_scratch);
+            if result.winner_by_round_limit {
+                self.stalls += 1;
+            } else if result.attacker_won {
+                self.wins += 1;
+            } else {
+                self.losses += 1;
+            }
+            let hull_draw =
+                surviving_hull_fraction(&result, trial_scratch.attacker_hull_health(&setup));
+            self.surviving_hull_sum += hull_draw;
+            let i = trial_index + 1;
+            let delta = hull_draw - self.hull_mean;
+            self.hull_mean += delta / i as f64;
+            let delta2 = hull_draw - self.hull_mean;
+            self.hull_m2 += delta * delta2;
+
+            let def_draw = (result.defender_hull_remaining / def_max).clamp(0.0, 1.0);
+            let delta_d = def_draw - self.def_hull_mean;
+            self.def_hull_mean += delta_d / i as f64;
+            let delta_d2 = def_draw - self.def_hull_mean;
+            self.def_hull_m2 += delta_d * delta_d2;
+
+            if result.attacker_won && result.rounds_simulated == 1 {
+                self.r1_kills += 1;
+            }
+        }
+        self.trials_done = target_trials;
+        executed
+    }
+
+    /// Snapshot current sufficient statistics into a [`SimulationResult`] with 95% intervals.
+    pub(crate) fn to_simulation_result(
+        &self,
+        chain_grind: Option<&ChainGrindParams>,
+    ) -> SimulationResult {
+        let n_done = self.trials_done;
+        let n = n_done as f64;
+        let win_rate = if n_done == 0 {
+            0.0
+        } else {
+            self.wins as f64 / n
+        };
+        let stall_rate = if n_done == 0 {
+            0.0
+        } else {
+            self.stalls as f64 / n
+        };
+        let loss_rate = if n_done == 0 {
+            0.0
+        } else {
+            self.losses as f64 / n
+        };
+        let r1_kill_rate = if n_done == 0 {
+            0.0
+        } else {
+            self.r1_kills as f64 / n
+        };
+        let (win_rate_ci_low, win_rate_ci_high) = wilson_95_interval(self.wins, n_done);
+        let (stall_rate_ci_low, stall_rate_ci_high) = wilson_95_interval(self.stalls, n_done);
+        let (loss_rate_ci_low, loss_rate_ci_high) = wilson_95_interval(self.losses, n_done);
+        let (r1_kill_rate_ci_low, r1_kill_rate_ci_high) = wilson_95_interval(self.r1_kills, n_done);
+
+        let avg_defender_hull_remaining = if n_done == 0 { 0.0 } else { self.def_hull_mean };
+        let (avg_defender_hull_remaining_ci_low, avg_defender_hull_remaining_ci_high) =
+            if n_done == 0 {
+                (0.0, 0.0)
+            } else if n_done == 1 {
+                (avg_defender_hull_remaining, avg_defender_hull_remaining)
+            } else {
+                let var = self.def_hull_m2 / (n - 1.0);
+                let se = (var / n).sqrt().max(0.0);
+                const Z: f64 = 1.96;
+                (
+                    (avg_defender_hull_remaining - Z * se).clamp(0.0, 1.0),
+                    (avg_defender_hull_remaining + Z * se).clamp(0.0, 1.0),
+                )
+            };
+
+        if let Some(chain) = chain_grind {
+            let avg_cond_secondary = if self.sec_count == 0 {
+                0.0
+            } else {
+                self.sec_mean
+            };
+            let (avg_hull_remaining_ci_low, avg_hull_remaining_ci_high) = if self.sec_count == 0 {
+                (0.0, 0.0)
+            } else if self.sec_count == 1 {
+                (avg_cond_secondary, avg_cond_secondary)
+            } else {
+                let var = self.sec_m2 / (self.sec_count as f64 - 1.0);
+                let se = (var / self.sec_count as f64).sqrt().max(0.0);
+                const Z: f64 = 1.96;
+                (avg_cond_secondary - Z * se, avg_cond_secondary + Z * se)
+            };
+            let summary = ChainSimulationSummary {
+                kills_target: chain.kills_target,
+                secondary_objective: chain.secondary,
+                primary_success_rate: win_rate,
+                primary_ci_low: win_rate_ci_low,
+                primary_ci_high: win_rate_ci_high,
+                secondary_mean_given_primary: avg_cond_secondary,
+                secondary_ci_low: avg_hull_remaining_ci_low,
+                secondary_ci_high: avg_hull_remaining_ci_high,
+                n_primary_successes: self.sec_count,
+            };
+            return SimulationResult {
+                candidate: self.candidate.clone(),
+                unsupported_crew_health_effects: self.unsupported_health,
+                trials_run: n_done,
+                win_rate,
+                win_rate_ci_low,
+                win_rate_ci_high,
+                stall_rate,
+                stall_rate_ci_low,
+                stall_rate_ci_high,
+                loss_rate,
+                loss_rate_ci_low,
+                loss_rate_ci_high,
+                r1_kill_rate,
+                r1_kill_rate_ci_low,
+                r1_kill_rate_ci_high,
+                avg_hull_remaining: avg_cond_secondary,
+                avg_hull_remaining_ci_low,
+                avg_hull_remaining_ci_high,
+                avg_defender_hull_remaining,
+                avg_defender_hull_remaining_ci_low,
+                avg_defender_hull_remaining_ci_high,
+                chain: Some(summary),
+                expected_hull_damage: None,
+            };
+        }
+
+        let avg_hull_remaining = if n_done == 0 {
+            0.0
+        } else {
+            self.surviving_hull_sum / n
+        };
+        let (avg_hull_remaining_ci_low, avg_hull_remaining_ci_high) = if n_done == 0 {
+            (0.0, 0.0)
+        } else if n_done == 1 {
+            (avg_hull_remaining, avg_hull_remaining)
+        } else {
+            let var = self.hull_m2 / (n - 1.0);
+            let se = (var / n).sqrt().max(0.0);
+            const Z: f64 = 1.96;
+            (
+                (avg_hull_remaining - Z * se).clamp(0.0, 1.0),
+                (avg_hull_remaining + Z * se).clamp(0.0, 1.0),
+            )
+        };
+
+        SimulationResult {
+            candidate: self.candidate.clone(),
+            unsupported_crew_health_effects: self.unsupported_health,
+            trials_run: n_done,
+            win_rate,
+            win_rate_ci_low,
+            win_rate_ci_high,
+            stall_rate,
+            stall_rate_ci_low,
+            stall_rate_ci_high,
+            loss_rate,
+            loss_rate_ci_low,
+            loss_rate_ci_high,
+            r1_kill_rate,
+            r1_kill_rate_ci_low,
+            r1_kill_rate_ci_high,
+            avg_hull_remaining,
+            avg_hull_remaining_ci_low,
+            avg_hull_remaining_ci_high,
+            avg_defender_hull_remaining,
+            avg_defender_hull_remaining_ci_low,
+            avg_defender_hull_remaining_ci_high,
+            chain: None,
+            expected_hull_damage: None,
+        }
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn run_monte_carlo(
     ship: &str,
