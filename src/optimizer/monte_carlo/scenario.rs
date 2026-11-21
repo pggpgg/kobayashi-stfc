@@ -5241,6 +5241,63 @@ mod tests {
     }
 
     #[test]
+    fn owned_mess_hall_uses_operations_requirement_and_full_rank_curve() {
+        struct Cleanup(std::path::PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = fs::remove_file(self.0.join(BUILDINGS_IMPORTED));
+                let _ = fs::remove_dir(&self.0);
+            }
+        }
+
+        let id = format!("mess_hall_{}", Uuid::new_v4().as_simple());
+        let dir = profile_index::profile_data_dir(&id);
+        fs::create_dir(&dir).unwrap();
+        let _cleanup = Cleanup(dir.clone());
+        let registry = DataRegistry::load().unwrap();
+
+        let cases = [(14, 1), (15, 1), (80, 80), (80, 81), (80, 99)];
+        let actual = cases.map(|(ops, level)| {
+            let buildings = serde_json::json!({"buildings": [
+                {"bid": 0, "level": ops}, {"bid": 72, "level": level}
+            ]});
+            fs::write(dir.join(BUILDINGS_IMPORTED), buildings.to_string()).unwrap();
+            let shared = build_shared_scenario_data_from_registry(
+                registry.as_ref(),
+                "phindra",
+                "2918121098",
+                None,
+                None,
+                Some(&id),
+                support_buffs::SupportBuffScenarioRequest::default(),
+                DefenderOpponent::Hostile,
+                None,
+                None,
+            );
+            assert!(!shared.using_placeholder_combatants);
+            let bonus = |key| shared.profile.bonuses.get(key).copied().unwrap_or(0.0);
+            // Operations also contributes to the weapon damage pool.
+            (
+                bonus("weapon_damage"),
+                bonus("officer_attack"),
+                bonus("officer_defense"),
+                bonus("officer_health"),
+            )
+        });
+
+        for (result, (weapon, officer)) in actual.into_iter().zip([
+            (0.14, 0.0),
+            (0.17, 0.02),
+            (18.95, 6.55),
+            (19.17, 6.79),
+            (23.0, 11.0),
+        ]) {
+            assert!((result.0 - weapon).abs() < 1e-9, "{actual:?}");
+            assert_eq!((result.1, result.2, result.3), (officer, officer, officer));
+        }
+    }
+
+    #[test]
     fn native_building_ranks_apply_without_owned_building_sync() {
         struct Cleanup(std::path::PathBuf);
         impl Drop for Cleanup {
