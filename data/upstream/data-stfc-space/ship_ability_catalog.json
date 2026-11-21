@@ -234,8 +234,8 @@
     "957865248": {
       "timing": "round_start",
       "effect_type": "accumulating_attack_multiplier",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false,
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
       "condition_defender_hull_breach": true
     },
     "974800413": {

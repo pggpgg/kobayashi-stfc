@@ -756,6 +756,20 @@ fn effect_condition_from_canonical(
         canonical_conditions_to_lcars(&filtered, officer_name, ability_label)
             .into_iter()
             .collect();
+    if a.modifier.as_deref() == Some("ShotsPerAttack") && a.trigger.as_deref() == Some("RoundStart")
+    {
+        let duration = num_rounds_from_attributes(a.attributes.as_deref());
+        // Keep the existing launch window for rows without a declared duration,
+        // Miles O'Brien's "For 3 rounds" wording, and FCM Data's unverified seat mapping.
+        if duration.is_none()
+            || matches!(a.ability_id.as_deref(), Some("3396349483" | "1610205778"))
+        {
+            let mut window = lcars_cond_base("round_range");
+            window.min = Some(1);
+            window.max = Some(duration.unwrap_or(2));
+            conditions.push(window);
+        }
+    }
     // These reviewed damage-taken abilities have a published Assault exclusion.
     if stacks_on_damage_taken(a) && filtered.iter().any(|token| token == "TargetNotASB") {
         let mut assaults = lcars_cond_base("engagement_includes");
