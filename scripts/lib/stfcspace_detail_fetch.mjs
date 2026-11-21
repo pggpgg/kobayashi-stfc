@@ -14,6 +14,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import {
   atomicWriteJson,
+  canonicalJsonSha256,
   clampConcurrency,
   DEFAULT_CONCURRENCY,
   DEFAULT_PACING_MS,
@@ -29,13 +30,16 @@ export const MAX_RETRIES = 3;
 export const RETRY_DELAY_MS = 1000;
 export const JSON_INDENT = 2;
 
-async function cachedDetailUsable(cachePath, id) {
+async function readCachedDetailIfUsable(cachePath, id) {
   try {
     const detail = JSON.parse(await fs.readFile(cachePath, "utf8"));
-    if (detail === null || typeof detail !== "object" || Array.isArray(detail)) return false;
-    return detail.id === id || (typeof detail.id === "string" && detail.id === String(id));
+    if (detail === null || typeof detail !== "object" || Array.isArray(detail)) {
+      return { ok: false, data: null };
+    }
+    const idMatch = detail.id === id || (typeof detail.id === "string" && detail.id === String(id));
+    return idMatch ? { ok: true, data: detail } : { ok: false, data: null };
   } catch {
-    return false;
+    return { ok: false, data: null };
   }
 }
 
@@ -215,7 +219,8 @@ export async function runDetailFetch(opts) {
     async (id) => {
       const cachePath = path.join(cacheDir, `${id}.json`);
       const mustRefresh = full || (forceSet !== null && forceSet.has(id));
-      const hasUsableCache = await cachedDetailUsable(cachePath, id);
+      const cached = await readCachedDetailIfUsable(cachePath, id);
+      const hasUsableCache = cached.ok;
 
       if (!mustRefresh && hasUsableCache) {
         log.skipped++;
@@ -255,7 +260,6 @@ export async function runDetailFetch(opts) {
           return;
         }
 
-        await atomicWriteJson(cachePath, res.data, JSON_INDENT);
         if (useConditional && (res.etag || res.lastModified)) {
           const prev = httpCache.entries[url];
           const nextEtag = res.etag ?? null;
@@ -268,6 +272,17 @@ export async function runDetailFetch(opts) {
             httpCacheDirty = true;
           }
         }
+
+        if (hasUsableCache && canonicalJsonSha256(cached.data) === canonicalJsonSha256(res.data)) {
+          log.not_modified++;
+          completed++;
+          if (progressEvery === 1 || completed % progressEvery === 0 || completed === ids.length) {
+            process.stdout.write(`[${completed}/${ids.length}] ${id} — unchanged\n`);
+          }
+          return;
+        }
+
+        await atomicWriteJson(cachePath, res.data, JSON_INDENT);
         log.fetched++;
         completed++;
         if (progressEvery === 1) {
@@ -279,7 +294,7 @@ export async function runDetailFetch(opts) {
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        const fallback = hasUsableCache || (await cachedDetailUsable(cachePath, id));
+        const fallback = hasUsableCache || (await readCachedDetailIfUsable(cachePath, id)).ok;
         log.failed++;
         if (fallback) {
           log.stale_cache_used++;
