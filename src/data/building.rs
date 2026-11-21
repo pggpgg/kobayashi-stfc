@@ -53,6 +53,8 @@ impl BuildingAttackerFaction {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BuildingBonusContext {
     pub ops_level: Option<u32>,
+    /// Gated building bonuses require a confirmed Syndicate level.
+    pub syndicate_level: Option<u32>,
     pub mode: BuildingMode,
     pub defender_opponent: BuildingDefenderOpponent,
     pub attacker_faction: BuildingAttackerFaction,
@@ -69,6 +71,7 @@ impl Default for BuildingBonusContext {
     fn default() -> Self {
         Self {
             ops_level: None,
+            syndicate_level: None,
             mode: BuildingMode::Unknown,
             defender_opponent: BuildingDefenderOpponent::Unknown,
             attacker_faction: BuildingAttackerFaction::Unknown,
@@ -291,6 +294,16 @@ fn normalize_condition(condition: &str) -> String {
         .replace(['-', ' '], "_")
 }
 
+const SYNDICATE_MINIMUM_PREFIX: &str = "syndicate_level_at_least_";
+
+pub(crate) fn syndicate_minimum_for_condition(normalized: &str) -> Option<u32> {
+    normalized
+        .strip_prefix(SYNDICATE_MINIMUM_PREFIX)?
+        .parse()
+        .ok()
+        .filter(|&level| level > 0)
+}
+
 fn level_matches_context(level: &BuildingLevel, context: &BuildingBonusContext) -> bool {
     let Some(ops_level) = context.ops_level else {
         return true;
@@ -407,6 +420,11 @@ fn bonus_matches_context(bonus: &BonusEntry, context: &BuildingBonusContext) -> 
             // Preserve the verified source row, but do not turn an unresolved
             // native scope into an unconditional bonus or a guessed hostile gate.
             "native_condition_57_unverified" => false,
+            normalized if normalized.starts_with(SYNDICATE_MINIMUM_PREFIX) => {
+                syndicate_minimum_for_condition(normalized)
+                    .zip(context.syndicate_level)
+                    .is_some_and(|(minimum, level)| level >= minimum)
+            }
             _ => true,
         };
         source_gate

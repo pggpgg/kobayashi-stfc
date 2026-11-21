@@ -238,3 +238,40 @@ test("explicit verified fraction units reject invalid declarations and non-finit
     assert.equal(normalizeBonusValue({}, mapping, value), null);
   }
 });
+
+test("Fleet Commander ownership omits On Duty effects and keeps Always On effects", () => {
+  const translations = readJson("../../data/upstream/data-stfc-space/translations-research.json");
+  const descriptionByLocaId = new Map(translations
+    .filter(row => row.key === "research_project_description")
+    .map(row => [row.id, row.text]));
+  const buffResolveCtx = { ...context, descriptionByLocaId };
+
+  for (const [rid, bid] of [
+    [1933674629, 748660265], // Fortified Rampart (On Duty)
+    [132869583, 2560382313], // Live Long (On Duty - Selectable)
+    [4126790711, 251122208], // Lorca's Fist (On Duty – Active Ability)
+    [3720854815, 2416147478], // First Things First (On Duty; timed Apex Shred)
+  ]) {
+    const detail = readJson("../../data/upstream/data-stfc-space/research/" + rid + ".json");
+    const unmappedByBuffId = new Map();
+    const levels = buildLevelsFromDetail(detail, {
+      rid,
+      projectLocaId: detail.loca_id,
+      buffResolveCtx,
+      descriptionByLocaId,
+      unmappedByBuffId,
+    });
+    assert.deepEqual(levels, [], "owned rank cannot establish activation for " + rid);
+    assert.deepEqual(unmappedByBuffId.get(String(bid)).exclusion_reasons,
+      ["requires_active_global_buff"], "missing activation diagnostic for " + bid);
+  }
+
+  const detail = readJson("../../data/upstream/data-stfc-space/research/151318080.json");
+  const levels = buildLevelsFromDetail(detail, {
+    rid: detail.id,
+    projectLocaId: detail.loca_id,
+    buffResolveCtx,
+    descriptionByLocaId,
+  });
+  assert.deepEqual(levels[0].bonuses, [{ stat: "weapon_damage", value: 0.65, operator: "add" }]);
+});

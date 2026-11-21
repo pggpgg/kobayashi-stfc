@@ -41,8 +41,10 @@
           "stat": "hull_hp",
           "value": 0.01,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -83,8 +85,10 @@
           "stat": "hull_hp",
           "value": 0.02,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -125,8 +129,10 @@
           "stat": "hull_hp",
           "value": 0.03,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -167,8 +173,10 @@
           "stat": "hull_hp",
           "value": 0.04,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -209,8 +217,10 @@
           "stat": "hull_hp",
           "value": 0.05,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -251,8 +261,10 @@
           "stat": "hull_hp",
           "value": 0.06,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -293,8 +305,10 @@
           "stat": "hull_hp",
           "value": 0.07,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -335,8 +349,10 @@
           "stat": "hull_hp",
           "value": 0.08,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -377,8 +393,10 @@
           "stat": "hull_hp",
           "value": 0.09,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -419,8 +437,10 @@
           "stat": "hull_hp",
           "value": 0.1,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -461,8 +481,10 @@
           "stat": "hull_hp",
           "value": 0.11,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -503,8 +525,10 @@
           "stat": "hull_hp",
           "value": 0.12,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -545,8 +569,10 @@
           "stat": "hull_hp",
           "value": 0.13,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -587,8 +613,10 @@
           "stat": "hull_hp",
           "value": 0.14,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -629,8 +657,10 @@
           "stat": "hull_hp",
           "value": 0.15,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -671,8 +701,10 @@
           "stat": "hull_hp",
           "value": 0.16,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -713,8 +745,10 @@
           "stat": "hull_hp",
           "value": 0.17,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -755,8 +789,10 @@
           "stat": "hull_hp",
           "value": 0.18,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -797,8 +833,10 @@
           "stat": "hull_hp",
           "value": 0.19,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -839,8 +877,10 @@
           "stat": "hull_hp",
           "value": 0.2,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -881,8 +921,10 @@
           "stat": "hull_hp",
           "value": 0.21,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -923,8 +965,10 @@
           "stat": "hull_hp",
           "value": 0.22,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -965,8 +1009,10 @@
           "stat": "hull_hp",
           "value": 0.23,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1007,8 +1053,10 @@
           "stat": "hull_hp",
           "value": 0.24,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1049,8 +1097,10 @@
           "stat": "hull_hp",
           "value": 0.25,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1091,8 +1141,10 @@
           "stat": "hull_hp",
           "value": 0.3,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1133,8 +1185,10 @@
           "stat": "hull_hp",
           "value": 0.35,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1175,8 +1229,10 @@
           "stat": "hull_hp",
           "value": 0.4,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1217,8 +1273,10 @@
           "stat": "hull_hp",
           "value": 0.45,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1259,8 +1317,10 @@
           "stat": "hull_hp",
           "value": 0.5,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1301,8 +1361,10 @@
           "stat": "hull_hp",
           "value": 0.55,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1343,8 +1405,10 @@
           "stat": "hull_hp",
           "value": 0.6,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1385,8 +1449,10 @@
           "stat": "hull_hp",
           "value": 0.65,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1427,8 +1493,10 @@
           "stat": "hull_hp",
           "value": 0.7,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1469,8 +1537,10 @@
           "stat": "hull_hp",
           "value": 0.75,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1511,8 +1581,10 @@
           "stat": "hull_hp",
           "value": 0.85,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1553,8 +1625,10 @@
           "stat": "hull_hp",
           "value": 0.95,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1595,8 +1669,10 @@
           "stat": "hull_hp",
           "value": 1.05,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1637,8 +1713,10 @@
           "stat": "hull_hp",
           "value": 1.15,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1679,8 +1757,10 @@
           "stat": "hull_hp",
           "value": 1.25,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1721,8 +1801,10 @@
           "stat": "hull_hp",
           "value": 1.35,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1763,8 +1845,10 @@
           "stat": "hull_hp",
           "value": 1.45,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1805,8 +1889,10 @@
           "stat": "hull_hp",
           "value": 1.55,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1847,8 +1933,10 @@
           "stat": "hull_hp",
           "value": 1.65,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1889,8 +1977,10 @@
           "stat": "hull_hp",
           "value": 1.75,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1931,8 +2021,10 @@
           "stat": "hull_hp",
           "value": 1.85,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -1973,8 +2065,10 @@
           "stat": "hull_hp",
           "value": 1.95,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2015,8 +2109,10 @@
           "stat": "hull_hp",
           "value": 2.05,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2057,8 +2153,10 @@
           "stat": "hull_hp",
           "value": 2.15,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2099,8 +2197,10 @@
           "stat": "hull_hp",
           "value": 2.25,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2141,8 +2241,10 @@
           "stat": "hull_hp",
           "value": 2.35,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2183,8 +2285,10 @@
           "stat": "hull_hp",
           "value": 2.45,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2225,8 +2329,10 @@
           "stat": "hull_hp",
           "value": 2.55,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2267,8 +2373,10 @@
           "stat": "hull_hp",
           "value": 2.65,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2309,8 +2417,10 @@
           "stat": "hull_hp",
           "value": 2.75,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2351,8 +2461,10 @@
           "stat": "hull_hp",
           "value": 2.9,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2393,8 +2505,10 @@
           "stat": "hull_hp",
           "value": 3.05,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2435,8 +2549,10 @@
           "stat": "hull_hp",
           "value": 3.2,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2477,8 +2593,10 @@
           "stat": "hull_hp",
           "value": 3.35,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2519,8 +2637,10 @@
           "stat": "hull_hp",
           "value": 3.5,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2561,8 +2681,10 @@
           "stat": "hull_hp",
           "value": 3.65,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2603,8 +2725,10 @@
           "stat": "hull_hp",
           "value": 3.8,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2645,8 +2769,10 @@
           "stat": "hull_hp",
           "value": 4,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2687,8 +2813,10 @@
           "stat": "hull_hp",
           "value": 4.2,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2729,8 +2857,10 @@
           "stat": "hull_hp",
           "value": 4.45,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2771,8 +2901,10 @@
           "stat": "hull_hp",
           "value": 4.7,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2813,8 +2945,10 @@
           "stat": "hull_hp",
           "value": 5,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2855,8 +2989,10 @@
           "stat": "hull_hp",
           "value": 5.3,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2897,8 +3033,10 @@
           "stat": "hull_hp",
           "value": 5.6,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2939,8 +3077,10 @@
           "stat": "hull_hp",
           "value": 6,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -2981,8 +3121,10 @@
           "stat": "hull_hp",
           "value": 6.4,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -3023,8 +3165,10 @@
           "stat": "hull_hp",
           "value": 6.8,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -3065,8 +3209,10 @@
           "stat": "hull_hp",
           "value": 7.2,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -3107,8 +3253,10 @@
           "stat": "hull_hp",
           "value": 7.6,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -3149,8 +3297,10 @@
           "stat": "hull_hp",
           "value": 8,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -3191,8 +3341,10 @@
           "stat": "hull_hp",
           "value": 8.4,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -3233,8 +3385,10 @@
           "stat": "hull_hp",
           "value": 8.8,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -3275,8 +3429,10 @@
           "stat": "hull_hp",
           "value": 9.2,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -3317,8 +3473,10 @@
           "stat": "hull_hp",
           "value": 9.6,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     },
@@ -3359,8 +3517,10 @@
           "stat": "hull_hp",
           "value": 10,
           "operator": "add",
-          "conditions": [],
-          "notes": null
+          "conditions": [
+            "syndicate_level_at_least_30"
+          ],
+          "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
         }
       ]
     }

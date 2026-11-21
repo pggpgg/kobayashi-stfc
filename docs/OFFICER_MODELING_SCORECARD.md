@@ -61,18 +61,26 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | borg-queen-c8e67d | Borg Queen | 2 | 0/0/0 | 0/0/1 | 0/0/1 | 0 | 1 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | brad-boimler-ee5262 | Brad Boimler | 2 | 0/0/0 | 0/0/1 | 0/0/1 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | cap-tilly-070cc9 | Cap. Tilly | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
+| cath-f0e149 | Cath | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | changeling-kira-666ebe | Changeling Kira | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
+| chen-cdb1ca | Chen | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | d-jaoki-baa18f | D'Jaoki | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | Captain battle-won Health and bridge crew-stat-based defenses are unsupported and diagnosed. |
+| damar-796eb0 | Damar | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | Captain and bridge effects require a qualifying critical hit and a weapon-scoped grant. Both are unsupported and diagnosed. The bridge effect reduces opponent critical damage for three rounds. |
 | decius-8fce68 | Decius | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | eurydice-18b643 | Eurydice | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | Bridge shield restoration is unsupported and diagnosed: the current shield-break handler cannot faithfully apply its chance and percentage of maximum shields. |
 | five-of-eleven-d9aa11 | Five Of Eleven | 1 | 0/0/1 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | — | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
+| gaila-3d387a | Gaila | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | Bridge opponent critical damage reduction against hostiles through level 70 is unsupported and diagnosed pending evidence for its damage pool. |
+| gossa-dafefb | Gossa | 2 | 0/0/0 | 0/0/1 | 0/0/1 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | 0 | 0 | F | 100 | none | Bridge opponent critical damage reduction for Borg Solo Armadas is unsupported and diagnosed pending evidence for its round-start path. |
 | hendorff-549c65 | Hendorff | 1 | 0/0/1 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | — | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | hugh-9fc348 | Hugh | 1 | 0/0/0 | 0/0/0 | 0/0/1 | 0 | 1 | 0 | 0 | 0 | — | — | 0 | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | jadzia-dax-736698 | Jadzia Dax | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
+| joachim-03587e | Joachim | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
+| k-bisch-b6c84c | K'Bisch | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | khan-3f1d1e | Khan | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | krell-ef559b | Krell | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | l-nar-ae14f4 | L'Nar | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | Captain bridge-only Health and bridge crew-Attack-scaled damage are unsupported and diagnosed. |
 | leslie-975ce0 | Leslie | 1 | 0/0/1 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | — | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
+| lursa-57a544 | Lursa | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | Cloaking cooldown on ship active ability — not modeled in combat sim (:non_combat). |
 | m-benga-53446d | M'Benga | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | marla-9732c7 | Marla | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | michael-burnham-6c711c | Michael Burnham | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
@@ -82,10 +90,13 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | pic-beverly-crusher-26f56a | PIC Beverly Crusher | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | reginald-barclay-111169 | Reginald Barclay | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | ro-mudd-21a89a | Ro Mudd | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | Captain officer-stat scope and bridge crew-Attack damage operation remain unsupported; bridge coefficient and proc chance are retained for diagnostics. |
+| saru-68cf4f | Saru | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | snw-t-pring-16cf8d | SNW T'Pring | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
+| t-laan-c4627b | T'Laan | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | the-doctor-327fc3 | The Doctor | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | toli-2d704a | Toli | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | tomalak-0ff09c | Tomalak | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
+| tos-chekov-0f158d | TOS Chekov | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | tyler-1dcc4d | Tyler | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | vemet-00a218 | Vemet | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | Captain post-defeat ship survival and bridge crew-Health-scaled enemy shield drain are unsupported and diagnosed. |
 | wesley-crusher-834fce | Wesley Crusher | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | Captain crew-Attack-scaled damage and bridge officer-only stats are unsupported and diagnosed. |
@@ -94,7 +105,6 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | worf-c55d58 | Worf | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | zhou-5d4d4b | Zhou | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | b-elanna-torres-75cf02 | B'Elanna Torres | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 100 | 50 | 40 | 0 | 40 | F | 100 | none | Bridge crew-Attack-based cumulative piercing after being hit is unsupported and diagnosed; below-deck hull breach has source-declared one-round state duration. |
-| beckett-mariner-d93865 | Beckett Mariner | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 100 | 50 | 40 | 0 | 40 | F | 100 | none | — |
 | mirror-uhura-0a7168 | Mirror Uhura | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 0 | 1 | 0 | 0 | 0 | — | 0 | 100 | 50 | 40 | 0 | 40 | F | 100 | none | — |
 | odo-04a97d | Odo | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 100 | 50 | 40 | 0 | 40 | F | 100 | none | — |
 | sam-rutherford-927c93 | Sam Rutherford | 2 | 0/0/0 | 0/0/1 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 100 | 50 | 40 | 0 | 40 | F | 100 | none | — |
@@ -104,22 +114,25 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | benjamin-sisko-5c51f2 | Benjamin Sisko | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | cadet-kirk-a80563 | Cadet Kirk | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Captain bridge-only stat scope is unsupported and diagnosed; bridge passive weapon damage is represented. |
 | cadet-mccoy-13d460 | Cadet McCoy | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Captain bridge-only Health scope is unsupported and diagnosed; bridge captain-maneuver effect uses the existing PvP proxy. |
+| cadet-uhura-3ef15c | Cadet Uhura | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
+| carol-755a05 | Carol | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | charvanek-0f1b5c | Charvanek | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
-| chen-cdb1ca | Chen | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | emp-georgiou-1564b5 | Emp. Georgiou | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
+| garak-771862 | Garak | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | georgiou-d2bdef | Georgiou | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | harry-mudd-374d5f | Harry Mudd | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Cap ShieldMitigation 2R vs hostiles ≤70; bridge on_combat_start shots bonus same gate. |
 | ikatika-4fa1ba | Ikat’Ika | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
-| joachim-03587e | Joachim | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | kathryn-janeway-bd4a19 | Kathryn Janeway | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Cap ShieldMitigation 1R vs NPC hostiles; bridge isolytic_cascade_damage at combat start. |
 | linkasa-01a1b3 | Linkasa | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
+| lorca-d32ec8 | Lorca | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | moreau-23ddb4 | Moreau | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
+| mudd-32546a | Mudd | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | next-gen-crusher-0de02d | Next Gen Crusher | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Captain bridge-only Health scope is unsupported and diagnosed; bridge captain-maneuver effect uses the existing proxy. |
 | next-gen-data-5e7215 | Next Gen Data | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Captain bridge-only stat scope is unsupported and diagnosed; bridge passive weapon damage is represented. |
+| next-gen-la-forge-ee6d76 | Next Gen La Forge | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | origins-burnham-e854d6 | Origins Burnham | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | origins-saru-753b24 | Origins Saru | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | qa-ug-a165bf | Qa'Ug | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Cap shield_mitigation on_round_start; bridge Accuracy when attacker hull breach. |
-| saru-68cf4f | Saru | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | severus-93daaf | Severus | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | snw-mbenga-fe38e5 | Snw M’Benga | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | sulu-fe562d | Sulu | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
@@ -131,9 +144,9 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | bones-ddc8a9 | Bones | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Cap OffAbilityEffect at combat start vs hostiles ≤70; bridge on_hit armor same gate. Inactive in default optimize vs high-level hostiles. |
 | cadet-sulu-784421 | Cadet Sulu | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | data-d20ef8 | Data | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
-| eight-of-eleven-cb5f3c | Eight Of Eleven | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | gowron-27ac30 | Gowron | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Bridge crew-Health-based Shield Deflection is unsupported and diagnosed, rather than modeled as shield regeneration. |
 | instr-spock-bba5d7 | Instr. Spock | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
+| komal-357fb2 | Komal | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | kumak-c5b0db | Kumak | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Cap OfficerStatAll on_round_start via Phase 4d per-round path; bridge armor on_round_start when defender burning. |
 | m-ral-986e7a | M'Ral | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | marcus-073931 | Marcus | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Captain morale timing remains approximate; bridge crew-Defense-scaled Shield Piercing is unsupported and diagnosed. |
@@ -151,11 +164,13 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | tal-c3e4eb | Tal | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | tilly-6bd08f | Tilly | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | tiza-9d38f9 | Tiza | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Cap enemy ShieldMitigation 3R (faction gate); bridge armor at combat start. |
+| tos-spock-86f176 | TOS Spock | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Bridge opponent critical damage reduction while the ship has Morale in PvP is unsupported and diagnosed. |
+| vixis-9eec06 | Vixis | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Captain enemy_delay 2R at round start; chance rank-scaled. |
 | yan-agh-dd8637 | Yan'Agh | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | yuki-1ab97a | Yuki | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
-| gossa-dafefb | Gossa | 2 | 0/0/0 | 1/0/0 | 0/0/1 | 0 | 0 | 0 | 0 | 0 | — | 100 | 0 | 50 | 60 | 0 | 60 | D | 100 | none | — |
 | tom-paris-3640cc | Tom Paris | 2 | 0/0/0 | 1/0/0 | 0/0/1 | 0 | 0 | 0 | 0 | 0 | — | 100 | 0 | 50 | 60 | 0 | 60 | D | 100 | none | Known below-decks defense mismatch. Native ability 3192273655 verifies Defense scaling and rank-4 coefficient 4; runtime own-versus-crew stat selection and operator-5 placement remain unbound. The previously used own-officer Defense proxy is quarantined until the crew Defense source and operation-5 placement are verified. The source-bound native CoreStats loader now supplies 421 at level 20; the earlier fractional 420.6 input predicted mitigation 0.223498 versus 0.712 across 17 observed Patrol hits over seven rounds. Earlier controls exclude post-pool and raw-stat pre-pool additions. The below-cap level-53 JemHadar control measures clean energy mitigation 0.7059305..0.7059335 and rejects all six frozen effective-stat/placement families; total effective crew Defense before all percentage pools is closest but remains outside its bound. Deployed UI confirms Jadzia Defense 1284 and Tom Defense 28573, rejecting the omitted mixed candidate as a displayed-stat source explanation; the actual UI sum 29857 still misses the combat interval. Tom-based crew rankings are not combat-validated. Fresh 2026-10-26 Jadzia-to-Mirror-Troi captain controls support the sum of individually buffed Defense before percentage pools in both absolute intervals; their delta alone cannot distinguish both crew aggregation hypotheses. The older control remains a counterexample. No replacement source or stacking rule is assumed; complete native per-officer modifier coverage and server operation-5 binding remain open. See docs/TOM_PARIS_CAPTAIN_SWAP_20261026.md. |
 | vil-gul-dukat-c46cb8 | Vil Gul Dukat | 2 | 0/0/0 | 1/0/0 | 0/0/1 | 0 | 0 | 0 | 0 | 0 | — | 100 | 0 | 50 | 60 | 0 | 60 | D | 100 | none | — |
+| vil-winn-adami-6c42f3 | Vil Winn Adami | 2 | 0/0/0 | 1/0/0 | 0/0/1 | 0 | 0 | 0 | 0 | 0 | — | 100 | 0 | 50 | 60 | 0 | 60 | D | 100 | none | Bridge enemy ShieldMitigation lasts three rounds. Below-deck opponent critical damage reduction in PvP is unsupported and diagnosed. |
 | kirk-1323b6 | Kirk | 2 | 0/1/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 50 | 100 | — | 75 | 71 | 0 | 71 | C | 100 | none | Cap OfficerStatAll on_round_start when Morale active (1R) — Phase 4d 3-axis per-round path (attack/defense/health). Bridge on_round_start Morale proc separate. |
 | 718-0-2509d7 | 718.0 | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Computer Precision adds 5–15% to the Defense pool of every crewed officer in non-Eclipse hostile ship fights. Station Knowledge requires a station-defense scenario. |
 | academy-doctor-bc8e69 | Academy Doctor | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | No captain (Chain of Command). Bridge isolytic_cascade_damage at combat start vs Explorer hostiles is gated on Wave Defense (SelfAtWaveDefenseChallenge → literal_false): inert on the default path. BD Interceptor crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles, active only in the PvP toggle. |
@@ -166,23 +181,20 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | arkady-94c81b | Arkady | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | azetbur-7eff22 | Azetbur | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | ba-el-91d122 | Ba'el | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
+| beckett-mariner-d93865 | Beckett Mariner | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | Get It Together! adds 5–30% to every crewed officer's Attack pool before ship breakpoints. The below-deck ability separately increases weapon damage. |
 | black-ops-chapel-814fe8 | Black Ops Chapel | 1 | 0/0/0 | 0/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | 100 | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | black-ops-m-benga-e23e3a | Black Ops M'Benga | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | byr-ch-kelrer-090eff | Byr Ch'Kelrer | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | cadet-scotty-b342ae | Cadet Scotty | 1 | 1/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | — | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
-| cadet-uhura-3ef15c | Cadet Uhura | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | caleb-mir-3588ed | Caleb Mir | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | No captain (Chain of Command). Bridge shield_regen_max_fraction (per-round SHP restore, MultiplyAdd) vs non-Armada hostiles is the one combat-modeled row (EnemyHostile + TargetNotArmada → defender_is_npc_hostile AND NOT armada); the in-game 'Outposts' half is unmodeled. BD Top Marks weapon_damage vs Outposts/Retaliation is gated on SelfAtStation (→ literal_false) so the very large below-deck bonus does not over-apply in generic hostile fights. |
-| carol-755a05 | Carol | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | carol-freeman-a46be4 | Carol Freeman | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | cat-spock-61edec | Cat Spock | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | No captain (Chain of Command). Bridge base crit_damage at combat start is OGN-faction-gated (up to 25,000% at rank 5 — matches Update 92 notes). BD apex_barrier vs non-Armada hostiles is unconditional on the default hostile path. |
-| cath-f0e149 | Cath | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | chakotay-a1f5df | Chakotay | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | chancellor-ake-225a78 | Chancellor Ake | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | No captain (Chain of Command). Bridge isolytic_cascade_damage vs Battleship hostiles is Wave-Defense-gated (literal_false): inert. BD Explorer crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles. |
 | chang-ecc238 | Chang | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Bridge enemy_delay on crit (on_critical) when defender hull breach active; DefenderFireDelay skips counter-fire. Captain weapon bonus uses hull_hp <60% gate. |
 | culber-b3e4a0 | Culber | 1 | 1/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | — | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | d-vana-tendi-9fabf0 | D'Vana Tendi | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | Bridge passive OfficerStatHealth; BD passive hull_hp. |
 | dajash-tolra-1e809f | Dajash Tolra | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
-| damar-796eb0 | Damar | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | darwin-b8dc0a | Darwin | 1 | 1/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | — | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | deanna-troi-57341d | Deanna Troi | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | deidamia-50f1da | Deidamia | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | No captain (Chain of Command). Bridge isolytic_cascade_damage vs Interceptor hostiles is Wave-Defense-gated (literal_false): inert. BD Battleship crit_chance (8R) is EnemyPlayer-gated: inert vs NPC hostiles. |
@@ -190,6 +202,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | dezoc-381416 | Dezoc | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | Bridge OfficerStatAll at combat start (AND: solo_armadas + defender hull faction) via pending; BD assimilated on_round_start when defender hull <95%. |
 | dixon-hill-b7ea10 | Dixon Hill | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 50 | mixed | — |
 | doctor-t-ana-b98f82 | Doctor T'Ana | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | AddRandomState vs player defenders only (PvP); same weighted states and rank proc as Zeph; inactive in default hostile optimize. |
+| eight-of-eleven-cb5f3c | Eight Of Eleven | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Cybernetic Enhancements adds 45–85% to every crewed officer's Attack pool before ship breakpoints. |
 | ent-e-data-871245 | Ent-E Data | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Bridge isolytic_cascade_damage at combat start vs NPC hostiles only, excluding Armada (EnemyHostile + TargetNotArmada → defender_is_npc_hostile AND NOT defender_ship_type_is armada). |
 | ent-e-picard-556227 | Ent-E Picard | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | ent-e-riker-516b8d | Ent-E Riker | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
@@ -198,8 +211,6 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | fcm-data-3b9e4d | FCM Data | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | female-spock-c21a12 | Female Spock | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Captain Enterprising Mind is Isogenite loot (economy → :non_combat; upstream rank 4-5 values unpublished, stored as 0). Bridge isolytic_damage at combat start is OGN-faction-gated: active only vs Origin Sector hostiles/armadas. |
 | french-marshal-q-1f0a28 | French Marshal Q | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| gaila-3d387a | Gaila | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
-| garak-771862 | Garak | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | genesis-lythe-82d460 | Genesis Lythe | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | No captain (Chain of Command). Bridge shield_regen_max_fraction restore is Wave-Defense-gated (literal_false): inert on the default path. BD Admiral's Daughter (Outpost retaliation medals/plunder) is economy → :non_combat tag. |
 | geordi-la-forge-914cec | Geordi La Forge | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | gonzales-de640c | Gonzales | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -217,22 +228,18 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | jean-luc-picard-e0515c | Jean-Luc Picard | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Captain off-ability boost is tag/non_combat path (ignored in sim); bridge crit damage roughly OK. Not an officer-stat-scaling gap. |
 | jonathan-archer-4e9cd0 | Jonathan Archer | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | julian-bashir-0551fa | Julian Bashir | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| k-bisch-b6c84c | K'Bisch | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | kang-55e67a | Kang | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Cap on_combat_start hull_breach; bridge Accuracy tag at combat start. |
 | kati-01ab4d | Kati | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | keenser-3a5ad4 | Keenser | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | kerla-6cdf45 | Kerla | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Cap ShipDodge on_shield_break; bridge crit_damage at combat start. |
 | kira-nerys-a5253a | Kira Nerys | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | Bridge enemy ShieldMitigation (literal_false gate — verify); BD crit_chance at combat start. |
 | klaa-acbd92 | Klaa | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
-| komal-357fb2 | Komal | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | koth-c70d1c | Koth | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | kras-a47042 | Kras | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | PvP-only: captain Art of War debuffs opponent captain maneuver; bridge Know Your Enemy debuffs enemy bridge officer stats (no-op vs NPC hostiles). |
 | kuron-15cda2 | Kuron | 1 | 1/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | — | — | 100 | 100 | 0 | 100 | A | 50 | mixed | Captain self_recharge at combat start modeled as +100% shots round 1 (ShotsBonus proxy; recharge≈double-shots hypothesis). ModuleKinetic gate honored: bonus applies to kinetic weapons only (weapon_type from ships_extended/hostile components; untyped weapons match leniently). |
 | laliari-87e81a | Laliari | 1 | 0/0/0 | 0/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | 100 | 100 | 100 | 0 | 100 | A | 100 | economy_only | Omega-13 cooldown reduction on ship active ability — not modeled in combat sim (:non_combat). |
 | lieutenant-picard-6303e7 | Lieutenant Picard | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | livis-43235e | Livis | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
-| lorca-d32ec8 | Lorca | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| lursa-57a544 | Lursa | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Cloaking cooldown on ship active ability — not modeled in combat sim (:non_combat). |
 | mara-bd3ca6 | Mara | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Cap weapon_damage at combat start; bridge enemy ShipDodge on_round_end. |
 | mara-dalen-6827 | Mara Dalen | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mariachi-q-c8cf6e | Mariachi Q | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -245,11 +252,9 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | mirror-picard-7c1a17 | Mirror Picard | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mirror-troi-d237df | Mirror Troi | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | miss-q-cc911e | Miss Q | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| mudd-32546a | Mudd | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | neelix-c8a380 | Neelix | 1 | 0/0/0 | 0/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | 100 | 100 | 100 | 0 | 100 | A | 100 | economy_only | Native English identity binds source 1458469333 to Neelix: below-decks Morale, with non-combat reputation officer ability. The prior catalog swapped this officer with Harry Kim. |
 | nero-1aeca9 | Nero | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Bridge burning state retains its source-declared two-round duration; the weapon-hit ability remains eligible in subsequent rounds. |
 | nesmith-8d3e34 | Nesmith | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Cap enemy ShieldMitigation (literal_false); bridge apex_barrier at combat start. |
-| next-gen-la-forge-ee6d76 | Next Gen La Forge | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | one-of-eleven-ee0ee9 | One Of Eleven | 1 | 1/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | — | — | 100 | 100 | 0 | 100 | A | 50 | mixed | — |
 | pan-13e04e | Pan | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | paul-stamets-4aa6ab | Paul Stamets | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
@@ -289,13 +294,10 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | strike-team-la-an-84e2a9 | Strike Team La'an | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | strike-team-ortegas-d9df30 | Strike Team Ortegas | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Bridge AllReloadSpeed vs player on BB: canonical trigger RoundStart (ability_id 1842949267); tooltip 'weapons shot by them' is flavor. Sim uses on_round_start enemy_delay 1R — matches upstream. |
 | strike-team-una-5ec6f6 | Strike Team Una | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Cap OfficerStatAll on_round_start (PvP + defender Explorer) via Phase 4d; bridge enemy ShieldMitigation on_round_start (PvP + attacker BB). |
-| t-laan-c4627b | T'Laan | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | tasha-yar-b9300c | Tasha Yar | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | the-hierarch-e1f430 | The Hierarch | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Cap shots_per_attack on_round_start; bridge AddRandomState vs player ships (PvP-only). |
 | tmp-hikaru-sulu-c73326 | TMP Hikaru Sulu | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | tmp-nyota-uhura-802f0c | TMP Nyota Uhura | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| tos-chekov-0f158d | TOS Chekov | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
-| tos-spock-86f176 | TOS Spock | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | tos-sulu-0d02c3 | TOS Sulu | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | trip-tucker-75d4f9 | Trip Tucker | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | uhura-ea117c | Uhura | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Captain shield-break enemy_delay: DefenderFireDelay skips defender counter-fire for N rounds; chance from rank scaling. |
@@ -303,8 +305,6 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | vartoq-9109e7 | Vartoq | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | vel-f335b3 | Vel | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | vella-7ab77e | Vella | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Cap weapon_damage at combat start; bridge passive OfficerStatHealth. |
-| vil-winn-adami-6c42f3 | Vil Winn Adami | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | Bridge enemy ShieldMitigation 3R; BD crit_damage at combat start. |
-| vixis-9eec06 | Vixis | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Captain enemy_delay 2R at round start; chance rank-scaled. |
 | weyoun-e042c4 | Weyoun | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | william-t-riker-ddebb5 | William T. Riker | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | wok-joachim-858f5a | WOK Joachim | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |

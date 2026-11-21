@@ -20,8 +20,8 @@
   "119659407": {
     "stat": "weapon_damage",
     "operator": "add",
-    "conditions": [],
-    "notes": "Syndicate line: Weapon damage increased for all ships."
+    "conditions": ["syndicate_level_at_least_35"],
+    "notes": "Dilithium Generator B: ship weapon damage (native BuffID 119659407, condition 205)."
   },
   "1255158479": {
     "operator": "add",
@@ -151,14 +151,20 @@
   "1944989778": {
     "stat": "hull_hp",
     "operator": "add",
-    "conditions": [],
-    "notes": "Syndicate line: Hull health increased for all ships."
+    "conditions": ["syndicate_level_at_least_30"],
+    "notes": "Parsteel Generator B: ship hull health (native BuffID 1944989778, condition 203)."
   },
   "194992291": {
     "stat": "shield_hp",
     "operator": "add",
-    "conditions": [],
-    "notes": "Syndicate line: Shield health increased for all ships."
+    "conditions": ["syndicate_level_at_least_33"],
+    "notes": "Tritanium Generator B: ship shield health (native BuffID 194992291, condition 204)."
+  },
+  "1974652540": {
+    "stat": "shield_hp",
+    "operator": "add",
+    "conditions": ["syndicate_level_at_least_33"],
+    "notes": "Tritanium Generator A: ship shield health (native BuffID 1974652540, condition 204)."
   },
   "2054906083": {
     "stat": "player_crit_damage_reduction",
@@ -382,6 +388,12 @@
     ],
     "notes": "Foundry: Shield Health Bonus for Battleship-class player ships."
   },
+  "560958387": {
+    "stat": "weapon_damage",
+    "operator": "add",
+    "conditions": ["syndicate_level_at_least_35"],
+    "notes": "Dilithium Generator A: ship weapon damage (native BuffID 560958387, condition 205)."
+  },
   "660954013": {
     "operator": "add",
     "conditions": [],
@@ -502,5 +514,11 @@
       "attacker_ship_faction_any_fed_klg_rom"
     ],
     "notes": "Outpost Control Center: Increases base HHP for Federation/Klingon/Romulan ships."
+  },
+  "995187207": {
+    "stat": "hull_hp",
+    "operator": "add",
+    "conditions": ["syndicate_level_at_least_30"],
+    "notes": "Parsteel Generator A: ship hull health (native BuffID 995187207, condition 203)."
   }
 }

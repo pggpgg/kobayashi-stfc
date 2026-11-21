@@ -2,6 +2,14 @@
 
 This is the authoritative inventory of upstream hostile abilities that are modeled, intentionally ignored, or still candidates for combat support.
 
+**Polaron Prototype audit (2026-11-19).** The `stfcspace-hostiles-2026-11-17` cache has 918 Polaron Prototypes. Each carries Experimental Defense Array (`2920844674`, translation `96501`), one Polaron Weaponry variant, and two weapon slots with type `6`. Isolytic Dampeners now uses the translated +5,000% Isolytic Defense at combat start. Combat-start Isolytic Defense from the defender's crew reduces the isolytic damage it receives.
+
+Polaron Weaponry (`323291059` Federation, `49117123` Klingon, `817894448` Romulan) is tracked under `polaron_weaponry_review`. Its text describes bypassing the player's Apex Barrier and gives the faction-conditioned Known Weakness multiplier. Modeling the dedicated weapon channel requires per-hit traces with Polaron Mitigation present and absent, plus controls for faction and counter hull class.
+
+The audit marks Experimental Defense Array as partial. The remaining mechanics include Standard Damage immunity, Infusion and the shield floor and refill rules, the round-eight kinetic hit and Hyperthermic Decay, and the FKR/Vengeance and Yuki gates. A frozen round-eight trace plus a shield-depletion trace that distinguishes Standard, Isolytic, and Infusion damage would resolve the damage and timing questions.
+
+**Cascade Nullification (2026-11-21).** Ability `3679636736` (translation `92210`) applies to Armada targets `827555808`, `3507276863`, and `4095062731`. At levels 65, 70, and 75, the cached curve supplies +250%, +500%, and +1,500% Isolytic Defense respectively. The same text sets a 300% critical damage floor and a 20-round engagement limit on all three targets. The catalog reuses the existing defender effects in single-ship simulations of these targets. Tests cover the three curve selections, the round-20 timeout and last-round win, and an uncapped Federation Stockade control.
+
 **Catalog revision (2026-07-27 / defender-alive gate on the lethal hook):** There are **982** unique upstream hostile ability ids across **2,901** hostiles with non-empty `ability[]`. The regenerated [`hostile_ability_catalog.json`](../data/upstream/data-stfc-space/hostile_ability_catalog.json) classifies all ids: **737** modeled for defender-side combat (`defender_crew`), **245** `combat_noop`. Regenerator: `python3 scripts/generate_full_hostile_ability_catalog.py`.
 
 **Defender-alive gate (2026-07-27):** [`hostile_lethal_end_of_round_hull_damage`](../src/combat/abilities.rs) now takes the hostile's post-round-end HHP and returns nothing when the hostile is already destroyed — the same value the round loop uses one line later to end the fight. This was a live scoring bug for the **31 already-modeled Species 8472** bio-ships: the round loop runs the round-end phase *before* its death check, so a kill landing exactly on round 8 let the dead hostile fire its beam, and `attacker_won` (which requires surviving hull) recorded the win as a mutual-death loss. Kills on rounds 8/16/24 were being scored as losses and the optimizer ranked against the crews that produced them. With the gate in place, `round_interval: 1` is also safe to model, which retires the last `scheduled_lethal_review` rows (below). Tests: `tests/hostile_other_review_triage.rs`, `tests/borg_defense_protocol_alpha.rs`.
@@ -267,7 +275,8 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | `2936293636` | 44 | isolytic_combat | `isolytic_defense` | Programmable Matter — dampener defense 10.0 + `hostile_final_damage_reduction` 0.5 + SM→0 + round-1 hyperthermic (2026-07-16) |
 | `3196612078` | 39 | hostile_shield_bypass | `shield_mitigation_bypass` | Strength of the Ibix — 100% bypass (10 shots are weapon components, not this seat) |
 | `1088929105` | 30 | faction_gate_lethal | `hostile_lethal_unless_attacker_faction` | S31 Elite — Klingon/Romulan designed ships only |
-| `1539285779` | 30 | armada_scope | `combat_noop` | Armada isolytic defense |
+| `1539285779` | 30 | isolytic_combat | `isolytic_defense` | Faction Armada combat start, +50% Isolytic Defense against player fire |
+| `2794125774` | 30 | isolytic_combat | `isolytic_damage` | Faction Armada combat start, +150% Isolytic Damage on counter-fire |
 | `1651219904` | 30 | faction_gate_lethal | `hostile_lethal_unless_attacker_faction` | Mo'Kai Elite — Fed/Romulan designed ships only |
 
 ---

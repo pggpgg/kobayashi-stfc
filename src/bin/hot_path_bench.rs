@@ -226,6 +226,7 @@ fn weapons(count: usize) -> Vec<WeaponStats> {
         .map(|index| WeaponStats {
             attack: 800.0 + index as f64 * 180.0,
             component_base_attack: None,
+            firing_schedule: None,
             shots: Some([3, 2, 4, 1, 3, 2][index % 6]),
             pierce: Some(0.04 + index as f64 * 0.01),
             crit_chance: Some(0.25 + index as f64 * 0.05),

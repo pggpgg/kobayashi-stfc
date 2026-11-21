@@ -31,6 +31,13 @@
       "value_override": 0.0,
       "condition_opponent_hostile_tags": ["conqueror_borg"]
     },
+    "1628890938": {
+      "timing": "round_start",
+      "effect_type": "accumulating_attack_multiplier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "values_scale_with_ship_level": true
+    },
     "448699234": {
       "timing": "round_start",
       "effect_type": "additive_weapon_damage_growth",
@@ -53,6 +60,12 @@
       "ignore_upstream_value_is_percentage": true,
       "values_scale_with_ship_level": true,
       "condition_opponent_hostile_tags": ["conqueror_borg"]
+    },
+    "34867572": {
+      "timing": "combat_begin",
+      "effect_type": "hull_hp_flat",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true
     },
     "987222969": {
       "timing": "combat_begin",
@@ -97,6 +110,7 @@
       "effect_type": "hostile_counter_stat_debuff",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
       "duration_rounds": 5
     },
     "1379978713": {
@@ -117,7 +131,15 @@
       "effect_type": "hostile_counter_stat_debuff",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
       "duration_rounds": 1
+    },
+    "957865248": {
+      "timing": "round_start",
+      "effect_type": "accumulating_attack_multiplier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_hull_breach": true
     },
     "2195955652": {
       "timing": "attack_phase",
@@ -142,6 +164,25 @@
       "condition_opponent_ship_class_not": "armada",
       "condition_defender_is_npc_hostile": true
     },
+    "2289346504": {
+      "timing": "combat_begin",
+      "effect_type": "component_base_weapon_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "values_scale_with_ship_level": true,
+      "condition_opponent_hostile_tags": ["xindi_aquatic"],
+      "condition_defender_is_npc_hostile": true,
+      "additional_effects": [
+        {
+          "id": "polarized_hull",
+          "timing": "combat_begin",
+          "effect_type": "incoming_shot_deflection",
+          "value": 9,
+          "condition_opponent_hostile_tags": ["xindi_aquatic"],
+          "condition_defender_is_npc_hostile": true
+        }
+      ]
+    },
     "985810609": {
       "timing": "combat_begin",
       "effect_type": "apex_barrier",
@@ -149,6 +190,24 @@
       "ignore_upstream_value_is_percentage": true,
       "condition_opponent_ship_class_not": "armada",
       "condition_defender_is_npc_hostile": true
+    },
+    "394860549": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_override": 0,
+      "unsupported_reason": "Disintegrator hits against a Hull Breached opponent stack base Energy Weapon Damage."
+    },
+    "407462527": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_override": 0,
+      "unsupported_reason": "Incinerator hits against a Burning opponent stack base Weapon Damage."
+    },
+    "4132047263": {
+      "timing": "combat_begin",
+      "effect_type": "combat_noop",
+      "value_override": 0,
+      "unsupported_reason": "Decimator hits while Morale is active stack base Kinetic Weapon Damage."
     }
   }
 }

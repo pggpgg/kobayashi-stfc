@@ -51,10 +51,11 @@ pub use forbidden_tech_special::{
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship,
-    ForbiddenTechBonusCombatRoute, BORG_ALCOVE_FORBIDDEN_TECH_FID,
-    BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID, CONTROL_SEEKER_PROBES_FORBIDDEN_TECH_FID,
-    DUAL_PHOTON_WARHEADS_FORBIDDEN_TECH_FID, QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID,
-    S31_TORPEDO_PODS_FORBIDDEN_TECH_FID, USS_VOYAGER_SHIP_ID,
+    temporal_conduit_chaos_tech_seats, ForbiddenTechBonusCombatRoute,
+    BORG_ALCOVE_FORBIDDEN_TECH_FID, BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID,
+    CONTROL_SEEKER_PROBES_FORBIDDEN_TECH_FID, DUAL_PHOTON_WARHEADS_FORBIDDEN_TECH_FID,
+    QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID, S31_TORPEDO_PODS_FORBIDDEN_TECH_FID,
+    USS_VOYAGER_SHIP_ID,
 };
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -663,26 +664,18 @@ pub fn merge_building_bonuses_with_native_snapshot(
     context: &BuildingBonusContext,
     native_bonuses: Option<&HashMap<String, f64>>,
 ) {
-    if imported_buildings.is_empty() || bid_to_id.is_empty() {
-        return;
-    }
-    // Callers can pass a synthetic index or a partial BID map. The on-disk
-    // index still defines the filenames for records in their chosen directory.
-    let disk_index = fs::read(data_dir.join("index.json"))
-        .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok());
-    merge_building_bonuses_from_index(
+    merge_building_bonuses_from_sources(
         profile,
         imported_buildings,
         bid_to_id,
-        disk_index.as_ref(),
+        None,
         data_dir,
         context,
         native_bonuses,
     );
 }
 
-pub(crate) fn merge_building_bonuses_from_index(
+pub(crate) fn merge_building_bonuses_from_sources(
     profile: &mut PlayerProfile,
     imported_buildings: &[BuildingEntry],
     bid_to_id: &HashMap<i64, String>,
@@ -691,10 +684,6 @@ pub(crate) fn merge_building_bonuses_from_index(
     context: &BuildingBonusContext,
     native_bonuses: Option<&HashMap<String, f64>>,
 ) {
-    if imported_buildings.is_empty() || bid_to_id.is_empty() {
-        return;
-    }
-
     let mut levels_by_id: HashMap<String, u32> = HashMap::new();
     for entry in imported_buildings {
         let Some(id) = bid_to_id.get(&entry.bid) else {
@@ -707,25 +696,39 @@ pub(crate) fn merge_building_bonuses_from_index(
         };
         levels_by_id.insert(id.clone(), level);
     }
-    if levels_by_id.is_empty() {
-        return;
-    }
-
-    let Ok(data_dir) = std::path::absolute(data_dir) else {
-        return;
+    let records: Vec<_> = if levels_by_id.is_empty() {
+        Vec::new()
+    } else {
+        // Public callers can pass partial index hints. Resolve filenames from
+        // disk unless scenario setup already read the index for this directory.
+        let disk_index = if building_index.is_none() {
+            fs::read(data_dir.join("index.json"))
+                .ok()
+                .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        } else {
+            None
+        };
+        let building_index = building_index.or(disk_index.as_ref());
+        std::path::absolute(data_dir)
+            .map(|dir| {
+                levels_by_id
+                    .keys()
+                    .filter_map(|id| {
+                        building::load_building_record_for_combat(&dir, id, building_index)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
     };
-    let records: Vec<_> = levels_by_id
-        .keys()
-        .filter_map(|id| building::load_building_record_for_combat(&data_dir, id, building_index))
-        .collect();
-    if records.is_empty() {
-        return;
-    }
 
+    let context = BuildingBonusContext {
+        syndicate_level: profile.syndicate_level,
+        ..*context
+    };
     let mut bonuses = building::cumulative_building_bonuses_from_records(
         records.iter().map(|record| record.as_ref()),
         &levels_by_id,
-        context,
+        &context,
     );
 
     if let Some(native) = native_bonuses {
@@ -3171,6 +3174,71 @@ mod tests {
             ]
         );
         assert_eq!(reloaded.bonuses.get("weapon_damage"), Some(&0.1));
+    }
+
+    #[test]
+    fn owned_generator_bonuses_require_their_syndicate_unlocks() {
+        let index = building::load_building_index(building::DEFAULT_BUILDINGS_INDEX_PATH)
+            .expect("checked building fixture index");
+        let bid_to_id = crate::data::building_bid_resolver::load_bid_to_building_id(
+            crate::data::building_bid_resolver::DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
+            &index,
+        )
+        .expect("checked building fixture translations");
+        let owned = [
+            BuildingEntry { bid: 0, level: 40 },
+            BuildingEntry { bid: 1, level: 40 },
+            BuildingEntry { bid: 2, level: 1 },
+            BuildingEntry { bid: 3, level: 40 },
+            BuildingEntry { bid: 5, level: 40 },
+            BuildingEntry { bid: 6, level: 1 },
+            BuildingEntry { bid: 7, level: 40 },
+            BuildingEntry { bid: 9, level: 40 },
+            BuildingEntry { bid: 10, level: 1 },
+            BuildingEntry { bid: 11, level: 40 },
+        ];
+        for opponent in [
+            BuildingDefenderOpponent::NpcHostile,
+            BuildingDefenderOpponent::PlayerShip,
+        ] {
+            for (syndicate_level, expected) in [
+                (None, [0.4, 0.0, 0.0]),
+                (Some(29), [0.4, 0.0, 0.0]),
+                (Some(30), [0.4, 1.26, 0.0]),
+                (Some(32), [0.4, 1.26, 0.0]),
+                (Some(33), [0.4, 1.26, 1.51]),
+                (Some(34), [0.4, 1.26, 1.51]),
+                (Some(35), [1.91, 1.26, 1.51]),
+            ] {
+                let mut profile = PlayerProfile {
+                    syndicate_level,
+                    ..Default::default()
+                };
+                merge_building_bonuses_into_profile(
+                    &mut profile,
+                    &owned,
+                    &bid_to_id,
+                    &index,
+                    Path::new("data/buildings"),
+                    &BuildingBonusContext {
+                        ops_level: Some(40),
+                        mode: BuildingMode::ShipCombat,
+                        defender_opponent: opponent,
+                        ..Default::default()
+                    },
+                );
+                for (stat, expected) in ["weapon_damage", "hull_hp", "shield_hp"]
+                    .into_iter()
+                    .zip(expected)
+                {
+                    let actual = profile.bonuses.get(stat).copied().unwrap_or_default();
+                    assert!(
+                        (actual - expected).abs() < 1e-12,
+                        "{opponent:?} Syndicate {syndicate_level:?}: {stat} was {actual}, expected {expected}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]

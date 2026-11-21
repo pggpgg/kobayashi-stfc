@@ -185,6 +185,7 @@ pub struct PreCombatSetup {
     pub combat_end_effects: Vec<ActiveAbilityEffect>,
     // Precomputed defender effects by timing window
     pub defender_combat_begin_effects: Vec<ActiveAbilityEffect>,
+    hostile_combat_begin_isolytic_defense: Vec<ActiveAbilityEffect>,
     pub defender_round_start_effects: Vec<ActiveAbilityEffect>,
     pub defender_attack_phase_effects: Vec<ActiveAbilityEffect>,
     pub defender_defense_phase_effects: Vec<ActiveAbilityEffect>,
@@ -196,6 +197,7 @@ pub struct PreCombatSetup {
     // Combat begin state (initial round 0, all precomputable)
     pub combat_begin_ctx: CombatContext,
     pub combat_begin_filtered: Vec<ActiveAbilityEffect>,
+    incoming_shot_deflection: u32,
     pub attacker_mitigation_additive: f64,
     pub attacker_accuracy_bonus: f64,
     pub attacker_dodge_bonus: f64,
@@ -340,6 +342,13 @@ pub fn build_combat_setup_with_officer_stat(
     let combat_begin_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatBegin);
     let combat_begin_filtered =
         filter_effects_by_condition(&combat_begin_effects, &combat_begin_ctx);
+    let incoming_shot_deflection =
+        combat_begin_filtered
+            .iter()
+            .fold(0u32, |total, effect| match effect.effect {
+                AbilityEffect::IncomingShotDeflection(shots) => total.saturating_add(shots),
+                _ => total,
+            });
     let conqueror_borg_beam_suppression = combat_begin_filtered
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::ConquerorBorgBeamSuppression));
@@ -389,8 +398,18 @@ pub fn build_combat_setup_with_officer_stat(
         active_effects_for_timing(&attacker_crew, TimingWindow::ReceiveDamage);
     let combat_end_effects = active_effects_for_timing(&attacker_crew, TimingWindow::CombatEnd);
 
-    let defender_combat_begin_effects =
+    let mut defender_combat_begin_effects =
         active_effects_for_timing(&defender_crew, TimingWindow::CombatBegin);
+    // A hostile's combat-start Isolytic Defense protects it from player fire.
+    let hostile_combat_begin_isolytic_defense = if defender_is_npc_hostile {
+        defender_combat_begin_effects
+            .extract_if(.., |effect| {
+                matches!(effect.effect, AbilityEffect::IsolyticDefenseBonus(_))
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
     let defender_round_start_effects =
         active_effects_for_timing(&defender_crew, TimingWindow::RoundStart);
     let defender_attack_phase_effects =
@@ -452,6 +471,7 @@ pub fn build_combat_setup_with_officer_stat(
         combat_begin_effects,
         combat_begin_ctx,
         combat_begin_filtered,
+        incoming_shot_deflection,
         attacker_mitigation_additive,
         attacker_accuracy_bonus,
         attacker_dodge_bonus,
@@ -479,6 +499,7 @@ pub fn build_combat_setup_with_officer_stat(
         receive_damage_effects,
         combat_end_effects,
         defender_combat_begin_effects,
+        hostile_combat_begin_isolytic_defense,
         defender_round_start_effects,
         defender_attack_phase_effects,
         defender_defense_phase_effects,
@@ -574,6 +595,8 @@ fn simulate_combat_from_setup_with_attacker_scratch(
         on_hit_crit_stack_expires: [0; MAX_TRACKED_WEAPON_SLOTS],
         on_hit_crit_stack_bonus: 0.0,
         on_hit_timed_bonuses: Vec::new(),
+        attacker_damage_taken_crit_stacks: Vec::new(),
+        defender_damage_taken_crit_stacks: Vec::new(),
         defender_weapon_fire_delayed_rounds: 0,
         defender_kemocite_stacks: 0,
         defender_denticle_blade_active: false,
@@ -871,6 +894,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
             attacker_shield_pct_round,
             defender_hull_pct_round,
             defender_shield_pct_round,
+            hyperthermic_decay_fraction,
         } = apply_defender_round_start(
             &mut trace,
             &mut rng,
@@ -1211,12 +1235,15 @@ fn simulate_combat_from_setup_with_attacker_scratch(
             st.attacker_shield_gross_damage_last_round,
         );
 
-        if config.attacker_hyperthermic_decay_fraction > 0.0 {
-            let decay = config.attacker_hyperthermic_decay_fraction * attacker.hull_health.max(0.0);
-            if decay > 0.0 {
-                st.total_attacker_hull_damage += decay;
-                st.attacker_hull_gross_damage_this_round += decay;
-            }
+        let decay_fraction = if config.attacker_hyperthermic_decay_fraction > 0.0 {
+            config.attacker_hyperthermic_decay_fraction
+        } else {
+            hyperthermic_decay_fraction
+        };
+        let decay = decay_fraction * attacker.hull_health.max(0.0);
+        if decay > 0.0 {
+            st.total_attacker_hull_damage += decay;
+            st.attacker_hull_gross_damage_this_round += decay;
         }
 
         // Prune expired shots bonuses and compute per-scope B_shots(r) sums for this round.
@@ -1286,6 +1313,21 @@ fn simulate_combat_from_setup_with_attacker_scratch(
 
         let defender_inbound_defense_filtered =
             filter_effects_by_condition_borrowed(defender_defense_phase_effects, &combat_ctx);
+        let hostile_combat_begin_isolytic_defense = setup
+            .hostile_combat_begin_isolytic_defense
+            .iter()
+            .filter_map(|effect| match effect.effect {
+                AbilityEffect::IsolyticDefenseBonus(value)
+                    if effect
+                        .condition
+                        .as_ref()
+                        .is_none_or(|gate| gate.evaluate(&combat_ctx)) =>
+                {
+                    Some(value)
+                }
+                _ => None,
+            })
+            .sum::<f64>();
         record_ability_activations(
             &mut trace,
             round_index,
@@ -1353,6 +1395,10 @@ fn simulate_combat_from_setup_with_attacker_scratch(
 
         st.on_hit_timed_bonuses
             .retain(|(expires, _)| *expires >= round_index);
+        st.attacker_damage_taken_crit_stacks
+            .retain(|stack| stack.expires_round >= round_index);
+        st.defender_damage_taken_crit_stacks
+            .retain(|stack| stack.expires_round >= round_index);
         let weapon_round_base = phase_effects_round.clone();
         let mut phase_effects = EffectAccumulator::default();
         let mut after_subround_carry = EffectAccumulator::default();
@@ -1488,9 +1534,24 @@ fn simulate_combat_from_setup_with_attacker_scratch(
             // Recorded PvE logs alternate volleys with the hostile firing first in each
             // weapon sub-round. Delayed or inactive hostile weapons still suppress the
             // after-subround window, but they must not suppress the player volley.
+            let attacker_crit_bonus =
+                damage_taken_crit_total(&st.attacker_damage_taken_crit_stacks, false);
+            if attacker_crit_bonus != 0.0 {
+                phase_effects.add_effect(
+                    TimingWindow::AttackPhase,
+                    AbilityEffect::BaseCritDamageBonus(attacker_crit_bonus),
+                    weapon_base,
+                    round_index,
+                    Some(("damage_taken_crit_stacks", None)),
+                );
+            }
+            let attacker_gross_damage_before = st.attacker_hull_gross_damage_this_round
+                + st.attacker_shield_gross_damage_this_round;
+            let attacker_weapon_fires = attacker.weapon_fires_in_round(weapon_index, round_index);
             let defender_weapon = defender.weapon_attack(weapon_index);
             let skip_defender_weapon = defender_weapon.is_some()
-                && (skip_defender_counter_attack
+                && (!defender.weapon_fires_in_round(weapon_index, round_index)
+                    || skip_defender_counter_attack
                     || (hostile_denticle_blade_gates_weapon(defender_crew, weapon_index)
                         && !st.defender_denticle_blade_active));
             if !skip_defender_weapon {
@@ -1510,6 +1571,7 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                         weapon_index,
                         defender_weapon_attack,
                         def_b_shots,
+                        incoming_shot_deflection: setup.incoming_shot_deflection,
                         weapon_base,
                         attack_phase_assimilated,
                         use_experimental_simd_damage_after_apex_base,
@@ -1581,13 +1643,20 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 compute_apex_damage_factor(effective_apex_shred, effective_apex_barrier)
                     * setup.outbound_final_damage_factor;
 
-            let base_shots = attacker.weapon_base_shots(weapon_index);
-            let effective_shots = effective_shots_for_weapon(
-                base_shots,
-                b_shots.for_weapon(attacker.weapon_type(weapon_index)),
-            );
+            let effective_shots = if attacker_weapon_fires {
+                effective_shots_for_weapon(
+                    attacker.weapon_base_shots(weapon_index),
+                    b_shots.for_weapon(attacker.weapon_type(weapon_index)),
+                )
+            } else {
+                0
+            };
             let defender_alive_before_shot = st.total_hull_damage < defender.hull_health;
             let shield_before_weapon = st.defender_shield_remaining;
+            let defender_damage_before = st.total_hull_damage + st.total_shield_damage;
+            let mut effective_attacker_crit_reduction = effective_attacker_crit_reduction;
+            effective_attacker_crit_reduction.additive_points +=
+                damage_taken_crit_total(&st.defender_damage_taken_crit_stacks, true);
             fire_attacker_weapon(FireAttackerWeapon {
                 st: &mut st,
                 phase_effects_round: &mut phase_effects_round,
@@ -1618,10 +1687,37 @@ fn simulate_combat_from_setup_with_attacker_scratch(
                 phase_effects: &mut phase_effects,
                 hull_breach_effects,
                 defender_inbound_defense_filtered: &defender_inbound_defense_filtered,
+                hostile_combat_begin_isolytic_defense,
                 defender_receive_damage_effects,
                 defender_isolytic_vulnerability: setup.defender_isolytic_vulnerability,
                 shield_routing_mitigation_override,
             });
+
+            // Damage-taken effects resolve after both volleys of this sub-round.
+            if st.attacker_hull_gross_damage_this_round + st.attacker_shield_gross_damage_this_round
+                > attacker_gross_damage_before
+            {
+                grant_damage_taken_crit_stacks(
+                    &mut st.attacker_damage_taken_crit_stacks,
+                    &mut trace,
+                    round_index,
+                    attacker,
+                    &defense_phase_filtered,
+                    defense_phase_assimilated,
+                );
+            }
+            if st.total_hull_damage + st.total_shield_damage > defender_damage_before
+                && st.total_hull_damage < defender.hull_health
+            {
+                grant_damage_taken_crit_stacks(
+                    &mut st.defender_damage_taken_crit_stacks,
+                    &mut trace,
+                    round_index,
+                    defender,
+                    &defender_inbound_defense_filtered,
+                    st.defender_assimilated_rounds_remaining > 0,
+                );
+            }
 
             // Client trigger10 (enemy takes hit) fires after the weapon. A volley
             // grants once even when it has multiple shots; combat ends before more
@@ -3029,6 +3125,7 @@ struct FireAttackerWeapon<'a> {
     phase_effects: &'a mut EffectAccumulator,
     hull_breach_effects: &'a [ActiveAbilityEffect],
     defender_inbound_defense_filtered: &'a [ActiveAbilityEffect],
+    hostile_combat_begin_isolytic_defense: f64,
     defender_receive_damage_effects: &'a [ActiveAbilityEffect],
     defender_isolytic_vulnerability: bool,
     /// `Some(effective mitigation)` while Breen shield-damage routing is active: replaces the
@@ -3075,6 +3172,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         phase_effects,
         hull_breach_effects,
         defender_inbound_defense_filtered,
+        hostile_combat_begin_isolytic_defense,
         defender_receive_damage_effects,
         defender_isolytic_vulnerability,
         shield_routing_mitigation_override,
@@ -3645,6 +3743,7 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 + phase_effects.composed_isolytic_damage_bonus())
             .max(0.0);
             let effective_isolytic_defense = (defender.isolytic_defense
+                + hostile_combat_begin_isolytic_defense
                 + phase_effects.composed_isolytic_defense_bonus()
                 + inbound_defender_effects.composed_isolytic_defense_bonus())
             .max(0.0);
@@ -3918,6 +4017,7 @@ struct FireDefenderCounter<'a> {
     weapon_index: usize,
     defender_weapon_attack: f64,
     def_b_shots: ShotsBonusSums,
+    incoming_shot_deflection: u32,
     weapon_base: f64,
     attack_phase_assimilated: bool,
     use_experimental_simd_damage_after_apex_base: bool,
@@ -3974,6 +4074,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         weapon_index,
         defender_weapon_attack,
         def_b_shots,
+        incoming_shot_deflection,
         weapon_base,
         attack_phase_assimilated,
         use_experimental_simd_damage_after_apex_base,
@@ -4010,10 +4111,33 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     // so the two paths stay in sync. Shot count mirrors outbound: `effective_shots_for_weapon`
     // on `defender.weapon_base_shots` with defender crew `ShotsBonus`.
     let def_base_shots = defender.weapon_base_shots(weapon_index);
-    let def_effective_shots = effective_shots_for_weapon(
+    let shots_before_deflection = effective_shots_for_weapon(
         def_base_shots,
         def_b_shots.for_weapon(defender.weapon_type(weapon_index)),
     );
+    let def_effective_shots = shots_before_deflection.saturating_sub(incoming_shot_deflection);
+    if def_effective_shots < shots_before_deflection {
+        trace.record_if(|| CombatEvent {
+            event_type: "incoming_shot_deflection".to_string(),
+            round_index,
+            phase: "counter".to_string(),
+            source: EventSource {
+                officer_id: Some(attacker.id.clone()),
+                ..EventSource::default()
+            },
+            weapon_index: Some(weapon_index as u32),
+            values: Map::from_iter([
+                (
+                    "shots_before".to_string(),
+                    Value::from(shots_before_deflection),
+                ),
+                ("shots_after".to_string(), Value::from(def_effective_shots)),
+            ]),
+        });
+        if def_effective_shots == 0 {
+            return;
+        }
+    }
 
     let defender_ctx = CombatContext {
         round_index,
@@ -4076,6 +4200,13 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             _ => None,
         })
         .sum();
+    let (hostile_counter_debuff, duration) =
+        hostile_counter_stat_debuff_from_crew(attacker_crew, combat_ctx);
+    let hostile_counter_piercing_factor = if round_in_inclusive_first_n(round_index, duration) {
+        1.0 - hostile_counter_debuff
+    } else {
+        1.0
+    };
 
     // Inbound counter-fire uses the same raw-stat curve before and after a
     // conditional research bonus activates. Combatant defense fields hold
@@ -4123,7 +4254,8 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 .copied()
                 .unwrap_or(params.base_attacker_stats);
             let piercing_multiplier =
-                (1.0 + counter_pierce_bonus_fraction - attacker_base_piercing_reduction).max(0.0);
+                (1.0 + counter_pierce_bonus_fraction - attacker_base_piercing_reduction).max(0.0)
+                    * hostile_counter_piercing_factor;
             let opponent = AttackerStats {
                 armor_piercing: opponent.armor_piercing * piercing_multiplier,
                 shield_piercing: opponent.shield_piercing * piercing_multiplier,
@@ -4215,9 +4347,6 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             }
         })
         .sum();
-    let (hostile_counter_debuff, hostile_counter_debuff_rounds) =
-        hostile_counter_stat_debuff_from_crew(attacker_crew, &defender_ctx);
-
     defender_phase_template.add_effects(
         TimingWindow::CombatBegin,
         &defender_combat_begin_filtered,
@@ -4287,6 +4416,10 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     let mut counter_simd_after_apex_batch = [0.0_f64; 4];
     let mut counter_simd_batch_len = 0;
 
+    let counter_crit_damage_bonus =
+        damage_taken_crit_total(&st.defender_damage_taken_crit_stacks, false);
+    let counter_crit_damage_reduction =
+        damage_taken_crit_total(&st.attacker_damage_taken_crit_stacks, true);
     for hit_index in 0..def_effective_shots {
         if hit_index > 0 && st.total_attacker_hull_damage >= attacker.hull_health {
             break;
@@ -4472,15 +4605,12 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 + defender_phase_effects.pre_attack_pierce_bonus(),
             st.defender_morale_rounds_remaining > 0,
         );
-        if hostile_counter_debuff > 0.0
-            && round_in_inclusive_first_n(round_index, hostile_counter_debuff_rounds)
-        {
-            counter_pierce *= (1.0 - hostile_counter_debuff).max(0.0);
-        }
-        // Preserve the legacy scalar approximation only when no raw context is
-        // available. Raw contexts already consumed the bonus in the curve.
-        if raw_stat_mitigation.is_none() && counter_pierce_bonus_fraction > 0.0 {
-            counter_pierce *= 1.0 + counter_pierce_bonus_fraction;
+        // Raw contexts apply the ship debuff and hostile bonus in the mitigation curve.
+        if raw_stat_mitigation.is_none() {
+            counter_pierce *= hostile_counter_piercing_factor;
+            if counter_pierce_bonus_fraction > 0.0 {
+                counter_pierce *= 1.0 + counter_pierce_bonus_fraction;
+            }
         }
         let counter_damage_through = compute_damage_through_factor(
             counter_mitigation_mult,
@@ -4488,16 +4618,17 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             defender_phase_effects.defense_mitigation_bonus(),
         );
         let attacker_hull_breach_active_for_crit = st.attacker_hull_breach_rounds > 0;
-        // Defender counter-fire: pass 0 for the attacker-outbound CDR params.
-        // Counter-side CDR is applied below so the hostile crit floor can clamp after it.
+        // Existing multiplicative counter-fire reduction is applied below.
+        // Native damage-taken reductions subtract from the crit bonus before the floor.
         let def_crit = resolve_vehicle_weapon_crit(
             defender.weapon_crit_chance(weapon_index),
             defender_phase_effects.crit_chance_bonus() - hostile_crit_chance_reduction,
             defender.weapon_crit_multiplier(weapon_index)
-                + defender_phase_effects.base_crit_damage_bonus(),
+                + defender_phase_effects.base_crit_damage_bonus()
+                + counter_crit_damage_bonus,
             defender_phase_effects.crit_damage_multiplier(),
             0.0,
-            0.0,
+            counter_crit_damage_reduction,
             0.0,
             defender.crit_damage_floor,
             attacker_hull_breach_active_for_crit,
@@ -5285,6 +5416,52 @@ impl ShotsBonusSums {
 
 /// The per-fight **mutable running state** threaded through `simulate_combat_from_setup` and its
 /// phase helpers: cumulative damage, remaining shields, and the per-side status-duration counters.
+struct DamageTakenCritStack {
+    expires_round: u32,
+    amount: f64,
+    reduce_opponent: bool,
+}
+
+fn damage_taken_crit_total(stacks: &[DamageTakenCritStack], reduce_opponent: bool) -> f64 {
+    stacks
+        .iter()
+        .filter(|stack| stack.reduce_opponent == reduce_opponent)
+        .map(|stack| stack.amount)
+        .sum()
+}
+
+fn grant_damage_taken_crit_stacks(
+    stacks: &mut Vec<DamageTakenCritStack>,
+    trace: &mut TraceCollector,
+    round_index: u32,
+    combatant: &Combatant,
+    effects: &[ActiveAbilityEffect],
+    assimilated: bool,
+) {
+    for effect in effects {
+        if let AbilityEffect::DamageTakenCritStack {
+            amount,
+            duration_rounds,
+            reduce_opponent,
+        } = scale_active_effect(effect, assimilated)
+        {
+            stacks.push(DamageTakenCritStack {
+                expires_round: round_index.saturating_add(duration_rounds.max(1) - 1),
+                amount,
+                reduce_opponent,
+            });
+            record_ability_activations(
+                trace,
+                round_index,
+                "after_damage_taken",
+                combatant,
+                std::slice::from_ref(effect),
+                assimilated,
+            );
+        }
+    }
+}
+
 /// Bundled into one struct (task 12) so the weapon-block helpers take `&mut CombatRunState` rather
 /// than ~20 separate `&mut` primitives. Immutable per-fight constants (`max_att_hull`, the breach
 /// per-event rates) and the trace/RNG stay as their own locals.
@@ -5323,6 +5500,8 @@ struct CombatRunState {
     on_hit_crit_stack_bonus: f64,
     /// Independent successful-volley grants: inclusive expiry round and scaled source row.
     on_hit_timed_bonuses: Vec<(u32, ActiveAbilityEffect)>,
+    attacker_damage_taken_crit_stacks: Vec<DamageTakenCritStack>,
+    defender_damage_taken_crit_stacks: Vec<DamageTakenCritStack>,
     defender_weapon_fire_delayed_rounds: u32,
     /// Successful Kemocite Weaponry round-end stacks (Xindi group armadas).
     defender_kemocite_stacks: u32,
@@ -5409,14 +5588,14 @@ impl CombatCtxTemplate {
     }
 }
 
-/// The vitals percentages flowing out of [`apply_defender_round_start`] into the attacker
-/// round-start context: attacker percentages are sampled *before* defender regen/drain, defender
-/// percentages *after* — preserving the original in-loop sampling points exactly.
+/// Defender round-start results used by the attacker phase. Attacker vitals are sampled before
+/// defender regen/drain, defender vitals afterward. Decay applies after attacker regeneration.
 pub(crate) struct DefenderRoundStartVitals {
     pub attacker_hull_pct_round: f64,
     pub attacker_shield_pct_round: f64,
     pub defender_hull_pct_round: f64,
     pub defender_shield_pct_round: f64,
+    pub hyperthermic_decay_fraction: f64,
 }
 
 /// Defender round-start phase: assimilation-extension rolls, defender round-start regen, and
@@ -5482,6 +5661,13 @@ fn apply_defender_round_start(
     );
     let defender_rs_for_assim =
         filter_effects_by_condition_borrowed(defender_round_start_effects, &ctx_def_round_start);
+    let hyperthermic_decay_fraction = defender_rs_for_assim
+        .iter()
+        .filter_map(|entry| match entry.effect {
+            AbilityEffect::HostileHyperthermicDecay { fraction } => Some(fraction),
+            _ => None,
+        })
+        .fold(0.0_f64, f64::max);
     let def_rs_assim_active = *defender_assimilated_rounds_remaining > 0;
     roll_assimilated_extensions_from_effects(
         &mut RoundPhaseCtx {
@@ -5571,6 +5757,7 @@ fn apply_defender_round_start(
         attacker_shield_pct_round,
         defender_hull_pct_round,
         defender_shield_pct_round,
+        hyperthermic_decay_fraction,
     }
 }
 

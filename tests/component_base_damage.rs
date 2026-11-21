@@ -12,6 +12,7 @@ fn component_bonus_uses_raw_weapon_base_and_respects_opponent_gate() {
         weapons: vec![WeaponStats {
             attack: 300.0, // 100 component base with pre-existing profile/officer buffs
             component_base_attack: Some(100.0),
+            firing_schedule: None,
             ..Default::default()
         }],
         ..Default::default()
@@ -71,6 +72,7 @@ fn profile_scaling_preserves_component_base() {
         weapons: vec![WeaponStats {
             attack: 100.0,
             component_base_attack: Some(100.0),
+            firing_schedule: None,
             ..Default::default()
         }],
         ..Default::default()

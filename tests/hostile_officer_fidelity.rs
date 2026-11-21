@@ -1,4 +1,6 @@
-//! Catalog-to-combat bounds for 0718, Annorax, and Arix against NPC ships.
+//! Catalog-to-combat regressions for officer abilities against NPC ships.
+use std::collections::HashMap;
+
 use kobayashi::combat::{
     simulate_combat, simulate_combat_with_defender_faction_and_defender_crew, AbilityClass,
     AbilityEffect, AttackerStats, Combatant, CrewConfiguration, DefenderStats,
@@ -6,7 +8,8 @@ use kobayashi::combat::{
     TraceMode, WeaponStats, WeaponType,
 };
 use kobayashi::data::profile::{
-    compute_officer_stat_runtime_bonus_with_officers, OfficerStatConditionContext, PlayerProfile,
+    apply_profile_to_attacker, compute_officer_stat_runtime_bonus_with_officers,
+    evaluate_officer_stats, OfficerStatConditionContext, PlayerProfile,
 };
 use kobayashi::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
 use kobayashi::lcars::{
@@ -32,6 +35,110 @@ fn crew(captain: &str, bridge: &[String], below: &[String], tier: u8) -> BuffSet
             ..Default::default()
         },
     )
+}
+
+#[test]
+fn launch_attack_bonuses_raise_all_officer_ratings_before_weapon_damage_breakpoints() {
+    let mariner = "beckett-mariner-d93865".to_owned();
+    let eight = "eight-of-eleven-cb5f3c".to_owned();
+    let below = ["tom-paris-3640cc".to_owned()];
+    let captain = "arrock-0791b2";
+    let profile = PlayerProfile {
+        bonuses: [
+            ("officer_attack".to_owned(), 0.10),
+            ("officer_attack_below_decks".to_owned(), 0.20),
+        ]
+        .into(),
+        ..Default::default()
+    };
+    let no_crew_bonuses = HashMap::new();
+
+    for (bridge, rank, expected) in [
+        (vec![mariner.clone()], 1, 0.05),
+        (vec![eight.clone()], 1, 0.45),
+        (vec![mariner.clone(), eight], 5, 1.15),
+    ] {
+        let buff = crew(captain, &bridge, &below, rank);
+        // Set the threshold between a bridge-only and a full-crew contribution.
+        let base =
+            evaluate_officer_stats(&buff.officer_stat_rows, &profile, None, &no_crew_bonuses);
+        let attack = buff.officer_stat_totals.attack;
+        let below_attack = attack - buff.bridge_officer_stat_totals.attack;
+        assert_eq!(buff.officer_stat_rows.len(), bridge.len() + 2);
+        assert!(below_attack > 0.0);
+        let ship = ShipRecord {
+            officer_bonus: OfficerBonusTable {
+                attack: vec![OfficerBonusBreakpoint {
+                    value: base.effective_totals.attack + expected * (attack - below_attack / 2.0),
+                    bonus: 0.50,
+                }],
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let compute = |is_player, static_buffs| {
+            compute_officer_stat_runtime_bonus_with_officers(
+                buff.officer_stat_totals,
+                buff.bridge_officer_stat_totals,
+                &buff.officer_stat_rows,
+                &ship,
+                &profile,
+                None,
+                static_buffs,
+                &buff.pending_officer_stat_contributions,
+                &OfficerStatConditionContext {
+                    defender_is_player_ship: is_player,
+                    ..Default::default()
+                },
+                &[],
+            )
+        };
+        for is_player in [false, true] {
+            let actual = compute(is_player, &buff.static_buffs);
+            assert_eq!(actual.attack_bonus, 0.50, "rank {rank}, {bridge:?}");
+            let unboosted = compute(is_player, &no_crew_bonuses);
+            assert_eq!(unboosted.attack_bonus, 0.0);
+        }
+        let actual = buff.static_buffs["officer_attack"];
+        assert!((actual - expected).abs() < 1e-12);
+        let evaluated =
+            evaluate_officer_stats(&buff.officer_stat_rows, &profile, None, &buff.static_buffs);
+        for (before, after) in base.rows.iter().zip(evaluated.rows.iter()) {
+            assert!(
+                (after.effective.attack
+                    - before.effective.attack
+                    - expected * before.officer.raw.attack)
+                    .abs()
+                    < 1e-9
+            );
+            assert_eq!(after.effective.defense, before.effective.defense);
+            assert_eq!(after.effective.health, before.effective.health);
+        }
+
+        let attacker = Combatant {
+            attack: 100.0,
+            hull_health: 10_000.0,
+            ..Default::default()
+        };
+        let defender = Combatant {
+            hull_health: 10_000.0,
+            ..Default::default()
+        };
+        let attacker =
+            apply_profile_to_attacker(attacker, &profile, None, compute(false, &buff.static_buffs));
+        let result = simulate_combat(
+            &attacker,
+            &defender,
+            &SimulationConfig {
+                rounds: 1,
+                ..Default::default()
+            },
+            buff.to_crew_config(),
+        );
+        assert_eq!(result.total_damage, 150.0);
+    }
+    let below_decks = crew(captain, &[], &[mariner], 5);
+    assert!(!below_decks.static_buffs.contains_key("officer_attack"));
 }
 
 #[test]

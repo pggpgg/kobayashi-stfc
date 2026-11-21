@@ -94,7 +94,7 @@ pub(crate) fn run_chain_trial(
             attacker_roster_officer_ids: input.attacker_roster_officer_ids.clone(),
             incoming_shield_mitigation_bonus: input.incoming_shield_mitigation_bonus,
             incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
-            attacker_hyperthermic_decay_fraction: input.attacker_hyperthermic_decay_fraction,
+            attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
         };
 
@@ -270,7 +270,6 @@ mod tests {
             attacker_roster_officer_ids: vec![],
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
-            attacker_hyperthermic_decay_fraction: 0.0,
             attacker_owner_faction: OpponentFactionTag::Unknown,
             officer_stat_round: None,
         }

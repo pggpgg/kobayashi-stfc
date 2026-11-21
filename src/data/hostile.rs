@@ -218,6 +218,10 @@ impl HostileRecord {
         }
     }
 
+    fn uses_native_weapon_schedule(&self) -> bool {
+        self.hostile_tag_mask() & crate::combat::hostile_tags::HOSTILE_TAG_MASK_XINDI_AQUATIC != 0
+    }
+
     /// Per-weapon stats from normalized `components` entries whose `data.tag` is `"Weapon"`.
     /// Sorted by component `order` (ascending; missing → last). Pierce fields are left unset (use
     /// [`Self::weapons_for_counter_attack`] when building the hostile attacker in combat).
@@ -225,7 +229,11 @@ impl HostileRecord {
         sorted_weapon_component_data(&self.components)
             .into_iter()
             .filter_map(|data| {
-                weapon_stats_from_component_data(data, self.crit_damage_is_bonus.unwrap_or(false))
+                weapon_stats_from_component_data(
+                    data,
+                    self.crit_damage_is_bonus.unwrap_or(false),
+                    self.uses_native_weapon_schedule(),
+                )
             })
             .collect()
     }
@@ -242,16 +250,20 @@ impl HostileRecord {
         sorted_weapon_component_data(&self.components)
             .into_iter()
             .filter_map(|data| {
-                weapon_stats_from_component_data(data, self.crit_damage_is_bonus.unwrap_or(false))
-                    .map(|mut w| {
-                        let atk = hostile_weapon_row_attacker_stats(data, &base);
-                        w.pierce = Some(pierce_damage_through_bonus(
-                            player_defender,
-                            atk,
-                            player_ship_type,
-                        ));
-                        w
-                    })
+                weapon_stats_from_component_data(
+                    data,
+                    self.crit_damage_is_bonus.unwrap_or(false),
+                    self.uses_native_weapon_schedule(),
+                )
+                .map(|mut w| {
+                    let atk = hostile_weapon_row_attacker_stats(data, &base);
+                    w.pierce = Some(pierce_damage_through_bonus(
+                        player_defender,
+                        atk,
+                        player_ship_type,
+                    ));
+                    w
+                })
             })
             .collect()
     }
@@ -263,8 +275,12 @@ impl HostileRecord {
         sorted_weapon_component_data(&self.components)
             .into_iter()
             .filter_map(|data| {
-                weapon_stats_from_component_data(data, self.crit_damage_is_bonus.unwrap_or(false))
-                    .map(|_| hostile_weapon_row_attacker_stats(data, &base))
+                weapon_stats_from_component_data(
+                    data,
+                    self.crit_damage_is_bonus.unwrap_or(false),
+                    self.uses_native_weapon_schedule(),
+                )
+                .map(|_| hostile_weapon_row_attacker_stats(data, &base))
             })
             .collect()
     }
@@ -458,6 +474,7 @@ fn hostile_weapon_row_attacker_stats(data: &Value, fallback: &AttackerStats) -> 
 fn weapon_stats_from_component_data(
     data: &Value,
     crit_damage_is_bonus: bool,
+    use_schedule: bool,
 ) -> Option<WeaponStats> {
     let obj = data.as_object()?;
     let tag = obj.get("tag")?.as_str()?;
@@ -518,6 +535,9 @@ fn weapon_stats_from_component_data(
     Some(WeaponStats {
         attack,
         component_base_attack: None,
+        firing_schedule: use_schedule
+            .then(|| crate::data::ship::weapon_schedule_from_upstream(data))
+            .flatten(),
         shots,
         pierce: None,
         crit_chance,
