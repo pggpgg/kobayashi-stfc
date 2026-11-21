@@ -2592,15 +2592,33 @@ pub(crate) fn build_shared_scenario_data_standalone(
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
 ) -> SharedScenarioData {
+    let pid = profile_index::resolve_profile_id_for_api(None);
+    build_shared_scenario_data_standalone_for_profile(
+        ship,
+        hostile,
+        &pid,
+        support_buffs,
+        defender_opponent,
+        player_defender_officer_crew,
+    )
+}
+
+fn build_shared_scenario_data_standalone_for_profile(
+    ship: &str,
+    hostile: &str,
+    pid: &str,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
+    defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+) -> SharedScenarioData {
     let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .ok()
         .map(index_officers_by_name)
         .unwrap_or_default();
-    let pid = profile_index::resolve_profile_id_for_api(None);
-    let profile_path_str = profile_path(&pid, PROFILE_JSON)
+    let profile_path_str = profile_path(pid, PROFILE_JSON)
         .to_string_lossy()
         .to_string();
-    let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED)
+    let ft_path = profile_path(pid, FORBIDDEN_TECH_IMPORTED)
         .to_string_lossy()
         .to_string();
     let mut profile = load_profile(&profile_path_str);
@@ -2663,6 +2681,25 @@ pub(crate) fn build_shared_scenario_data_standalone(
         }
     }
 
+    let ship_rec = resolve_ship(ship);
+    let hostile_rec = resolve_hostile(hostile);
+    let (building_opponent, building_opponent_ship_type) = match defender_opponent {
+        DefenderOpponent::Hostile => (
+            BuildingDefenderOpponent::NpcHostile,
+            hostile_rec
+                .as_ref()
+                .map(HostileRecord::ship_type_for_combat),
+        ),
+        DefenderOpponent::Player => (BuildingDefenderOpponent::PlayerShip, None),
+    };
+    merge_scenario_building_bonuses(
+        &mut profile,
+        pid,
+        ship_rec.as_ref(),
+        building_opponent,
+        building_opponent_ship_type,
+    );
+
     let support_cat = SupportBuffCatalog::load(crate::runtime_paths::resolve(
         support_buffs::DEFAULT_SUPPORT_BUFFS_PATH,
     ))
@@ -2680,7 +2717,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
 
     let shared_research_catalog = load_research_catalog(DEFAULT_RESEARCH_CATALOG_PATH);
     let canonical_overrides = load_research_canonical_overrides(DEFAULT_RESEARCH_CANONICAL_PATH);
-    let research_path = profile_path(&pid, RESEARCH_IMPORTED)
+    let research_path = profile_path(pid, RESEARCH_IMPORTED)
         .to_string_lossy()
         .into_owned();
     let imported_research = import::load_imported_research(&research_path).unwrap_or_default();
@@ -2748,15 +2785,13 @@ pub(crate) fn build_shared_scenario_data_standalone(
         .ok()
         .map(lcars_officer_data_from_officers);
 
-    let roster_path = profile_path(&pid, ROSTER_IMPORTED)
+    let roster_path = profile_path(pid, ROSTER_IMPORTED)
         .to_string_lossy()
         .to_string();
     let resolve_options = import::load_imported_roster(&roster_path)
         .map(|entries| resolve_options_from_roster(&entries))
         .unwrap_or_default();
 
-    let ship_rec = resolve_ship(ship);
-    let hostile_rec = resolve_hostile(hostile);
     if let Some(ref cat) = shared_research_catalog {
         merge_ship_setup_research_bonuses_into_profile(
             &mut profile,
@@ -2772,7 +2807,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
 
     merge_native_research_bonuses(
         &mut profile,
-        &pid,
+        pid,
         ship_rec.as_ref(),
         &imported_research,
         shared_research_catalog.as_ref(),
@@ -2780,7 +2815,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
     );
     merge_native_consumable_bonuses(
         &mut profile,
-        &pid,
+        pid,
         ship_rec.as_ref(),
         is_non_armada_npc(defender_opponent, hostile_rec.as_ref()),
     );
@@ -2908,7 +2943,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
 
     let (native_defense_derived_seats, native_defense_rounding) =
         native_combat_start_seats_for_profile(
-            &pid,
+            pid,
             ship_rec.as_ref(),
             profile.syndicate_level,
             defender_opponent.defender_is_player_ship(),
@@ -3081,15 +3116,17 @@ fn merge_scenario_building_bonuses(
     let buildings =
         import::load_imported_buildings(&profile_path(pid, BUILDINGS_IMPORTED).to_string_lossy())
             .unwrap_or_default();
-    let bid_to_id = if buildings.is_empty() {
-        HashMap::new()
+    let building_index = if buildings.is_empty() {
+        None
     } else {
         building::load_building_index(DEFAULT_BUILDINGS_INDEX_PATH)
-            .and_then(|index| {
-                load_bid_to_building_id(DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH, &index)
-            })
-            .unwrap_or_default()
     };
+    let bid_to_id = building_index
+        .as_ref()
+        .and_then(|index| {
+            load_bid_to_building_id(DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH, index)
+        })
+        .unwrap_or_default();
     let context = BuildingBonusContext {
         ops_level: profile
             .ops_level
@@ -3112,6 +3149,7 @@ fn merge_scenario_building_bonuses(
         profile,
         &buildings,
         &bid_to_id,
+        building_index.as_ref(),
         data_dir,
         &context,
         native.as_ref(),
@@ -5349,6 +5387,109 @@ mod tests {
     }
 
     #[test]
+    fn standalone_and_registry_share_ranked_building_combat_bonuses() {
+        let id = format!("scenario_buildings_{}", Uuid::new_v4().as_simple());
+        let dir = profile_index::profile_data_dir(&id);
+        fs::create_dir_all(&dir).unwrap();
+        struct Cleanup(std::path::PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = fs::remove_file(self.0.join(PROFILE_JSON));
+                let _ = fs::remove_file(self.0.join(BUILDINGS_IMPORTED));
+                let _ = fs::remove_dir(&self.0);
+            }
+        }
+        let _cleanup = Cleanup(dir);
+        fs::write(
+            profile_path(&id, PROFILE_JSON),
+            r#"{"bonuses":{"weapon_damage":0.25}}"#,
+        )
+        .unwrap();
+        fs::write(
+            profile_path(&id, BUILDINGS_IMPORTED),
+            r#"{"buildings":[{"bid":0,"level":40},{"bid":24,"level":2},{"bid":27,"level":2},
+                {"bid":28,"level":2},{"bid":29,"level":2},{"bid":33,"level":2}]}"#,
+        )
+        .unwrap();
+
+        let registry = DataRegistry::load().unwrap();
+        let hostile = "2918121098";
+        let candidate = CrewCandidate {
+            captain: String::new(),
+            bridge: vec![],
+            below_decks: vec![],
+        };
+        for (ship, shield_bonus) in [("realta", 0.16), ("phindra", 0.10)] {
+            let standalone = build_shared_scenario_data_standalone_for_profile(
+                ship,
+                hostile,
+                &id,
+                support_buffs::SupportBuffScenarioRequest::default(),
+                DefenderOpponent::Hostile,
+                None,
+            );
+            let registered = build_shared_scenario_data_from_registry(
+                registry.as_ref(),
+                ship,
+                hostile,
+                None,
+                None,
+                Some(&id),
+                support_buffs::SupportBuffScenarioRequest::default(),
+                DefenderOpponent::Hostile,
+                None,
+                None,
+            );
+            let (defender_profile, _, _) = load_defender_profile_for_pvp(
+                registry.as_ref(),
+                &id,
+                ship,
+                registered.ship_rec.as_ref().and_then(|s| s.grade),
+            );
+            for (stat, expected) in [
+                ("weapon_damage", 0.67),
+                ("hull_hp", 0.10),
+                ("shield_hp", shield_bonus),
+                ("armor", 0.10),
+                ("shield_deflection", 0.12),
+                ("dodge", 0.10),
+                ("officer_attack", 0.02),
+                ("officer_defense", 0.02),
+                ("officer_health", 0.02),
+            ] {
+                let actual = standalone.profile.bonuses.get(stat).copied().unwrap_or(0.0);
+                assert!(
+                    (actual - expected).abs() < 1e-12,
+                    "{ship} {stat}: {actual} vs {expected}"
+                );
+                assert_eq!(
+                    registered.profile.bonuses.get(stat),
+                    Some(&actual),
+                    "{ship} {stat}"
+                );
+                assert_eq!(
+                    defender_profile.bonuses.get(stat),
+                    Some(&actual),
+                    "PvP defender {ship} {stat}"
+                );
+            }
+
+            let input = scenario_to_combat_input_from_shared(&standalone, &candidate, 41);
+            let registered_input =
+                scenario_to_combat_input_from_shared(&registered, &candidate, 41);
+            assert!((input.profile_weapon_damage_fraction - 0.67).abs() < 1e-12);
+            assert_eq!(
+                input.attacker.hull_health,
+                registered_input.attacker.hull_health
+            );
+            assert_eq!(
+                input.attacker.shield_health,
+                registered_input.attacker.shield_health
+            );
+        }
+    }
+
+    #[test]
     fn native_building_ranks_apply_without_owned_building_sync() {
         struct Cleanup(std::path::PathBuf);
         impl Drop for Cleanup {
@@ -5386,6 +5527,15 @@ mod tests {
         assert_eq!(shared.profile.bonuses.get("shield_hp"), Some(&0.06));
         assert_eq!(shared.profile.bonuses.get("hull_hp"), Some(&0.56));
         assert!(!shared.using_placeholder_combatants);
+        let standalone = build_shared_scenario_data_standalone_for_profile(
+            "phindra",
+            "2918121098",
+            &id,
+            support_buffs::SupportBuffScenarioRequest::default(),
+            DefenderOpponent::Hostile,
+            None,
+        );
+        assert_eq!(standalone.profile.bonuses, shared.profile.bonuses);
         let crew = CrewCandidate {
             captain: String::new(),
             bridge: vec![],

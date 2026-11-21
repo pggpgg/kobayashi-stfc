@@ -126,8 +126,11 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   compile as friendly attack bonuses. The canaries use pre-resolved seats.
 /// * 27 → 28 (2026-11): combat-start weapon damage retains canonical duration.
 ///   Canary w checks combat expiry. The canaries do not load the officer catalog.
-/// * 28 → 29: Enterprise-D firing cadence and eligible-round Galaxy Class stacks.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 29;
+/// * 28 → 29 (2026-11): standalone scenarios load the building pools before
+///   research. Canary f exercises building pools without profile file loading.
+/// * 29 → 30 (2026-11): Enterprise-D firing cadence and eligible-round Galaxy
+///   Class stacks. The canaries do not load normalized ship records.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 30;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -849,6 +852,8 @@ fn canary_fights() -> Vec<CanaryFight> {
     let f_buffs = [
         (476178618, 3),   // global Defense +15%
         (334143899, 2),   // building all officer stats +2%
+        (1474824297, 2),  // Armory hull health +10%
+        (1030529782, 2),  // Shuttle Bay weapon damage +2%
         (941300209, 5),   // captain all stats +35%
         (809236561, 5),   // bridge (including captain) all stats +35%
         (1895868262, 10), // below-decks Defense +100%
@@ -868,6 +873,7 @@ fn canary_fights() -> Vec<CanaryFight> {
         &mut f_profile,
         &[],
         &std::collections::HashMap::new(),
+        None,
         Path::new("data/buildings"),
         &crate::data::building::BuildingBonusContext::default(),
         building_bonuses.as_ref(),
