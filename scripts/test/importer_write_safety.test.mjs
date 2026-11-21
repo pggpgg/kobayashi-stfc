@@ -124,6 +124,27 @@ test("complete building import replaces indexed records and preserves independen
   assert.equal(await f.read("data/buildings/client_critical_semantics_2026-10-20.json"), "independent evidence");
 });
 
+test("building import uses an explicit Operations requirement and honors a higher declared level cap", async t => {
+  const f = await fixture(t, "import_stfcspace_buildings.mjs");
+  const buffs = [{ id: 777, values: Array.from({ length: 99 }, (_, i) => ({ value: i + 1 })) }];
+  await f.put("data/upstream/data-stfc-space/summary-building.json", [
+    { id: 72, unlock_level: 150, max_level: 99, buffs, first_level_requirements: [
+      { requirement_type: "BuildingLevel", requirement_id: 0, requirement_level: 15 },
+      { requirement_type: "TotalOfficerLevel", requirement_id: null, requirement_level: 150 },
+    ] },
+    { id: 73, unlock_level: 26, max_level: 70, buffs, first_level_requirements: [
+      { requirement_type: "BuildingLevel", requirement_id: 72, requirement_level: 3 },
+    ] },
+  ]);
+  const result = f.run("--from-upstream");
+  assert.equal(result.status, 0, result.stderr);
+  const index = JSON.parse(await f.read("data/buildings/index.json"));
+  const records = await Promise.all(index.buildings.map(async ({ file }) =>
+    JSON.parse(await f.read(`data/buildings/${file}.json`))));
+  assert.deepEqual(records.map(({ levels }) => [levels.length, levels[0].ops_min, levels.at(-1).bonuses[0].value]),
+    [[99, 15, 99], [80, 26, 80]]);
+});
+
 test("allowlist seeder preserves hand-written reasons and entries outside its proposals", async t => {
   const f = await fixture(t, "seed_building_opaque_allowlist.mjs");
   const reviewed = { version: 2, entries: { buff_430522112: { category: "economy_meta", reason: "Reviewed custom reason" },

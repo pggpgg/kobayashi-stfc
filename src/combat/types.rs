@@ -405,6 +405,22 @@ impl WeaponType {
     }
 }
 
+/// A weapon first fires on its warm-up round and repeats at its cooldown interval.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WeaponFiringSchedule {
+    pub first_round: u32,
+    pub interval_rounds: u32,
+}
+
+impl WeaponFiringSchedule {
+    pub fn fires_in_round(self, round: u32) -> bool {
+        self.first_round > 0
+            && self.interval_rounds > 0
+            && round >= self.first_round
+            && (round - self.first_round).is_multiple_of(self.interval_rounds)
+    }
+}
+
 /// Per-weapon stats for sub-round resolution. Optional fields override [`Combatant`] ship-level
 /// pierce/crit/proc for that weapon index only; unset → use combatant defaults.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
@@ -414,6 +430,8 @@ pub struct WeaponStats {
     /// Absent for sources that do not expose component base damage.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub component_base_attack: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub firing_schedule: Option<WeaponFiringSchedule>,
     /// Base shots per weapon per round (n_w,0). When absent, 1. Effective shots = [`effective_shots_for_weapon`] with the round's `B_shots` sum.
     #[serde(default)]
     pub shots: Option<u32>,
@@ -559,6 +577,17 @@ impl Combatant {
     /// Number of weapons (sub-rounds per round). Empty weapons list is treated as one weapon using scalar `attack`.
     pub fn weapon_count(&self) -> usize {
         self.weapons.len().max(1)
+    }
+
+    /// Older and scalar weapons without a schedule fire on every combat round.
+    pub fn weapon_fires_in_round(&self, weapon_index: usize, round: u32) -> bool {
+        round > 0
+            && self.weapon_attack(weapon_index).is_some()
+            && self
+                .weapons
+                .get(weapon_index)
+                .and_then(|weapon| weapon.firing_schedule)
+                .is_none_or(|schedule| schedule.fires_in_round(round))
     }
 
     /// Base shots per weapon per round (n_w,0). Default 1 when not set.

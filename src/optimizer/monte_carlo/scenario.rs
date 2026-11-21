@@ -32,7 +32,7 @@ use crate::data::profile::{
     apply_static_buffs_to_combatant, borg_alcove_hull_hp_bonus_fraction,
     borg_operating_table_forbidden_tech_seats, forbidden_tech_derived_attack_phase_seats,
     forbidden_tech_level_tier_scaling_enabled_from_env, load_profile,
-    merge_building_bonuses_with_native_snapshot, merge_research_bonuses_into_profile,
+    merge_building_bonuses_from_sources, merge_research_bonuses_into_profile,
     merge_ship_setup_research_bonuses_into_profile, merge_tech_fids_into_profile_with_level_tier,
     quantum_slipstream_forbidden_tech_round_start_seats,
     replace_research_setup_bonuses_with_native_snapshot, research_derived_attack_phase_seats,
@@ -41,8 +41,8 @@ use crate::data::profile::{
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship,
-    take_static_health_pool_bonus, PlayerProfile, SupportBuffResearchGateState,
-    USS_VOYAGER_SHIP_ID,
+    take_static_health_pool_bonus, temporal_conduit_chaos_tech_seats, PlayerProfile,
+    SupportBuffResearchGateState, USS_VOYAGER_SHIP_ID,
 };
 use crate::data::profile_index::{
     self, profile_path, BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
@@ -2637,6 +2637,11 @@ pub(crate) fn build_shared_scenario_data_standalone(
                     scale_by_level_tier,
                 ),
             );
+            forbidden_tech_derived_seats.extend(temporal_conduit_chaos_tech_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+            ));
             forbidden_tech_derived_seats.extend(ship_class_gated_torpedo_family_derived_seats(
                 &ft_entries,
                 &effective_fids,
@@ -3057,20 +3062,59 @@ fn merge_native_consumable_bonuses(
     }
 }
 
-fn native_building_bonuses_for_profile(
+fn merge_scenario_building_bonuses(
+    profile: &mut PlayerProfile,
     pid: &str,
-    ship_id: &str,
-    syndicate_level: Option<u32>,
-) -> Option<HashMap<String, f64>> {
-    let imported =
+    ship: Option<&ShipRecord>,
+    defender_opponent: BuildingDefenderOpponent,
+    defender_ship_type: Option<ShipType>,
+) {
+    let imported_buffs =
         import::load_imported_buffs(&profile_path(pid, BUFFS_IMPORTED).to_string_lossy())
             .unwrap_or_default();
-    let ship = resolve_ship(ship_id);
-    crate::data::native_building_buffs::building_bonuses_for_imported_buffs(
-        &imported,
-        ship.as_ref().map(|ship| ship.ship_class.as_str()),
-        syndicate_level,
+    let native = crate::data::native_building_buffs::building_bonuses_for_imported_buffs(
+        &imported_buffs,
+        ship.map(|ship| ship.ship_class.as_str()),
+        profile.syndicate_level,
         chrono::Utc::now().timestamp(),
+    );
+    let buildings =
+        import::load_imported_buildings(&profile_path(pid, BUILDINGS_IMPORTED).to_string_lossy())
+            .unwrap_or_default();
+    let bid_to_id = if buildings.is_empty() {
+        HashMap::new()
+    } else {
+        building::load_building_index(DEFAULT_BUILDINGS_INDEX_PATH)
+            .and_then(|index| {
+                load_bid_to_building_id(DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH, &index)
+            })
+            .unwrap_or_default()
+    };
+    let context = BuildingBonusContext {
+        ops_level: profile
+            .ops_level
+            .or_else(|| infer_ops_level(&buildings, &bid_to_id)),
+        mode: BuildingMode::ShipCombat,
+        defender_opponent,
+        attacker_faction: ship
+            .and_then(|ship| ship.faction.as_deref())
+            .map(BuildingAttackerFaction::from_ship_faction_slug)
+            .unwrap_or(BuildingAttackerFaction::Unknown),
+        attacker_ship_type: ship.map(|ship| ship_class_to_type(&ship.ship_class)),
+        attacker_ship_grade: ship.and_then(|ship| ship.grade),
+        defender_ship_type,
+        ..Default::default()
+    };
+    let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
+        .parent()
+        .unwrap_or_else(|| Path::new("data/buildings"));
+    merge_building_bonuses_from_sources(
+        profile,
+        &buildings,
+        &bid_to_id,
+        data_dir,
+        &context,
+        native.as_ref(),
     )
 }
 
@@ -3176,57 +3220,13 @@ fn load_defender_profile_for_pvp(
             );
         }
     }
-    if let Some(imported_buildings) = import::load_imported_buildings(
-        profile_path(&pid, BUILDINGS_IMPORTED)
-            .to_string_lossy()
-            .as_ref(),
-    ) {
-        if !imported_buildings.is_empty() {
-            if let Some(building_index) =
-                building::load_building_index(DEFAULT_BUILDINGS_INDEX_PATH)
-            {
-                if let Some(bid_to_id) = load_bid_to_building_id(
-                    DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
-                    &building_index,
-                ) {
-                    let building_context = BuildingBonusContext {
-                        ops_level: profile
-                            .ops_level
-                            .or_else(|| infer_ops_level(&imported_buildings, &bid_to_id)),
-                        mode: BuildingMode::ShipCombat,
-                        defender_opponent: BuildingDefenderOpponent::PlayerShip,
-                        attacker_faction: resolve_ship(defender_ship_id)
-                            .and_then(|s| s.faction)
-                            .as_deref()
-                            .map(BuildingAttackerFaction::from_ship_faction_slug)
-                            .unwrap_or(BuildingAttackerFaction::Unknown),
-                        attacker_tal_assigned_captain_or_bridge: false,
-                        attacker_ship_type: resolve_ship(defender_ship_id)
-                            .map(|s| ship_class_to_type(&s.ship_class)),
-                        attacker_ship_grade: resolve_ship(defender_ship_id).and_then(|s| s.grade),
-                        defender_ship_type: None,
-                    };
-                    let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
-                        .parent()
-                        .unwrap_or_else(|| Path::new("data/buildings"));
-                    let native = native_building_bonuses_for_profile(
-                        &pid,
-                        defender_ship_id,
-                        profile.syndicate_level,
-                    );
-                    merge_building_bonuses_with_native_snapshot(
-                        &mut profile,
-                        &imported_buildings,
-                        &bid_to_id,
-                        &building_index,
-                        data_dir,
-                        &building_context,
-                        native.as_ref(),
-                    );
-                }
-            }
-        }
-    }
+    merge_scenario_building_bonuses(
+        &mut profile,
+        &pid,
+        resolve_ship(defender_ship_id).as_ref(),
+        BuildingDefenderOpponent::PlayerShip,
+        None,
+    );
     let research_path = profile_path(&pid, RESEARCH_IMPORTED)
         .to_string_lossy()
         .into_owned();
@@ -3345,6 +3345,11 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                     scale_by_level_tier,
                 ),
             );
+            forbidden_tech_derived_seats.extend(temporal_conduit_chaos_tech_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+            ));
             forbidden_tech_derived_seats.extend(ship_class_gated_torpedo_family_derived_seats(
                 &ft_entries,
                 &effective_fids,
@@ -3366,63 +3371,22 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         }
     }
 
-    if let Some(imported_buildings) = import::load_imported_buildings(
-        profile_path(&pid, BUILDINGS_IMPORTED)
-            .to_string_lossy()
-            .as_ref(),
-    ) {
-        if !imported_buildings.is_empty() {
-            if let Some(building_index) =
-                building::load_building_index(DEFAULT_BUILDINGS_INDEX_PATH)
-            {
-                if let Some(bid_to_id) = load_bid_to_building_id(
-                    DEFAULT_STARBASE_MODULES_TRANSLATIONS_PATH,
-                    &building_index,
-                ) {
-                    let building_context = BuildingBonusContext {
-                        ops_level: profile
-                            .ops_level
-                            .or_else(|| infer_ops_level(&imported_buildings, &bid_to_id)),
-                        mode: BuildingMode::ShipCombat,
-                        defender_opponent: match defender_opponent {
-                            DefenderOpponent::Hostile => BuildingDefenderOpponent::NpcHostile,
-                            DefenderOpponent::Player => BuildingDefenderOpponent::PlayerShip,
-                        },
-                        attacker_faction: resolve_ship(ship)
-                            .and_then(|s| s.faction)
-                            .as_deref()
-                            .map(BuildingAttackerFaction::from_ship_faction_slug)
-                            .unwrap_or(BuildingAttackerFaction::Unknown),
-                        attacker_tal_assigned_captain_or_bridge: false,
-                        attacker_ship_type: resolve_ship(ship)
-                            .map(|s| ship_class_to_type(&s.ship_class)),
-                        attacker_ship_grade: resolve_ship(ship).and_then(|s| s.grade),
-                        defender_ship_type: if defender_opponent == DefenderOpponent::Hostile {
-                            registry
-                                .resolve_hostile(hostile)
-                                .map(|h| h.ship_type_for_combat())
-                        } else {
-                            None
-                        },
-                    };
-                    let data_dir = Path::new(DEFAULT_BUILDINGS_INDEX_PATH)
-                        .parent()
-                        .unwrap_or_else(|| Path::new("data/buildings"));
-                    let native =
-                        native_building_bonuses_for_profile(&pid, ship, profile.syndicate_level);
-                    merge_building_bonuses_with_native_snapshot(
-                        &mut profile,
-                        &imported_buildings,
-                        &bid_to_id,
-                        &building_index,
-                        data_dir,
-                        &building_context,
-                        native.as_ref(),
-                    );
-                }
-            }
-        }
-    }
+    let (building_opponent, building_opponent_ship_type) = match defender_opponent {
+        DefenderOpponent::Hostile => (
+            BuildingDefenderOpponent::NpcHostile,
+            registry
+                .resolve_hostile(hostile)
+                .map(|hostile| hostile.ship_type_for_combat()),
+        ),
+        DefenderOpponent::Player => (BuildingDefenderOpponent::PlayerShip, None),
+    };
+    merge_scenario_building_bonuses(
+        &mut profile,
+        &pid,
+        resolve_ship(ship).as_ref(),
+        building_opponent,
+        building_opponent_ship_type,
+    );
 
     let (resolved_support_buffs, unknown_support_buff_ids) = match (
         registry.support_buffs_catalog(),
@@ -5325,6 +5289,133 @@ mod tests {
         ]);
 
         assert_eq!(infer_ops_level(&imported_buildings, &bid_to_id), Some(35));
+    }
+
+    #[test]
+    fn owned_mess_hall_uses_operations_requirement_and_full_rank_curve() {
+        struct Cleanup(std::path::PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = fs::remove_file(self.0.join(BUILDINGS_IMPORTED));
+                let _ = fs::remove_dir(&self.0);
+            }
+        }
+
+        let id = format!("mess_hall_{}", Uuid::new_v4().as_simple());
+        let dir = profile_index::profile_data_dir(&id);
+        fs::create_dir(&dir).unwrap();
+        let _cleanup = Cleanup(dir.clone());
+        let registry = DataRegistry::load().unwrap();
+
+        let cases = [(14, 1), (15, 1), (80, 80), (80, 81), (80, 99)];
+        let actual = cases.map(|(ops, level)| {
+            let buildings = serde_json::json!({"buildings": [
+                {"bid": 0, "level": ops}, {"bid": 72, "level": level}
+            ]});
+            fs::write(dir.join(BUILDINGS_IMPORTED), buildings.to_string()).unwrap();
+            let shared = build_shared_scenario_data_from_registry(
+                registry.as_ref(),
+                "phindra",
+                "2918121098",
+                None,
+                None,
+                Some(&id),
+                support_buffs::SupportBuffScenarioRequest::default(),
+                DefenderOpponent::Hostile,
+                None,
+                None,
+            );
+            assert!(!shared.using_placeholder_combatants);
+            let bonus = |key| shared.profile.bonuses.get(key).copied().unwrap_or(0.0);
+            // Operations also contributes to the weapon damage pool.
+            (
+                bonus("weapon_damage"),
+                bonus("officer_attack"),
+                bonus("officer_defense"),
+                bonus("officer_health"),
+            )
+        });
+
+        for (result, (weapon, officer)) in actual.into_iter().zip([
+            (0.14, 0.0),
+            (0.17, 0.02),
+            (18.95, 6.55),
+            (19.17, 6.79),
+            (23.0, 11.0),
+        ]) {
+            assert!((result.0 - weapon).abs() < 1e-9, "{actual:?}");
+            assert_eq!((result.1, result.2, result.3), (officer, officer, officer));
+        }
+    }
+
+    #[test]
+    fn native_building_ranks_apply_without_owned_building_sync() {
+        struct Cleanup(std::path::PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = fs::remove_file(self.0.join(PROFILE_JSON));
+                let _ = fs::remove_file(self.0.join(BUFFS_IMPORTED));
+                let _ = fs::remove_dir(&self.0);
+            }
+        }
+        let id = format!("native_buildings_{}", Uuid::new_v4().as_simple());
+        let dir = profile_index::profile_data_dir(&id);
+        fs::create_dir(&dir).unwrap();
+        let _cleanup = Cleanup(dir.clone());
+        fs::write(dir.join(PROFILE_JSON), r#"{"bonuses":{"hull_hp":0.5}}"#).unwrap();
+        fs::write(
+            dir.join(BUFFS_IMPORTED),
+            r#"{"buffs":[{"bid":1400315411,"level":2},{"bid":1761515720,"level":2},{"bid":2334827430,"level":2}]}"#,
+        )
+        .unwrap();
+
+        let registry = DataRegistry::load().unwrap();
+        let shared = build_shared_scenario_data_from_registry(
+            registry.as_ref(),
+            "phindra",
+            "2918121098",
+            None,
+            None,
+            Some(&id),
+            support_buffs::SupportBuffScenarioRequest::default(),
+            DefenderOpponent::Hostile,
+            None,
+            None,
+        );
+        assert_eq!(shared.profile.bonuses.get("dodge"), Some(&0.02));
+        assert_eq!(shared.profile.bonuses.get("shield_hp"), Some(&0.06));
+        assert_eq!(shared.profile.bonuses.get("hull_hp"), Some(&0.56));
+        assert!(!shared.using_placeholder_combatants);
+        let crew = CrewCandidate {
+            captain: String::new(),
+            bridge: vec![],
+            below_decks: vec![],
+        };
+        let attacker = scenario_to_combat_input_from_shared(&shared, &crew, 1).attacker;
+        let ship = shared.ship_rec.as_ref().unwrap();
+        assert!((attacker.hull_health - ship.hull_health * 1.56).abs() < 1e-8);
+        assert!((attacker.shield_health - ship.shield_health * 1.06).abs() < 1e-8);
+
+        let (defender, _, _) =
+            load_defender_profile_for_pvp(registry.as_ref(), &id, "realta", None);
+        assert_eq!(defender.bonuses.get("dodge"), Some(&0.02));
+        assert_eq!(defender.bonuses.get("hull_hp"), Some(&0.56));
+        assert!(!defender.bonuses.contains_key("shield_hp"));
+
+        let summary = crate::data::building_summary::building_combat_summary_for_profile_with_ship(
+            &id,
+            Some("phindra"),
+        );
+        assert_eq!(summary.synced_building_count, 0);
+        assert_eq!(summary.setup_bonus_source, "native_active_buffs");
+        assert_eq!(
+            summary.combat_bonuses_from_buildings.get("shield_hp"),
+            Some(&0.06)
+        );
+        assert_eq!(
+            summary.combat_bonuses_from_buildings.get("hull_hp"),
+            Some(&0.06)
+        );
     }
 
     #[test]

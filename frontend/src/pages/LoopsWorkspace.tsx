@@ -21,9 +21,12 @@ import {
 } from "../lib/loopsCatalog";
 import {
   getLoopBestRecord,
+  getLoopLadderRevision,
   type LoopBestRecord,
   type LoopRunContext,
   listLoopRecords,
+  loopWorkspaceStorageKey,
+  resetLoopLadder,
   savePendingLoopRun,
 } from "../lib/loopsWorkspaceStorage";
 import { useLoopClimb } from "../lib/useLoopClimb";
@@ -109,23 +112,41 @@ function ClimbControls({
   onStart,
   nextTargetId,
   totalRungs,
+  ready,
+  loopId,
+  ladderRevision,
+  onReset,
+  hasRecords,
 }: {
   climb: ReturnType<typeof useLoopClimb>;
   onStart: () => void;
   nextTargetId: string | null;
   totalRungs: number;
+  ready: boolean;
+  loopId: string;
+  ladderRevision: number;
+  onReset: () => void;
+  hasRecords: boolean;
 }) {
-  const { plan, progress, isClimbing } = climb;
+  const { progress, isClimbing } = climb;
+  const plan =
+    climb.plan?.loopId === loopId &&
+    (climb.plan.ladderRevision ?? 0) === ladderRevision
+      ? climb.plan
+      : null;
   const done = plan?.results.length ?? 0;
   const current = plan?.rungs[plan.cursor];
+  const last = plan?.results[done - 1];
 
   if (isClimbing) {
     return (
       <div className="loop-climb loop-climb--running">
-        <span>
+        <span role="status">
           Climbing {current ? `level ${current.targetLevel}` : "…"} · rung{" "}
           {(plan?.cursor ?? 0) + 1} of {plan?.rungs.length ?? totalRungs}
-          {progress?.progress ? ` · ${Math.round(progress.progress)}%` : ""}
+          {progress && progress.targetId === current?.targetId
+            ? ` · ${Math.round(progress.progress)}%`
+            : " · Starting optimizer…"}
         </span>
         <button type="button" onClick={climb.cancel}>
           Cancel climb
@@ -146,16 +167,37 @@ function ClimbControls({
       <button
         type="button"
         onClick={onStart}
-        disabled={totalRungs === 0 || !nextTargetId}
+        disabled={!ready || totalRungs === 0 || !nextTargetId}
         title={
-          nextTargetId
-            ? "Run each rung in turn from your frontier upward, warm-starting from the rung below"
-            : "Every rung on this ladder is already cleared"
+          !ready
+            ? "Waiting for the selected profile’s ship data"
+            : nextTargetId
+              ? "Run each rung in turn from your frontier upward, warm-starting from the rung below"
+              : "Every rung on this ladder is already cleared"
         }
       >
-        {nextTargetId ? "Climb this loop" : "Ladder cleared"}
+        {nextTargetId || totalRungs === 0
+          ? "Climb this loop"
+          : "Ladder cleared"}
+      </button>
+      <button
+        type="button"
+        onClick={onReset}
+        disabled={!hasRecords && !summary}
+      >
+        Reset ladder
       </button>
       {summary && <small>{summary}</small>}
+      {last?.error && (
+        <small role="alert">
+          Stopped at level {last.targetLevel}. {last.error}
+        </small>
+      )}
+      {last?.outcome === "contested" && !last.error && (
+        <small role="status">
+          Level {last.targetLevel} missed the clearance threshold.
+        </small>
+      )}
     </div>
   );
 }
@@ -169,8 +211,12 @@ export default function LoopsWorkspace() {
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
   const [ships, setShips] = useState<ShipListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadedProfileId, setLoadedProfileId] = useState<string | null>(null);
+  const climbReady =
+    activeProfileId !== null && loadedProfileId === activeProfileId && !loading;
   const [error, setError] = useState<string | null>(null);
   const [recordsRevision, setRecordsRevision] = useState(0);
+  const [resetNotice, setResetNotice] = useState<string | null>(null);
 
   const selectedLoop =
     LOOP_CATALOG.find((loop) => loop.id === selectedLoopId) ?? LOOP_CATALOG[0];
@@ -178,7 +224,9 @@ export default function LoopsWorkspace() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setLoadedProfileId(null);
     setError(null);
+    setResetNotice(null);
     Promise.all([
       fetchHostiles(),
       fetchShips(false, activeProfileId),
@@ -187,6 +235,7 @@ export default function LoopsWorkspace() {
       .then(([hostileList, allShips, ownedShips]) => {
         if (cancelled) return;
         setHostiles(hostileList);
+        setLoadedProfileId(activeProfileId);
         if (ownedShips.length === 0) {
           setShips(allShips);
           return;
@@ -231,9 +280,21 @@ export default function LoopsWorkspace() {
 
   useEffect(() => {
     const refresh = () => setRecordsRevision((revision) => revision + 1);
+    const refreshStorage = (event: StorageEvent) => {
+      if (
+        event.key === loopWorkspaceStorageKey(activeProfileId) ||
+        event.key === null
+      ) {
+        refresh();
+      }
+    };
     window.addEventListener("focus", refresh);
-    return () => window.removeEventListener("focus", refresh);
-  }, []);
+    window.addEventListener("storage", refreshStorage);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("storage", refreshStorage);
+    };
+  }, [activeProfileId]);
 
   const loopHostiles = useMemo(
     () => resolveLoopHostiles(hostiles, selectedLoop),
@@ -279,6 +340,10 @@ export default function LoopsWorkspace() {
   );
 
   const climb = useLoopClimb(activeProfileId);
+  const ladderRevision = getLoopLadderRevision(
+    activeProfileId,
+    selectedLoop.id,
+  );
 
   // Refresh the ladder as each rung completes so badges track the climb live.
   useEffect(() => {
@@ -289,9 +354,31 @@ export default function LoopsWorkspace() {
     if (climb.isClimbing) return;
     setSelectedLoopId(id);
     setSelectedShipId("");
+    setResetNotice(null);
+  };
+
+  const resetLadder = () => {
+    if (
+      climb.isClimbing ||
+      !window.confirm(
+        `Reset the ${selectedLoop.name} ladder? This deletes its saved results for every goal on the active profile.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      resetLoopLadder(activeProfileId, selectedLoop.id);
+      setRecordsRevision((revision) => revision + 1);
+      setError(null);
+      setResetNotice(`${selectedLoop.name} ladder reset.`);
+    } catch (cause) {
+      setResetNotice(null);
+      setError(`Could not reset the ladder. ${formatApiError(cause)}`);
+    }
   };
 
   const startClimb = () => {
+    if (!climbReady) return;
     const shipId = selectedShipId;
     if (!shipId) {
       setError("Choose a ship before climbing this loop.");
@@ -330,6 +417,7 @@ export default function LoopsWorkspace() {
     }
     const context: LoopRunContext = {
       loopId: selectedLoop.id,
+      ladderRevision: getLoopLadderRevision(activeProfileId, selectedLoop.id),
       loopName: selectedLoop.name,
       targetId: hostile.id,
       targetName: hostileLabel(hostile),
@@ -487,6 +575,8 @@ export default function LoopsWorkspace() {
             </div>
           )}
 
+          {resetNotice && <p role="status">{resetNotice}</p>}
+
           <div className="ladder-heading">
             <div>
               <div className="loops-eyebrow">Progression ladder</div>
@@ -496,6 +586,11 @@ export default function LoopsWorkspace() {
                 onStart={startClimb}
                 nextTargetId={frontier.nextTargetId}
                 totalRungs={loopHostiles.length}
+                ready={climbReady}
+                loopId={selectedLoop.id}
+                ladderRevision={ladderRevision}
+                onReset={resetLadder}
+                hasRecords={loopRecords.length > 0}
               />
             </div>
             <span>

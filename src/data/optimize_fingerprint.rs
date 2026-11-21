@@ -24,9 +24,14 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::OnceLock;
 
+use crate::combat::effect_spec_compile::compile_officer_combat_spec;
 use crate::combat::{
     simulate_combat, Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant,
     CrewConfiguration, CrewSeat, CrewSeatContext, SimulationConfig, TimingWindow, TraceMode,
+};
+use crate::data::combat_effect_spec::{
+    AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec, AbilityTriggerSpec, ChanceSpec,
+    CombatEffectSpec, DurationSpec, EffectSource, ValueSpec,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::data::import::{GlobalBuffEntry, ShipEntry};
@@ -104,7 +109,24 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 /// * 19 → 20 (2026-11): 0718's crew-wide Defense changes the scenario's rating
 ///   before ship breakpoints. The engine canaries do not load the officer catalog.
 ///   Powered Armor's fight-start hull and raw Armor behavior has a separate canary.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 20;
+/// * 20 → 21 (2026-11): owned generator bonuses require the saved Syndicate
+///   level during profile setup. Canary r exercises the gate with synthetic data.
+/// * 22 → 23 (2026-11): unsupported officer crit triggers and opponent crit
+///   damage reductions stop compiling as friendly bonuses. The pre-resolved
+///   engine canaries do not exercise the canonical officer converter.
+/// * 23 → 24 (2026-11): crew-wide launch Attack now contributes to ship breakpoints.
+///   Canary f covers the crew rating pool. The source mapping itself is outside
+///   the synthetic canaries.
+/// * 24 → 25 (2026-11): active native building buffs reach combat setup without
+///   an owned-building import. Canary f covers the shared merge; the canary
+///   fights do not exercise profile file discovery or scenario routing.
+/// * 25 → 26 (2026-11): D4 Relentless Hunting retains the source's decimal
+///   fractions. Canary v covers combat application but does not load the curve.
+/// * 26 → 27 (2026-11): canonical opponent weapon damage reductions no longer
+///   compile as friendly attack bonuses. The canaries use pre-resolved seats.
+/// * 27 → 28 (2026-11): combat-start weapon damage retains canonical duration.
+///   Canary w checks combat expiry. The canaries do not load the officer catalog.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 28;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -411,12 +433,106 @@ fn canary_fight_summaries() -> Vec<String> {
         result.total_damage,result.attacker_won,result.winner_by_round_limit,result.rounds_simulated,
         result.attacker_hull_remaining,result.defender_hull_remaining,result.defender_shield_remaining,
         result.attacker_shield_remaining,result.total_isolytic_damage));
+    // Fire Isolytic Damage in both directions to detect which hull the Armada's
+    // combat-start Isolytic Defense protects.
+    let mut attacker = canary_combatant("canary_s_attacker");
+    attacker.attack = 510.0;
+    attacker.isolytic_damage = 1.0;
+    let mut defender = canary_combatant("canary_s_armada");
+    defender.attack = 200.0;
+    let defender_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDamageBonus(1.5),
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDefenseBonus(0.5),
+            ),
+        ],
+    };
+    let result = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &canary_config(2, 71),
+        &CrewConfiguration::default(),
+        crate::combat::OpponentFactionTag::Romulan,
+        crate::combat::ShipType::Armada,
+        crate::combat::ShipType::Battleship,
+        true,
+        false,
+        &defender_crew,
+    );
+    summaries.push(format!("s_hostile_combat_begin_isolytic_defense:dmg={:.6};won={};limit={};rounds={};ahull={:.6};dhull={:.6};dshield={:.6};ashield={:.6};iso={:.6};",
+        result.total_damage,result.attacker_won,result.winner_by_round_limit,result.rounds_simulated,
+        result.attacker_hull_remaining,result.defender_hull_remaining,result.defender_shield_remaining,
+        result.attacker_shield_remaining,result.total_isolytic_damage));
+
+    // The hostile engagement limit stops a potential win. Cascade Nullification
+    // also exercises separate outbound Isolytic Defense and counter critical damage.
+    let mut attacker = canary_combatant("canary_t_player");
+    attacker.attack = 230.0;
+    attacker.isolytic_damage = 0.25;
+    let mut defender = canary_combatant("canary_t_hostile");
+    defender.attack = 10.0;
+    defender.crit_chance = 1.0;
+    let defender_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileEngagementRoundLimit { rounds: 3 },
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDefenseBonus(2.5),
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageFloorBonus(3.0),
+            ),
+        ],
+    };
+    defender.crit_damage_floor =
+        crate::combat::hostile_crit_damage_floor_bonus_from_defender_crew(&defender_crew);
+    let result = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &canary_config(8, 73),
+        &CrewConfiguration { seats: vec![] },
+        crate::combat::OpponentFactionTag::Unknown,
+        crate::combat::ShipType::Armada,
+        crate::combat::ShipType::Battleship,
+        true,
+        false,
+        &defender_crew,
+    );
+    summaries.push(format!(
+        "t_hostile_engagement_limit:dmg={:.6};won={};limit={};rounds={};dhull={:.6};ahull={:.6};iso={:.6};",
+        result.total_damage,
+        result.attacker_won,
+        result.winner_by_round_limit,
+        result.rounds_simulated,
+        result.defender_hull_remaining,
+        result.attacker_hull_remaining,
+        result.total_isolytic_damage,
+    ));
 
     // The stronger decay ends after round one. The weaker seat still applies in round two.
-    let mut attacker = canary_combatant("canary_q_player");
+    let mut attacker = canary_combatant("canary_y_player");
     attacker.hull_health = 10_000.0;
     attacker.attack = 100.0;
-    let defender = canary_combatant("canary_q_hostile");
+    let defender = canary_combatant("canary_y_hostile");
     let sustained = canary_seat(
         CrewSeat::Ship,
         AbilityClass::ShipAbility,
@@ -445,7 +561,7 @@ fn canary_fight_summaries() -> Vec<String> {
         },
     );
     summaries.push(format!(
-        "q_hostile_hyperthermic_decay:dmg={:.6};rounds={};ahull={:.6};",
+        "y_hostile_hyperthermic_decay:dmg={:.6};rounds={};ahull={:.6};",
         result.total_damage, result.rounds_simulated, result.attacker_hull_remaining,
     ));
     summaries
@@ -710,11 +826,17 @@ fn canary_fights() -> Vec<CanaryFight> {
     f_profile.bonuses.extend(
         crate::data::native_consumable_buffs::bonuses_for_imported_buffs(&f_buffs, None, 0),
     );
-    for (key, value) in
-        crate::data::native_building_buffs::bonuses_for_imported_buffs(&f_buffs, None, None, 0)
-    {
-        *f_profile.bonuses.entry(key).or_default() += value;
-    }
+    let building_bonuses = crate::data::native_building_buffs::building_bonuses_for_imported_buffs(
+        &f_buffs, None, None, 0,
+    );
+    crate::data::profile::merge_building_bonuses_from_sources(
+        &mut f_profile,
+        &[],
+        &std::collections::HashMap::new(),
+        Path::new("data/buildings"),
+        &crate::data::building::BuildingBonusContext::default(),
+        building_bonuses.as_ref(),
+    );
     // Catalog groups are disjoint; officer pools add across the three sources.
     for (key, value) in
         crate::data::native_research_buffs::research_bonuses_for_imported_buffs(&f_buffs, None, 0)
@@ -734,15 +856,29 @@ fn canary_fights() -> Vec<CanaryFight> {
         level: 1,
         seat,
         raw: crate::combat::CrewOfficerStatTotals {
+            attack: 50.0,
             defense: 50.0,
             ..Default::default()
         },
     })
     .collect::<Vec<_>>();
+    let f_base_attack_rating = crate::data::profile::evaluate_officer_stats(
+        &f_rows,
+        &f_profile,
+        None,
+        &Default::default(),
+    )
+    .effective_totals
+    .attack;
     let f_ship = crate::data::ship::ShipRecord {
         ship_class: "battleship".into(),
         armor: 20.0,
         officer_bonus: crate::data::ship::OfficerBonusTable {
+            // +30% to both seats crosses this threshold. Captain only does not.
+            attack: vec![crate::data::ship::OfficerBonusBreakpoint {
+                value: f_base_attack_rating + 22.5,
+                bonus: 0.25,
+            }],
             defense: vec![crate::data::ship::OfficerBonusBreakpoint {
                 value: 200.5,
                 bonus: 0.5,
@@ -753,10 +889,12 @@ fn canary_fights() -> Vec<CanaryFight> {
     };
     let f_runtime = crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
         crate::combat::CrewOfficerStatTotals {
+            attack: 100.0,
             defense: 100.0,
             ..Default::default()
         },
         crate::combat::CrewOfficerStatTotals {
+            attack: 50.0,
             defense: 50.0,
             ..Default::default()
         },
@@ -764,7 +902,7 @@ fn canary_fights() -> Vec<CanaryFight> {
         &f_ship,
         &f_profile,
         None,
-        &std::collections::HashMap::new(),
+        &[("officer_attack".into(), 0.30)].into(),
         &[],
         &crate::data::profile::OfficerStatConditionContext::default(),
         &[],
@@ -840,22 +978,54 @@ fn canary_fights() -> Vec<CanaryFight> {
         )],
     };
 
-    // (j) base-component damage is distinct from already buffed weapon attack.
+    // (j) Aquatic base-component damage, flat shot deflection, weapon schedules and reactive crit.
     let mut j_attacker = canary_combatant("canary_j_attacker");
     j_attacker.weapons = vec![crate::combat::WeaponStats {
         attack: 250.0,
         component_base_attack: Some(40.0),
+        firing_schedule: Some(crate::combat::WeaponFiringSchedule {
+            first_round: 2,
+            interval_rounds: 2,
+        }),
+        crit_chance: Some(1.0),
         ..Default::default()
     }];
     let mut j_defender = canary_combatant("canary_j_defender");
     j_defender.hull_health = 8_000.0;
+    j_defender.weapons = vec![crate::combat::WeaponStats {
+        attack: 12.0,
+        shots: Some(10),
+        firing_schedule: Some(crate::combat::WeaponFiringSchedule {
+            first_round: 1,
+            interval_rounds: 100,
+        }),
+        ..Default::default()
+    }];
     let j_crew = CrewConfiguration {
-        seats: vec![canary_seat(
-            CrewSeat::Ship,
-            AbilityClass::ShipAbility,
-            TimingWindow::CombatBegin,
-            AbilityEffect::ComponentBaseWeaponDamageBonus(3.0),
-        )],
+        seats: vec![
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::ComponentBaseWeaponDamageBonus(3.0),
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::IncomingShotDeflection(9),
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::DefensePhase,
+                AbilityEffect::DamageTakenCritStack {
+                    amount: 0.3,
+                    duration_rounds: 2,
+                    reduce_opponent: false,
+                },
+            ),
+        ],
     };
 
     // (k) piercing-derived setup must not add a second quarter of the damage
@@ -1000,6 +1170,170 @@ fn canary_fights() -> Vec<CanaryFight> {
         initial_attacker_hull_damage: 500.0,
         ..canary_config(5, 71)
     };
+    let mut counter_piercing = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::CombatBegin,
+        AbilityEffect::HostileCounterStatDebuff {
+            reduction: 0.35,
+            duration_rounds: 1,
+        },
+    );
+    counter_piercing.ability.condition = Some(AbilityCondition::DefenderIsNpcHostile);
+
+    // An owned generator supplies a weapon bonus only when its Syndicate gate passes.
+    use crate::data::building::{
+        cumulative_building_level_bonuses, BonusEntry, BuildingLevel, BuildingRecord,
+    };
+    use crate::data::profile::{apply_profile_to_attacker, OfficerStatRuntimeBonus, PlayerProfile};
+    let generator = BuildingRecord {
+        id: "canary_generator".into(),
+        building_name: "Generator".into(),
+        data_version: None,
+        source_note: None,
+        levels: vec![BuildingLevel {
+            level: 1,
+            ops_min: None,
+            ops_max: None,
+            bonuses: vec![BonusEntry {
+                stat: "weapon_damage".into(),
+                value: 0.5,
+                operator: "add".into(),
+                conditions: vec!["syndicate_level_at_least_35".into()],
+                notes: None,
+            }],
+        }],
+    };
+    let building_profile = PlayerProfile {
+        bonuses: cumulative_building_level_bonuses(&generator, 1),
+        ..Default::default()
+    };
+    let mut building_attacker = canary_combatant("generator_player");
+    building_attacker.attack = 131.0;
+    let building_attacker = apply_profile_to_attacker(
+        building_attacker,
+        &building_profile,
+        None,
+        OfficerStatRuntimeBonus::default(),
+    );
+    let mut building_defender = canary_combatant("generator_hostile");
+    building_defender.attack = 83.0;
+
+    let shots_spec = CombatEffectSpec {
+        id: "canary:round_start_shots".into(),
+        source: EffectSource::LcarsOfficer,
+        source_ref: None,
+        text: None,
+        trigger: AbilityTriggerSpec::RoundStart,
+        target: AbilityTargetSpec::AttackerSelf,
+        modifier: AbilityModifierSpec::ShotsBonus,
+        operation: AbilityOperationSpec::Add,
+        value: Some(ValueSpec {
+            scalar: Some(1.0),
+            by_rank: None,
+            unit: None,
+            officer_stat_scaling: None,
+        }),
+        chance: Some(ChanceSpec {
+            scalar: Some(0.30),
+            by_rank: None,
+        }),
+        duration: Some(DurationSpec::Rounds { rounds: 2 }),
+        decay: None,
+        accumulate: None,
+        conditions: Vec::new(),
+        attributes: Default::default(),
+        officer: Default::default(),
+        stacking: None,
+        category: None,
+        confidence: None,
+    };
+    let (timing, effect, condition) =
+        compile_officer_combat_spec(&shots_spec).expect("round-start shot canary compiles");
+    let mut shots = canary_seat(
+        CrewSeat::Bridge,
+        AbilityClass::BridgeAbility,
+        timing,
+        effect,
+    );
+    shots.ability.condition = condition;
+    let mut shots_attacker = canary_combatant("canary_t_attacker");
+    shots_attacker.attack = 31.0;
+    let mut shots_defender = canary_combatant("canary_t_defender");
+    shots_defender.attack = 13.0;
+
+    // Breach-gated hull weapon damage at RoundStart.
+    let mut breach_attacker = canary_combatant("canary_v_player");
+    breach_attacker.attack = 100.0;
+    let mut breach_growth = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::RoundStart,
+        AbilityEffect::AccumulatingAttackMultiplier {
+            initial: 1.0,
+            growth_per_round: 0.25,
+            ceiling: 2.0,
+        },
+    );
+    breach_growth.ability.condition = Some(AbilityCondition::DefenderHullBreach);
+    let breach_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::RoundStart,
+                AbilityEffect::HullBreach {
+                    chance: 1.0,
+                    duration_rounds: 2,
+                    requires_critical: false,
+                },
+            ),
+            breach_growth,
+        ],
+    };
+
+    let mut opening_attacker = canary_combatant("opening_salvo_attacker");
+    opening_attacker.attack = 100.0;
+    let mut opening_salvo = canary_seat(
+        CrewSeat::Captain,
+        AbilityClass::CaptainManeuver,
+        TimingWindow::CombatBegin,
+        AbilityEffect::AttackMultiplier(0.1),
+    );
+    opening_salvo.ability.condition = Some(AbilityCondition::RoundRange { min: 1, max: 1 });
+
+    // Fleet Commander weapon damage uses the unexpired active rank only.
+    let commander_buffs = [
+        GlobalBuffEntry {
+            bid: 251_122_208,
+            level: 1,
+            expiry_time: Some(101),
+        },
+        GlobalBuffEntry {
+            bid: 251_122_208,
+            level: 15,
+            expiry_time: Some(100),
+        },
+    ];
+    let commander_profile = crate::data::profile::PlayerProfile {
+        bonuses: crate::data::native_research_buffs::research_bonuses_for_imported_buffs(
+            &commander_buffs,
+            None,
+            100,
+        )
+        .unwrap_or_default(),
+        ..Default::default()
+    };
+    let mut commander_attacker = canary_combatant("commander_player");
+    commander_attacker.attack = 29.0;
+    let commander_attacker = crate::data::profile::apply_profile_to_attacker(
+        commander_attacker,
+        &commander_profile,
+        None,
+        Default::default(),
+    );
+    let mut commander_defender = canary_combatant("commander_target");
+    commander_defender.hull_health = 20_000.0;
 
     vec![
         (
@@ -1068,7 +1402,7 @@ fn canary_fights() -> Vec<CanaryFight> {
             i_crew,
         ),
         (
-            "j_component_base_damage",
+            "j_component_base_damage_and_shot_deflection",
             j_attacker,
             j_defender,
             canary_config(7, 41),
@@ -1103,6 +1437,15 @@ fn canary_fights() -> Vec<CanaryFight> {
             CrewConfiguration::default(),
         ),
         (
+            "npc_counter_piercing",
+            arix_attacker.clone(),
+            arix_defender.clone(),
+            canary_config(2, 73),
+            CrewConfiguration {
+                seats: vec![counter_piercing],
+            },
+        ),
+        (
             "q_powered_armor",
             arix_attacker,
             arix_defender,
@@ -1110,6 +1453,43 @@ fn canary_fights() -> Vec<CanaryFight> {
             CrewConfiguration {
                 seats: vec![arix_armor],
             },
+        ),
+        (
+            "r_locked_building_weapon_damage",
+            building_attacker,
+            building_defender,
+            canary_config(4, 73),
+            CrewConfiguration::default(),
+        ),
+        (
+            "u_recurring_officer_shots",
+            shots_attacker,
+            shots_defender,
+            canary_config(9, 3),
+            CrewConfiguration { seats: vec![shots] },
+        ),
+        (
+            "v_breach_weapon_growth",
+            breach_attacker,
+            canary_combatant("canary_v_hostile"),
+            canary_config(3, 79),
+            breach_crew,
+        ),
+        (
+            "w_first_round_weapon_damage",
+            opening_attacker,
+            canary_combatant("opening_salvo_defender"),
+            canary_config(3, 97),
+            CrewConfiguration {
+                seats: vec![opening_salvo],
+            },
+        ),
+        (
+            "x_fleet_commander_active_buff",
+            commander_attacker,
+            commander_defender,
+            canary_config(3, 73),
+            CrewConfiguration::default(),
         ),
     ]
 }
@@ -1765,15 +2145,34 @@ mod tests {
         );
     }
 
+    #[test]
+    fn recurring_shots_canary_detects_old_roll_window_and_chance() {
+        let (_, attacker, defender, config, crew) = canary_fights()
+            .into_iter()
+            .find(|(id, ..)| *id == "u_recurring_officer_shots")
+            .unwrap();
+        let correct = simulate_combat(&attacker, &defender, &config, &crew).total_damage;
+        let mut clipped = crew.clone();
+        clipped.seats[0].ability.condition = Some(AbilityCondition::RoundRange { min: 1, max: 2 });
+        let clipped = simulate_combat(&attacker, &defender, &config, &clipped).total_damage;
+        let mut guaranteed = crew;
+        if let AbilityEffect::ShotsBonus { chance, .. } = &mut guaranteed.seats[0].ability.effect {
+            *chance = 1.0;
+        }
+        let guaranteed = simulate_combat(&attacker, &defender, &config, &guaranteed).total_damage;
+        assert_ne!(correct, clipped);
+        assert_ne!(correct, guaranteed);
+    }
+
     /// A suite whose fights all end the same way would hash the same after most engine changes.
     /// Every fight must reach a distinct outcome, and none may end instantly.
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 18, "expected eighteen canary fights");
+        assert_eq!(summaries.len(), 26, "expected twenty-six canary fights");
         let decay = summaries
             .iter()
-            .find(|summary| summary.starts_with("q_hostile_hyperthermic_decay:"))
+            .find(|summary| summary.starts_with("y_hostile_hyperthermic_decay:"))
             .expect("decay canary");
         assert!(
             decay.contains("rounds=2;ahull=6500.000000;"),

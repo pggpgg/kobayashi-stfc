@@ -830,17 +830,23 @@ mod tests {
     }
 
     #[test]
-    fn scenario_native_setup_excludes_owned_inactive_research_and_owner_pool() {
+    fn scenario_hull_setup_respects_commander_activation_and_native_precedence() {
         let catalog = crate::data::research::load_research_catalog(
             crate::data::research::DEFAULT_RESEARCH_CATALOG_PATH,
         )
         .unwrap();
-        let imported = [ResearchEntry {
-            rid: 1933674629,
-            level: 3,
-        }];
+        let imported = [
+            ResearchEntry {
+                rid: 445_679_281, // Always On Lorca's Defense contributes +100% hull.
+                level: 1,
+            },
+            ResearchEntry {
+                rid: 1_933_674_629, // On Duty Fortified Rampart requires activation.
+                level: 3,
+            },
+        ];
         let owned = combat_research_bonuses_from_import(&imported, &catalog, None);
-        assert_eq!(owned.get("hull_hp"), Some(&0.4));
+        assert_eq!(owned.get("hull_hp"), Some(&1.0));
         let native = crate::data::native_research_buffs::research_bonuses_for_imported_buffs(
             &[import::GlobalBuffEntry {
                 bid: 434613423,
@@ -858,19 +864,23 @@ mod tests {
             OpponentFactionTag::Klingon,
             "battleship",
         );
-        let (effective, _) = build_scenario_effective(
-            &imported,
-            &catalog,
-            &HashSet::new(),
-            &owned,
-            &HashMap::new(),
-            &[],
-            &scenario,
-            Some(&native),
-        );
+        let effective_bonuses = |active_bonuses| {
+            build_scenario_effective(
+                &imported,
+                &catalog,
+                &HashSet::new(),
+                &owned,
+                &HashMap::new(),
+                &[],
+                &scenario,
+                active_bonuses,
+            )
+            .0
+        };
+        assert_eq!(effective_bonuses(None).get("hull_hp"), Some(&1.0));
+        let effective = effective_bonuses(Some(&native));
         assert!(!effective.contains_key("hull_hp"));
         assert_eq!(effective.get("hull_hp_flat"), Some(&3400.0));
-        assert_eq!(owned.get("hull_hp"), Some(&0.4));
     }
 
     #[test]

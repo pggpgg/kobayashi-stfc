@@ -120,8 +120,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             let ops_level = infer_ops_level(&imported, &bid_to_id);
+            let profile_path = kobayashi::data::profile_index::profile_path(
+                pid,
+                kobayashi::data::profile_index::PROFILE_JSON,
+            );
+            let profile = kobayashi::data::profile::load_profile(&profile_path.to_string_lossy());
             let context = kobayashi::data::building::BuildingBonusContext {
                 ops_level,
+                syndicate_level: profile.syndicate_level,
                 mode: kobayashi::data::building::BuildingMode::ShipCombat,
                 defender_opponent: kobayashi::data::building::BuildingDefenderOpponent::Unknown,
                 attacker_faction: kobayashi::data::building::BuildingAttackerFaction::Unknown,

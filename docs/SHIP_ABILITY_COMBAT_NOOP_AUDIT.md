@@ -12,6 +12,22 @@ Kelcie Mae `2748355073` remains a no-op because its Capture Node/Takeover/player
 conditions are unsupported. See [combat corrections](MONAVEEN_ENTERPRISE_D_COMBAT.md)
 for source identities, operation order and validation limits.
 
+**Grade 6 named weapon stacks (2026-11):** K'Rencha Disintegrate `394860549`,
+Scimitar Designed For War `407462527`, and Enterprise-E Drawing The Line
+`4132047263` remain catalogued with normalization warnings. Their source
+descriptions require hits from the Disintegrator, Incinerator, and Decimator,
+respectively. Scopely's release notes confirm the status conditions and damage
+types. The cached component localizations identify the named weapons as
+`600012`, `600013`, and `600011`. The raw curves remain in the pinned ship
+details. The previous mappings reacted to incoming damage or a round start.
+[Scopely G6 release notes](https://startrekfleetcommand.com/news/introducing-g6/) ·
+[Cached ability text](../data/upstream/data-stfc-space/translations-ship_buffs.json) ·
+[Cached component names](../data/upstream/data-stfc-space/translations-ship_components.json)
+
+Implementation needs weapon-level evidence for when the earning hit changes
+damage, whether a stack is earned once per shot or firing volley, and whether
+stacks survive expiry and reapplication of the required status.
+
 **Catalog revision (2026-05-19, Track D + D2):** There are **140** upstream ability ids in `data/upstream/data-stfc-space/ship_ability_catalog.json`. **67** map to `effect_type: combat_noop` (inventory-only in combat). **73** are modeled for the sim (timing + effect resolved in `src/data/ship_ability_resolve.rs` and related combat code). Opponent hull-class gates (`condition_opponent_ship_class`) are evaluated against the hostile’s `ship_class` in [`CombatContext::defender_ship_type`](../src/combat/abilities.rs).
 
 **Track E update (2026-06-07):** The two breach-gated cumulative crit proc chains — Hegh'ta "Open the Wound" (`3432906971`) and Rotarran "Bird of Prey" (`2195955652`) — are now **modeled** (see §6.5), dropping the noop inventory from **67 → 65**. An earlier revision of §6.2 mislabeled these proc chains with the ids `2520552521` / `3014221215`; those two ids are in fact economy abilities (transogen loot / tritanium mining) and remain `combat_noop`.
@@ -80,7 +96,8 @@ Counts are approximate because a few lines span multiple themes (e.g. Trellium m
 `scripts/generate_full_ship_ability_catalog.py` now maps (and `ship_ability_catalog.json` matches):
 
 - **True Aim** — combat start accuracy vs hostiles → `combat_begin` + `accuracy` (summed in scenario; not a crew seat).
-- **Mirror / Borg / Swarm / Actian / Xindi-Aquatic** — “damage increased … against …” without the literal phrase “weapon damage” → `attack_multiplier` + `condition_opponent_faction` where slugs exist.
+- **Mirror / Borg / Swarm / Actian** — “damage increased … against …” without the literal phrase “weapon damage” → `attack_multiplier` + `condition_opponent_faction` where slugs exist.
+- **Enterprise NX-01** — Learning The Hard Way (`2289346504`) adds its per-level fraction of raw component damage to the already scaled weapon attack. Polarized Hull deflects nine shots from each hostile weapon before counter-fire rolls. Both require the native Aquatic faction (`2745774076`) on an NPC hostile. The upstream ship row carries the Learning The Hard Way curve. The catalog override adds Polarized Hull from the separate ship description (`loca_id 63002`). [Scopely ability documentation](https://scopely.helpshift.com/hc/en/19-star-trek-fleet-command/faq/7830-enterprise-nx-01/)
 - **Opponent hull class** — text ties bonuses to Explorer / Battleship / Interceptor (e.g. “if the opponent’s ship is…”, “against interceptors”) → appropriate `effect_type` + `condition_opponent_ship_class`.
 - **Round cap** — phrases like “first 5 rounds of combat” set catalog `round_cap` (and `AbilityCondition::RoundRange` in the resolver). Omitted when `duration_rounds` is set on the row (e.g. Crozier hostile crit reduction uses effect duration only).
 
@@ -98,7 +115,7 @@ in [DESIGN.md](DESIGN.md) alongside the combat implementation.
 ## 4. Drift control (regeneration)
 
 1. Run from repo root: `python3 scripts/generate_full_ship_ability_catalog.py` (requires Python 3).
-2. **Overrides:** After heuristics, the script merges `data/upstream/data-stfc-space/ship_ability_catalog_overrides.json` (`entries` object: ability id → full catalog row). Use this for hand-tuned rows that must survive regeneration.
+2. **Overrides:** After heuristics, the script merges `data/upstream/data-stfc-space/ship_ability_catalog_overrides.json` (`entries` object: ability id → full catalog row). Use this for hand-tuned rows that must survive regeneration. Set `unsupported_reason` on an unsupported combat row to report its missing mechanic during ship normalization.
 3. **Diff:** Compare the regenerated `ship_ability_catalog.json` to the previous commit; port any intentional deltas either into the Python classifier or into `ship_ability_catalog_overrides.json`.
 
 Approximations for modeled rows remain summarized in [DESIGN.md](DESIGN.md) §3.6 (Ship hull abilities).
@@ -124,9 +141,9 @@ Eight parallel shards reviewed all noop ids against `ships/*.json` `ability[]`, 
 
 | id | Ship | Catalog `effect_type` | Engine effect | Assumption | Value |
 | --- | --- | --- | --- | --- | --- |
-| `701705952` | Quv’Sompek | `hostile_counter_stat_debuff` | [`HostileCounterStatDebuff`](../src/combat/abilities.rs) — 5 rounds | Uniform pierce multiplier on counter-fire (proxy for armor/shield pierce + accuracy debuff). | 0.12 |
+| `701705952` | Quv’Sompek | `hostile_counter_stat_debuff` | [`HostileCounterStatDebuff`](../src/combat/abilities.rs) — 5 rounds | Reduces NPC Armor Piercing, Shield Piercing, and Accuracy on the counter-firing weapon. | 0.12 |
 | `1379978713` | Sanctus | `defender_shield_drain_per_round` | [`DefenderShieldDrainPerRound`](../src/combat/abilities.rs) — `round_start`, 5 rounds | Drains `fraction × max_shield` at round start. | 0.10 |
-| `2441576367` | B’Rel | `hostile_counter_stat_debuff` | Same — `duration_rounds: 1` | First-round-only pierce debuff (same proxy as Quv’Sompek). | 0.15 |
+| `2441576367` | B’Rel | `hostile_counter_stat_debuff` | Same — `duration_rounds: 1` | Reduces the same three NPC weapon stats in round one. | 0.15 |
 | `1463338054` | U.S.S. Intrepid | `hostile_engagement_defensive` | [`HostileEngagementDefensiveBonus`](../src/combat/abilities.rs) | Same % added to counter-fire mitigation + dodge sums. | 0.40 |
 
 > **Data activation fix (2026-06-07).** Track D2 mapped the catalog/overrides in 2026-05-19 but the
@@ -136,11 +153,14 @@ Eight parallel shards reviewed all noop ids against `ships/*.json` `ability[]`, 
 > 15%), so a regeneration alone would have baked them **100× too small** (`0.0015`). Both are fixed:
 > the rows now carry `value_is_percentage: false` + `ignore_upstream_value_is_percentage: true` (the
 > documented "upstream marks small decimals as %" case — see [`normalize_data_stfc_space.rs`](../src/bin/normalize_data_stfc_space.rs)),
-> and `ships_extended` is regenerated. The **Value** column shows the resolved per-ability fraction
-> (first-tier `values[]` entry; these rows are not level-scaled). Re-run after catalog edits:
+> and `ships_extended` is regenerated. The **Value** column shows the fraction at level 1.
+> The resolver uses the ship-level curve when the values vary. Re-run after catalog edits:
 > `cargo run --bin normalize_data_stfc_space`.
 
-Tests: [`tests/ship_ability_hostile_debuff.rs`](../tests/ship_ability_hostile_debuff.rs). Regenerate `ships_extended` after catalog change: `cargo run --bin normalize_data_stfc_space` (or full data refresh).
+The raw-counter path applies the debuff before the mitigation curve. The legacy scalar
+pierce path uses the same debuff when raw stats are unavailable. Both paths retain
+the existing 95% cap. Source-backed tests exercise the NPC gate, level and round
+boundaries, and both counter-fire paths. [Catalog and raw-stat tests](../tests/ship_ability_track_d2_data.rs) · [Legacy scalar tests](../tests/ship_ability_hostile_debuff.rs)
 
 ### 6.2 Proc chains (modeled in Track E — see §6.5)
 
@@ -156,7 +176,7 @@ ids and ships:
 
 ### 6.3 In-game verification (HiggsBozo)
 
-- Confirm B’Rel `2441576367` debuff stat (pierce vs accuracy vs damage) and round-1-only scope.
+- Compare B’Rel `2441576367` and Quv’Sompek `701705952` against frozen inbound traces. A target with a known piercing bonus can distinguish stacking order, and a high-level Quv’Sompek can distinguish the existing 95% cap from a native zero floor.
 - Confirm Sanctus `1379978713` shield drain is % of max shield per round and round cap from ability tier.
 - Intrepid `1463338054`: whether dodge/deflection stack with officer buffs in hostile fights.
 - For `509252162`, verify how the server combines the base damage bonus with profile and officer effects before enabling it. The current resolver reports the effect as unsupported.

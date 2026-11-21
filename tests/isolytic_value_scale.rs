@@ -111,6 +111,33 @@ fn double_down_defense_from_chance_barrier_from_value() {
     );
 }
 
+#[test]
+fn cascade_nullification_uses_level_defense_and_a_fixed_crit_floor() {
+    for (hostile_id, expected_defense) in [
+        ("827555808", 2.5),
+        ("3507276863", 5.0),
+        ("4095062731", 15.0),
+    ] {
+        let crew = crew_for(hostile_id);
+        assert_single(
+            &seat_values(&crew, "3679636736", |effect| match effect {
+                AbilityEffect::IsolyticDefenseBonus(value) => Some(*value),
+                _ => None,
+            }),
+            expected_defense,
+            "Cascade Nullification isolytic defense",
+        );
+        assert_single(
+            &seat_values(&crew, "3679636736", |effect| match effect {
+                AbilityEffect::HostileCritDamageFloorBonus(value) => Some(*value),
+                _ => None,
+            }),
+            3.0,
+            "Cascade Nullification crit floor",
+        );
+    }
+}
+
 /// Isolytic Simulator + Dampeners (1767142233 on hostile 109780618): the hardcoded
 /// "increases its Isolytic Defense by 1000%" overrides the meaningless upstream value
 /// (1 → old seat 0.01), and the "can only be damaged by Isolytic Damage" line becomes a
@@ -141,6 +168,106 @@ fn isolytic_simulator_dampeners_bundle() {
         }),
         0.08,
         "hyperthermic decay",
+    );
+}
+
+#[test]
+fn polaron_prototypes_only_resolve_the_documented_isolytic_defense() {
+    for (hostile_id, weaponry_id) in [
+        ("5765927", "323291059"), // Federation
+        ("980858", "49117123"),   // Klingon
+        ("1178966", "817894448"), // Romulan
+    ] {
+        let crew = crew_for(hostile_id);
+        assert!(
+            crew.seats
+                .iter()
+                .all(|seat| seat.ability.name != weaponry_id),
+            "Polaron Weaponry {weaponry_id} must not emit a simulated stat bonus"
+        );
+        assert_eq!(crew.seats.len(), 1, "unexpected effects for {hostile_id}");
+        let defense = &crew.seats[0].ability;
+        assert_eq!(defense.name, "2920844674");
+        assert!(matches!(
+            defense.effect,
+            AbilityEffect::IsolyticDefenseBonus(50.0)
+        ));
+        assert_eq!(defense.timing, kobayashi::combat::TimingWindow::CombatBegin);
+        assert!(defense.condition.is_none());
+    }
+}
+
+#[test]
+fn polaron_dampeners_reduce_only_the_isolytic_damage_pool() {
+    let attacker = Combatant {
+        attack: 5_100.0,
+        hull_health: 100_000.0,
+        isolytic_damage: 1.0,
+        ..Default::default()
+    };
+    let defender = Combatant {
+        attack: 2_040.0,
+        hull_health: 100_000.0,
+        isolytic_damage: 1.0,
+        ..Default::default()
+    };
+    let config = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        ..Default::default()
+    };
+    let empty = CrewConfiguration { seats: vec![] };
+    let run = |crew: &CrewConfiguration, config: &SimulationConfig, player_type| {
+        kobayashi::combat::simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            &defender,
+            config,
+            &empty,
+            OpponentFactionTag::Klingon,
+            ShipType::Interceptor,
+            player_type,
+            true,
+            false,
+            crew,
+        )
+    };
+    let crew = crew_for("980858");
+    let control = run(&empty, &config, ShipType::Explorer);
+    let dampened = run(&crew, &config, ShipType::Explorer);
+    assert_eq!(control.total_isolytic_damage, 5_100.0);
+    assert_eq!(dampened.total_isolytic_damage, 100.0);
+    assert_eq!(
+        dampened.total_damage - dampened.total_isolytic_damage,
+        control.total_damage - control.total_isolytic_damage,
+    );
+    assert_eq!(
+        dampened.attacker_hull_remaining,
+        control.attacker_hull_remaining
+    );
+    let traced = run(
+        &crew,
+        &SimulationConfig {
+            trace_mode: TraceMode::Events,
+            ..config.clone()
+        },
+        ShipType::Explorer,
+    );
+    assert_eq!(traced.total_damage, dampened.total_damage);
+    assert_eq!(
+        traced.attacker_hull_remaining,
+        dampened.attacker_hull_remaining
+    );
+    let mut gated = crew;
+    gated.seats[0].ability.condition = Some(
+        kobayashi::combat::AbilityCondition::AttackerShipTypeIs(ShipType::Battleship),
+    );
+    assert_eq!(
+        run(&gated, &config, ShipType::Explorer).total_isolytic_damage,
+        5_100.0,
+    );
+    assert_eq!(
+        run(&gated, &config, ShipType::Battleship).total_isolytic_damage,
+        100.0,
     );
 }
 

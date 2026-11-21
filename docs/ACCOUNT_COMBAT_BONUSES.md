@@ -58,6 +58,11 @@ and 205. These conditions require the corresponding Syndicate minimum. Their
 values also depend on building level, so a Syndicate table alone cannot resolve
 them.
 
+When no recognized active building snapshot is available, the simulator uses
+owned building levels. The Parsteel, Tritanium, and Dilithium A and B
+generator bonuses require confirmed Syndicate levels 30, 33, and 35,
+respectively. Each eligible bonus uses the current level of its generator.
+
 Active imports retain BuffID identity. Duplicate entries select the highest
 eligible current level once. Expired entries do not contribute. The new reward
 catalog and CLI do not merge level-derived totals into runtime profiles.

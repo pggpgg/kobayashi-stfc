@@ -325,6 +325,7 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::ShotsBonus { .. }
             | AbilityEffect::OnHitCritDamageStack { .. }
             | AbilityEffect::OnHitTimedBonus { .. }
+            | AbilityEffect::DamageTakenCritStack { .. }
             | AbilityEffect::DefenderOnHitStack { .. }
             | AbilityEffect::HostileCritDamageReduction { .. }
             | AbilityEffect::HostileLethalEndOfRound { .. }
@@ -336,6 +337,7 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::HostileDefenderMitigationMultiplier { .. }
             | AbilityEffect::HostileCritDamageFloorBonus(_)
             | AbilityEffect::DefenderFireDelay { .. }
+            | AbilityEffect::IncomingShotDeflection(_)
             | AbilityEffect::RandomDefenderState { .. }
             | AbilityEffect::DecayingAttackMultiplier { .. }
             | AbilityEffect::AccumulatingAttackMultiplier { .. }
@@ -376,6 +378,9 @@ pub fn compile_officer_combat_spec_full(
     // into the accumulator for the rest of the fight.
     let skip_round_gate = (timing == TimingWindow::CombatBegin
         && effect_has_intrinsic_duration(&effect))
+        // Round-start shot grants each expire relative to their own proc.
+        // Any trigger window is expressed by an explicit condition.
+        || (timing == TimingWindow::RoundStart && spec.modifier == AbilityModifierSpec::ShotsBonus)
         // State durations describe each proc after it fires, not an expiry
         // window for the ability itself. In particular, a hit-triggered burn
         // with a two-round duration can still proc in round three or later.
@@ -384,7 +389,10 @@ pub fn compile_officer_combat_spec_full(
         // clip re-arming past `spec.duration` (the duration bounds each stack, not the trigger).
         || matches!(
             effect,
-            AbilityEffect::OnHitCritDamageStack { .. } | AbilityEffect::OnHitTimedBonus { .. } | AbilityEffect::DefenderOnHitStack { .. }
+            AbilityEffect::OnHitCritDamageStack { .. }
+                | AbilityEffect::OnHitTimedBonus { .. }
+                | AbilityEffect::DamageTakenCritStack { .. }
+                | AbilityEffect::DefenderOnHitStack { .. }
         );
     let condition = if skip_round_gate {
         condition
@@ -626,6 +634,30 @@ fn compile_officer_combat_spec_impl(
                     .as_ref()
                     .ok_or(EffectSpecCompileError::MissingScalarValue)?,
             )?;
+            if timing == TimingWindow::DefensePhase {
+                if let Some(DurationSpec::Rounds { rounds }) = spec.duration.as_ref() {
+                    let reduce_opponent = spec.target == AbilityTargetSpec::DefenderOpponent;
+                    if matches!(
+                        (op, spec.target),
+                        (
+                            "add",
+                            AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+                        ) | ("sub", AbilityTargetSpec::DefenderOpponent)
+                    ) && v.is_finite()
+                        && v > 0.0
+                    {
+                        return Ok((
+                            timing,
+                            AbilityEffect::DamageTakenCritStack {
+                                amount: v,
+                                duration_rounds: *rounds,
+                                reduce_opponent,
+                            },
+                            compiled_condition.clone(),
+                        ));
+                    }
+                }
+            }
             // On-hit crit-damage buff with a finite duration (Seska "Rules Are for Fools"):
             // per-weapon stacking with engine-managed expiry, not a flat round-gated multiplier.
             // Additive ops only — the stack bonus is an additive fraction per hit.
@@ -1064,10 +1096,20 @@ fn compile_officer_combat_spec_impl(
             )?;
             let bonus_pct = fold_operator_to_additive(op, v);
             let duration_rounds = officer_spec_duration_rounds(spec, 1);
+            let chance = if timing == TimingWindow::RoundStart {
+                spec.chance
+                    .as_ref()
+                    .and_then(|c| c.scalar)
+                    .filter(|c| c.is_finite())
+                    .unwrap_or(1.0)
+                    .clamp(0.0, 1.0)
+            } else {
+                1.0
+            };
             Ok((
                 timing,
                 AbilityEffect::ShotsBonus {
-                    chance: 1.0,
+                    chance,
                     bonus_pct,
                     duration_rounds,
                 },

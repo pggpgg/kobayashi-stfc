@@ -243,6 +243,11 @@ and current levels. The generated project catalog remains the fallback when
 that source is unavailable. Canonical status/timing seats and nonselected
 research families retain their separate paths.
 
+Fleet Commander projects labeled On Duty, including selectable and active
+abilities, require a current active buff. The owned-project importer excludes
+their bonuses and reports `requires_active_global_buff` in `--dump-unmapped`.
+Always On projects remain eligible for the catalog fallback.
+
 Selected setup families now also include accuracy, armor/shield piercing and
 crew-wide officer Attack/Defense/Health. Native rank selection retains ship-class
 gates and Direct Hit's grade-4 minimum. Unknown grades cannot satisfy that gate.

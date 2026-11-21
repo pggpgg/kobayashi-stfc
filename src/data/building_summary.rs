@@ -131,7 +131,8 @@ pub fn building_combat_summary_for_profile_with_ship(
     }
     if player.syndicate_level.is_none() {
         source_limitations.push(
-            "Syndicate level is unknown; native loyalty-gated bonuses are excluded.".to_string(),
+            "Syndicate level is unknown. Bonuses that require a Syndicate level are excluded."
+                .to_string(),
         );
     }
     if native.is_none() {
@@ -234,6 +235,7 @@ pub fn building_combat_summary_for_profile_with_ship(
     };
     let mut scratch = PlayerProfile {
         ops_level: player.ops_level,
+        syndicate_level: player.syndicate_level,
         bonuses: HashMap::new(),
         support_buffs: Vec::new(),
         forbidden_tech_override: None,
@@ -273,19 +275,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn native_summary_matches_selected_class_and_known_syndicate_setup_pools() {
+    fn summary_applies_syndicate_and_class_gates_for_both_building_sources() {
         let pid = format!("summary_native_{}", uuid::Uuid::new_v4().as_simple());
         let root = profile_path(&pid, PROFILE_JSON)
             .parent()
             .unwrap()
             .to_path_buf();
         std::fs::create_dir_all(&root).unwrap();
-        std::fs::write(root.join(PROFILE_JSON), r#"{"syndicate_level":45}"#).unwrap();
         std::fs::write(
             root.join(BUILDINGS_IMPORTED),
-            r#"{"buildings":[{"bid":0,"level":60}]}"#,
+            r#"{"buildings":[{"bid":0,"level":60},{"bid":5,"level":40}]}"#,
         )
         .unwrap();
+        let fallback = building_combat_summary_for_profile(&pid);
+        assert_eq!(fallback.setup_bonus_source, "owned_catalog_fallback");
+        assert!(!fallback
+            .combat_bonuses_from_buildings
+            .contains_key("shield_hp"));
+        std::fs::write(root.join(PROFILE_JSON), r#"{"syndicate_level":45}"#).unwrap();
+        let fallback = building_combat_summary_for_profile(&pid);
+        assert_eq!(
+            fallback.combat_bonuses_from_buildings.get("shield_hp"),
+            Some(&1.5)
+        );
+
         std::fs::write(
             root.join(BUFFS_IMPORTED),
             r#"{"buffs":[

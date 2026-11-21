@@ -60,6 +60,8 @@ pub enum AbilityEffect {
     /// Fraction of the unbuffed weapon component's damage, added to the shot.
     /// Kept separate from legacy, already profile-scaled attack pools.
     ComponentBaseWeaponDamageBonus(f64),
+    /// Flat number of shots deflected from each opposing weapon volley.
+    IncomingShotDeflection(u32),
     /// Additive max-hull fraction from conditional research/LCARS (`0.12` ⇒ ×1.12 max hull when the seat's conditions pass).
     HullHpMultiplier(f64),
     /// Additive max-shield fraction from conditional research/LCARS (`0.08` ⇒ ×1.08 max shield when conditions pass).
@@ -196,6 +198,12 @@ pub enum AbilityEffect {
         crit_chance: f64,
         cascade_damage: f64,
         duration_rounds: u32,
+    },
+    /// One additive crit modifier per damaging incoming weapon volley, after the sub-round.
+    DamageTakenCritStack {
+        amount: f64,
+        duration_rounds: u32,
+        reduce_opponent: bool,
     },
     /// On-hit crit-damage stack (Seska "each time you score a hit (Once per weapon)"): each
     /// attacker weapon's hit (re)arms one stack of `+bonus` (additive fraction on the crit-damage
@@ -1083,10 +1091,8 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
             *crit_chance = cap_one(*crit_chance);
             *cascade_damage = scale(*cascade_damage);
         }
-        AbilityEffect::OnHitCritDamageStack {
-            bonus,
-            duration_rounds: _,
-        } => *bonus = scale(*bonus),
+        AbilityEffect::OnHitCritDamageStack { bonus, .. }
+        | AbilityEffect::DamageTakenCritStack { amount: bonus, .. } => *bonus = scale(*bonus),
         AbilityEffect::ShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::AttackerShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::MitigationAdditive(v) => *v = scale(*v),
@@ -1188,6 +1194,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::OpponentCaptainManeuverMultiplier(_)
         | AbilityEffect::CaptainManeuverMultiplier(_)
         | AbilityEffect::DefenderFireDelay { .. }
+        | AbilityEffect::IncomingShotDeflection(_)
         | AbilityEffect::RandomDefenderState { .. }
         | AbilityEffect::HostileIsolyticVulnerability
         | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
