@@ -115,7 +115,9 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 /// * 24 → 25 (2026-11): active native building buffs reach combat setup without
 ///   an owned-building import. Canary f covers the shared merge; the canary
 ///   fights do not exercise profile file discovery or scenario routing.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 25;
+/// * 25 → 26 (2026-11): D4 Relentless Hunting retains the source's decimal
+///   fractions. Canary t covers combat application but does not load the curve.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 26;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -1116,6 +1118,36 @@ fn canary_fights() -> Vec<CanaryFight> {
     let mut building_defender = canary_combatant("generator_hostile");
     building_defender.attack = 83.0;
 
+    // Breach-gated hull weapon damage at RoundStart.
+    let mut breach_attacker = canary_combatant("canary_t_player");
+    breach_attacker.attack = 100.0;
+    let mut breach_growth = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::RoundStart,
+        AbilityEffect::AccumulatingAttackMultiplier {
+            initial: 1.0,
+            growth_per_round: 0.25,
+            ceiling: 2.0,
+        },
+    );
+    breach_growth.ability.condition = Some(AbilityCondition::DefenderHullBreach);
+    let breach_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::RoundStart,
+                AbilityEffect::HullBreach {
+                    chance: 1.0,
+                    duration_rounds: 2,
+                    requires_critical: false,
+                },
+            ),
+            breach_growth,
+        ],
+    };
+
     vec![
         (
             "a_plain",
@@ -1241,6 +1273,13 @@ fn canary_fights() -> Vec<CanaryFight> {
             building_defender,
             canary_config(4, 73),
             CrewConfiguration::default(),
+        ),
+        (
+            "t_breach_weapon_growth",
+            breach_attacker,
+            canary_combatant("canary_t_hostile"),
+            canary_config(3, 79),
+            breach_crew,
         ),
     ]
 }
@@ -1901,7 +1940,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 20, "expected twenty canary fights");
+        assert_eq!(summaries.len(), 21, "expected twenty-one canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),
