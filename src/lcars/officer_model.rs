@@ -1108,6 +1108,7 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                     | "crit_damage_flat"
                     | "crit_chance"
                     | "hostile_crit_chance_reduction"
+                    | "weapon_damage"
             ) && a.trigger.as_deref() == Some("CombatStart")
             {
                 // A source-declared combat-start duration applies from round one;
@@ -1121,7 +1122,7 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
             ) {
                 // Officer-stat keys honor canonical `num_rounds` (e.g. Kirk OfficerStatAll
                 // `num_rounds=1` → first-round-only), matching the Tag path. Other stat_modify
-                // effects (shield drain, weapon damage, …) stay permanent unless handled above.
+                // effects stay permanent unless handled by a supported duration path.
                 num_rounds_from_attributes(a.attributes.as_deref())
                     .map(|n| LcarsDuration::Rounds { rounds: n })
                     .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))

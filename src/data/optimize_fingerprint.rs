@@ -124,7 +124,9 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   fractions. Canary v covers combat application but does not load the curve.
 /// * 26 → 27 (2026-11): canonical opponent weapon damage reductions no longer
 ///   compile as friendly attack bonuses. The canaries use pre-resolved seats.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 27;
+/// * 27 → 28 (2026-11): combat-start weapon damage retains canonical duration.
+///   Canary w checks combat expiry. The canaries do not load the officer catalog.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 28;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -1253,6 +1255,16 @@ fn canary_fights() -> Vec<CanaryFight> {
         ],
     };
 
+    let mut opening_attacker = canary_combatant("opening_salvo_attacker");
+    opening_attacker.attack = 100.0;
+    let mut opening_salvo = canary_seat(
+        CrewSeat::Captain,
+        AbilityClass::CaptainManeuver,
+        TimingWindow::CombatBegin,
+        AbilityEffect::AttackMultiplier(0.1),
+    );
+    opening_salvo.ability.condition = Some(AbilityCondition::RoundRange { min: 1, max: 1 });
+
     vec![
         (
             "a_plain",
@@ -1392,6 +1404,15 @@ fn canary_fights() -> Vec<CanaryFight> {
             canary_combatant("canary_v_hostile"),
             canary_config(3, 79),
             breach_crew,
+        ),
+        (
+            "w_first_round_weapon_damage",
+            opening_attacker,
+            canary_combatant("opening_salvo_defender"),
+            canary_config(3, 97),
+            CrewConfiguration {
+                seats: vec![opening_salvo],
+            },
         ),
     ]
 }
@@ -2071,7 +2092,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 23, "expected twenty-three canary fights");
+        assert_eq!(summaries.len(), 24, "expected twenty-four canary fights");
         for summary in &summaries {
             assert!(
                 !summary.contains("rounds=0"),
