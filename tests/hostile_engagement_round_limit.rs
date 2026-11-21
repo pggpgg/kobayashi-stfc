@@ -119,8 +119,8 @@ fn one_v_one_variant_resolves_no_engagement_limit_seat() {
     assert_eq!(hostile_engagement_round_limit(&crew), None);
 }
 
-fn check_krenim_round_limit(hostile_id: &str, limit: u32) {
-    let rec = resolve_hostile(hostile_id).expect("Krenim warship");
+fn check_hostile_round_limit(hostile_id: &str, limit: u32) {
+    let rec = resolve_hostile(hostile_id).expect("hostile record");
     let catalog = hostile_ability_catalog_for_default_path();
     let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
     let attacker = combatant(
@@ -133,27 +133,39 @@ fn check_krenim_round_limit(hostile_id: &str, limit: u32) {
         },
     );
     let mut defender = combatant(hostile_id, 10_000_000.0, WeaponStats::default());
-    let damage_per_round = run(&attacker, &defender, &pve_config(1, 42), &crew).total_damage;
+    let run_hostile = |defender: &Combatant, config: &SimulationConfig| {
+        simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            defender,
+            config,
+            &CrewConfiguration::default(),
+            OpponentFactionTag::Unknown,
+            rec.ship_type_for_combat(),
+            ShipType::Explorer,
+            true,
+            false,
+            &crew,
+        )
+    };
+    let damage_per_round = run_hostile(&defender, &pve_config(1, 42)).total_damage;
     assert!(damage_per_round > 0.0);
     let cfg = pve_config(100, 42);
 
     // The same shot would kill on round limit + 1 without the engagement limit.
     defender.hull_health = (f64::from(limit) + 0.5) * damage_per_round;
-    let timed_out = run(&attacker, &defender, &cfg, &crew);
+    let timed_out = run_hostile(&defender, &cfg);
     assert_eq!(timed_out.rounds_simulated, limit, "hostile {hostile_id}");
     assert!(!timed_out.attacker_won);
     assert!(timed_out.winner_by_round_limit);
     assert!(timed_out.defender_hull_remaining > 0.0);
     assert_eq!(hostile_engagement_round_limit(&crew), Some(limit));
 
-    let traced = run(
-        &attacker,
+    let traced = run_hostile(
         &defender,
         &SimulationConfig {
             trace_mode: TraceMode::Events,
             ..cfg.clone()
         },
-        &crew,
     );
     assert_eq!(traced.rounds_simulated, timed_out.rounds_simulated);
     assert_eq!(traced.attacker_won, timed_out.attacker_won);
@@ -168,7 +180,7 @@ fn check_krenim_round_limit(hostile_id: &str, limit: u32) {
     );
 
     defender.hull_health = (f64::from(limit) - 0.5) * damage_per_round;
-    let killed = run(&attacker, &defender, &cfg, &crew);
+    let killed = run_hostile(&defender, &cfg);
     assert_eq!(killed.rounds_simulated, limit);
     assert!(killed.attacker_won, "a kill in the final round counts");
     assert!(!killed.winner_by_round_limit);
@@ -176,12 +188,28 @@ fn check_krenim_round_limit(hostile_id: &str, limit: u32) {
 
 #[test]
 fn charged_krenim_warships_stop_after_thirty_rounds() {
-    check_krenim_round_limit("10483733", 30);
+    check_hostile_round_limit("10483733", 30);
 }
 
 #[test]
 fn static_krenim_warships_stop_after_fifty_rounds() {
-    check_krenim_round_limit("35075000", 50);
+    check_hostile_round_limit("35075000", 50);
+}
+
+#[test]
+fn cascade_nullification_armadas_stop_after_twenty_rounds() {
+    for hostile_id in ["827555808", "3507276863", "4095062731"] {
+        check_hostile_round_limit(hostile_id, 20);
+    }
+
+    let stockade = resolve_hostile("28209938").expect("uncapped Federation Armada");
+    let crew = hostile_abilities_to_defender_crew(
+        &stockade.ability,
+        hostile_ability_catalog_for_default_path(),
+        stockade.level,
+    );
+    assert_eq!(stockade.ship_type_for_combat(), ShipType::Armada);
+    assert_eq!(hostile_engagement_round_limit(&crew), None);
 }
 
 #[test]

@@ -6758,10 +6758,25 @@
     },
     "3679636736": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_crit_damage_floor",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 3.0
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_engagement_round_limit",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 20
+        }
+      ]
     },
     "3684108364": {
       "timing": "combat_begin",

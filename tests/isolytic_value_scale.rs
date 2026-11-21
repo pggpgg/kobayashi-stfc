@@ -111,6 +111,33 @@ fn double_down_defense_from_chance_barrier_from_value() {
     );
 }
 
+#[test]
+fn cascade_nullification_uses_level_defense_and_a_fixed_crit_floor() {
+    for (hostile_id, expected_defense) in [
+        ("827555808", 2.5),
+        ("3507276863", 5.0),
+        ("4095062731", 15.0),
+    ] {
+        let crew = crew_for(hostile_id);
+        assert_single(
+            &seat_values(&crew, "3679636736", |effect| match effect {
+                AbilityEffect::IsolyticDefenseBonus(value) => Some(*value),
+                _ => None,
+            }),
+            expected_defense,
+            "Cascade Nullification isolytic defense",
+        );
+        assert_single(
+            &seat_values(&crew, "3679636736", |effect| match effect {
+                AbilityEffect::HostileCritDamageFloorBonus(value) => Some(*value),
+                _ => None,
+            }),
+            3.0,
+            "Cascade Nullification crit floor",
+        );
+    }
+}
+
 /// Isolytic Simulator + Dampeners (1767142233 on hostile 109780618): the hardcoded
 /// "increases its Isolytic Defense by 1000%" overrides the meaningless upstream value
 /// (1 → old seat 0.01), and the "can only be damaged by Isolytic Damage" line becomes a
