@@ -55,6 +55,12 @@ pub struct BenchConfig {
     #[serde(default)]
     pub prefilter_keep: Vec<usize>,
     pub profile: String,
+    /// Optional subset of non-control methods subject to strict `control_ordering` (beating
+    /// `random_stratified` within `control_margin`). When empty (default), every non-control
+    /// method is checked. Legacy lanes omitted from this list remain strictly gated by their own
+    /// `recall_floor` and `regret_ceiling` baselines.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub control_gated_methods: Vec<String>,
 }
 
 impl BenchConfig {
@@ -279,7 +285,7 @@ fn parse_stability(jsonl: &str, cases: &[String]) -> Result<ObservedByCase> {
         let Ok(row) = serde_json::from_str::<StabilityRow>(line) else {
             continue;
         };
-        if row.record_kind != "stability" || !cases.iter().any(|c| *c == row.case) {
+        if row.record_kind != "stability" || !cases.contains(&row.case) {
             continue;
         }
         out.entry(row.case.clone())
@@ -379,6 +385,15 @@ fn compare_case(
             if method == CONTROL_METHOD {
                 continue;
             }
+            if !baseline.config.control_gated_methods.is_empty()
+                && !baseline
+                    .config
+                    .control_gated_methods
+                    .iter()
+                    .any(|m| m == method)
+            {
+                continue;
+            }
             let Some(actual) = row.score_regret_mean else {
                 continue;
             };
@@ -438,9 +453,20 @@ fn markdown_report(baseline: &Baseline, observed: &ObservedByCase, failures: &[F
         }
     }
     s.push_str(&format!(
-        "\nTolerances: recall may drop {:.3}, score regret may rise {:.5}, and every lane must stay within {:.5} of the `{}` control.\n",
+        "\nTolerances: recall may drop {:.3}, score regret may rise {:.5}, and {} must stay within {:.5} of the `{}` control.\n",
         baseline.tolerances.recall_drop,
         baseline.tolerances.score_regret_increase,
+        if baseline.config.control_gated_methods.is_empty() {
+            "every lane".to_string()
+        } else {
+            baseline
+                .config
+                .control_gated_methods
+                .iter()
+                .map(|m| format!("`{m}`"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        },
         baseline.tolerances.control_margin,
         CONTROL_METHOD,
     ));
@@ -478,6 +504,7 @@ mod tests {
                 recall_top_k: 10,
                 prefilter_keep: vec![],
                 profile: "demo".into(),
+                control_gated_methods: vec![],
             },
             tolerances: Tolerances {
                 recall_drop: 0.2,
@@ -636,5 +663,58 @@ mod tests {
         let parsed = parse_stability(jsonl, &["case_a".to_string()]).expect("parse");
         assert_eq!(parsed.len(), 1);
         assert_eq!(parsed["case_a"]["tiered"].top_k_recall_mean, Some(0.45));
+    }
+
+    #[test]
+    fn control_gated_methods_scopes_control_ordering_while_keeping_regret_ceilings() {
+        let mut b = baseline();
+        b.config.control_gated_methods = vec!["portfolio".into()];
+        b.methods.get_mut("case_a").unwrap().insert(
+            "portfolio".into(),
+            MethodBaseline {
+                top_k_recall_mean: Some(0.0),
+                score_regret_mean: Some(0.0),
+            },
+        );
+        // Legacy `tiered` matches its own baseline (0.002) even though `random_stratified` is 0.0;
+        // `portfolio` satisfies both its own ceiling and control ordering.
+        let ok = observed_for(
+            "case_a",
+            BTreeMap::from([
+                ("tiered".to_string(), row("tiered", Some(0.5), Some(0.002))),
+                (
+                    "portfolio".to_string(),
+                    row("portfolio", Some(0.0), Some(0.0)),
+                ),
+                (
+                    CONTROL_METHOD.to_string(),
+                    row(CONTROL_METHOD, Some(0.0), Some(0.001)),
+                ),
+            ]),
+        );
+        assert!(compare(&b, &ok).is_empty());
+
+        // If `portfolio` falls behind control, control ordering still catches it.
+        let bad_portfolio = observed_for(
+            "case_a",
+            BTreeMap::from([
+                ("tiered".to_string(), row("tiered", Some(0.5), Some(0.002))),
+                (
+                    "portfolio".to_string(),
+                    row("portfolio", Some(0.0), Some(0.01)),
+                ),
+                (
+                    CONTROL_METHOD.to_string(),
+                    row(CONTROL_METHOD, Some(0.0), Some(0.001)),
+                ),
+            ]),
+        );
+        let failures = compare(&b, &bad_portfolio);
+        assert!(
+            failures
+                .iter()
+                .any(|f| f.method == "portfolio" && f.rule == "control ordering"),
+            "{failures:?}"
+        );
     }
 }

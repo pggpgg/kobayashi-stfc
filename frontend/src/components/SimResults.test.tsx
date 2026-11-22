@@ -732,4 +732,117 @@ describe("SimResults", () => {
     );
     expect(methodCell?.getAttribute("title")).toContain("Beam, Archive");
   });
+
+  it("supports portfolio archive exploration, lane filtering, and one-click diverse side-by-side comparison", () => {
+    const recs: CrewRecommendation[] = [
+      {
+        ...crewRec({
+          captain: "Kirk",
+          bridge: ["Spock", "McCoy"],
+          below_decks: ["Uhura", "Scotty"],
+          win_rate: 0.96,
+          stall_rate: 0.01,
+          loss_rate: 0.03,
+          avg_hull_remaining: 0.78,
+        }),
+        method_provenance: "beam_diversity",
+        proposing_methods: ["beam_diversity", "qd_archive"],
+        evidence_level: "deep_confirmed",
+        trials_run: 5000,
+        qd_cell: "tos|fast|high_hull",
+        pareto_tags: ["pareto_optimal", "fastest_farming"],
+        fidelity: {
+          implemented: 5,
+          partial: 0,
+          ignored: 0,
+          total_combat_effects: 5,
+          coverage_pct: 100,
+          grade: "A",
+        },
+      },
+      {
+        ...crewRec({
+          captain: "TOS Kirk",
+          bridge: ["Spock", "Uhura"],
+          below_decks: ["Scotty", "Sulu"],
+          win_rate: 0.94,
+          stall_rate: 0.02,
+          loss_rate: 0.04,
+          avg_hull_remaining: 0.75,
+        }),
+        method_provenance: "portfolio_neighbor",
+        proposing_methods: ["portfolio_neighbor"],
+        evidence_level: "deep_confirmed",
+        trials_run: 5000,
+        qd_cell: "tos|fast|high_hull",
+        fidelity: {
+          implemented: 5,
+          partial: 0,
+          ignored: 0,
+          total_combat_effects: 5,
+          coverage_pct: 100,
+          grade: "A",
+        },
+      },
+      {
+        ...crewRec({
+          captain: "Picard",
+          bridge: ["Spock", "Data"],
+          below_decks: ["Uhura", "Worf"],
+          win_rate: 0.92,
+          stall_rate: 0.06,
+          loss_rate: 0.02,
+          avg_hull_remaining: 0.85,
+        }),
+        method_provenance: "random_stratified",
+        proposing_methods: ["random_stratified", "qd_archive"],
+        evidence_level: "confirmed",
+        trials_run: 5000,
+        qd_cell: "tng|medium|high_hull",
+        pareto_tags: ["safest"],
+        uncertainty_reason: "1 active combat effect(s) ignored or unmodeled",
+        fidelity: {
+          implemented: 3,
+          partial: 0,
+          ignored: 1,
+          total_combat_effects: 4,
+          coverage_pct: 75,
+          grade: "C",
+          caveats: ["Data: 1 ignored effect"],
+        },
+      },
+    ];
+
+    render(<SimResults {...baseProps} recommendations={recs} />);
+
+    // Insights bar summarizes archetypes, cells, and fidelity counts.
+    expect(screen.getByText("Portfolio insights")).toBeTruthy();
+    expect(screen.getByText(/2 archetypes · 2 archive cells/)).toBeTruthy();
+
+    // Open archive explorer and filter to the TNG cell.
+    fireEvent.click(
+      screen.getByRole("button", { name: /Explore archive \(2 cells\)/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /TNG/i }));
+    expect(screen.getByText("Showing 1–1 of 1")).toBeTruthy();
+    // Preserves global rank #3 even while filtered to 1 visible row.
+    expect(screen.getByRole("checkbox", { name: "Select row 3" })).toBeTruthy();
+
+    // Clear filter restores all 3 rows.
+    fireEvent.click(screen.getByRole("button", { name: /Clear filters/i }));
+    expect(screen.getByText("Showing 1–3 of 3")).toBeTruthy();
+
+    // One-click diverse comparison selects row #1 (TOS) and row #3 (TNG), skipping duplicate TOS row #2.
+    fireEvent.click(
+      screen.getByRole("button", { name: /Compare top diverse \(2\)/i }),
+    );
+    expect(screen.getByText("Compare (delta)")).toBeTruthy();
+    expect(screen.getByText("Baseline")).toBeTruthy();
+    expect(screen.getByText(/3 swaps vs #1/)).toBeTruthy();
+    expect(screen.getByText(/\+Data/)).toBeTruthy();
+    expect(screen.getByText(/-McCoy/)).toBeTruthy();
+    expect(
+      screen.getByText(/Caveat: 1 active combat effect\(s\) ignored/i),
+    ).toBeTruthy();
+  });
 });

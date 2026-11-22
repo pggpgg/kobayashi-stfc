@@ -23,6 +23,7 @@ import path from "node:path";
 import url from "node:url";
 import {
   atomicWriteJson,
+  canonicalJsonSha256,
   clampConcurrency,
   DEFAULT_CONCURRENCY,
   DEFAULT_PACING_MS,
@@ -119,13 +120,12 @@ Options:
 `);
 }
 
-async function fileUsableJson(dest) {
+async function readLocalJsonIfUsable(dest) {
   try {
     const raw = await fs.readFile(dest, "utf8");
-    JSON.parse(raw);
-    return true;
+    return { ok: true, data: JSON.parse(raw) };
   } catch {
-    return false;
+    return { ok: false, data: null };
   }
 }
 
@@ -193,7 +193,8 @@ async function main() {
     args.concurrency,
     async (job) => {
       const dest = path.join(OUT, job.relPath);
-      const hasLocal = await fileUsableJson(dest);
+      const local = await readLocalJsonIfUsable(dest);
+      const hasLocal = local.ok;
       const cachedMeta = !args.noConditional && hasLocal ? httpCache.entries[job.url] : null;
       try {
         const res = await fetchJsonResilient(job.url, {
@@ -212,9 +213,6 @@ async function main() {
           process.stdout.write(`[${completed}/${jobs.length}] ${job.relPath} (304 not modified)\n`);
           return;
         }
-        // Summaries & translations stay compact (indent=0) matching existing upstream convention.
-        const indent = job.kind === "sample_ship" ? 2 : 0;
-        await atomicWriteJson(dest, res.data, indent);
         if (!args.noConditional && (res.etag || res.lastModified)) {
           const prev = httpCache.entries[job.url];
           const nextEtag = res.etag ?? null;
@@ -227,6 +225,17 @@ async function main() {
             httpCacheDirty = true;
           }
         }
+        // Preserve existing file bytes when upstream JSON is semantically identical
+        // (avoids spurious ASCII-escape vs UTF-8 churn between Python and Node serializers).
+        if (hasLocal && canonicalJsonSha256(local.data) === canonicalJsonSha256(res.data)) {
+          summary.not_modified++;
+          completed++;
+          process.stdout.write(`[${completed}/${jobs.length}] ${job.relPath} (unchanged)\n`);
+          return;
+        }
+        // Summaries & translations stay compact (indent=0) matching existing upstream convention.
+        const indent = job.kind === "sample_ship" ? 2 : 0;
+        await atomicWriteJson(dest, res.data, indent);
         summary.fetched++;
         completed++;
         process.stdout.write(`[${completed}/${jobs.length}] ${job.relPath}\n`);

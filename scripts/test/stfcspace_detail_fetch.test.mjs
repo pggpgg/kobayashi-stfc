@@ -158,3 +158,50 @@ test("drift-targeted refresh re-fetches modified ids and honors 304 Not Modified
     await fs.rm(fixture, { recursive: true, force: true });
   }
 });
+
+test("full refresh preserves original file bytes when fetched JSON is semantically identical", async () => {
+  const scratchRoot = path.join(repoRoot, "target/test-tmp");
+  await fs.mkdir(scratchRoot, { recursive: true });
+  const fixture = await fs.mkdtemp(path.join(scratchRoot, "detail-fetch-noop-"));
+  try {
+    const cacheDir = path.join(fixture, "cache");
+    await fs.mkdir(cacheDir);
+    // Original file uses Python-style \\u00e9 escaping and reversed key order.
+    const originalBytes = '{"name":"Caf\\u00e9","id":301}\n';
+    await fs.writeFile(path.join(cacheDir, "301.json"), originalBytes, "utf8");
+    const script = `
+      import { runDetailFetch } from ${JSON.stringify(helperUrl.href)};
+      globalThis.fetch = async () => ({
+        ok: true,
+        status: 200,
+        headers: new Headers({ etag: '"e-301"' }),
+        json: async () => ({ id: 301, name: "Café" }),
+      });
+      const log = await runDetailFetch({
+        repoRoot: ${JSON.stringify(fixture)},
+        cacheDir: ${JSON.stringify(cacheDir)},
+        segment: "ship",
+        logStem: "ships",
+        ids: [301],
+        full: true,
+        concurrency: 2,
+        pacingMs: 0,
+        retryBaseMs: 1,
+      });
+      console.log(JSON.stringify(log));
+    `;
+    const run = spawnSync(process.execPath, ["--input-type=module", "-e", script], {
+      cwd: repoRoot,
+      encoding: "utf8",
+      timeout: 20_000,
+    });
+    assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
+    const out = JSON.parse(run.stdout.trim().split("\n").pop());
+    assert.equal(out.not_modified, 1);
+    assert.equal(out.fetched, 0);
+    assert.equal(await fs.readFile(path.join(cacheDir, "301.json"), "utf8"), originalBytes);
+  } finally {
+    assert.ok(fixture.startsWith(`${scratchRoot}${path.sep}`));
+    await fs.rm(fixture, { recursive: true, force: true });
+  }
+});
