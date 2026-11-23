@@ -605,6 +605,7 @@ fn solve_disjoint_branch_and_bound(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_dock_portfolio_discovery(
     registry: &DataRegistry,
     slot: &FleetSlotSpec,

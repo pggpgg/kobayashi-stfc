@@ -583,7 +583,7 @@ pub fn analyze_crew_counterfactual_with_registry(
         scenario.ship_tier,
         scenario.ship_level,
         scenario.profile_id,
-        scenario.support_buffs.clone(),
+        scenario.support_buffs,
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
