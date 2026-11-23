@@ -130,7 +130,10 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   research. Canary f exercises building pools without profile file loading.
 /// * 29 → 30 (2026-11): Enterprise-D firing cadence and eligible-round Galaxy
 ///   Class stacks. The canaries do not load normalized ship records.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 30;
+/// * 30 → 31 (2026-11): Honor upstream `warm_up` / `cool_down` weapon firing
+///   schedules for all normalized player ships and hostiles (#419). The canaries
+///   do not load normalized ship or hostile records.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 31;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.

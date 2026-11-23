@@ -374,6 +374,89 @@ mod tests {
     }
 
     #[test]
+    fn weapon_schedules_reset_between_chain_fights() {
+        use crate::combat::{WeaponFiringSchedule, WeaponStats};
+
+        let shared = test_shared();
+        let mut input = test_input();
+        input.rounds = 4;
+        input.attacker.hull_health = 1000.0;
+        input.attacker.mitigation = 0.0;
+        input.attacker.crit_chance = 0.0;
+        // Attacker slot 0 fires every round (50 dmg); slot 1 warms up on R2 with cooldown 2 (150 dmg).
+        // Against a 150 HP defender, every fresh fight takes 2 rounds (R1: 50 dmg, R2: 50+150=200 -> kill).
+        input.attacker.weapons = vec![
+            WeaponStats {
+                attack: 50.0,
+                shots: Some(1),
+                firing_schedule: Some(WeaponFiringSchedule {
+                    first_round: 1,
+                    interval_rounds: 1,
+                }),
+                ..WeaponStats::default()
+            },
+            WeaponStats {
+                attack: 150.0,
+                shots: Some(1),
+                firing_schedule: Some(WeaponFiringSchedule {
+                    first_round: 2,
+                    interval_rounds: 2,
+                }),
+                ..WeaponStats::default()
+            },
+        ];
+        input.defender.hull_health = 150.0;
+        input.defender.mitigation = 0.0;
+        input.defender.crit_chance = 0.0;
+        // Defender slot 0 fires ONCE on round 1 with cool_down=100 (deals 100 dmg).
+        // If schedules reset per fight, each 2-round link deals exactly 100 dmg (not 200 if cooldown ignored,
+        // and not 0 on fight 2 if cooldown persisted across links).
+        input.defender.weapons = vec![WeaponStats {
+            attack: 100.0,
+            shots: Some(1),
+            firing_schedule: Some(WeaponFiringSchedule {
+                first_round: 1,
+                interval_rounds: 100,
+            }),
+            ..WeaponStats::default()
+        }];
+
+        let one = run_chain_trial(
+            &shared,
+            &input,
+            &ChainGrindParams {
+                kills_target: 1,
+                secondary: ChainSecondaryObjective::MinHullDamage,
+            },
+            7,
+        );
+        let two = run_chain_trial(
+            &shared,
+            &input,
+            &ChainGrindParams {
+                kills_target: 2,
+                secondary: ChainSecondaryObjective::MinHullDamage,
+            },
+            7,
+        );
+        assert!(one.primary_success);
+        assert!(two.primary_success);
+        // Fight 1: defender hits once on R1 (-100 hull -> 900/1000 = 0.9), silent on R2 when attacker kills.
+        assert!(
+            (one.hull_fraction_end.unwrap() - 0.9).abs() < 1e-12,
+            "fight 1 should take exactly one R1 defender hit (0.9 hull), got {:?}",
+            one.hull_fraction_end
+        );
+        // Fight 2: defender schedule resets to R1 (-100 hull again -> 800/1000 = 0.8),
+        // and attacker slot 1 warms up again (silent R1, fires R2 -> 2 rounds, not R1 kill).
+        assert!(
+            (two.hull_fraction_end.unwrap() - 0.8).abs() < 1e-12,
+            "fight 2 must reset both attacker warm-up and defender cooldown (0.8 hull), got {:?}",
+            two.hull_fraction_end
+        );
+    }
+
+    #[test]
     fn secondary_loot_proxy_monotone() {
         let a = secondary_draw(ChainSecondaryObjective::MaxLootPerHullProxy, 3, 0.9);
         let b = secondary_draw(ChainSecondaryObjective::MaxLootPerHullProxy, 3, 0.5);
