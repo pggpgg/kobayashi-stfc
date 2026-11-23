@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import hostilesIndexJson from "../../../data/hostiles/index.json";
 import type { HostileListItem } from "./api";
 import {
+  chainGrindForLoopGoal,
   FUTURE_PATTERN_EXEMPTIONS,
   hostileLabel,
   hostileMatchesLoop,
@@ -99,6 +100,52 @@ describe("loops catalog", () => {
     );
 
     expect(result.map((row) => row.id)).toEqual(["high-a", "low"]);
+  });
+
+  it("#414 selects the Yoton farming variant over the no-loot ghost regardless of catalog order", () => {
+    const loop = findLoop("xindi-aquatic");
+    const ghost: HostileListItem = {
+      id: "3294438884",
+      hostile_name: "Xindi-Aquatic Cruiser",
+      display_name: "Xindi-Aquatic Cruiser",
+      level: 62,
+      ship_class: "interceptor",
+      system_names: [],
+      warp: 0,
+      has_loot: false,
+      primary_resource_name: null,
+    };
+    const yoton: HostileListItem = {
+      id: "3919830203",
+      hostile_name: "Xindi-Aquatic Cruiser",
+      display_name: "Xindi-Aquatic Cruiser",
+      level: 62,
+      ship_class: "interceptor",
+      system_names: ["Yoton"],
+      warp: 1000,
+      has_loot: true,
+      primary_resource_name: "Tech Module",
+    };
+
+    const ghostFirst = resolveLoopHostiles([ghost, yoton], loop);
+    const yotonFirst = resolveLoopHostiles([yoton, ghost], loop);
+
+    expect(ghostFirst.map((row) => row.id)).toEqual(["3919830203"]);
+    expect(yotonFirst.map((row) => row.id)).toEqual(["3919830203"]);
+  });
+
+  it("#415 maps repeat-kill survival and farming loot goals to distinct chain objectives", () => {
+    expect(chainGrindForLoopGoal("kills_per_hull")).toEqual({
+      enabled: true,
+      kills_target: 5,
+      secondary: "min_hull_damage",
+    });
+    expect(chainGrindForLoopGoal("farming_loot")).toEqual({
+      enabled: true,
+      kills_target: 5,
+      secondary: "max_expected_loot",
+    });
+    expect(chainGrindForLoopGoal("one_round")).toBeUndefined();
   });
 
   it("does not treat Lost Gorn targets as the Gorn Hunter loop", () => {

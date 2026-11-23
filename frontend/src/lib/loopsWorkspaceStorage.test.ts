@@ -379,6 +379,116 @@ describe("primaryMetricForGoal", () => {
       ).value,
     ).toBeCloseTo(0.9, 6);
   });
+
+  it("#415 saves farming loot metrics and lets higher expected loot replace an equal-survival crew", () => {
+    const farmingCtx: LoopRunContext = {
+      ...context,
+      loopId: "xindi-aquatic",
+      loopName: "Xindi-Aquatic",
+      targetId: "3919830203",
+      targetName: "Xindi-Aquatic Cruiser",
+      targetLevel: 62,
+      goalId: "farming_loot",
+      shipId: "enterprise_nx_01",
+      shipPolicy: "required",
+      specialtyShipIds: ["enterprise_nx_01"],
+    };
+    const kangRec = recommendation({
+      captain: "Kang",
+      win_rate: 1,
+      win_rate_ci_low: 0.99,
+      win_rate_ci_high: 1,
+      avg_hull_remaining: 0.85,
+      chain: {
+        kills_target: 4,
+        secondary_objective: "max_expected_loot",
+        primary_success_rate: 1,
+        primary_ci_low: 0.99,
+        primary_ci_high: 1,
+        secondary_mean_given_primary: 4_434_094,
+        secondary_ci_low: 4_434_094,
+        secondary_ci_high: 4_434_094,
+        n_primary_successes: 100,
+        ending_hull_mean_given_primary: 0.85,
+        loot: {
+          resource_id: 103783761,
+          resource_name: "Tech Module",
+          expected_loot_mean: 4_434_094,
+          expected_loot_ci_low: 4_434_094,
+          expected_loot_ci_high: 4_434_094,
+          base_drop_per_kill: 1_108_523.5,
+          loot_multiplier: 1,
+          cargo_capacity: 25_000_000,
+          cargo_capped: false,
+          loot_sources: [],
+        },
+      },
+    });
+    const archerRec = recommendation({
+      captain: "Jonathan Archer",
+      win_rate: 1,
+      win_rate_ci_low: 0.99,
+      win_rate_ci_high: 1,
+      avg_hull_remaining: 0.8,
+      chain: {
+        kills_target: 4,
+        secondary_objective: "max_expected_loot",
+        primary_success_rate: 1,
+        primary_ci_low: 0.99,
+        primary_ci_high: 1,
+        secondary_mean_given_primary: 17_736_376,
+        secondary_ci_low: 17_736_376,
+        secondary_ci_high: 17_736_376,
+        n_primary_successes: 100,
+        ending_hull_mean_given_primary: 0.8,
+        loot: {
+          resource_id: 103783761,
+          resource_name: "Tech Module",
+          expected_loot_mean: 17_736_376,
+          expected_loot_ci_low: 17_736_376,
+          expected_loot_ci_high: 17_736_376,
+          base_drop_per_kill: 1_108_523.5,
+          loot_multiplier: 4,
+          cargo_capacity: 25_000_000,
+          cargo_capped: false,
+          loot_sources: ["Jonathan Archer (+300% loot)"],
+        },
+      },
+    });
+
+    const first = saveLoopOptimizationResult({
+      profileId: "p1",
+      context: farmingCtx,
+      shipId: "enterprise_nx_01",
+      shipTier: 12,
+      shipLevel: 60,
+      recommendations: [kangRec],
+      simsPerCrew: 500,
+    });
+    expect(first.saved).toBe(true);
+    expect(first.record?.chainLootResourceName).toBe("Tech Module");
+    expect(first.record?.chainExpectedLoot).toBeCloseTo(4_434_094, 0);
+
+    const improved = saveLoopOptimizationResult({
+      profileId: "p1",
+      context: farmingCtx,
+      shipId: "enterprise_nx_01",
+      shipTier: 12,
+      shipLevel: 60,
+      recommendations: [archerRec],
+      simsPerCrew: 500,
+    });
+    expect(improved.saved).toBe(true);
+    const best = getLoopBestRecord(
+      "p1",
+      "xindi-aquatic",
+      "3919830203",
+      "farming_loot",
+    );
+    expect(best?.crew.captain).toBe("Jonathan Archer");
+    expect(best?.chainExpectedLoot).toBeCloseTo(17_736_376, 0);
+    expect(best?.chainEndingHull).toBeCloseTo(0.8, 6);
+  });
 });
 
 describe("schema migration", () => {

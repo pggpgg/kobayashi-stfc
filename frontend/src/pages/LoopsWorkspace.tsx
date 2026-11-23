@@ -62,13 +62,26 @@ function policyLabel(policy: "required" | "recommended" | "open"): string {
   }
 }
 
+function formatCompactLoot(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 10_000) return `${(value / 1_000).toFixed(1)}k`;
+  return Math.round(value).toLocaleString();
+}
+
 function BestCrewSummary({ record }: { record: LoopBestRecord }) {
-  // Under chain grind the engine reuses `avg_hull_remaining` to carry the chain's
-  // *secondary* objective (see SimulationResult's note), and for this workspace that
-  // secondary is a loot-per-hull proxy — an unbounded number, not a hull fraction.
-  // Rendering it as "% hull" produced readings like "24241% hull". Chain records
-  // therefore report the chain metrics they actually hold.
   const isChain = record.chainSuccessRate != null;
+  const hasFarmingLoot =
+    isChain &&
+    record.chainExpectedLoot != null &&
+    Boolean(record.chainLootResourceName);
+  const endingHull =
+    record.chainEndingHull ??
+    (record.chainSecondaryObjective !== "max_loot_per_hull_proxy" &&
+    record.averageHullRemaining <= 1
+      ? record.averageHullRemaining
+      : null);
   return (
     <div className="loop-best">
       <div className="loop-best__heading">Saved best</div>
@@ -79,7 +92,32 @@ function BestCrewSummary({ record }: { record: LoopBestRecord }) {
           : ""}
       </div>
       <div className="loop-best__metrics">
-        {isChain ? (
+        {hasFarmingLoot ? (
+          <>
+            <span
+              title={`Chance of completing ${record.chainKillsTarget ?? "N"} consecutive kills`}
+            >
+              {percent(record.chainSuccessRate ?? 0)} P(
+              {record.chainKillsTarget ?? "N"}-kill)
+            </span>
+            <span
+              title={
+                record.chainCargoCapped
+                  ? `Expected ${record.chainLootResourceName} per sortie (cargo hold full)`
+                  : `Expected ${record.chainLootResourceName} per sortie`
+              }
+            >
+              {formatCompactLoot(record.chainExpectedLoot ?? 0)}{" "}
+              {record.chainLootResourceName}
+              {record.chainCargoCapped ? " (cargo full)" : ""}
+            </span>
+            {endingHull != null && (
+              <span title="Mean ending attacker hull after completing the chain">
+                {percent(endingHull)} hull
+              </span>
+            )}
+          </>
+        ) : isChain ? (
           <>
             <span
               title={`Chance of completing ${record.chainKillsTarget ?? "N"} consecutive kills`}
@@ -87,7 +125,11 @@ function BestCrewSummary({ record }: { record: LoopBestRecord }) {
               {percent(record.chainSuccessRate ?? 0)} chain
               {record.chainKillsTarget ? ` ×${record.chainKillsTarget}` : ""}
             </span>
-            <span>{percent(record.winRate)} wins</span>
+            {endingHull != null && (
+              <span title="Mean ending attacker hull after completing the chain">
+                {percent(endingHull)} hull
+              </span>
+            )}
             <span>{percent(record.roundOneKillRate)} R1</span>
           </>
         ) : (
@@ -643,7 +685,7 @@ export default function LoopsWorkspace() {
                               <span>
                                 {classLabel(hostile.ship_class)} · {hostile.id}
                               </span>
-                              {system && (
+                              {system ? (
                                 <small>
                                   <a
                                     href={`https://stfc.space/systems/${system.id}`}
@@ -653,6 +695,24 @@ export default function LoopsWorkspace() {
                                     {system.name}
                                   </a>
                                 </small>
+                              ) : (
+                                hostile.system_names &&
+                                hostile.system_names.length > 0 && (
+                                  <small>
+                                    {hostile.system_names
+                                      .slice(0, 2)
+                                      .join(", ")}
+                                    {hostile.system_names.length > 2
+                                      ? ` +${hostile.system_names.length - 2}`
+                                      : ""}
+                                    {hostile.warp != null && hostile.warp > 0
+                                      ? ` · W${hostile.warp}`
+                                      : ""}
+                                    {hostile.primary_resource_name
+                                      ? ` · ${hostile.primary_resource_name}`
+                                      : ""}
+                                  </small>
+                                )
                               )}
                               <div style={{ marginTop: "0.25rem" }}>
                                 <RungStatusBadge

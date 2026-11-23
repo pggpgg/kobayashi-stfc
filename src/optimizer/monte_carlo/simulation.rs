@@ -8,9 +8,11 @@ use crate::combat::{
 use crate::data::data_registry::DataRegistry;
 use crate::data::support_buffs;
 use crate::optimizer::chain::{
-    run_chain_trial, secondary_draw, ChainGrindParams, ChainSimulationSummary,
+    run_chain_trial, secondary_draw_with_loot, ChainGrindParams, ChainSecondaryObjective,
+    ChainSimulationSummary,
 };
 use crate::optimizer::crew_generator::CrewCandidate;
+use crate::optimizer::loot::{resolve_crew_loot_profile, ChainLootSummary, CrewLootProfile};
 use crate::perf_log;
 use rayon::prelude::*;
 use serde_json::{json, Value};
@@ -457,6 +459,107 @@ fn unsupported_crew_health_effects_for_crew(
     })
 }
 
+fn normal_95_interval(mean: f64, m2: f64, count: usize, clamp_unit: bool) -> (f64, f64) {
+    if count == 0 {
+        return (0.0, 0.0);
+    }
+    if count == 1 {
+        let v = if clamp_unit {
+            mean.clamp(0.0, 1.0)
+        } else {
+            mean.max(0.0)
+        };
+        return (v, v);
+    }
+    let var = m2 / (count as f64 - 1.0);
+    let se = (var / count as f64).sqrt().max(0.0);
+    const Z: f64 = 1.96;
+    if clamp_unit {
+        (
+            (mean - Z * se).clamp(0.0, 1.0),
+            (mean + Z * se).clamp(0.0, 1.0),
+        )
+    } else {
+        ((mean - Z * se).max(0.0), (mean + Z * se).max(0.0))
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build_chain_summary_and_hull(
+    chain: &ChainGrindParams,
+    n_done: usize,
+    win_rate: f64,
+    win_rate_ci_low: f64,
+    win_rate_ci_high: f64,
+    sec_count: usize,
+    sec_mean: f64,
+    sec_m2: f64,
+    chain_hull_mean: f64,
+    chain_hull_m2: f64,
+    loot_profile: Option<&CrewLootProfile>,
+    loot_mean: f64,
+    loot_m2: f64,
+) -> (ChainSimulationSummary, f64, f64, f64) {
+    let avg_cond_secondary = if sec_count == 0 { 0.0 } else { sec_mean };
+    let (sec_ci_low, sec_ci_high) = normal_95_interval(
+        avg_cond_secondary,
+        sec_m2,
+        sec_count,
+        chain.secondary == ChainSecondaryObjective::MinHullDamage,
+    );
+    let avg_cond_hull = if sec_count == 0 { 0.0 } else { chain_hull_mean };
+    let (hull_ci_low, hull_ci_high) =
+        normal_95_interval(avg_cond_hull, chain_hull_m2, sec_count, true);
+
+    let loot = loot_profile.map(|lp| {
+        let expected_loot_mean = if n_done == 0 { 0.0 } else { loot_mean };
+        let (expected_loot_ci_low, expected_loot_ci_high) =
+            normal_95_interval(expected_loot_mean, loot_m2, n_done, false);
+        ChainLootSummary {
+            resource_id: lp.resource_id,
+            resource_name: lp.resource_name.clone(),
+            expected_loot_mean,
+            expected_loot_ci_low,
+            expected_loot_ci_high,
+            base_drop_per_kill: lp.primary_base_per_kill,
+            loot_multiplier: lp.primary_loot_multiplier,
+            cargo_capacity: lp.effective_cargo_capacity,
+            cargo_capped: lp.is_cargo_capped_at_target(chain.kills_target),
+            loot_sources: lp.loot_sources.clone(),
+        }
+    });
+
+    let summary = ChainSimulationSummary {
+        kills_target: chain.kills_target,
+        secondary_objective: chain.secondary,
+        primary_success_rate: win_rate,
+        primary_ci_low: win_rate_ci_low,
+        primary_ci_high: win_rate_ci_high,
+        secondary_mean_given_primary: avg_cond_secondary,
+        secondary_ci_low: sec_ci_low,
+        secondary_ci_high: sec_ci_high,
+        n_primary_successes: sec_count,
+        ending_hull_mean_given_primary: Some(avg_cond_hull),
+        loot,
+    };
+
+    let (avg_hull_remaining, avg_hull_ci_low, avg_hull_ci_high) = match chain.secondary {
+        ChainSecondaryObjective::MaxLootPerHullProxy => {
+            (avg_cond_secondary, sec_ci_low, sec_ci_high)
+        }
+        ChainSecondaryObjective::MinHullDamage | ChainSecondaryObjective::MaxExpectedLoot => {
+            (avg_cond_hull, hull_ci_low, hull_ci_high)
+        }
+    };
+
+    (
+        summary,
+        avg_hull_remaining,
+        avg_hull_ci_low,
+        avg_hull_ci_high,
+    )
+}
+
 #[allow(clippy::too_many_arguments)]
 fn run_candidate_chain_monte_carlo(
     shared: &SharedScenarioData,
@@ -471,6 +574,14 @@ fn run_candidate_chain_monte_carlo(
 ) -> SimulationResult {
     let mut input = scenario_to_combat_input_from_shared(shared, candidate, seed);
     apply_seed_panel_policy(&mut input, shared, seed, seed_panel_policy);
+    let loot_profile = if chain.secondary == ChainSecondaryObjective::MaxExpectedLoot {
+        resolve_crew_loot_profile(shared, candidate)
+    } else {
+        None
+    };
+    let loot_on_primary = loot_profile
+        .as_ref()
+        .map(|lp| lp.primary_loot_for_kills(chain.kills_target));
     let mut primary_ok = 0usize;
     let mut stalls = 0usize;
     let mut losses = 0usize;
@@ -478,6 +589,10 @@ fn run_candidate_chain_monte_carlo(
     let mut sec_mean = 0.0f64;
     let mut sec_m2 = 0.0f64;
     let mut sec_count = 0usize;
+    let mut chain_hull_mean = 0.0f64;
+    let mut chain_hull_m2 = 0.0f64;
+    let mut loot_mean = 0.0f64;
+    let mut loot_m2 = 0.0f64;
     let mut def_hull_mean = 0.0f64;
     let mut def_hull_m2 = 0.0f64;
 
@@ -493,6 +608,14 @@ fn run_candidate_chain_monte_carlo(
         let delta_d2 = d - def_hull_mean;
         def_hull_m2 += delta_d * delta_d2;
 
+        if let Some(ref lp) = loot_profile {
+            let ldraw = lp.primary_loot_for_kills(outcome.kills_completed);
+            let delta_l = ldraw - loot_mean;
+            loot_mean += delta_l / i as f64;
+            let delta_l2 = ldraw - loot_mean;
+            loot_m2 += delta_l * delta_l2;
+        }
+
         if outcome.first_link_r1_clean_win {
             r1_first += 1;
         }
@@ -500,9 +623,15 @@ fn run_candidate_chain_monte_carlo(
         if outcome.primary_success {
             primary_ok += 1;
             let hf = outcome.hull_fraction_end.unwrap_or(0.0);
-            let sdraw = secondary_draw(chain.secondary, chain.kills_target, hf);
+            let sdraw =
+                secondary_draw_with_loot(chain.secondary, chain.kills_target, hf, loot_on_primary);
             sec_count += 1;
             let j = sec_count as f64;
+            let delta_h = hf - chain_hull_mean;
+            chain_hull_mean += delta_h / j;
+            let delta_h2 = hf - chain_hull_mean;
+            chain_hull_m2 += delta_h * delta_h2;
+
             let delta = sdraw - sec_mean;
             sec_mean += delta / j;
             let delta2 = sdraw - sec_mean;
@@ -549,49 +678,31 @@ fn run_candidate_chain_monte_carlo(
     let loss_rate = if n == 0 { 0.0 } else { losses as f64 / nf };
     let r1_kill_rate = if n == 0 { 0.0 } else { r1_first as f64 / nf };
 
-    let avg_cond_secondary = if sec_count == 0 { 0.0 } else { sec_mean };
-    let (avg_hull_remaining_ci_low, avg_hull_remaining_ci_high) = if sec_count == 0 {
-        (0.0, 0.0)
-    } else if sec_count == 1 {
-        (avg_cond_secondary, avg_cond_secondary)
-    } else {
-        let var = sec_m2 / (sec_count as f64 - 1.0);
-        let se = (var / sec_count as f64).sqrt().max(0.0);
-        const Z: f64 = 1.96;
-        ((avg_cond_secondary - Z * se), (avg_cond_secondary + Z * se))
-    };
-
     let (win_rate_ci_low, win_rate_ci_high) = wilson_95_interval(primary_ok, n);
     let (stall_rate_ci_low, stall_rate_ci_high) = wilson_95_interval(stalls, n);
     let (loss_rate_ci_low, loss_rate_ci_high) = wilson_95_interval(losses, n);
     let (r1_kill_rate_ci_low, r1_kill_rate_ci_high) = wilson_95_interval(r1_first, n);
 
     let avg_defender_hull_remaining = if n == 0 { 0.0 } else { def_hull_mean };
-    let (avg_defender_hull_remaining_ci_low, avg_defender_hull_remaining_ci_high) = if n == 0 {
-        (0.0, 0.0)
-    } else if n == 1 {
-        (avg_defender_hull_remaining, avg_defender_hull_remaining)
-    } else {
-        let var = def_hull_m2 / (n as f64 - 1.0);
-        let se = (var / n as f64).sqrt().max(0.0);
-        const Z: f64 = 1.96;
-        (
-            (avg_defender_hull_remaining - Z * se).clamp(0.0, 1.0),
-            (avg_defender_hull_remaining + Z * se).clamp(0.0, 1.0),
-        )
-    };
+    let (avg_defender_hull_remaining_ci_low, avg_defender_hull_remaining_ci_high) =
+        normal_95_interval(avg_defender_hull_remaining, def_hull_m2, n, true);
 
-    let summary = ChainSimulationSummary {
-        kills_target: chain.kills_target,
-        secondary_objective: chain.secondary,
-        primary_success_rate: win_rate,
-        primary_ci_low: win_rate_ci_low,
-        primary_ci_high: win_rate_ci_high,
-        secondary_mean_given_primary: avg_cond_secondary,
-        secondary_ci_low: avg_hull_remaining_ci_low,
-        secondary_ci_high: avg_hull_remaining_ci_high,
-        n_primary_successes: sec_count,
-    };
+    let (summary, avg_hull_remaining, avg_hull_remaining_ci_low, avg_hull_remaining_ci_high) =
+        build_chain_summary_and_hull(
+            chain,
+            n,
+            win_rate,
+            win_rate_ci_low,
+            win_rate_ci_high,
+            sec_count,
+            sec_mean,
+            sec_m2,
+            chain_hull_mean,
+            chain_hull_m2,
+            loot_profile.as_ref(),
+            loot_mean,
+            loot_m2,
+        );
 
     SimulationResult {
         candidate: candidate.clone(),
@@ -609,7 +720,7 @@ fn run_candidate_chain_monte_carlo(
         r1_kill_rate,
         r1_kill_rate_ci_low,
         r1_kill_rate_ci_high,
-        avg_hull_remaining: avg_cond_secondary,
+        avg_hull_remaining,
         avg_hull_remaining_ci_low,
         avg_hull_remaining_ci_high,
         avg_defender_hull_remaining,
@@ -867,6 +978,12 @@ pub(crate) struct CandidateTrialAccumulator {
     sec_count: usize,
     sec_mean: f64,
     sec_m2: f64,
+    chain_hull_mean: f64,
+    chain_hull_m2: f64,
+    loot_mean: f64,
+    loot_m2: f64,
+    loot_profile_resolved: bool,
+    loot_profile: Option<CrewLootProfile>,
     unsupported_health: Option<bool>,
 }
 
@@ -887,6 +1004,12 @@ impl CandidateTrialAccumulator {
             sec_count: 0,
             sec_mean: 0.0,
             sec_m2: 0.0,
+            chain_hull_mean: 0.0,
+            chain_hull_m2: 0.0,
+            loot_mean: 0.0,
+            loot_m2: 0.0,
+            loot_profile_resolved: false,
+            loot_profile: None,
             unsupported_health: None,
         }
     }
@@ -912,6 +1035,16 @@ impl CandidateTrialAccumulator {
         let executed = target_trials - start;
 
         if let Some(chain) = chain_grind {
+            if chain.secondary == ChainSecondaryObjective::MaxExpectedLoot
+                && !self.loot_profile_resolved
+            {
+                self.loot_profile = resolve_crew_loot_profile(shared, &self.candidate);
+                self.loot_profile_resolved = true;
+            }
+            let loot_on_primary = self
+                .loot_profile
+                .as_ref()
+                .map(|lp| lp.primary_loot_for_kills(chain.kills_target));
             for trial_index in start..target_trials {
                 let trial_seed = input.base_seed.wrapping_add(trial_index as u64);
                 let outcome = run_chain_trial(shared, &input, chain, trial_seed);
@@ -921,15 +1054,32 @@ impl CandidateTrialAccumulator {
                 self.def_hull_mean += delta_d / i as f64;
                 let delta_d2 = d - self.def_hull_mean;
                 self.def_hull_m2 += delta_d * delta_d2;
+                if let Some(ref lp) = self.loot_profile {
+                    let ldraw = lp.primary_loot_for_kills(outcome.kills_completed);
+                    let delta_l = ldraw - self.loot_mean;
+                    self.loot_mean += delta_l / i as f64;
+                    let delta_l2 = ldraw - self.loot_mean;
+                    self.loot_m2 += delta_l * delta_l2;
+                }
                 if outcome.first_link_r1_clean_win {
                     self.r1_kills += 1;
                 }
                 if outcome.primary_success {
                     self.wins += 1;
                     let hf = outcome.hull_fraction_end.unwrap_or(0.0);
-                    let sdraw = secondary_draw(chain.secondary, chain.kills_target, hf);
+                    let sdraw = secondary_draw_with_loot(
+                        chain.secondary,
+                        chain.kills_target,
+                        hf,
+                        loot_on_primary,
+                    );
                     self.sec_count += 1;
                     let j = self.sec_count as f64;
+                    let delta_h = hf - self.chain_hull_mean;
+                    self.chain_hull_mean += delta_h / j;
+                    let delta_h2 = hf - self.chain_hull_mean;
+                    self.chain_hull_m2 += delta_h * delta_h2;
+
                     let delta = sdraw - self.sec_mean;
                     self.sec_mean += delta / j;
                     let delta2 = sdraw - self.sec_mean;
@@ -1070,32 +1220,26 @@ impl CandidateTrialAccumulator {
             };
 
         if let Some(chain) = chain_grind {
-            let avg_cond_secondary = if self.sec_count == 0 {
-                0.0
-            } else {
-                self.sec_mean
-            };
-            let (avg_hull_remaining_ci_low, avg_hull_remaining_ci_high) = if self.sec_count == 0 {
-                (0.0, 0.0)
-            } else if self.sec_count == 1 {
-                (avg_cond_secondary, avg_cond_secondary)
-            } else {
-                let var = self.sec_m2 / (self.sec_count as f64 - 1.0);
-                let se = (var / self.sec_count as f64).sqrt().max(0.0);
-                const Z: f64 = 1.96;
-                (avg_cond_secondary - Z * se, avg_cond_secondary + Z * se)
-            };
-            let summary = ChainSimulationSummary {
-                kills_target: chain.kills_target,
-                secondary_objective: chain.secondary,
-                primary_success_rate: win_rate,
-                primary_ci_low: win_rate_ci_low,
-                primary_ci_high: win_rate_ci_high,
-                secondary_mean_given_primary: avg_cond_secondary,
-                secondary_ci_low: avg_hull_remaining_ci_low,
-                secondary_ci_high: avg_hull_remaining_ci_high,
-                n_primary_successes: self.sec_count,
-            };
+            let (
+                summary,
+                avg_hull_remaining,
+                avg_hull_remaining_ci_low,
+                avg_hull_remaining_ci_high,
+            ) = build_chain_summary_and_hull(
+                chain,
+                n_done,
+                win_rate,
+                win_rate_ci_low,
+                win_rate_ci_high,
+                self.sec_count,
+                self.sec_mean,
+                self.sec_m2,
+                self.chain_hull_mean,
+                self.chain_hull_m2,
+                self.loot_profile.as_ref(),
+                self.loot_mean,
+                self.loot_m2,
+            );
             return SimulationResult {
                 candidate: self.candidate.clone(),
                 unsupported_crew_health_effects: self.unsupported_health,
@@ -1112,7 +1256,7 @@ impl CandidateTrialAccumulator {
                 r1_kill_rate,
                 r1_kill_rate_ci_low,
                 r1_kill_rate_ci_high,
-                avg_hull_remaining: avg_cond_secondary,
+                avg_hull_remaining,
                 avg_hull_remaining_ci_low,
                 avg_hull_remaining_ci_high,
                 avg_defender_hull_remaining,

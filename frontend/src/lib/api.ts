@@ -20,6 +20,8 @@ import type {
 
 export type {
   ChainGrindRequestBody,
+  ChainLootSummary,
+  ChainSecondaryObjective,
   ChainSimulationSummary,
   CrewRecommendation,
   DataVersionResponse,

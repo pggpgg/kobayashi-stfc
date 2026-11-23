@@ -7,7 +7,7 @@ import {
 } from "./api";
 import { rungStatus } from "./loopRungStatus";
 import type { LoopGoalId } from "./loopsCatalog";
-import { loopGoal } from "./loopsCatalog";
+import { chainGrindForLoopGoal, loopGoal } from "./loopsCatalog";
 import {
   getLoopBestRecord,
   getLoopLadderRevision,
@@ -284,14 +284,7 @@ export async function runLoopClimb(
       shipTier: plan.shipTier,
       shipLevel: plan.shipLevel,
       warmStartCrews: warmStartCrews.length > 0 ? warmStartCrews : undefined,
-      chainGrind:
-        plan.goalId === "kills_per_hull"
-          ? {
-              enabled: true,
-              kills_target: 5,
-              secondary: "max_loot_per_hull_proxy",
-            }
-          : undefined,
+      chainGrind: chainGrindForLoopGoal(plan.goalId),
     });
 
     let jobId: string;

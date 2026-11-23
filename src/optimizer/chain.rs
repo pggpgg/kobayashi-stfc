@@ -6,6 +6,7 @@ use crate::combat::engine::{
 use crate::combat::{OpponentFactionTag, SimulationConfig, TraceMode};
 use serde::{Deserialize, Serialize};
 
+use crate::optimizer::loot::ChainLootSummary;
 use crate::optimizer::monte_carlo::scenario::{CombatSimulationInput, SharedScenarioData};
 
 /// How to break ties among crews with similar chain-primary success (conditional on primary hit).
@@ -14,7 +15,11 @@ use crate::optimizer::monte_carlo::scenario::{CombatSimulationInput, SharedScena
 pub enum ChainSecondaryObjective {
     /// Maximize mean attacker hull fraction after the Nth kill (minimize hull damage over the chain).
     MinHullDamage,
-    /// Placeholder: `kills / (1 - hull_frac + eps)` until real loot is modeled in combat.
+    /// Maximize expected primary farming resource payout over the chain, accounting for hostile drops,
+    /// applicable canonical officer loot bonuses, and ship cargo capacity (including CargoCapacity
+    /// officers). Ties break by ending hull fraction.
+    MaxExpectedLoot,
+    /// Legacy placeholder: `kills / (1 - hull_frac + eps)` before real loot/cargo modeling.
     MaxLootPerHullProxy,
 }
 
@@ -36,11 +41,54 @@ pub struct ChainSimulationSummary {
     pub secondary_ci_low: f64,
     pub secondary_ci_high: f64,
     pub n_primary_successes: usize,
+    /// Mean ending attacker hull fraction `[0, 1]` conditional on completing all `kills_target` kills.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ending_hull_mean_given_primary: Option<f64>,
+    /// Expected farming loot metrics when `max_expected_loot` is active and the hostile carries drops.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub loot: Option<ChainLootSummary>,
+}
+
+/// Unified monotone scalar ranking proxy for chain-grind rows (used by `ranking`, `racing`,
+/// `qd_archive`, and `genetic` so every optimizer strategy agrees on chain priority).
+///
+/// Primary completion rate (`win_rate * 1e4`) always dominates; the secondary term stays strictly
+/// inside `[0, 1)` so even a `1e-4` primary gap outranks any secondary tie-breaker.
+#[inline]
+pub(crate) fn chain_ranking_scalar(
+    win_rate: f64,
+    hull_frac: f64,
+    secondary: ChainSecondaryObjective,
+    secondary_val: f64,
+) -> f64 {
+    let sec = match secondary {
+        ChainSecondaryObjective::MinHullDamage => secondary_val.clamp(0.0, 1.0),
+        ChainSecondaryObjective::MaxLootPerHullProxy => {
+            let v = secondary_val.max(0.0);
+            if v.is_finite() {
+                v / (1.0 + v)
+            } else {
+                1.0
+            }
+        }
+        ChainSecondaryObjective::MaxExpectedLoot => {
+            let loot_term = if secondary_val.is_finite() {
+                (secondary_val.max(0.0).ln_1p() * 0.03).min(0.95)
+            } else {
+                0.95
+            };
+            let hull_term = hull_frac.clamp(0.0, 1.0) * 1e-5;
+            loot_term + hull_term
+        }
+    };
+    win_rate * 1e4 + sec
 }
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct ChainTrialOutcome {
     pub primary_success: bool,
+    /// Number of clean hostile kills completed in this trial (`0..=kills_target`).
+    pub kills_completed: u32,
     /// Set when `primary_success` (hull remaining / max hull after last fight).
     pub hull_fraction_end: Option<f64>,
     /// True if chain failed because a link ended in round-limit stall (attacker "won" by tie-break).
@@ -122,6 +170,7 @@ pub(crate) fn run_chain_trial(
         if result.winner_by_round_limit {
             return ChainTrialOutcome {
                 primary_success: false,
+                kills_completed: link,
                 hull_fraction_end: None,
                 failed_on_stall: true,
                 first_link_r1_clean_win,
@@ -131,6 +180,7 @@ pub(crate) fn run_chain_trial(
         if !result.attacker_won {
             return ChainTrialOutcome {
                 primary_success: false,
+                kills_completed: link,
                 hull_fraction_end: None,
                 failed_on_stall: false,
                 first_link_r1_clean_win,
@@ -147,6 +197,7 @@ pub(crate) fn run_chain_trial(
         if link + 1 == n {
             return ChainTrialOutcome {
                 primary_success: true,
+                kills_completed: n,
                 hull_fraction_end: Some(hull_frac),
                 failed_on_stall: false,
                 first_link_r1_clean_win,
@@ -160,6 +211,7 @@ pub(crate) fn run_chain_trial(
 
     ChainTrialOutcome {
         primary_success: false,
+        kills_completed: 0,
         hull_fraction_end: None,
         failed_on_stall: false,
         first_link_r1_clean_win,
@@ -167,18 +219,29 @@ pub(crate) fn run_chain_trial(
     }
 }
 
-pub(crate) fn secondary_draw(
+pub(crate) fn secondary_draw_with_loot(
     secondary: ChainSecondaryObjective,
     kills_target: u32,
     hull_fraction_end: f64,
+    loot_on_primary: Option<f64>,
 ) -> f64 {
     match secondary {
         ChainSecondaryObjective::MinHullDamage => hull_fraction_end,
+        ChainSecondaryObjective::MaxExpectedLoot => loot_on_primary.unwrap_or(hull_fraction_end),
         ChainSecondaryObjective::MaxLootPerHullProxy => {
             let k = kills_target.max(1) as f64;
             k / (1.0 - hull_fraction_end + LOOT_PROXY_EPS)
         }
     }
+}
+
+#[cfg(test)]
+pub(crate) fn secondary_draw(
+    secondary: ChainSecondaryObjective,
+    kills_target: u32,
+    hull_fraction_end: f64,
+) -> f64 {
+    secondary_draw_with_loot(secondary, kills_target, hull_fraction_end, None)
 }
 
 #[cfg(test)]
@@ -244,6 +307,8 @@ mod tests {
             defender_profile: None,
             defender_incoming_shield_mitigation_bonus: 0.0,
             defender_incoming_shield_mitigation_bonus_rounds: 0,
+            ship_cargo_capacity: None,
+            resource_names: std::sync::Arc::new(std::collections::HashMap::new()),
         }
     }
 

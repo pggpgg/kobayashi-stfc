@@ -46,4 +46,53 @@ describe("HostilePicker", () => {
     fireEvent.click(option);
     expect(onChange).toHaveBeenCalledWith("hostile_b");
   });
+
+  it("#414 disambiguates duplicate (name, level) hostiles by spawn system/warp and searches by system", () => {
+    const duplicateHostiles: HostileListItem[] = [
+      {
+        id: "3294438884",
+        hostile_name: "Xindi-Aquatic Cruiser",
+        level: 62,
+        ship_class: "interceptor",
+        system_names: [],
+        warp: 0,
+        has_loot: false,
+        primary_resource_name: null,
+      },
+      {
+        id: "3919830203",
+        hostile_name: "Xindi-Aquatic Cruiser",
+        level: 62,
+        ship_class: "interceptor",
+        system_names: ["Yoton"],
+        warp: 1000,
+        has_loot: true,
+        primary_resource_name: "Tech Module",
+      },
+    ];
+    const onChange = vi.fn();
+    render(
+      <HostilePicker
+        hostiles={duplicateHostiles}
+        value="3919830203"
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByRole("combobox") as HTMLInputElement;
+    expect(input.value).toBe("Xindi-Aquatic Cruiser (Lvl 62 · Yoton, W1000)");
+
+    fireEvent.focus(input);
+    expect(
+      screen.getByRole("option", {
+        name: "Xindi-Aquatic Cruiser (Lvl 62 · no system, no loot · #3294438884)",
+      }),
+    ).toBeTruthy();
+
+    fireEvent.change(input, { target: { value: "yoton" } });
+    const options = screen.getAllByRole("option");
+    expect(options).toHaveLength(1);
+    expect(options[0].textContent).toBe(
+      "Xindi-Aquatic Cruiser (Lvl 62 · Yoton, W1000)",
+    );
+  });
 });

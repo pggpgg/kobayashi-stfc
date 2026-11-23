@@ -2415,6 +2415,10 @@ export interface components {
                 display_name?: string;
                 level: number;
                 ship_class: string;
+                system_names?: string[];
+                warp?: number | null;
+                has_loot?: boolean | null;
+                primary_resource_name?: string | null;
             } & {
                 [key: string]: unknown;
             })[];
@@ -3119,15 +3123,22 @@ export interface components {
             enabled?: boolean;
             /** Format: uint32 */
             kills_target?: number | null;
-            /** @description `min_hull_damage` (default) or `max_loot_per_hull_proxy` (placeholder economy). */
+            /** @description `min_hull_damage` (default), `max_expected_loot` (farming drops + cargo), or legacy `max_loot_per_hull_proxy`. */
             secondary?: string | null;
         };
         /** @description How to break ties among crews with similar chain-primary success (conditional on primary hit). */
-        ChainSecondaryObjective: "min_hull_damage" | "max_loot_per_hull_proxy";
+        ChainSecondaryObjective: "min_hull_damage" | "max_expected_loot" | "max_loot_per_hull_proxy";
         /** @description Aggregated chain-grind Monte Carlo (attached to optimizer [`super::monte_carlo::SimulationResult`] when enabled). */
         ChainSimulationSummary: {
+            /**
+             * Format: double
+             * @description Mean ending attacker hull fraction `[0, 1]` conditional on completing all `kills_target` kills.
+             */
+            ending_hull_mean_given_primary?: number | null;
             /** Format: uint32 */
             kills_target: number;
+            /** @description Expected farming loot metrics when `max_expected_loot` is active and the hostile carries drops. */
+            loot?: components["schemas"]["ChainLootSummary"] | null;
             /** Format: uint */
             n_primary_successes: number;
             /** Format: double */
@@ -3498,6 +3509,50 @@ export interface components {
              * @description Total active seat combat-intent effects inspected (`implemented + partial + ignored`).
              */
             total_combat_effects: number;
+        };
+        /** @description Expected farming loot metrics attached to [`crate::optimizer::chain::ChainSimulationSummary`] when the hostile carries positive drops and `max_expected_loot` is active (or whenever loot accounting is evaluated for a farming chain). */
+        ChainLootSummary: {
+            /**
+             * Format: double
+             * @description Mean unbuffed drop per single hostile kill (`(min + max) / 2`).
+             */
+            base_drop_per_kill: number;
+            /**
+             * Format: double
+             * @description Effective ship cargo hold capacity after officer `CargoCapacity` bonuses (`None` when ship cargo data is unavailable, in which case drops are uncapped).
+             */
+            cargo_capacity?: number | null;
+            /** @description True when uncapped `kills_target` drops exceed `cargo_capacity`. */
+            cargo_capped: boolean;
+            /**
+             * Format: double
+             * @description Upper 95% confidence bound on `expected_loot_mean`.
+             */
+            expected_loot_ci_high: number;
+            /**
+             * Format: double
+             * @description Lower 95% confidence bound on `expected_loot_mean`.
+             */
+            expected_loot_ci_low: number;
+            /**
+             * Format: double
+             * @description Mean expected quantity of `resource_name` collected across the chain (capped by cargo hold).
+             */
+            expected_loot_mean: number;
+            /**
+             * Format: double
+             * @description Effective multiplicative loot factor (`1.0 + sum_applicable_officer_loot_bonuses`).
+             */
+            loot_multiplier: number;
+            /** @description Human-readable summary of officer loot/cargo bonuses applied to this crew. */
+            loot_sources?: string[];
+            /**
+             * Format: uint64
+             * @description Upstream resource id for the named primary farming drop (e.g. `103783761` = Tech Module).
+             */
+            resource_id: number;
+            /** @description Human-readable name of the primary farming resource (e.g. `"Tech Module"`). */
+            resource_name: string;
         };
     };
     responses: never;

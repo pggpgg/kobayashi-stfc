@@ -1442,6 +1442,19 @@ components:
                 type: integer
               ship_class:
                 type: string
+              system_names:
+                type: array
+                items:
+                  type: string
+              warp:
+                type: integer
+                nullable: true
+              has_loot:
+                type: boolean
+                nullable: true
+              primary_resource_name:
+                type: string
+                nullable: true
             additionalProperties: true
 
     ShipTiersLevelsResponse:
@@ -2951,7 +2964,7 @@ components:
             - integer
             - "null"
         secondary:
-          description: "`min_hull_damage` (default) or `max_loot_per_hull_proxy` (placeholder economy)."
+          description: "`min_hull_damage` (default), `max_expected_loot` (farming drops + cargo), or legacy `max_loot_per_hull_proxy`."
           type:
             - string
             - "null"
@@ -2966,7 +2979,14 @@ components:
           enum:
             - min_hull_damage
           type: string
-        - description: "Placeholder: `kills / (1 - hull_frac + eps)` until real loot is modeled in combat."
+        - description: >-
+            Maximize expected primary farming resource payout over the chain, accounting for hostile
+            drops, applicable canonical officer loot bonuses, and ship cargo capacity (including
+            CargoCapacity officers). Ties break by ending hull fraction.
+          enum:
+            - max_expected_loot
+          type: string
+        - description: "Legacy placeholder: `kills / (1 - hull_frac + eps)` before real loot/cargo modeling."
           enum:
             - max_loot_per_hull_proxy
           type: string
@@ -2976,10 +2996,25 @@ components:
         Aggregated chain-grind Monte Carlo (attached to optimizer
         [`super::monte_carlo::SimulationResult`] when enabled).
       properties:
+        ending_hull_mean_given_primary:
+          description: >-
+            Mean ending attacker hull fraction `[0, 1]` conditional on completing all `kills_target`
+            kills.
+          format: double
+          type:
+            - number
+            - "null"
         kills_target:
           format: uint32
           minimum: 0
           type: integer
+        loot:
+          anyOf:
+            - $ref: "#/components/schemas/ChainLootSummary"
+            - type: "null"
+          description: >-
+            Expected farming loot metrics when `max_expected_loot` is active and the hostile carries
+            drops.
         n_primary_successes:
           format: uint
           minimum: 0
@@ -3692,4 +3727,65 @@ components:
         - implemented
         - partial
         - total_combat_effects
+      type: object
+
+    ChainLootSummary:
+      description: >-
+        Expected farming loot metrics attached to [`crate::optimizer::chain::ChainSimulationSummary`]
+        when the hostile carries positive drops and `max_expected_loot` is active (or whenever loot
+        accounting is evaluated for a farming chain).
+      properties:
+        base_drop_per_kill:
+          description: Mean unbuffed drop per single hostile kill (`(min + max) / 2`).
+          format: double
+          type: number
+        cargo_capacity:
+          description: >-
+            Effective ship cargo hold capacity after officer `CargoCapacity` bonuses (`None` when ship
+            cargo data is unavailable, in which case drops are uncapped).
+          format: double
+          type:
+            - number
+            - "null"
+        cargo_capped:
+          description: True when uncapped `kills_target` drops exceed `cargo_capacity`.
+          type: boolean
+        expected_loot_ci_high:
+          description: Upper 95% confidence bound on `expected_loot_mean`.
+          format: double
+          type: number
+        expected_loot_ci_low:
+          description: Lower 95% confidence bound on `expected_loot_mean`.
+          format: double
+          type: number
+        expected_loot_mean:
+          description: Mean expected quantity of `resource_name` collected across the chain (capped by cargo hold).
+          format: double
+          type: number
+        loot_multiplier:
+          description: Effective multiplicative loot factor (`1.0 + sum_applicable_officer_loot_bonuses`).
+          format: double
+          type: number
+        loot_sources:
+          description: Human-readable summary of officer loot/cargo bonuses applied to this crew.
+          items:
+            type: string
+          type: array
+        resource_id:
+          description: Upstream resource id for the named primary farming drop (e.g. `103783761` = Tech Module).
+          format: uint64
+          minimum: 0
+          type: integer
+        resource_name:
+          description: Human-readable name of the primary farming resource (e.g. `"Tech Module"`).
+          type: string
+      required:
+        - base_drop_per_kill
+        - cargo_capped
+        - expected_loot_ci_high
+        - expected_loot_ci_low
+        - expected_loot_mean
+        - loot_multiplier
+        - resource_id
+        - resource_name
       type: object

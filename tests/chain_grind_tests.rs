@@ -121,6 +121,8 @@ fn simulation_result_chain(
             secondary_ci_low: 0.0,
             secondary_ci_high: 1.0,
             n_primary_successes: 1,
+            ending_hull_mean_given_primary: Some(avg_hull_remaining),
+            loot: None,
         }),
         expected_hull_damage: None,
     }

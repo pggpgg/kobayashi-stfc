@@ -957,6 +957,10 @@ pub(crate) struct SharedScenarioData {
     /// Incoming shield mitigation on the **attacker** from counter-fire (defender profile research).
     pub defender_incoming_shield_mitigation_bonus: f64,
     pub defender_incoming_shield_mitigation_bonus_rounds: u32,
+    /// Base ship cargo hold capacity (`Cargo.max_resources`) before officer `CargoCapacity` bonuses.
+    pub ship_cargo_capacity: Option<f64>,
+    /// Upstream resource id → English display name for farming loot summaries.
+    pub resource_names: std::sync::Arc<HashMap<u64, String>>,
 }
 
 fn attacker_owner_faction_from_ship(ship_rec: Option<&ShipRecord>) -> OpponentFactionTag {
@@ -2583,6 +2587,39 @@ pub(crate) fn stable_scenario_seed_panel(ship: &str, hostile: &str, seed: u64) -
     acc
 }
 
+/// Process-cached tier-1 base ship cargo capacity keyed by `(asset_root, ship_id)` so standalone
+/// scenario builders and benchmarks do not re-parse `hull_id_registry.json` and raw ship JSON on
+/// every invocation.
+fn standalone_ship_cargo_capacity_cached(asset_root: &Path, ship_id: &str) -> Option<f64> {
+    use std::path::PathBuf;
+    use std::sync::{Mutex, OnceLock};
+
+    type CargoCapacityCache = Mutex<HashMap<(PathBuf, String), Option<f64>>>;
+    static CACHE: OnceLock<CargoCapacityCache> = OnceLock::new();
+    let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    let key = (asset_root.to_path_buf(), ship_id.to_string());
+    if let Ok(guard) = cache.lock() {
+        if let Some(&existing) = guard.get(&key) {
+            return existing;
+        }
+    }
+    let computed = (|| {
+        let reg = crate::data::ship::load_hull_id_registry();
+        let hull_id = reg
+            .iter()
+            .find_map(|(&hid, sid)| (sid == ship_id).then_some(hid))?;
+        let raw = crate::data::ship::load_upstream_ship_raw(
+            Path::new(crate::data::ship::DEFAULT_UPSTREAM_SHIPS_DIR),
+            hull_id,
+        )?;
+        crate::data::ship::ship_cargo_capacity_from_raw(&raw, 1, None)
+    })();
+    if let Ok(mut guard) = cache.lock() {
+        guard.insert(key, computed);
+    }
+    computed
+}
+
 /// Build scenario data for `(ship, hostile)` without a [DataRegistry] — same sources as legacy
 /// [super::simulation::run_monte_carlo_parallel] (canonical officers, profile JSON, optional LCARS).
 pub(crate) fn build_shared_scenario_data_standalone(
@@ -2949,6 +2986,12 @@ fn build_shared_scenario_data_standalone_for_profile(
             defender_opponent.defender_is_player_ship(),
         );
 
+    let asset_root = crate::runtime_paths::asset_root();
+    let resource_names = crate::data::hostile_loca::load_resource_display_names_cached(asset_root);
+    let ship_cargo_capacity = ship_rec
+        .as_ref()
+        .and_then(|s| standalone_ship_cargo_capacity_cached(asset_root, &s.id));
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -3002,6 +3045,8 @@ fn build_shared_scenario_data_standalone_for_profile(
         defender_profile: None,
         defender_incoming_shield_mitigation_bonus: 0.0,
         defender_incoming_shield_mitigation_bonus_rounds: 0,
+        ship_cargo_capacity,
+        resource_names,
     }
 }
 
@@ -3788,6 +3833,10 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             defender_opponent.defender_is_player_ship(),
         );
 
+    let ship_cargo_capacity =
+        registry.resolve_ship_cargo_capacity(ship, ship_tier, ship_level, &imported_ships);
+    let resource_names = registry.resource_names_arc();
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: scenario_hostile_key,
@@ -3841,6 +3890,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         defender_profile,
         defender_incoming_shield_mitigation_bonus,
         defender_incoming_shield_mitigation_bonus_rounds,
+        ship_cargo_capacity,
+        resource_names,
     }
 }
 
@@ -5202,6 +5253,8 @@ mod tests {
             defender_profile: None,
             defender_incoming_shield_mitigation_bonus: 0.0,
             defender_incoming_shield_mitigation_bonus_rounds: 0,
+            ship_cargo_capacity: None,
+            resource_names: std::sync::Arc::new(HashMap::new()),
         };
 
         let candidate = CrewCandidate {

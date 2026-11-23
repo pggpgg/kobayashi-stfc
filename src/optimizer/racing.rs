@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 
 use rayon::prelude::*;
 
-use crate::optimizer::chain::ChainGrindParams;
+use crate::optimizer::chain::{chain_ranking_scalar, ChainGrindParams};
 use crate::optimizer::constraints::normalize_officer_name;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::SharedScenarioData;
@@ -140,8 +140,13 @@ pub struct RacingOutcome {
 /// Ranking proxy aligned with [`rank_results`] for bracket sorting.
 #[inline]
 fn racing_point_score(r: &SimulationResult) -> f64 {
-    if r.chain.is_some() {
-        r.win_rate * 1e4 + r.avg_hull_remaining.min(1.0)
+    if let Some(ref c) = r.chain {
+        chain_ranking_scalar(
+            r.win_rate,
+            r.avg_hull_remaining,
+            c.secondary_objective,
+            c.secondary_mean_given_primary,
+        )
     } else {
         r.win_rate * 0.8 + r.avg_hull_remaining * 0.2
     }
@@ -150,8 +155,13 @@ fn racing_point_score(r: &SimulationResult) -> f64 {
 /// Pessimistic lower bound on the ranking proxy using 95% intervals.
 #[inline]
 fn racing_lower_bound(r: &SimulationResult) -> f64 {
-    if r.chain.is_some() {
-        r.win_rate_ci_low * 1e4 + r.avg_hull_remaining_ci_low.min(1.0)
+    if let Some(ref c) = r.chain {
+        chain_ranking_scalar(
+            r.win_rate_ci_low,
+            r.avg_hull_remaining_ci_low,
+            c.secondary_objective,
+            c.secondary_ci_low,
+        )
     } else {
         r.win_rate_ci_low * 0.8 + r.avg_hull_remaining_ci_low * 0.2
     }
@@ -160,8 +170,13 @@ fn racing_lower_bound(r: &SimulationResult) -> f64 {
 /// Optimistic upper bound on the ranking proxy using 95% intervals.
 #[inline]
 fn racing_upper_bound(r: &SimulationResult) -> f64 {
-    if r.chain.is_some() {
-        r.win_rate_ci_high * 1e4 + r.avg_hull_remaining_ci_high.min(1.0)
+    if let Some(ref c) = r.chain {
+        chain_ranking_scalar(
+            r.win_rate_ci_high,
+            r.avg_hull_remaining_ci_high,
+            c.secondary_objective,
+            c.secondary_ci_high,
+        )
     } else {
         r.win_rate_ci_high * 0.8 + r.avg_hull_remaining_ci_high * 0.2
     }
@@ -399,8 +414,17 @@ where
             })
             .collect();
         scored_active.sort_by(|a, b| {
+            let a_sec =
+                a.1.chain
+                    .as_ref()
+                    .map_or(a.1.avg_hull_remaining, |c| c.secondary_mean_given_primary);
+            let b_sec =
+                b.1.chain
+                    .as_ref()
+                    .map_or(b.1.avg_hull_remaining, |c| c.secondary_mean_given_primary);
             b.2.total_cmp(&a.2)
                 .then_with(|| b.1.win_rate.total_cmp(&a.1.win_rate))
+                .then_with(|| b_sec.total_cmp(&a_sec))
                 .then_with(|| b.1.avg_hull_remaining.total_cmp(&a.1.avg_hull_remaining))
                 .then_with(|| a.5.cmp(&b.5))
         });

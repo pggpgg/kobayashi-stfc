@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import {
+  type ChainLootSummary,
   type CompareCrewDistribution,
   type CrewRecommendation,
   compareCrewsDistributions,
@@ -142,6 +143,30 @@ function formatPctWithCi(p: number, lo: number, hi: number): string {
 function formatExpectedHullDamage(value: number | undefined): string {
   if (value == null || !Number.isFinite(value)) return "—";
   return Math.round(value).toLocaleString();
+}
+
+function formatCompactLoot(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 10_000) return `${(value / 1_000).toFixed(1)}k`;
+  return Math.round(value).toLocaleString();
+}
+
+function formatChainLootTooltip(loot: ChainLootSummary): string {
+  const lines = [
+    `Expected ${loot.resource_name}: ${Math.round(loot.expected_loot_mean).toLocaleString()} (95% CI: ${Math.round(loot.expected_loot_ci_low).toLocaleString()}–${Math.round(loot.expected_loot_ci_high).toLocaleString()})`,
+    `Base drop/kill: ${Math.round(loot.base_drop_per_kill).toLocaleString()} · Multiplier: ${loot.loot_multiplier.toFixed(2)}×`,
+  ];
+  if (loot.cargo_capacity != null) {
+    lines.push(
+      `Cargo capacity: ${Math.round(loot.cargo_capacity).toLocaleString()}${loot.cargo_capped ? " (cargo hold full)" : ""}`,
+    );
+  }
+  if (loot.loot_sources && loot.loot_sources.length > 0) {
+    lines.push(`Officer bonuses: ${loot.loot_sources.join(", ")}`);
+  }
+  return lines.join("\n");
 }
 
 function formatMethodProvenance(value: string | undefined): string {
@@ -421,13 +446,21 @@ export default memo(function SimResults({
     () => recommendations.find((r) => r.chain)?.chain,
     [recommendations],
   );
+  const chainLootMeta = useMemo(
+    () => recommendations.find((r) => r.chain?.loot)?.chain?.loot ?? null,
+    [recommendations],
+  );
   const chainMode = chainMeta != null;
+  const showChainLoot = chainMode && chainLootMeta != null;
   const linearEvalMode =
     optimizeEffectiveStrategy === "linear_eval" ||
     recommendations.some((r) => r.expected_hull_damage != null);
   const chainWinHeader = chainMode
     ? `P(${chainMeta.kills_target}-kill)`
     : "Win %";
+  const chainLootHeader = chainLootMeta?.resource_name
+    ? `Expected ${chainLootMeta.resource_name}`
+    : "Expected loot";
   const chainHullHeader =
     chainMode && chainMeta.secondary_objective === "max_loot_per_hull_proxy"
       ? "Loot proxy*|hit"
@@ -465,6 +498,7 @@ export default memo(function SimResults({
               "Stall %",
               "Loss %",
               chainR1Header,
+              ...(showChainLoot ? [chainLootHeader] : []),
               chainHullHeader,
               "Enemy hull %",
             ]
@@ -476,7 +510,15 @@ export default memo(function SimResults({
               "Your hull %",
               "Enemy hull %",
             ],
-    [linearEvalMode, chainMode, chainWinHeader, chainR1Header, chainHullHeader],
+    [
+      linearEvalMode,
+      chainMode,
+      chainWinHeader,
+      chainR1Header,
+      showChainLoot,
+      chainLootHeader,
+      chainHullHeader,
+    ],
   );
 
   const portfolioSummary = useMemo(
@@ -853,9 +895,21 @@ export default memo(function SimResults({
                 Select 2–5 rows to compare. <strong>Chain grind:</strong>{" "}
                 {chainMeta.kills_target} consecutive wins vs the same hostile;
                 attacker hull carries between fights; shields start full each
-                fight. First column is chain completion rate (Wilson CI).
-                &quot;Hull %*|hit&quot; / &quot;Loot proxy*|hit&quot; is the
-                secondary mean given a successful chain (normal approx CI).
+                fight. First column is chain completion rate (Wilson CI).{" "}
+                {showChainLoot ? (
+                  <>
+                    &quot;{chainLootHeader}&quot; shows expected payout per
+                    sortie (hostile drops, applicable officer loot bonuses, and
+                    cargo hold cap; hover for breakdown). &quot;Hull
+                    %*|hit&quot; shows ending hull after completing all{" "}
+                    {chainMeta.kills_target} kills.
+                  </>
+                ) : (
+                  <>
+                    &quot;{chainHullHeader}&quot; is the secondary mean given a
+                    successful chain (normal approx CI).
+                  </>
+                )}{" "}
                 Stall/loss/R1 follow the first link.
               </>
             ) : (
@@ -1159,12 +1213,47 @@ export default memo(function SimResults({
                               r.r1_kill_rate_ci_high,
                             )}
                           </td>
+                          {showChainLoot && (
+                            <td
+                              style={styles.tdNumeric}
+                              title={
+                                r.chain?.loot
+                                  ? formatChainLootTooltip(r.chain.loot)
+                                  : undefined
+                              }
+                            >
+                              {r.chain?.loot ? (
+                                <>
+                                  {formatCompactLoot(
+                                    r.chain.loot.expected_loot_mean,
+                                  )}
+                                  {r.chain.loot.cargo_capped && (
+                                    <span
+                                      style={{
+                                        marginLeft: 4,
+                                        fontSize: "0.72rem",
+                                        color: "var(--warning)",
+                                      }}
+                                    >
+                                      (full)
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                          )}
                           <td style={styles.tdNumeric}>
-                            {formatPctWithCi(
-                              r.avg_hull_remaining,
-                              r.avg_hull_remaining_ci_low,
-                              r.avg_hull_remaining_ci_high,
-                            )}
+                            {chainMode &&
+                            chainMeta.secondary_objective ===
+                              "max_loot_per_hull_proxy"
+                              ? r.avg_hull_remaining.toFixed(2)
+                              : formatPctWithCi(
+                                  r.avg_hull_remaining,
+                                  r.avg_hull_remaining_ci_low,
+                                  r.avg_hull_remaining_ci_high,
+                                )}
                           </td>
                           <td style={styles.tdNumeric}>
                             {formatPctWithCi(

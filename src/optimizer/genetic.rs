@@ -14,7 +14,7 @@
 use crate::combat::rng::Rng;
 use crate::data::data_registry::DataRegistry;
 use crate::data::support_buffs;
-use crate::optimizer::chain::ChainGrindParams;
+use crate::optimizer::chain::{chain_ranking_scalar, ChainGrindParams};
 use crate::optimizer::constraints::CrewSearchConstraints;
 use crate::optimizer::crew_generator::{
     build_officer_pools, build_officer_pools_with_constraints_from_registry, CrewCandidate,
@@ -100,8 +100,13 @@ fn build_shared_for_genetic(
 
 /// Single-fight: hull-weighted win rate. Chain: lexicographic proxy (primary then conditional secondary).
 fn fitness_from_result(result: &SimulationResult) -> f32 {
-    if result.chain.is_some() {
-        result.win_rate as f32 * 1e4 + result.avg_hull_remaining.min(1.0) as f32
+    if let Some(ref c) = result.chain {
+        chain_ranking_scalar(
+            result.win_rate,
+            result.avg_hull_remaining,
+            c.secondary_objective,
+            c.secondary_mean_given_primary,
+        ) as f32
     } else {
         (result.win_rate * 0.8 + result.avg_hull_remaining * 0.2) as f32
     }
@@ -1210,6 +1215,8 @@ mod tests {
             secondary_ci_low: 0.0,
             secondary_ci_high: 0.0,
             n_primary_successes: 10,
+            ending_hull_mean_given_primary: None,
+            loot: None,
         });
 
         // The point estimate is too low, but its upper bound can approach a 20% elite.

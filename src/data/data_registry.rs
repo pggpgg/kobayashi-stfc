@@ -15,7 +15,10 @@ use crate::data::hostile::{
     load_hostile_index, load_hostile_record, HostileIndex, HostileRecord,
     DEFAULT_HOSTILES_INDEX_PATH,
 };
-use crate::data::hostile_loca::load_hostile_loca_display_names;
+use crate::data::hostile_loca::{
+    load_hostile_catalog_meta, load_hostile_loca_display_names, load_resource_display_names,
+    load_system_display_names, HostileCatalogMeta,
+};
 use crate::data::import::ShipEntry;
 use crate::data::loader::normalize_lookup;
 use crate::data::officer::{
@@ -29,8 +32,9 @@ use crate::data::research::{
 };
 use crate::data::ship::{
     apply_component_overrides_to_ship_record, load_extended_ship_index, load_extended_ship_record,
-    load_hull_id_registry, load_upstream_ship_raw, ComponentOverrideSummary, CrewSlotUnlock,
-    ExtendedShipIndex, ShipRecord, DEFAULT_SHIPS_EXTENDED_DIR, DEFAULT_UPSTREAM_SHIPS_DIR,
+    load_hull_id_registry, load_upstream_ship_raw, ship_cargo_capacity_from_raw,
+    ComponentOverrideSummary, CrewSlotUnlock, ExtendedShipIndex, ShipRecord,
+    DEFAULT_SHIPS_EXTENDED_DIR, DEFAULT_UPSTREAM_SHIPS_DIR,
 };
 use crate::data::support_buffs::{
     load_support_buff_catalog, SupportBuffCatalog, DEFAULT_SUPPORT_BUFFS_PATH,
@@ -67,6 +71,12 @@ pub struct DataRegistry {
     pub hostile_index: Option<HostileIndex>,
     /// `loca_id` → display name from data.stfc.space translation exports (for API / UI).
     pub hostile_loca_display: HashMap<u64, String>,
+    /// `system_id` → display name from `translations-systems.json`.
+    pub system_names: HashMap<u64, String>,
+    /// `resource_id` → display name from `summary-ressource.json` + `translations-materials.json`.
+    pub resource_names: Arc<HashMap<u64, String>>,
+    /// Hostile id → spawn systems, warp, and primary resource metadata from `summary-hostile.json`.
+    pub hostile_catalog_meta: HashMap<String, HostileCatalogMeta>,
     /// LCARS officers — the sole ability source; `None` only if the data failed to load.
     /// Used by monte_carlo to resolve abilities.
     pub lcars_officers: Option<Vec<LcarsOfficer>>,
@@ -99,8 +109,12 @@ impl DataRegistry {
             .then(|| load_extended_ship_index(Path::new(DEFAULT_SHIPS_EXTENDED_DIR)))
             .flatten();
         let hostile_index = load_hostile_index(DEFAULT_HOSTILES_INDEX_PATH);
-        let hostile_loca_display =
-            load_hostile_loca_display_names(crate::runtime_paths::asset_root());
+        let asset_root = crate::runtime_paths::asset_root();
+        let hostile_loca_display = load_hostile_loca_display_names(asset_root);
+        let system_names = load_system_display_names(asset_root);
+        let resource_names = Arc::new(load_resource_display_names(asset_root));
+        let hostile_catalog_meta =
+            load_hostile_catalog_meta(asset_root, &system_names, &resource_names);
 
         // LCARS is the sole officer ability source, built in-process from canonical (no committed
         // monolith); `None` only if the source data fails to load.
@@ -123,6 +137,9 @@ impl DataRegistry {
             ship_index,
             hostile_index,
             hostile_loca_display,
+            system_names,
+            resource_names,
+            hostile_catalog_meta,
             lcars_officers,
             forbidden_chaos_catalog,
             research_catalog,
@@ -190,6 +207,48 @@ impl DataRegistry {
     /// Loca id → English name for hostile list labels (from bundled stfc.space translations).
     pub fn hostile_loca_display(&self) -> &HashMap<u64, String> {
         &self.hostile_loca_display
+    }
+
+    /// System id → English display name (from `translations-systems.json`).
+    pub fn system_names(&self) -> &HashMap<u64, String> {
+        &self.system_names
+    }
+
+    /// Resource id → English display name (from `summary-ressource.json` + `translations-materials.json`).
+    pub fn resource_names(&self) -> &HashMap<u64, String> {
+        &self.resource_names
+    }
+
+    /// Cheap `Arc` handle to `resource_names` for scenario builders.
+    pub fn resource_names_arc(&self) -> Arc<HashMap<u64, String>> {
+        Arc::clone(&self.resource_names)
+    }
+
+    /// Hostile id → spawn systems, warp, and primary loot metadata (from `summary-hostile.json`).
+    pub fn hostile_catalog_meta(&self) -> &HashMap<String, HostileCatalogMeta> {
+        &self.hostile_catalog_meta
+    }
+
+    /// Resolve a player ship's base cargo capacity (`Cargo.max_resources`) at `tier` (defaulting to
+    /// tier 1), honoring synced Cargo Bay component upgrades when present.
+    pub fn resolve_ship_cargo_capacity(
+        &self,
+        name_or_id: &str,
+        tier: Option<u32>,
+        level: Option<u32>,
+        imported_ships: &[ShipEntry],
+    ) -> Option<f64> {
+        let ship_id = self.resolve_ship_id(name_or_id)?;
+        let effective_tier = tier.unwrap_or(1);
+        let synced_entry = self.imported_ship_entry_for_ship(ship_id, tier, level, imported_ships);
+        let hull_id = synced_entry.map(|e| e.hull_id).or_else(|| {
+            self.hull_id_registry
+                .iter()
+                .find_map(|(&hid, sid)| (sid == ship_id).then_some(hid))
+        })?;
+        let raw_ship = load_upstream_ship_raw(Path::new(DEFAULT_UPSTREAM_SHIPS_DIR), hull_id)?;
+        let comp_ids = synced_entry.map(|e| e.components.as_slice());
+        ship_cargo_capacity_from_raw(&raw_ship, effective_tier, comp_ids)
     }
 
     /// Load a hostile record from disk, caching in the LRU to avoid repeated I/O.

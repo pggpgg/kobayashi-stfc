@@ -141,6 +141,9 @@ pub fn chain_fingerprint(chain: &Option<ChainGrindParams>) -> String {
                 crate::optimizer::chain::ChainSecondaryObjective::MinHullDamage => {
                     "min_hull_damage"
                 }
+                crate::optimizer::chain::ChainSecondaryObjective::MaxExpectedLoot => {
+                    "max_expected_loot"
+                }
                 crate::optimizer::chain::ChainSecondaryObjective::MaxLootPerHullProxy => {
                     "max_loot_per_hull_proxy"
                 }

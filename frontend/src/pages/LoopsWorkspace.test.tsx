@@ -33,6 +33,26 @@ vi.mock("../lib/api", async (importOriginal) => {
         level: 51,
         ship_class: "survey",
       },
+      {
+        id: "3294438884",
+        hostile_name: "Xindi-Aquatic Cruiser",
+        level: 62,
+        ship_class: "interceptor",
+        system_names: [],
+        warp: 0,
+        has_loot: false,
+        primary_resource_name: null,
+      },
+      {
+        id: "3919830203",
+        hostile_name: "Xindi-Aquatic Cruiser",
+        level: 62,
+        ship_class: "interceptor",
+        system_names: ["Yoton"],
+        warp: 1000,
+        has_loot: true,
+        primary_resource_name: "Tech Module",
+      },
     ]),
     fetchShips: vi.fn().mockResolvedValue([
       { id: "mantis", ship_name: "MANTIS", ship_class: "battleship" },
@@ -41,6 +61,11 @@ vi.mock("../lib/api", async (importOriginal) => {
         id: "uss_dauntless",
         ship_name: "USS Dauntless",
         ship_class: "interceptor",
+      },
+      {
+        id: "enterprise_nx_01",
+        ship_name: "Enterprise NX-01",
+        ship_class: "explorer",
       },
     ]),
     // Never settles, so a started climb stays in flight for assertions about the
@@ -291,5 +316,81 @@ describe("LoopsWorkspace", () => {
       ).toBe(true);
     });
     expect(screen.getByRole("button", { name: "Cancel climb" })).toBeTruthy();
+  });
+
+  it("#414/#415 resolves the Yoton L62 Xindi cruiser with system metadata and displays saved farming loot", async () => {
+    localStorage.setItem(
+      loopWorkspaceStorageKey("p1"),
+      JSON.stringify({
+        version: 2,
+        records: {
+          "xindi-aquatic|3919830203|farming_loot": [
+            {
+              id: "yoton-loot",
+              loopId: "xindi-aquatic",
+              targetId: "3919830203",
+              targetName: "Xindi-Aquatic Cruiser",
+              targetLevel: 62,
+              goalId: "farming_loot",
+              shipId: "enterprise_nx_01",
+              shipTier: 12,
+              shipLevel: 60,
+              crew: {
+                captain: "Jonathan Archer",
+                bridge: ["Spock", "Bones"],
+                belowDecks: ["Ent-E Data"],
+              },
+              winRate: 1,
+              winRateCiLow: 0.99,
+              winRateCiHigh: 1,
+              roundOneKillRate: 0.5,
+              roundOneKillRateCiLow: 0.45,
+              roundOneKillRateCiHigh: 0.55,
+              averageHullRemaining: 0.8,
+              averageHullRemainingCiLow: 0.78,
+              averageHullRemainingCiHigh: 0.82,
+              averageDefenderHullRemaining: 0,
+              averageDefenderHullRemainingCiLow: 0,
+              averageDefenderHullRemainingCiHigh: 0,
+              chainSuccessRate: 1,
+              chainSuccessRateCiLow: 0.99,
+              chainSuccessRateCiHigh: 1,
+              chainKillsTarget: 4,
+              chainSecondaryObjective: "max_expected_loot",
+              chainEndingHull: 0.8,
+              chainExpectedLoot: 17_736_376,
+              chainLootResourceName: "Tech Module",
+              chainCargoCapped: false,
+              recordedAt: "2026-11-23T00:00:00Z",
+            },
+          ],
+        },
+      }),
+    );
+
+    render(
+      <MemoryRouter initialEntries={["/loops"]}>
+        <ProfileProvider>
+          <Routes>
+            <Route path="/loops" element={<LoopsWorkspace />} />
+            <Route path="/" element={<WorkspaceStateProbe />} />
+          </Routes>
+        </ProfileProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Xindi-Aquatic.*1 saved/ }),
+    );
+    await screen.findByText("Yoton · W1000 · Tech Module");
+    expect(screen.getByText(/3919830203/)).toBeTruthy();
+    expect(screen.queryByText(/3294438884/)).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Rank crews by"), {
+      target: { value: "farming_loot" },
+    });
+    expect(await screen.findByText(/17\.74M Tech Module/)).toBeTruthy();
+    expect(screen.getByText(/100% P\(4-kill\)/)).toBeTruthy();
+    expect(screen.getByText(/80% hull/)).toBeTruthy();
   });
 });

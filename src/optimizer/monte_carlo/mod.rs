@@ -5,7 +5,7 @@
 //! - [simulation]: run_monte_carlo* and SimulationResult.
 
 mod compare_crews;
-mod crew_resolution;
+pub(crate) mod crew_resolution;
 pub(crate) mod scenario;
 mod simulation;
 

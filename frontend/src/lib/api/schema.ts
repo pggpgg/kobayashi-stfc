@@ -34,6 +34,8 @@ export type SimulateResponse = Schemas["SimulateResponse"];
 export type OptimizeStartResponse = Schemas["OptimizeStartResponse"];
 export type OptimizeEstimate = Schemas["OptimizeEstimateResponse"];
 
+export type ChainSecondaryObjective = Schemas["ChainSecondaryObjective"];
+export type ChainLootSummary = Schemas["ChainLootSummary"];
 export type ChainSimulationSummary = Schemas["ChainSimulationSummary"];
 export type RefinementSlotChange = Schemas["RefinementSlotChange"];
 export type RefinementDetail = Schemas["RefinementDetail"];

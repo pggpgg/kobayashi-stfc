@@ -38,6 +38,7 @@ export const RUNG_CLEAR_CI_LOW_THRESHOLD: Record<LoopGoalId, number> = {
   damage_dealt: 0.6,
   no_hits: 0.7,
   kills_per_hull: 0.6,
+  farming_loot: 0.6,
   smallest_ship: 0.5,
 };
 

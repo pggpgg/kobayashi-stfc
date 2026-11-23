@@ -139,7 +139,15 @@ pub(crate) fn confirm_ranking_uncertainty_width(r: &RankedCrewResult) -> f64 {
 
 fn chain_ranking_uncertainty_width(c: &ChainSimulationSummary) -> f64 {
     let w_p = (c.primary_ci_high - c.primary_ci_low).max(1e-12);
-    let w_s = (c.secondary_ci_high - c.secondary_ci_low).max(0.0);
+    let w_s = match c.secondary_objective {
+        crate::optimizer::chain::ChainSecondaryObjective::MinHullDamage => {
+            (c.secondary_ci_high - c.secondary_ci_low).max(0.0)
+        }
+        crate::optimizer::chain::ChainSecondaryObjective::MaxExpectedLoot
+        | crate::optimizer::chain::ChainSecondaryObjective::MaxLootPerHullProxy => {
+            (c.secondary_ci_high.max(0.0).ln_1p() - c.secondary_ci_low.max(0.0).ln_1p()).max(0.0)
+        }
+    };
     // Secondary breaks ties after primary; widen budget when either signal is noisy.
     w_p.max(0.35 * w_s).max(1e-12)
 }
