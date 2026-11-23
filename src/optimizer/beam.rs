@@ -1213,6 +1213,158 @@ pub(crate) fn propose_diversity_beam_crews_from_pools_with_seats(
     (out, ranked_seats)
 }
 
+/// Compact LCARS tactical summary for one officer in one specific seat role, folded against the
+/// scenario's static combat gates. Reused by counterfactual explanations & substitute search.
+#[derive(Debug, Clone)]
+pub(crate) struct OfficerRoleSummary {
+    pub provides_state: u8,
+    pub needs_state: u8,
+    pub bridge_effectiveness_boost: f64,
+    pub captain_maneuver_boost: f64,
+    pub synergy: Option<OfficerSynergyIdentity>,
+}
+
+/// Human-readable names for trigger-state bitmasks (`STATE_*`).
+pub(crate) fn state_bit_labels(mask: u8) -> Vec<&'static str> {
+    let mut out = Vec::new();
+    if mask & STATE_MORALE != 0 {
+        out.push("Morale");
+    }
+    if mask & STATE_BURNING != 0 {
+        out.push("Burning");
+    }
+    if mask & STATE_HULL_BREACH != 0 {
+        out.push("Hull Breach");
+    }
+    if mask & STATE_ASSIMILATED != 0 {
+        out.push("Assimilated");
+    }
+    out
+}
+
+/// Score one officer in a specific seat role using the exact static-folded beam profiler.
+pub(crate) fn summarize_officer_role(
+    registry: &DataRegistry,
+    shared: &SharedScenarioData,
+    name: &str,
+    seat_role: CrewSeat,
+) -> OfficerRoleSummary {
+    let static_ctx = static_context_from_shared(shared);
+    let group_lookup = captain_group_lookup_from_registry(registry);
+    let curated_bd_rank: HashMap<String, u32> = HashMap::new();
+    let mut lcars_by_norm: HashMap<String, &LcarsOfficer> = HashMap::new();
+    if let Some(lcars) = registry.lcars_officers() {
+        for officer in lcars {
+            let key = normalize_officer_name(&officer.name);
+            if !key.is_empty() {
+                lcars_by_norm.insert(key, officer);
+            }
+        }
+    }
+    let p = build_role_profile(
+        name,
+        seat_role,
+        &lcars_by_norm,
+        shared,
+        &static_ctx,
+        &group_lookup,
+        &curated_bd_rank,
+    );
+    OfficerRoleSummary {
+        provides_state: p.provides_state,
+        needs_state: p.needs_state,
+        bridge_effectiveness_boost: p.bridge_effectiveness_boost,
+        captain_maneuver_boost: p.captain_maneuver_boost,
+        synergy: p.synergy,
+    }
+}
+
+/// Rank legal replacement candidates for a single seat, rewarding officers that preserve required
+/// trigger states (`desired_states`), match captain synergy (`captain_synergy`), and score strongly
+/// on static-folded LCARS abilities for the scenario.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn rank_replacement_names_for_seat(
+    registry: &DataRegistry,
+    shared: &SharedScenarioData,
+    pool_names: &[String],
+    seat_role: CrewSeat,
+    desired_states: u8,
+    captain_synergy: Option<OfficerSynergyIdentity>,
+    other_bridge_synergies: &[OfficerSynergyIdentity],
+    limit: usize,
+) -> Vec<String> {
+    if pool_names.is_empty() || limit == 0 {
+        return Vec::new();
+    }
+    let static_ctx = static_context_from_shared(shared);
+    let group_lookup = captain_group_lookup_from_registry(registry);
+    let curated_bd_rank: HashMap<String, u32> = HashMap::new();
+    let mut lcars_by_norm: HashMap<String, &LcarsOfficer> = HashMap::new();
+    if let Some(lcars) = registry.lcars_officers() {
+        for officer in lcars {
+            let key = normalize_officer_name(&officer.name);
+            if !key.is_empty() {
+                lcars_by_norm.insert(key, officer);
+            }
+        }
+    }
+
+    let mut scored: Vec<(String, f64, f64)> = pool_names
+        .iter()
+        .map(|name| {
+            let p = build_role_profile(
+                name,
+                seat_role,
+                &lcars_by_norm,
+                shared,
+                &static_ctx,
+                &group_lookup,
+                &curated_bd_rank,
+            );
+            let best_axis = p.scores[..5].iter().copied().fold(0.0_f64, f64::max);
+            let sum_axes: f64 = p.scores[..5].iter().sum();
+            let mut rank_score = best_axis + 0.15 * sum_axes;
+            // Reward covering combat states consumed by remaining crewmates.
+            let matched_states = (p.provides_state & desired_states).count_ones() as f64;
+            rank_score += matched_states * 2.2;
+            // Reward matching captain synergy for bridge seats or preserving synergy for captain.
+            if let Some(cand_syn) = p.synergy {
+                match seat_role {
+                    CrewSeat::Bridge => {
+                        if let Some(cap_syn) = captain_synergy {
+                            if cand_syn.group_id == cap_syn.group_id {
+                                let same_class_used = other_bridge_synergies.iter().any(|s| {
+                                    s.group_id == cap_syn.group_id
+                                        && s.officer_class == cand_syn.officer_class
+                                });
+                                if !same_class_used {
+                                    rank_score += 1.8;
+                                }
+                            }
+                        }
+                    }
+                    CrewSeat::Captain => {
+                        let matching_bridge = other_bridge_synergies
+                            .iter()
+                            .filter(|s| s.group_id == cand_syn.group_id)
+                            .count() as f64;
+                        rank_score += matching_bridge * 1.4;
+                    }
+                    _ => {}
+                }
+            }
+            (p.name, rank_score, p.officer_power)
+        })
+        .collect();
+
+    scored.sort_by(|a, b| {
+        b.1.total_cmp(&a.1)
+            .then_with(|| b.2.total_cmp(&a.2))
+            .then_with(|| a.0.cmp(&b.0))
+    });
+    scored.into_iter().take(limit).map(|(n, _, _)| n).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

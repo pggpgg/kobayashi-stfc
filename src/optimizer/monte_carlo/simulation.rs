@@ -1023,6 +1023,21 @@ impl CandidateTrialAccumulator {
         target_trials: usize,
         chain_grind: Option<&ChainGrindParams>,
     ) -> usize {
+        self.advance_to_with_trial_scores(shared, seed, target_trials, chain_grind, None)
+    }
+
+    /// Same as [`Self::advance_to`], optionally recording the per-trial scalar ranking score
+    /// (`0.8·win + 0.2·surviving_hull`, or `0.8·primary_success + 0.2·ending_hull` for chains)
+    /// so paired Common Random Numbers (CRN) comparisons can compute tight paired confidence
+    /// intervals across counterfactual crew variants.
+    pub(crate) fn advance_to_with_trial_scores(
+        &mut self,
+        shared: &SharedScenarioData,
+        seed: u64,
+        target_trials: usize,
+        chain_grind: Option<&ChainGrindParams>,
+        mut trial_scores: Option<&mut Vec<f64>>,
+    ) -> usize {
         if target_trials <= self.trials_done {
             return 0;
         }
@@ -1033,6 +1048,9 @@ impl CandidateTrialAccumulator {
         }
         let start = self.trials_done;
         let executed = target_trials - start;
+        if let Some(scores) = trial_scores.as_deref_mut() {
+            scores.reserve(executed);
+        }
 
         if let Some(chain) = chain_grind {
             if chain.secondary == ChainSecondaryObjective::MaxExpectedLoot
@@ -1084,10 +1102,18 @@ impl CandidateTrialAccumulator {
                     self.sec_mean += delta / j;
                     let delta2 = sdraw - self.sec_mean;
                     self.sec_m2 += delta * delta2;
-                } else if outcome.failed_on_stall {
-                    self.stalls += 1;
+                    if let Some(scores) = trial_scores.as_deref_mut() {
+                        scores.push(0.8 + 0.2 * hf.clamp(0.0, 1.0));
+                    }
                 } else {
-                    self.losses += 1;
+                    if outcome.failed_on_stall {
+                        self.stalls += 1;
+                    } else {
+                        self.losses += 1;
+                    }
+                    if let Some(scores) = trial_scores.as_deref_mut() {
+                        scores.push(0.0);
+                    }
                 }
             }
             self.trials_done = target_trials;
@@ -1141,13 +1167,16 @@ impl CandidateTrialAccumulator {
             let iteration_seed = input.base_seed.wrapping_add(trial_index as u64);
             let result =
                 simulate_combat_from_setup_with_scratch(&setup, iteration_seed, &mut trial_scratch);
-            if result.winner_by_round_limit {
+            let clean_win = if result.winner_by_round_limit {
                 self.stalls += 1;
+                false
             } else if result.attacker_won {
                 self.wins += 1;
+                true
             } else {
                 self.losses += 1;
-            }
+                false
+            };
             let hull_draw =
                 surviving_hull_fraction(&result, trial_scratch.attacker_hull_health(&setup));
             self.surviving_hull_sum += hull_draw;
@@ -1165,6 +1194,9 @@ impl CandidateTrialAccumulator {
 
             if result.attacker_won && result.rounds_simulated == 1 {
                 self.r1_kills += 1;
+            }
+            if let Some(scores) = trial_scores.as_deref_mut() {
+                scores.push(blended_score(if clean_win { 1.0 } else { 0.0 }, hull_draw));
             }
         }
         self.trials_done = target_trials;
@@ -1311,6 +1343,30 @@ impl CandidateTrialAccumulator {
             chain: None,
             expected_hull_damage: None,
         }
+    }
+}
+
+/// Evaluate a batch of crews on the exact same Common Random Numbers (CRN) scenario seed panel,
+/// returning each candidate's full [`SimulationResult`] alongside its per-trial scalar ranking
+/// scores (`len == iterations`) for paired difference confidence intervals.
+pub(crate) fn evaluate_candidates_crn_with_trial_scores(
+    shared: &SharedScenarioData,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+    chain_grind: Option<&ChainGrindParams>,
+) -> Vec<(SimulationResult, Vec<f64>)> {
+    let iters = iterations.max(1);
+    let eval_one = |cand: &CrewCandidate| {
+        let mut acc = CandidateTrialAccumulator::new(cand.clone());
+        let mut scores = Vec::with_capacity(iters);
+        acc.advance_to_with_trial_scores(shared, seed, iters, chain_grind, Some(&mut scores));
+        (acc.to_simulation_result(chain_grind), scores)
+    };
+    if monte_carlo_parallel_worthwhile(candidates.len(), candidates.len().saturating_mul(iters)) {
+        candidates.par_iter().map(eval_one).collect()
+    } else {
+        candidates.iter().map(eval_one).collect()
     }
 }
 

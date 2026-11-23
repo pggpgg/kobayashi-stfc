@@ -40,6 +40,11 @@ describe("Shell", () => {
         .getByRole("link", { name: "Loops workspace" })
         .getAttribute("href"),
     ).toBe("/loops");
+    expect(
+      screen
+        .getByRole("link", { name: "Fleet Allocator" })
+        .getAttribute("href"),
+    ).toBe("/fleet");
     expect(screen.getByText("Main content")).toBeTruthy();
     expect(screen.getByRole("link", { name: "PvP" }).getAttribute("href")).toBe(
       "/pvp",

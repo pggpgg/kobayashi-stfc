@@ -51,6 +51,8 @@ export default function Workspace() {
             ...(ws.selectedSupportBuffs.length > 0
               ? { supportBuffs: ws.selectedSupportBuffs }
               : {}),
+            enemyType: ws.enemyType,
+            belowDecksPoolMode: ws.optimizerSettings?.belowDecksPoolMode,
           }
         : null,
     [
@@ -62,8 +64,40 @@ export default function Workspace() {
       ws.belowDeckUnlockLevels,
       ws.activeProfileId,
       ws.selectedSupportBuffs,
+      ws.enemyType,
+      ws.optimizerSettings?.belowDecksPoolMode,
     ],
   );
+
+  const handleLoadCrewFromResults = (loaded: {
+    captain: string;
+    bridge: string[];
+    below_decks: string[];
+  }) => {
+    const byKey = new Map<string, string>();
+    for (const o of officerOptions) {
+      byKey.set(o.name.trim().toLowerCase(), o.id);
+      byKey.set(o.id.trim().toLowerCase(), o.id);
+    }
+    const resolveId = (raw: string | undefined): string | null => {
+      const trimmed = raw?.trim();
+      if (!trimmed) return null;
+      return byKey.get(trimmed.toLowerCase()) ?? trimmed;
+    };
+    const bdSlots = belowDeckSlotCount(ws.shipLevel, ws.belowDeckUnlockLevels);
+    const belowDeck: (string | null)[] = Array.from(
+      { length: Math.max(bdSlots, loaded.below_decks.length) },
+      (_, idx) => resolveId(loaded.below_decks[idx]),
+    ).slice(0, bdSlots);
+    ws.setCrew({
+      captain: resolveId(loaded.captain),
+      bridge: [resolveId(loaded.bridge[0]), resolveId(loaded.bridge[1])],
+      belowDeck,
+    });
+    ws.setWorkspaceInfo(
+      `Loaded ${loaded.captain} into Crew Builder for simulation or tweaking.`,
+    );
+  };
 
   return (
     <div
@@ -245,6 +279,7 @@ export default function Workspace() {
                 optimizePreview={ws.optimizePreview}
                 optimizeEffectiveStrategy={ws.lastOptimizeEffectiveStrategy}
                 compareWorkspace={compareWorkspace}
+                onLoadCrew={handleLoadCrewFromResults}
               />
             </div>
           )}

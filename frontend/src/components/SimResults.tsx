@@ -4,11 +4,14 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
+  analyzeCrewCounterfactual,
   type ChainLootSummary,
   type CompareCrewDistribution,
+  type CrewCounterfactualResponse,
   type CrewRecommendation,
   compareCrewsDistributions,
   crewRecommendationToSimulateCrew,
@@ -26,6 +29,9 @@ import {
   type RecommendationFilters,
   summarizePortfolioResults,
 } from "../lib/portfolioAnalytics";
+import CounterfactualPanel, {
+  type LoadedCrewTarget,
+} from "./results/CounterfactualPanel";
 import CrewComparisonPanel from "./results/CrewComparisonPanel";
 import PortfolioAnalyticsBar from "./results/PortfolioAnalyticsBar";
 
@@ -315,7 +321,7 @@ function formatTrialsRun(value: number | undefined): string | null {
     : String(value);
 }
 
-/** Scenario context for POST /api/compare/crews (Monte Carlo distributions). */
+/** Scenario context for POST /api/compare/crews & POST /api/crew/counterfactual. */
 export interface CompareWorkspaceParams {
   ship: string;
   hostile: string;
@@ -326,6 +332,18 @@ export interface CompareWorkspaceParams {
   profileId: string | null;
   /** Parity with simulate/optimize workspace selection. */
   supportBuffs?: string[];
+  enemyType?: string;
+  belowDecksPoolMode?: string;
+}
+
+interface CounterfactualState {
+  recommendations: CrewRecommendation[];
+  rowIndex: number;
+  workspaceKey: string;
+  loading: boolean;
+  data: CrewCounterfactualResponse | null;
+  error: string | null;
+  unavailableOfficers: string[];
 }
 
 interface ComparisonState {
@@ -357,6 +375,8 @@ interface SimResultsProps {
   compareWorkspace?: CompareWorkspaceParams | null;
   /** Last optimize run effective strategy (from API scenario.effective_strategy). */
   optimizeEffectiveStrategy?: string | null;
+  /** Optional callback to load a substitute/swapped crew back into CrewBuilder. */
+  onLoadCrew?: (crew: LoadedCrewTarget) => void;
 }
 
 export default memo(function SimResults({
@@ -375,6 +395,7 @@ export default memo(function SimResults({
   optimizePreview = null,
   compareWorkspace = null,
   optimizeEffectiveStrategy = null,
+  onLoadCrew,
 }: SimResultsProps) {
   const [selection, setSelection] = useState(() => ({
     recommendations,
@@ -407,6 +428,15 @@ export default memo(function SimResults({
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
   const [comparison, setComparison] = useState<ComparisonState | null>(null);
+  const [counterfactual, setCounterfactual] =
+    useState<CounterfactualState | null>(null);
+  const counterfactualAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      counterfactualAbortRef.current?.abort();
+    };
+  }, []);
   const workspaceKey = JSON.stringify(
     compareWorkspace && [
       compareWorkspace.ship,
@@ -557,6 +587,9 @@ export default memo(function SimResults({
     setComparison((current) =>
       current?.recommendations === recommendations ? current : null,
     );
+    setCounterfactual((current) =>
+      current?.recommendations === recommendations ? current : null,
+    );
   }, [recommendations]);
 
   const selectDiverseTop = useCallback(
@@ -650,6 +683,115 @@ export default memo(function SimResults({
     showCompare,
     workspaceKey,
   ]);
+
+  const inspectTargetIndex =
+    selectedList.length > 0
+      ? selectedList[0]
+      : (filteredRows[0]?.originalIndex ?? 0);
+
+  const runCounterfactual = useCallback(
+    async (rowIndex: number, unavailable: string[]) => {
+      if (!compareWorkspace || linearEvalMode) return;
+      const targetRec = recommendations[rowIndex];
+      if (!targetRec) return;
+
+      counterfactualAbortRef.current?.abort();
+      const controller = new AbortController();
+      counterfactualAbortRef.current = controller;
+
+      const request: CounterfactualState = {
+        recommendations,
+        rowIndex,
+        workspaceKey,
+        loading: true,
+        data: null,
+        error: null,
+        unavailableOfficers: unavailable,
+      };
+      setCounterfactual(request);
+
+      try {
+        const crew = crewRecommendationToSimulateCrew(
+          targetRec,
+          compareWorkspace.belowDecksSlots,
+        );
+        const simCount = Math.min(Math.max(compareWorkspace.numSims, 250), 800);
+        const res = await analyzeCrewCounterfactual(
+          {
+            ship: compareWorkspace.ship,
+            hostile: compareWorkspace.hostile,
+            crew,
+            num_sims: simCount,
+            seed: 42,
+            ship_tier:
+              compareWorkspace.shipTier > 0
+                ? compareWorkspace.shipTier
+                : undefined,
+            ship_level:
+              compareWorkspace.shipLevel > 0
+                ? compareWorkspace.shipLevel
+                : undefined,
+            below_decks_slots: compareWorkspace.belowDecksSlots,
+            below_decks_pool_mode: compareWorkspace.belowDecksPoolMode,
+            unavailable_officers: unavailable,
+            max_substitutes_per_slot: 3,
+            max_substitute_crews: 5,
+            support_buffs: compareWorkspace.supportBuffs,
+            enemy_type: compareWorkspace.enemyType,
+          },
+          compareWorkspace.profileId,
+          controller.signal,
+        );
+        setCounterfactual((current) =>
+          current === request
+            ? { ...request, loading: false, data: res }
+            : current,
+        );
+      } catch (e) {
+        if (controller.signal.aborted) return;
+        setCounterfactual((current) =>
+          current === request
+            ? { ...request, loading: false, error: formatApiError(e) }
+            : current,
+        );
+      }
+    },
+    [compareWorkspace, linearEvalMode, recommendations, workspaceKey],
+  );
+
+  const activeCounterfactual =
+    counterfactual &&
+    counterfactual.recommendations === recommendations &&
+    counterfactual.workspaceKey === workspaceKey
+      ? counterfactual
+      : null;
+
+  const toggleCounterfactualUnavailable = useCallback((officer: string) => {
+    setCounterfactual((current) => {
+      if (!current) return current;
+      const norm = officer.trim().toLowerCase();
+      const exists = current.unavailableOfficers.some(
+        (n) => n.trim().toLowerCase() === norm,
+      );
+      const nextList = exists
+        ? current.unavailableOfficers.filter(
+            (n) => n.trim().toLowerCase() !== norm,
+          )
+        : [...current.unavailableOfficers, officer];
+      return { ...current, unavailableOfficers: nextList };
+    });
+  }, []);
+
+  const clearCounterfactualUnavailable = useCallback(() => {
+    setCounterfactual((current) =>
+      current ? { ...current, unavailableOfficers: [] } : current,
+    );
+  }, []);
+
+  const closeCounterfactual = useCallback(() => {
+    counterfactualAbortRef.current?.abort();
+    setCounterfactual(null);
+  }, []);
 
   return (
     <section
@@ -974,6 +1116,28 @@ export default memo(function SimResults({
             <span style={{ color: "var(--text-muted)" }}>
               Selected {totalSelected}/5
             </span>
+            {compareWorkspace &&
+              !linearEvalMode &&
+              recommendations.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => void runCounterfactual(inspectTargetIndex, [])}
+                  disabled={Boolean(activeCounterfactual?.loading)}
+                  style={{
+                    ...styles.control,
+                    cursor: activeCounterfactual?.loading
+                      ? "not-allowed"
+                      : "pointer",
+                    borderColor: "var(--accent)",
+                    color: "var(--accent)",
+                    fontWeight: 600,
+                  }}
+                >
+                  {activeCounterfactual?.loading
+                    ? "Analyzing…"
+                    : `Inspect #${inspectTargetIndex + 1} & Substitutes`}
+                </button>
+              )}
             {totalPages > 1 && (
               <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <button
@@ -1270,6 +1434,25 @@ export default memo(function SimResults({
               </tbody>
             </table>
           </div>
+
+          {activeCounterfactual && (
+            <CounterfactualPanel
+              data={activeCounterfactual.data}
+              loading={activeCounterfactual.loading}
+              error={activeCounterfactual.error}
+              unavailableOfficers={activeCounterfactual.unavailableOfficers}
+              onToggleUnavailable={toggleCounterfactualUnavailable}
+              onClearUnavailable={clearCounterfactualUnavailable}
+              onRunWithUnavailable={(unavailable) =>
+                void runCounterfactual(
+                  activeCounterfactual.rowIndex,
+                  unavailable,
+                )
+              }
+              onClose={closeCounterfactual}
+              onLoadCrew={onLoadCrew}
+            />
+          )}
 
           {showCompare && (
             <CrewComparisonPanel

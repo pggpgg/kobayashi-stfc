@@ -727,6 +727,162 @@ impl fmt::Display for CompareCrewsError {
 
 impl std::error::Error for CompareCrewsError {}
 
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
+pub struct CrewCounterfactualRequest {
+    pub ship: String,
+    #[serde(default)]
+    pub hostile: String,
+    pub ship_tier: Option<u32>,
+    pub ship_level: Option<u32>,
+    pub crew: SimulateCrew,
+    #[serde(default)]
+    pub num_sims: Option<u32>,
+    #[serde(default)]
+    pub seed: Option<u64>,
+    #[serde(default)]
+    pub below_decks_slots: Option<u32>,
+    #[serde(default)]
+    pub below_decks_pool_mode: Option<String>,
+    #[serde(default)]
+    pub unavailable_officers: Option<Vec<String>>,
+    #[serde(default)]
+    pub max_substitutes_per_slot: Option<u32>,
+    #[serde(default)]
+    pub max_substitute_crews: Option<u32>,
+    #[serde(default)]
+    pub support_buffs: Option<Vec<String>>,
+    #[serde(default)]
+    pub defender_support_buffs: Option<Vec<String>>,
+    #[serde(default)]
+    pub defender_alliance_debuffs: Option<Vec<String>>,
+    #[serde(default)]
+    pub chain_grind: Option<ChainGrindRequest>,
+    #[serde(default)]
+    pub defender_opponent: DefenderOpponent,
+    #[serde(default)]
+    pub defender_crew: Option<SimulateCrew>,
+    #[serde(default)]
+    pub defender_ship: Option<String>,
+    pub defender_ship_tier: Option<u32>,
+    pub defender_ship_level: Option<u32>,
+    #[serde(default)]
+    pub defender_profile_id: Option<String>,
+    #[serde(default)]
+    pub enemy_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
+pub struct CrewCounterfactualResponse {
+    pub status: &'static str,
+    pub seed: u64,
+    pub trials_per_variant: usize,
+    pub captain: String,
+    pub bridge: Vec<String>,
+    pub below_decks: Vec<String>,
+    pub baseline: crate::optimizer::counterfactual::CounterfactualMetrics,
+    pub seat_ablations: Vec<crate::optimizer::counterfactual::SeatAblation>,
+    pub unavailable_officers: Vec<String>,
+    pub substitutes: Vec<crate::optimizer::counterfactual::SubstituteCrewPlan>,
+    pub variants_evaluated: usize,
+    pub using_placeholder_combatants: bool,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
+}
+
+#[derive(Debug)]
+pub enum CrewCounterfactualError {
+    Parse(serde_json::Error),
+    Validation(String),
+}
+
+impl fmt::Display for CrewCounterfactualError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Parse(e) => write!(f, "{e}"),
+            Self::Validation(s) => f.write_str(s),
+        }
+    }
+}
+
+impl std::error::Error for CrewCounterfactualError {}
+
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
+pub struct FleetSlotRequestDto {
+    #[serde(default)]
+    pub label: Option<String>,
+    pub ship: String,
+    pub hostile: String,
+    pub ship_tier: Option<u32>,
+    pub ship_level: Option<u32>,
+    #[serde(default)]
+    pub below_decks_slots: Option<u32>,
+    #[serde(default)]
+    pub support_buffs: Option<Vec<String>>,
+    #[serde(default)]
+    pub chain_grind: Option<ChainGrindRequest>,
+    #[serde(default)]
+    pub priority_weight: Option<f64>,
+    #[serde(default)]
+    pub fixed_officers: Option<Vec<String>>,
+    #[serde(default)]
+    pub excluded_officers: Option<Vec<String>>,
+    #[serde(default)]
+    pub enemy_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
+pub struct FleetAllocateRequest {
+    pub slots: Vec<FleetSlotRequestDto>,
+    #[serde(default)]
+    pub objective: Option<crate::optimizer::fleet::FleetObjective>,
+    #[serde(default)]
+    pub sims_per_crew: Option<u32>,
+    #[serde(default)]
+    pub candidates_per_slot: Option<u32>,
+    #[serde(default)]
+    pub seed: Option<u64>,
+    #[serde(default)]
+    pub unavailable_officers: Option<Vec<String>>,
+    #[serde(default)]
+    pub below_decks_pool_mode: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
+pub struct FleetAllocateResponse {
+    pub status: &'static str,
+    pub objective: crate::optimizer::fleet::FleetObjective,
+    pub seed: u64,
+    pub sims_per_crew: usize,
+    pub candidates_per_slot: usize,
+    pub slots: Vec<crate::optimizer::fleet::FleetSlotAssignment>,
+    pub total_fleet_score: f64,
+    pub standalone_upper_bound: f64,
+    pub fleet_efficiency_pct: f64,
+    pub min_dock_retention_pct: f64,
+    pub contested_officers: Vec<crate::optimizer::fleet::ContestedOfficerReport>,
+    pub conflict_free: bool,
+    pub solver_mode: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
+}
+
+#[derive(Debug)]
+pub enum FleetAllocateError {
+    Parse(serde_json::Error),
+    Validation(String),
+}
+
+impl fmt::Display for FleetAllocateError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Parse(e) => write!(f, "{e}"),
+            Self::Validation(s) => f.write_str(s),
+        }
+    }
+}
+
+impl std::error::Error for FleetAllocateError {}
+
 fn officer_id_to_name(id: &str, officers: &[(String, String)]) -> String {
     officers
         .iter()
@@ -1482,6 +1638,359 @@ pub fn compare_crews_payload(
         warnings,
     };
     serde_json::to_string(&response).map_err(CompareCrewsError::Parse)
+}
+
+/// POST `/api/crew/counterfactual` — CRN leave-one-out seat ablations, trigger dependencies,
+/// per-seat drop-in replacements, and unavailable-officer substitute crew planner.
+pub fn crew_counterfactual_payload(
+    registry: &DataRegistry,
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, CrewCounterfactualError> {
+    let req: CrewCounterfactualRequest =
+        serde_json::from_str(body).map_err(CrewCounterfactualError::Parse)?;
+    let target = match validate_scenario_target(&ScenarioTargetFields {
+        hostile: Some(req.hostile.clone()),
+        defender_ship: req.defender_ship.clone(),
+        defender_ship_tier: req.defender_ship_tier,
+        defender_ship_level: req.defender_ship_level,
+        defender_profile_id: req.defender_profile_id.clone(),
+    }) {
+        Ok(target) => target,
+        Err(errors) => {
+            return Err(CrewCounterfactualError::Validation(
+                scenario_resolution::issues_to_message(errors),
+            ))
+        }
+    };
+    if let Err(errors) = scenario_resolution::validate_scenario_resolves(
+        registry,
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        &target,
+    ) {
+        return Err(CrewCounterfactualError::Validation(
+            scenario_resolution::issues_to_message(errors),
+        ));
+    }
+
+    let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
+        req.defender_ship.as_deref(),
+        req.defender_ship_tier,
+        req.defender_ship_level,
+        req.defender_profile_id.as_deref(),
+    );
+    let scenario_hostile: String = pvp
+        .as_ref()
+        .map(|p| p.defender_ship.clone())
+        .unwrap_or_else(|| req.hostile.trim().to_string());
+    let defender_opponent = if pvp.is_some() {
+        DefenderOpponent::Player
+    } else {
+        req.defender_opponent
+    };
+
+    if let Some(n) = req.below_decks_slots {
+        let lo = crate::optimizer::crew_generator::MIN_BELOW_DECKS_SLOTS as u32;
+        let hi = crate::optimizer::crew_generator::MAX_BELOW_DECKS_SLOTS as u32;
+        if !(lo..=hi).contains(&n) {
+            return Err(CrewCounterfactualError::Validation(format!(
+                "below_decks_slots must be between {lo} and {hi}"
+            )));
+        }
+    }
+    let below_decks_slots = resolve_below_decks_slots_for_ship(
+        &req.ship,
+        req.ship_tier,
+        req.ship_level,
+        req.below_decks_slots,
+    );
+    let below_decks_pool_mode = req
+        .below_decks_pool_mode
+        .as_deref()
+        .and_then(crate::data::heuristics::BelowDecksPoolMode::parse_api_str)
+        .unwrap_or(crate::data::heuristics::BelowDecksPoolMode::Strict);
+
+    let officers: Vec<(String, String)> = registry
+        .officers()
+        .iter()
+        .map(|o| (o.id.clone(), o.name.clone()))
+        .collect();
+    let baseline_crew = crew_candidate_from_officer_fields(
+        req.crew.captain.as_deref(),
+        req.crew.bridge.as_deref(),
+        req.crew.below_deck.as_deref(),
+        &officers,
+        below_decks_slots,
+    )
+    .map_err(CrewCounterfactualError::Validation)?;
+
+    let player_defender_officer_crew = if defender_opponent.defender_is_player_ship() {
+        let def_bd = pvp
+            .as_ref()
+            .map(|p| {
+                resolve_below_decks_slots_for_ship(
+                    &p.defender_ship,
+                    p.defender_ship_tier,
+                    p.defender_ship_level,
+                    None,
+                )
+            })
+            .unwrap_or(below_decks_slots);
+        let def_profile = pvp
+            .as_ref()
+            .map(|p| p.defender_profile_id.as_str())
+            .filter(|s| !s.is_empty())
+            .or(profile_id);
+        resolve_player_defender_officer_crew_for_simulate(
+            registry,
+            def_profile,
+            def_bd,
+            req.defender_crew.as_ref(),
+        )
+        .map_err(CrewCounterfactualError::Validation)?
+    } else {
+        None
+    };
+
+    let chain_grind = match req.chain_grind.as_ref() {
+        Some(cg) => {
+            if cg.enabled && (pvp.is_some() || defender_opponent.defender_is_player_ship()) {
+                return Err(CrewCounterfactualError::Validation(
+                    "chain_grind is only supported for PvE hostile matchups".to_string(),
+                ));
+            }
+            chain_grind_params_from_request(cg).map_err(CrewCounterfactualError::Validation)?
+        }
+        None => None,
+    };
+
+    let hostile_rec = if pvp.is_some() {
+        None
+    } else {
+        registry.resolve_hostile(&scenario_hostile)
+    };
+    let enemy_type = crate::data::officer_eligibility::resolve_enemy_type(
+        req.enemy_type.as_deref(),
+        pvp.is_some() || defender_opponent.defender_is_player_ship(),
+        hostile_rec.as_ref(),
+    );
+
+    let unavailable_officers = crate::optimizer::counterfactual::canonical_unavailable_names(
+        req.unavailable_officers.as_deref().unwrap_or(&[]),
+        &officers,
+    );
+    let support_buffs = support_buffs::SupportBuffScenarioRequest::from_api_options(
+        req.support_buffs.as_deref(),
+        req.defender_support_buffs.as_deref(),
+        req.defender_alliance_debuffs.as_deref(),
+    );
+    let num_sims = req.num_sims.unwrap_or(400).clamp(64, 5_000) as usize;
+    let seed = req.seed.unwrap_or(0);
+    let max_substitutes_per_slot = req.max_substitutes_per_slot.unwrap_or(3).clamp(1, 5) as usize;
+    let max_substitute_crews = req.max_substitute_crews.unwrap_or(5).clamp(1, 10) as usize;
+
+    let scenario = crate::optimizer::counterfactual::CounterfactualScenario {
+        ship: &req.ship,
+        hostile: &scenario_hostile,
+        ship_tier: req.ship_tier,
+        ship_level: req.ship_level,
+        below_decks_slots,
+        below_decks_pool_mode,
+        profile_id,
+        support_buffs,
+        chain_grind,
+        defender_opponent,
+        player_defender_officer_crew,
+        pvp,
+        enemy_type,
+        num_sims,
+        seed,
+        unavailable_officers,
+        max_substitutes_per_slot,
+        max_substitute_crews,
+    };
+
+    let mut outcome = crate::optimizer::counterfactual::analyze_crew_counterfactual_with_registry(
+        registry,
+        &scenario,
+        &baseline_crew,
+    );
+    if let Some(message) = roster_import_fallback_warning_message(profile_id) {
+        outcome.warnings.push(message);
+    }
+
+    let response = CrewCounterfactualResponse {
+        status: "ok",
+        seed: outcome.seed,
+        trials_per_variant: outcome.trials_per_variant,
+        captain: outcome.captain,
+        bridge: outcome.bridge,
+        below_decks: outcome.below_decks,
+        baseline: outcome.baseline,
+        seat_ablations: outcome.seat_ablations,
+        unavailable_officers: outcome.unavailable_officers,
+        substitutes: outcome.substitutes,
+        variants_evaluated: outcome.variants_evaluated,
+        using_placeholder_combatants: outcome.using_placeholder_combatants,
+        warnings: outcome.warnings,
+    };
+    serde_json::to_string(&response).map_err(CrewCounterfactualError::Parse)
+}
+
+/// POST `/api/fleet/allocate` — multi-ship disjoint-officer fleet allocator across 2–5 drydocks.
+pub fn fleet_allocate_payload(
+    registry: &DataRegistry,
+    body: &str,
+    profile_id: Option<&str>,
+) -> Result<String, FleetAllocateError> {
+    let req: FleetAllocateRequest =
+        serde_json::from_str(body).map_err(FleetAllocateError::Parse)?;
+    if !(2..=5).contains(&req.slots.len()) {
+        return Err(FleetAllocateError::Validation(
+            "slots must contain between 2 and 5 drydock missions".to_string(),
+        ));
+    }
+
+    let officers: Vec<(String, String)> = registry
+        .officers()
+        .iter()
+        .map(|o| (o.id.clone(), o.name.clone()))
+        .collect();
+    let global_unavailable = crate::optimizer::counterfactual::canonical_unavailable_names(
+        req.unavailable_officers.as_deref().unwrap_or(&[]),
+        &officers,
+    );
+    let below_decks_pool_mode = req
+        .below_decks_pool_mode
+        .as_deref()
+        .and_then(crate::data::heuristics::BelowDecksPoolMode::parse_api_str)
+        .unwrap_or(crate::data::heuristics::BelowDecksPoolMode::Strict);
+
+    let mut specs = Vec::with_capacity(req.slots.len());
+    for (idx, s) in req.slots.iter().enumerate() {
+        let target = match validate_scenario_target(&ScenarioTargetFields {
+            hostile: Some(s.hostile.clone()),
+            defender_ship: None,
+            defender_ship_tier: None,
+            defender_ship_level: None,
+            defender_profile_id: None,
+        }) {
+            Ok(t) => t,
+            Err(errors) => {
+                return Err(FleetAllocateError::Validation(format!(
+                    "slot {}: {}",
+                    idx + 1,
+                    scenario_resolution::issues_to_message(errors)
+                )))
+            }
+        };
+        if let Err(errors) = scenario_resolution::validate_scenario_resolves(
+            registry,
+            &s.ship,
+            s.ship_tier,
+            s.ship_level,
+            &target,
+        ) {
+            return Err(FleetAllocateError::Validation(format!(
+                "slot {}: {}",
+                idx + 1,
+                scenario_resolution::issues_to_message(errors)
+            )));
+        }
+        if let Some(n) = s.below_decks_slots {
+            let lo = crate::optimizer::crew_generator::MIN_BELOW_DECKS_SLOTS as u32;
+            let hi = crate::optimizer::crew_generator::MAX_BELOW_DECKS_SLOTS as u32;
+            if !(lo..=hi).contains(&n) {
+                return Err(FleetAllocateError::Validation(format!(
+                    "slot {}: below_decks_slots must be between {lo} and {hi}",
+                    idx + 1
+                )));
+            }
+        }
+        let weight = s.priority_weight.unwrap_or(1.0);
+        if !weight.is_finite() || weight <= 0.0 || weight > 10.0 {
+            return Err(FleetAllocateError::Validation(format!(
+                "slot {}: priority_weight must be between 0 (exclusive) and 10",
+                idx + 1
+            )));
+        }
+        let chain_grind = match s.chain_grind.as_ref() {
+            Some(cg) => chain_grind_params_from_request(cg).map_err(|msg| {
+                FleetAllocateError::Validation(format!("slot {}: {msg}", idx + 1))
+            })?,
+            None => None,
+        };
+        let hostile_rec = registry.resolve_hostile(&s.hostile);
+        let enemy_type = crate::data::officer_eligibility::resolve_enemy_type(
+            s.enemy_type.as_deref(),
+            false,
+            hostile_rec.as_ref(),
+        );
+        let label = s
+            .label
+            .as_deref()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .map(str::to_string)
+            .unwrap_or_else(|| format!("Dock {}", idx + 1));
+
+        specs.push(crate::optimizer::fleet::FleetSlotSpec {
+            label,
+            ship: s.ship.clone(),
+            hostile: s.hostile.clone(),
+            ship_tier: s.ship_tier,
+            ship_level: s.ship_level,
+            below_decks_slots: s.below_decks_slots.map(|n| n as usize),
+            support_buffs: s.support_buffs.clone().unwrap_or_default(),
+            chain_grind,
+            priority_weight: weight,
+            fixed_officers: crate::optimizer::counterfactual::canonical_unavailable_names(
+                s.fixed_officers.as_deref().unwrap_or(&[]),
+                &officers,
+            ),
+            excluded_officers: crate::optimizer::counterfactual::canonical_unavailable_names(
+                s.excluded_officers.as_deref().unwrap_or(&[]),
+                &officers,
+            ),
+            enemy_type,
+        });
+    }
+
+    let alloc_req = crate::optimizer::fleet::FleetAllocationRequest {
+        slots: specs,
+        objective: req.objective.unwrap_or_default(),
+        sims_per_crew: req.sims_per_crew.unwrap_or(250).clamp(64, 3_000) as usize,
+        candidates_per_slot: req.candidates_per_slot.unwrap_or(64).clamp(16, 256) as usize,
+        seed: req.seed.unwrap_or(0),
+        profile_id: profile_id.map(str::to_string),
+        unavailable_officers: global_unavailable,
+        below_decks_pool_mode,
+    };
+
+    let mut outcome = crate::optimizer::fleet::allocate_fleet_with_registry(registry, &alloc_req);
+    if let Some(message) = roster_import_fallback_warning_message(profile_id) {
+        outcome.warnings.push(message);
+    }
+
+    let response = FleetAllocateResponse {
+        status: "ok",
+        objective: outcome.objective,
+        seed: outcome.seed,
+        sims_per_crew: outcome.sims_per_crew,
+        candidates_per_slot: outcome.candidates_per_slot,
+        slots: outcome.slots,
+        total_fleet_score: outcome.total_fleet_score,
+        standalone_upper_bound: outcome.standalone_upper_bound,
+        fleet_efficiency_pct: outcome.fleet_efficiency_pct,
+        min_dock_retention_pct: outcome.min_dock_retention_pct,
+        contested_officers: outcome.contested_officers,
+        conflict_free: outcome.conflict_free,
+        solver_mode: outcome.solver_mode,
+        warnings: outcome.warnings,
+    };
+    serde_json::to_string(&response).map_err(FleetAllocateError::Parse)
 }
 
 #[derive(Debug)]

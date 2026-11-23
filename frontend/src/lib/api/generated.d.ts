@@ -1500,6 +1500,135 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/crew/counterfactual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * CRN counterfactual seat ablations and substitute crew planner
+         * @description Evaluates leave-one-out seat ablations, static-folded LCARS trigger dependencies,
+         *     legal per-seat drop-in replacements, and (when unavailable officers are supplied)
+         *     multi-seat legal substitute crews on a shared Common Random Numbers (CRN) seed panel.
+         */
+        post: {
+            parameters: {
+                query?: {
+                    /** @description Profile id (alternative to X-Profile-Id) */
+                    profile?: components["parameters"]["QueryProfile"];
+                };
+                header?: {
+                    "X-Profile-Id"?: components["parameters"]["HeaderProfileId"];
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CrewCounterfactualRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CrewCounterfactualResponse"];
+                    };
+                };
+                /** @description Validation error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CpuBusyError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/fleet/allocate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Multi-ship disjoint-officer fleet allocator across 2–5 drydock missions
+         * @description Discovers diverse confirmed crew banks per drydock via the Portfolio optimizer, then
+         *     solves for a globally optimal conflict-free officer assignment via exact Branch-and-Bound
+         *     under `total_score` or `min_regret`, returning per-dock retention and contested-officer
+         *     resolution diagnostics.
+         */
+        post: {
+            parameters: {
+                query?: {
+                    /** @description Profile id (alternative to X-Profile-Id) */
+                    profile?: components["parameters"]["QueryProfile"];
+                };
+                header?: {
+                    "X-Profile-Id"?: components["parameters"]["HeaderProfileId"];
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["FleetAllocateRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FleetAllocateResponse"];
+                    };
+                };
+                /** @description Validation error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CpuBusyError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sensitivity": {
         parameters: {
             query?: never;
@@ -2874,6 +3003,189 @@ export interface components {
                 [key: string]: unknown;
             }[];
             using_placeholder_combatants: boolean;
+            warnings?: string[];
+        };
+        CrewCounterfactualRequest: {
+            ship: string;
+            hostile?: string;
+            ship_tier?: number;
+            ship_level?: number;
+            crew: components["schemas"]["SimulateCrew"];
+            num_sims?: number;
+            /** Format: int64 */
+            seed?: number;
+            below_decks_slots?: number;
+            below_decks_pool_mode?: string;
+            unavailable_officers?: string[];
+            max_substitutes_per_slot?: number;
+            max_substitute_crews?: number;
+            support_buffs?: string[];
+            defender_support_buffs?: string[];
+            defender_alliance_debuffs?: string[];
+            chain_grind?: components["schemas"]["ChainGrindRequestDto"];
+            defender_opponent?: string;
+            defender_crew?: components["schemas"]["SimulateCrew"];
+            defender_ship?: string;
+            defender_ship_tier?: number;
+            defender_ship_level?: number;
+            defender_profile_id?: string;
+            enemy_type?: string;
+        };
+        CounterfactualMetrics: {
+            score: number;
+            win_rate: number;
+            win_rate_ci_low: number;
+            win_rate_ci_high: number;
+            stall_rate: number;
+            loss_rate: number;
+            r1_kill_rate: number;
+            avg_hull_remaining: number;
+            avg_hull_remaining_ci_low: number;
+            avg_hull_remaining_ci_high: number;
+            avg_defender_hull_remaining: number;
+            trials_run: number;
+            chain?: components["schemas"]["ChainSimulationSummary"];
+            fidelity: components["schemas"]["CrewFidelitySummary"];
+        };
+        PairedDelta: {
+            delta_score: number;
+            delta_score_ci_low: number;
+            delta_score_ci_high: number;
+            delta_win_rate: number;
+            delta_avg_hull_remaining: number;
+            delta_r1_kill_rate: number;
+            statistically_significant: boolean;
+        };
+        SeatReplacementOption: {
+            officer: string;
+            metrics: components["schemas"]["CounterfactualMetrics"];
+            delta: components["schemas"]["PairedDelta"];
+            preserves_triggers?: string[];
+            synergy_match: boolean;
+        };
+        SeatAblation: {
+            slot_group: string;
+            slot_index?: number;
+            officer: string;
+            unavailable: boolean;
+            leave_one_out: components["schemas"]["CounterfactualMetrics"];
+            drop_delta: components["schemas"]["PairedDelta"];
+            marginal_contribution: number;
+            trigger_dependencies?: string[];
+            best_replacements: components["schemas"]["SeatReplacementOption"][];
+        };
+        SubstituteSlotChange: {
+            slot_group: string;
+            slot_index?: number;
+            from: string;
+            to: string;
+        };
+        SubstituteCrewPlan: {
+            captain: string;
+            bridge: string[];
+            below_decks: string[];
+            changed_slots: components["schemas"]["SubstituteSlotChange"][];
+            metrics: components["schemas"]["CounterfactualMetrics"];
+            delta: components["schemas"]["PairedDelta"];
+            retention_pct: number;
+            summary: string;
+        };
+        CrewCounterfactualResponse: {
+            status: string;
+            /** Format: int64 */
+            seed: number;
+            trials_per_variant: number;
+            captain: string;
+            bridge: string[];
+            below_decks: string[];
+            baseline: components["schemas"]["CounterfactualMetrics"];
+            seat_ablations: components["schemas"]["SeatAblation"][];
+            unavailable_officers: string[];
+            substitutes: components["schemas"]["SubstituteCrewPlan"][];
+            variants_evaluated: number;
+            using_placeholder_combatants: boolean;
+            warnings?: string[];
+        };
+        FleetSlotRequestDto: {
+            label?: string;
+            ship: string;
+            hostile: string;
+            ship_tier?: number;
+            ship_level?: number;
+            below_decks_slots?: number;
+            support_buffs?: string[];
+            chain_grind?: components["schemas"]["ChainGrindRequestDto"];
+            priority_weight?: number;
+            fixed_officers?: string[];
+            excluded_officers?: string[];
+            enemy_type?: string;
+        };
+        FleetAllocateRequest: {
+            slots: components["schemas"]["FleetSlotRequestDto"][];
+            /** @enum {string} */
+            objective?: "total_score" | "min_regret";
+            sims_per_crew?: number;
+            candidates_per_slot?: number;
+            /** Format: int64 */
+            seed?: number;
+            unavailable_officers?: string[];
+            below_decks_pool_mode?: string;
+        };
+        FleetCrewSummary: {
+            captain: string;
+            bridge: string[];
+            below_decks: string[];
+            score: number;
+            win_rate: number;
+            win_rate_ci_low: number;
+            win_rate_ci_high: number;
+            stall_rate: number;
+            loss_rate: number;
+            r1_kill_rate: number;
+            avg_hull_remaining: number;
+            avg_hull_remaining_ci_low: number;
+            avg_hull_remaining_ci_high: number;
+            trials_run: number;
+            chain?: components["schemas"]["ChainSimulationSummary"];
+            fidelity: components["schemas"]["CrewFidelitySummary"];
+        };
+        FleetSlotAssignment: {
+            slot_index: number;
+            label: string;
+            ship: string;
+            hostile: string;
+            ship_tier?: number;
+            ship_level?: number;
+            priority_weight: number;
+            candidates_evaluated: number;
+            assigned_crew?: components["schemas"]["FleetCrewSummary"];
+            standalone_best?: components["schemas"]["FleetCrewSummary"];
+            retention_pct: number;
+            score_loss_vs_standalone: number;
+            yielded_officers?: string[];
+        };
+        ContestedOfficerReport: {
+            officer: string;
+            wanted_by_docks: string[];
+            assigned_to_dock?: string;
+            reason: string;
+        };
+        FleetAllocateResponse: {
+            status: string;
+            /** @enum {string} */
+            objective: "total_score" | "min_regret";
+            /** Format: int64 */
+            seed: number;
+            sims_per_crew: number;
+            candidates_per_slot: number;
+            slots: components["schemas"]["FleetSlotAssignment"][];
+            total_fleet_score: number;
+            standalone_upper_bound: number;
+            fleet_efficiency_pct: number;
+            min_dock_retention_pct: number;
+            contested_officers: components["schemas"]["ContestedOfficerReport"][];
+            conflict_free: boolean;
+            solver_mode: string;
             warnings?: string[];
         };
         OfficerGroupConstraintDto: {

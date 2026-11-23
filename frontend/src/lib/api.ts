@@ -1,7 +1,11 @@
 import type {
+  CrewCounterfactualRequest,
+  CrewCounterfactualResponse,
   CrewRecommendation,
   components,
   DataVersionResponse,
+  FleetAllocateRequest,
+  FleetAllocateResponse,
   HostileListItem,
   MechanicsCoverageResponse,
   OfficerListItem,
@@ -23,8 +27,17 @@ export type {
   ChainLootSummary,
   ChainSecondaryObjective,
   ChainSimulationSummary,
+  ContestedOfficerReport,
+  CounterfactualMetrics,
+  CrewCounterfactualRequest,
+  CrewCounterfactualResponse,
   CrewRecommendation,
   DataVersionResponse,
+  FleetAllocateRequest,
+  FleetAllocateResponse,
+  FleetCrewSummary,
+  FleetSlotAssignment,
+  FleetSlotRequestDto,
   HostileListItem,
   MechanicsCoverageResponse,
   MechanicsTierCounts,
@@ -36,15 +49,20 @@ export type {
   OptimizerFunnelTelemetry,
   OptimizeStartResponse,
   OptimizeStatusResponse,
+  PairedDelta,
   ProfileEntry,
   ProfilesResponse,
   RefinementDetail,
   RefinementSlotChange,
+  SeatAblation,
+  SeatReplacementOption,
   ShipListItem,
   ShipTiersLevels,
   SimulateCrew,
   SimulateResponse,
   SimulateStats,
+  SubstituteCrewPlan,
+  SubstituteSlotChange,
   WarmStartCrewBody,
 } from "./api/schema";
 
@@ -640,6 +658,50 @@ export async function compareCrewsDistributions(
       ...profileHeaders(profileId),
     },
     body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+/**
+ * POST /api/crew/counterfactual — CRN leave-one-out seat ablations, trigger dependencies,
+ * per-seat legal drop-in replacements, and unavailable-officer substitute crew planner.
+ */
+export async function analyzeCrewCounterfactual(
+  params: CrewCounterfactualRequest,
+  profileId?: string | null,
+  signal?: AbortSignal,
+): Promise<CrewCounterfactualResponse> {
+  const res = await fetchWithCpuBusyRetries(
+    `${API_BASE}/api/crew/counterfactual`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...profileHeaders(profileId),
+      },
+      body: JSON.stringify(params),
+      signal,
+    },
+  );
+  return res.json();
+}
+
+/**
+ * POST /api/fleet/allocate — multi-ship disjoint-officer fleet allocator across 2–5 drydocks.
+ */
+export async function allocateFleet(
+  params: FleetAllocateRequest,
+  profileId?: string | null,
+  signal?: AbortSignal,
+): Promise<FleetAllocateResponse> {
+  const res = await fetchWithCpuBusyRetries(`${API_BASE}/api/fleet/allocate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...profileHeaders(profileId),
+    },
+    body: JSON.stringify(params),
+    signal,
   });
   return res.json();
 }
