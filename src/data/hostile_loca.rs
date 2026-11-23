@@ -2,7 +2,8 @@
 //! (`translations-ships.json`, `translations-officer_names.json`, `translations-navigation.json`).
 
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use serde::Deserialize;
 
@@ -251,6 +252,25 @@ pub fn load_resource_display_names(data_root: &Path) -> HashMap<u64, String> {
         out.insert(row.id, name);
     }
     out
+}
+
+/// Process-cached [`load_resource_display_names`] keyed by `data_root` so standalone scenario
+/// builders and benchmarks do not re-parse `translations-materials.json` on every invocation.
+pub fn load_resource_display_names_cached(data_root: &Path) -> Arc<HashMap<u64, String>> {
+    type ResourceNamesCache = Mutex<HashMap<PathBuf, Arc<HashMap<u64, String>>>>;
+    static CACHE: OnceLock<ResourceNamesCache> = OnceLock::new();
+    let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    let key = data_root.to_path_buf();
+    if let Ok(guard) = cache.lock() {
+        if let Some(existing) = guard.get(&key) {
+            return Arc::clone(existing);
+        }
+    }
+    let loaded = Arc::new(load_resource_display_names(data_root));
+    if let Ok(mut guard) = cache.lock() {
+        return Arc::clone(guard.entry(key).or_insert_with(|| Arc::clone(&loaded)));
+    }
+    loaded
 }
 
 #[derive(Debug, Deserialize)]

@@ -2587,6 +2587,39 @@ pub(crate) fn stable_scenario_seed_panel(ship: &str, hostile: &str, seed: u64) -
     acc
 }
 
+/// Process-cached tier-1 base ship cargo capacity keyed by `(asset_root, ship_id)` so standalone
+/// scenario builders and benchmarks do not re-parse `hull_id_registry.json` and raw ship JSON on
+/// every invocation.
+fn standalone_ship_cargo_capacity_cached(asset_root: &Path, ship_id: &str) -> Option<f64> {
+    use std::path::PathBuf;
+    use std::sync::{Mutex, OnceLock};
+
+    type CargoCapacityCache = Mutex<HashMap<(PathBuf, String), Option<f64>>>;
+    static CACHE: OnceLock<CargoCapacityCache> = OnceLock::new();
+    let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    let key = (asset_root.to_path_buf(), ship_id.to_string());
+    if let Ok(guard) = cache.lock() {
+        if let Some(&existing) = guard.get(&key) {
+            return existing;
+        }
+    }
+    let computed = (|| {
+        let reg = crate::data::ship::load_hull_id_registry();
+        let hull_id = reg
+            .iter()
+            .find_map(|(&hid, sid)| (sid == ship_id).then_some(hid))?;
+        let raw = crate::data::ship::load_upstream_ship_raw(
+            Path::new(crate::data::ship::DEFAULT_UPSTREAM_SHIPS_DIR),
+            hull_id,
+        )?;
+        crate::data::ship::ship_cargo_capacity_from_raw(&raw, 1, None)
+    })();
+    if let Ok(mut guard) = cache.lock() {
+        guard.insert(key, computed);
+    }
+    computed
+}
+
 /// Build scenario data for `(ship, hostile)` without a [DataRegistry] — same sources as legacy
 /// [super::simulation::run_monte_carlo_parallel] (canonical officers, profile JSON, optional LCARS).
 pub(crate) fn build_shared_scenario_data_standalone(
@@ -2953,20 +2986,11 @@ fn build_shared_scenario_data_standalone_for_profile(
             defender_opponent.defender_is_player_ship(),
         );
 
-    let resource_names = std::sync::Arc::new(
-        crate::data::hostile_loca::load_resource_display_names(crate::runtime_paths::asset_root()),
-    );
-    let ship_cargo_capacity = ship_rec.as_ref().and_then(|s| {
-        let reg = crate::data::ship::load_hull_id_registry();
-        let hull_id = reg
-            .iter()
-            .find_map(|(&hid, sid)| (sid == &s.id).then_some(hid))?;
-        let raw = crate::data::ship::load_upstream_ship_raw(
-            Path::new(crate::data::ship::DEFAULT_UPSTREAM_SHIPS_DIR),
-            hull_id,
-        )?;
-        crate::data::ship::ship_cargo_capacity_from_raw(&raw, 1, None)
-    });
+    let asset_root = crate::runtime_paths::asset_root();
+    let resource_names = crate::data::hostile_loca::load_resource_display_names_cached(asset_root);
+    let ship_cargo_capacity = ship_rec
+        .as_ref()
+        .and_then(|s| standalone_ship_cargo_capacity_cached(asset_root, &s.id));
 
     SharedScenarioData {
         ship: ship.to_string(),
@@ -3811,7 +3835,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
 
     let ship_cargo_capacity =
         registry.resolve_ship_cargo_capacity(ship, ship_tier, ship_level, &imported_ships);
-    let resource_names = std::sync::Arc::new(registry.resource_names().clone());
+    let resource_names = registry.resource_names_arc();
 
     SharedScenarioData {
         ship: ship.to_string(),

@@ -74,7 +74,7 @@ pub struct DataRegistry {
     /// `system_id` → display name from `translations-systems.json`.
     pub system_names: HashMap<u64, String>,
     /// `resource_id` → display name from `summary-ressource.json` + `translations-materials.json`.
-    pub resource_names: HashMap<u64, String>,
+    pub resource_names: Arc<HashMap<u64, String>>,
     /// Hostile id → spawn systems, warp, and primary resource metadata from `summary-hostile.json`.
     pub hostile_catalog_meta: HashMap<String, HostileCatalogMeta>,
     /// LCARS officers — the sole ability source; `None` only if the data failed to load.
@@ -112,7 +112,7 @@ impl DataRegistry {
         let asset_root = crate::runtime_paths::asset_root();
         let hostile_loca_display = load_hostile_loca_display_names(asset_root);
         let system_names = load_system_display_names(asset_root);
-        let resource_names = load_resource_display_names(asset_root);
+        let resource_names = Arc::new(load_resource_display_names(asset_root));
         let hostile_catalog_meta =
             load_hostile_catalog_meta(asset_root, &system_names, &resource_names);
 
@@ -217,6 +217,11 @@ impl DataRegistry {
     /// Resource id → English display name (from `summary-ressource.json` + `translations-materials.json`).
     pub fn resource_names(&self) -> &HashMap<u64, String> {
         &self.resource_names
+    }
+
+    /// Cheap `Arc` handle to `resource_names` for scenario builders.
+    pub fn resource_names_arc(&self) -> Arc<HashMap<u64, String>> {
+        Arc::clone(&self.resource_names)
     }
 
     /// Hostile id → spawn systems, warp, and primary loot metadata (from `summary-hostile.json`).
