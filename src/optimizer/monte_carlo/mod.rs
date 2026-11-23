@@ -25,8 +25,9 @@ pub use simulation::{
     SimulationResult,
 };
 pub(crate) use simulation::{
-    full_mc_early_stop_enabled, run_monte_carlo_confirm_topk_with_shared,
-    run_monte_carlo_parallel_deduped_chunked_with_shared, run_monte_carlo_scout_phase_with_shared,
-    run_monte_carlo_scout_phase_with_shared_top_k, run_monte_carlo_with_shared,
-    run_monte_carlo_with_shared_variable_iterations, zeroed_loss_result, CandidateTrialAccumulator,
+    evaluate_candidates_crn_with_trial_scores, full_mc_early_stop_enabled,
+    run_monte_carlo_confirm_topk_with_shared, run_monte_carlo_parallel_deduped_chunked_with_shared,
+    run_monte_carlo_scout_phase_with_shared, run_monte_carlo_scout_phase_with_shared_top_k,
+    run_monte_carlo_with_shared, run_monte_carlo_with_shared_variable_iterations,
+    zeroed_loss_result, CandidateTrialAccumulator,
 };

@@ -269,6 +269,8 @@ pub fn build_router(registry: Arc<DataRegistry>) -> Router {
     let api_cpu_json = Router::new()
         .route("/api/simulate", post(handle_simulate))
         .route("/api/compare/crews", post(handle_compare_crews))
+        .route("/api/crew/counterfactual", post(handle_crew_counterfactual))
+        .route("/api/fleet/allocate", post(handle_fleet_allocate))
         .route("/api/optimize", post(handle_optimize))
         .route(
             "/api/optimize/replay-seed",
@@ -950,6 +952,80 @@ async fn handle_compare_crews(
         )
         .into_response(),
         Ok(Err(api::CompareCrewsError::Validation(msg))) => {
+            error_json(StatusCode::BAD_REQUEST, &msg).into_response()
+        }
+        Err(e) => error_json(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            &format!("Task panicked: {e}"),
+        )
+        .into_response(),
+    }
+}
+
+/// POST /api/crew/counterfactual — CRN seat ablations & substitute crew planner.
+/// Synchronous; gated by the CPU admission semaphore.
+async fn handle_crew_counterfactual(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
+    let permit = match acquire_cpu_or_response(&state).await {
+        Ok(p) => p,
+        Err(resp) => return *resp,
+    };
+    let profile_id = profile_id_from_request(&headers, &params);
+    let registry = state.registry.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        let _permit = permit;
+        api::crew_counterfactual_payload(registry.as_ref(), &body, profile_id.as_deref())
+    })
+    .await;
+    match result {
+        Ok(Ok(payload)) => ok_json(payload).into_response(),
+        Ok(Err(api::CrewCounterfactualError::Parse(e))) => error_json(
+            StatusCode::BAD_REQUEST,
+            &format!("Invalid request body: {e}"),
+        )
+        .into_response(),
+        Ok(Err(api::CrewCounterfactualError::Validation(msg))) => {
+            error_json(StatusCode::BAD_REQUEST, &msg).into_response()
+        }
+        Err(e) => error_json(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            &format!("Task panicked: {e}"),
+        )
+        .into_response(),
+    }
+}
+
+/// POST /api/fleet/allocate — multi-ship disjoint-officer fleet allocator (2–5 docks).
+/// Synchronous; gated by the CPU admission semaphore.
+async fn handle_fleet_allocate(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
+    let permit = match acquire_cpu_or_response(&state).await {
+        Ok(p) => p,
+        Err(resp) => return *resp,
+    };
+    let profile_id = profile_id_from_request(&headers, &params);
+    let registry = state.registry.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        let _permit = permit;
+        api::fleet_allocate_payload(registry.as_ref(), &body, profile_id.as_deref())
+    })
+    .await;
+    match result {
+        Ok(Ok(payload)) => ok_json(payload).into_response(),
+        Ok(Err(api::FleetAllocateError::Parse(e))) => error_json(
+            StatusCode::BAD_REQUEST,
+            &format!("Invalid request body: {e}"),
+        )
+        .into_response(),
+        Ok(Err(api::FleetAllocateError::Validation(msg))) => {
             error_json(StatusCode::BAD_REQUEST, &msg).into_response()
         }
         Err(e) => error_json(

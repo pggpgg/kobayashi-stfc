@@ -25,6 +25,7 @@ tags:
   - name: simulate
   - name: optimize
   - name: compare
+  - name: fleet
   - name: sensitivity
   - name: sync
   - name: debug
@@ -727,6 +728,75 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CompareCrewsResponse"
+        "400":
+          description: Validation error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/crew/counterfactual:
+    post:
+      tags: [compare]
+      summary: CRN counterfactual seat ablations and substitute crew planner
+      description: |
+        Evaluates leave-one-out seat ablations, static-folded LCARS trigger dependencies,
+        legal per-seat drop-in replacements, and (when unavailable officers are supplied)
+        multi-seat legal substitute crews on a shared Common Random Numbers (CRN) seed panel.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrewCounterfactualRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrewCounterfactualResponse"
+        "400":
+          description: Validation error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CpuBusyError"
+
+  /api/fleet/allocate:
+    post:
+      tags: [fleet]
+      summary: Multi-ship disjoint-officer fleet allocator across 2–5 drydock missions
+      description: |
+        Discovers diverse confirmed crew banks per drydock via the Portfolio optimizer, then
+        solves for a globally optimal conflict-free officer assignment via exact Branch-and-Bound
+        under `total_score` or `min_regret`, returning per-dock retention and contested-officer
+        resolution diagnostics.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/QueryProfile"
+        - $ref: "#/components/parameters/HeaderProfileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FleetAllocateRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FleetAllocateResponse"
         "400":
           description: Validation error
         "503":
@@ -2408,6 +2478,531 @@ components:
             additionalProperties: true
         using_placeholder_combatants:
           type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+
+    CrewCounterfactualRequest:
+      type: object
+      required: [ship, crew]
+      properties:
+        ship:
+          type: string
+        hostile:
+          type: string
+        ship_tier:
+          type: integer
+        ship_level:
+          type: integer
+        crew:
+          $ref: "#/components/schemas/SimulateCrew"
+        num_sims:
+          type: integer
+          minimum: 64
+          maximum: 5000
+        seed:
+          type: integer
+          format: int64
+        below_decks_slots:
+          type: integer
+        below_decks_pool_mode:
+          type: string
+        unavailable_officers:
+          type: array
+          items:
+            type: string
+        max_substitutes_per_slot:
+          type: integer
+          minimum: 1
+          maximum: 5
+        max_substitute_crews:
+          type: integer
+          minimum: 1
+          maximum: 10
+        support_buffs:
+          type: array
+          items:
+            type: string
+        defender_support_buffs:
+          type: array
+          items:
+            type: string
+        defender_alliance_debuffs:
+          type: array
+          items:
+            type: string
+        chain_grind:
+          $ref: "#/components/schemas/ChainGrindRequestDto"
+        defender_opponent:
+          type: string
+        defender_crew:
+          $ref: "#/components/schemas/SimulateCrew"
+        defender_ship:
+          type: string
+        defender_ship_tier:
+          type: integer
+        defender_ship_level:
+          type: integer
+        defender_profile_id:
+          type: string
+        enemy_type:
+          type: string
+
+    CounterfactualMetrics:
+      type: object
+      required:
+        - score
+        - win_rate
+        - win_rate_ci_low
+        - win_rate_ci_high
+        - stall_rate
+        - loss_rate
+        - r1_kill_rate
+        - avg_hull_remaining
+        - avg_hull_remaining_ci_low
+        - avg_hull_remaining_ci_high
+        - avg_defender_hull_remaining
+        - trials_run
+        - fidelity
+      properties:
+        score:
+          type: number
+        win_rate:
+          type: number
+        win_rate_ci_low:
+          type: number
+        win_rate_ci_high:
+          type: number
+        stall_rate:
+          type: number
+        loss_rate:
+          type: number
+        r1_kill_rate:
+          type: number
+        avg_hull_remaining:
+          type: number
+        avg_hull_remaining_ci_low:
+          type: number
+        avg_hull_remaining_ci_high:
+          type: number
+        avg_defender_hull_remaining:
+          type: number
+        trials_run:
+          type: integer
+        chain:
+          $ref: "#/components/schemas/ChainSimulationSummary"
+        fidelity:
+          $ref: "#/components/schemas/CrewFidelitySummary"
+
+    PairedDelta:
+      type: object
+      required:
+        - delta_score
+        - delta_score_ci_low
+        - delta_score_ci_high
+        - delta_win_rate
+        - delta_avg_hull_remaining
+        - delta_r1_kill_rate
+        - statistically_significant
+      properties:
+        delta_score:
+          type: number
+        delta_score_ci_low:
+          type: number
+        delta_score_ci_high:
+          type: number
+        delta_win_rate:
+          type: number
+        delta_avg_hull_remaining:
+          type: number
+        delta_r1_kill_rate:
+          type: number
+        statistically_significant:
+          type: boolean
+
+    SeatReplacementOption:
+      type: object
+      required: [officer, metrics, delta, synergy_match]
+      properties:
+        officer:
+          type: string
+        metrics:
+          $ref: "#/components/schemas/CounterfactualMetrics"
+        delta:
+          $ref: "#/components/schemas/PairedDelta"
+        preserves_triggers:
+          type: array
+          items:
+            type: string
+        synergy_match:
+          type: boolean
+
+    SeatAblation:
+      type: object
+      required:
+        - slot_group
+        - officer
+        - unavailable
+        - leave_one_out
+        - drop_delta
+        - marginal_contribution
+        - best_replacements
+      properties:
+        slot_group:
+          type: string
+        slot_index:
+          type: integer
+        officer:
+          type: string
+        unavailable:
+          type: boolean
+        leave_one_out:
+          $ref: "#/components/schemas/CounterfactualMetrics"
+        drop_delta:
+          $ref: "#/components/schemas/PairedDelta"
+        marginal_contribution:
+          type: number
+        trigger_dependencies:
+          type: array
+          items:
+            type: string
+        best_replacements:
+          type: array
+          items:
+            $ref: "#/components/schemas/SeatReplacementOption"
+
+    SubstituteSlotChange:
+      type: object
+      required: [slot_group, from, to]
+      properties:
+        slot_group:
+          type: string
+        slot_index:
+          type: integer
+        from:
+          type: string
+        to:
+          type: string
+
+    SubstituteCrewPlan:
+      type: object
+      required:
+        - captain
+        - bridge
+        - below_decks
+        - changed_slots
+        - metrics
+        - delta
+        - retention_pct
+        - summary
+      properties:
+        captain:
+          type: string
+        bridge:
+          type: array
+          items:
+            type: string
+        below_decks:
+          type: array
+          items:
+            type: string
+        changed_slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubstituteSlotChange"
+        metrics:
+          $ref: "#/components/schemas/CounterfactualMetrics"
+        delta:
+          $ref: "#/components/schemas/PairedDelta"
+        retention_pct:
+          type: number
+        summary:
+          type: string
+
+    CrewCounterfactualResponse:
+      type: object
+      required:
+        - status
+        - seed
+        - trials_per_variant
+        - captain
+        - bridge
+        - below_decks
+        - baseline
+        - seat_ablations
+        - unavailable_officers
+        - substitutes
+        - variants_evaluated
+        - using_placeholder_combatants
+      properties:
+        status:
+          type: string
+        seed:
+          type: integer
+          format: int64
+        trials_per_variant:
+          type: integer
+        captain:
+          type: string
+        bridge:
+          type: array
+          items:
+            type: string
+        below_decks:
+          type: array
+          items:
+            type: string
+        baseline:
+          $ref: "#/components/schemas/CounterfactualMetrics"
+        seat_ablations:
+          type: array
+          items:
+            $ref: "#/components/schemas/SeatAblation"
+        unavailable_officers:
+          type: array
+          items:
+            type: string
+        substitutes:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubstituteCrewPlan"
+        variants_evaluated:
+          type: integer
+        using_placeholder_combatants:
+          type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+
+    FleetSlotRequestDto:
+      type: object
+      required: [ship, hostile]
+      properties:
+        label:
+          type: string
+        ship:
+          type: string
+        hostile:
+          type: string
+        ship_tier:
+          type: integer
+        ship_level:
+          type: integer
+        below_decks_slots:
+          type: integer
+        support_buffs:
+          type: array
+          items:
+            type: string
+        chain_grind:
+          $ref: "#/components/schemas/ChainGrindRequestDto"
+        priority_weight:
+          type: number
+        fixed_officers:
+          type: array
+          items:
+            type: string
+        excluded_officers:
+          type: array
+          items:
+            type: string
+        enemy_type:
+          type: string
+
+    FleetAllocateRequest:
+      type: object
+      required: [slots]
+      properties:
+        slots:
+          type: array
+          minItems: 2
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/FleetSlotRequestDto"
+        objective:
+          type: string
+          enum: [total_score, min_regret]
+        sims_per_crew:
+          type: integer
+          minimum: 64
+          maximum: 3000
+        candidates_per_slot:
+          type: integer
+          minimum: 16
+          maximum: 256
+        seed:
+          type: integer
+          format: int64
+        unavailable_officers:
+          type: array
+          items:
+            type: string
+        below_decks_pool_mode:
+          type: string
+
+    FleetCrewSummary:
+      type: object
+      required:
+        - captain
+        - bridge
+        - below_decks
+        - score
+        - win_rate
+        - win_rate_ci_low
+        - win_rate_ci_high
+        - stall_rate
+        - loss_rate
+        - r1_kill_rate
+        - avg_hull_remaining
+        - avg_hull_remaining_ci_low
+        - avg_hull_remaining_ci_high
+        - trials_run
+        - fidelity
+      properties:
+        captain:
+          type: string
+        bridge:
+          type: array
+          items:
+            type: string
+        below_decks:
+          type: array
+          items:
+            type: string
+        score:
+          type: number
+        win_rate:
+          type: number
+        win_rate_ci_low:
+          type: number
+        win_rate_ci_high:
+          type: number
+        stall_rate:
+          type: number
+        loss_rate:
+          type: number
+        r1_kill_rate:
+          type: number
+        avg_hull_remaining:
+          type: number
+        avg_hull_remaining_ci_low:
+          type: number
+        avg_hull_remaining_ci_high:
+          type: number
+        trials_run:
+          type: integer
+        chain:
+          $ref: "#/components/schemas/ChainSimulationSummary"
+        fidelity:
+          $ref: "#/components/schemas/CrewFidelitySummary"
+
+    FleetSlotAssignment:
+      type: object
+      required:
+        - slot_index
+        - label
+        - ship
+        - hostile
+        - priority_weight
+        - candidates_evaluated
+        - retention_pct
+        - score_loss_vs_standalone
+      properties:
+        slot_index:
+          type: integer
+        label:
+          type: string
+        ship:
+          type: string
+        hostile:
+          type: string
+        ship_tier:
+          type: integer
+        ship_level:
+          type: integer
+        priority_weight:
+          type: number
+        candidates_evaluated:
+          type: integer
+        assigned_crew:
+          $ref: "#/components/schemas/FleetCrewSummary"
+        standalone_best:
+          $ref: "#/components/schemas/FleetCrewSummary"
+        retention_pct:
+          type: number
+        score_loss_vs_standalone:
+          type: number
+        yielded_officers:
+          type: array
+          items:
+            type: string
+
+    ContestedOfficerReport:
+      type: object
+      required: [officer, wanted_by_docks, reason]
+      properties:
+        officer:
+          type: string
+        wanted_by_docks:
+          type: array
+          items:
+            type: string
+        assigned_to_dock:
+          type: string
+        reason:
+          type: string
+
+    FleetAllocateResponse:
+      type: object
+      required:
+        - status
+        - objective
+        - seed
+        - sims_per_crew
+        - candidates_per_slot
+        - slots
+        - total_fleet_score
+        - standalone_upper_bound
+        - fleet_efficiency_pct
+        - min_dock_retention_pct
+        - contested_officers
+        - conflict_free
+        - solver_mode
+      properties:
+        status:
+          type: string
+        objective:
+          type: string
+          enum: [total_score, min_regret]
+        seed:
+          type: integer
+          format: int64
+        sims_per_crew:
+          type: integer
+        candidates_per_slot:
+          type: integer
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/FleetSlotAssignment"
+        total_fleet_score:
+          type: number
+        standalone_upper_bound:
+          type: number
+        fleet_efficiency_pct:
+          type: number
+        min_dock_retention_pct:
+          type: number
+        contested_officers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContestedOfficerReport"
+        conflict_free:
+          type: boolean
+        solver_mode:
+          type: string
         warnings:
           type: array
           items:

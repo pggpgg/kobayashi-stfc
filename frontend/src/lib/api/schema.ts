@@ -47,3 +47,19 @@ export type OptimizeResponse = Schemas["OptimizeResponse"];
 export type OptimizeStatusResponse = Schemas["OptimizeStatusResponse"];
 export type OptimizeCrewConstraintsBody = Schemas["OptimizeConstraintsDto"];
 export type OptimizeRequest = Schemas["OptimizeRequest"];
+
+export type CounterfactualMetrics = Schemas["CounterfactualMetrics"];
+export type PairedDelta = Schemas["PairedDelta"];
+export type SeatReplacementOption = Schemas["SeatReplacementOption"];
+export type SeatAblation = Schemas["SeatAblation"];
+export type SubstituteSlotChange = Schemas["SubstituteSlotChange"];
+export type SubstituteCrewPlan = Schemas["SubstituteCrewPlan"];
+export type CrewCounterfactualRequest = Schemas["CrewCounterfactualRequest"];
+export type CrewCounterfactualResponse = Schemas["CrewCounterfactualResponse"];
+
+export type FleetSlotRequestDto = Schemas["FleetSlotRequestDto"];
+export type FleetAllocateRequest = Schemas["FleetAllocateRequest"];
+export type FleetCrewSummary = Schemas["FleetCrewSummary"];
+export type FleetSlotAssignment = Schemas["FleetSlotAssignment"];
+export type ContestedOfficerReport = Schemas["ContestedOfficerReport"];
+export type FleetAllocateResponse = Schemas["FleetAllocateResponse"];

@@ -10,16 +10,22 @@ use schemars::{schema_for, JsonSchema};
 use serde_yaml::Value;
 
 use crate::data::profile_index::ProfileEntry;
+use crate::optimizer::counterfactual::{
+    CounterfactualMetrics, PairedDelta, SeatAblation, SeatReplacementOption, SubstituteCrewPlan,
+    SubstituteSlotChange,
+};
+use crate::optimizer::fleet::{ContestedOfficerReport, FleetCrewSummary, FleetSlotAssignment};
 use crate::optimizer::sensitivity::{SensitivityRequest, SensitivityResponse, SensitivityRow};
 use crate::optimizer::sensitivity_morris::{MorrisRequest, MorrisResponse, MorrisRow};
 use crate::optimizer::sensitivity_sobol::{SobolPairRow, SobolRequest, SobolResponse, SobolRow};
 use crate::server::api::{ChainGrindRequest, OfficerGroupConstraintDto, OptimizeConstraintsDto};
 use crate::server::api::{
-    CompareCrewsRequest, CompareCrewsResponse, DataVersionResponse, HostileListItem,
-    OfficerListItem, OptimizeRequest, OptimizeResponse, OptimizeStartResponse,
-    OptimizeStatusResponse, Preset, PresetSummary, ReplaySeedCrew, ReplaySeedRequest, ShipListItem,
-    SimulateCrew, SimulateRequest, SimulateResponse, SimulateStats, ValidationErrorResponse,
-    ValidationIssue, WarmStartCrewDto,
+    CompareCrewsRequest, CompareCrewsResponse, CrewCounterfactualRequest,
+    CrewCounterfactualResponse, DataVersionResponse, FleetAllocateRequest, FleetAllocateResponse,
+    FleetSlotRequestDto, HostileListItem, OfficerListItem, OptimizeRequest, OptimizeResponse,
+    OptimizeStartResponse, OptimizeStatusResponse, Preset, PresetSummary, ReplaySeedCrew,
+    ReplaySeedRequest, ShipListItem, SimulateCrew, SimulateRequest, SimulateResponse,
+    SimulateStats, ValidationErrorResponse, ValidationIssue, WarmStartCrewDto,
 };
 use crate::server::openapi::OPENAPI_YAML;
 use crate::server::sensitivity_jobs::{SensitivityStartResponse, SensitivityStatusResponse};
@@ -281,6 +287,62 @@ fn all_schema_pairs() -> Vec<SchemaPair> {
         SchemaPair {
             openapi_name: "CompareCrewsResponse",
             rust_fields: rust_property_names::<CompareCrewsResponse>(),
+        },
+        SchemaPair {
+            openapi_name: "CrewCounterfactualRequest",
+            rust_fields: rust_property_names::<CrewCounterfactualRequest>(),
+        },
+        SchemaPair {
+            openapi_name: "CounterfactualMetrics",
+            rust_fields: rust_property_names::<CounterfactualMetrics>(),
+        },
+        SchemaPair {
+            openapi_name: "PairedDelta",
+            rust_fields: rust_property_names::<PairedDelta>(),
+        },
+        SchemaPair {
+            openapi_name: "SeatReplacementOption",
+            rust_fields: rust_property_names::<SeatReplacementOption>(),
+        },
+        SchemaPair {
+            openapi_name: "SeatAblation",
+            rust_fields: rust_property_names::<SeatAblation>(),
+        },
+        SchemaPair {
+            openapi_name: "SubstituteSlotChange",
+            rust_fields: rust_property_names::<SubstituteSlotChange>(),
+        },
+        SchemaPair {
+            openapi_name: "SubstituteCrewPlan",
+            rust_fields: rust_property_names::<SubstituteCrewPlan>(),
+        },
+        SchemaPair {
+            openapi_name: "CrewCounterfactualResponse",
+            rust_fields: rust_property_names::<CrewCounterfactualResponse>(),
+        },
+        SchemaPair {
+            openapi_name: "FleetSlotRequestDto",
+            rust_fields: rust_property_names::<FleetSlotRequestDto>(),
+        },
+        SchemaPair {
+            openapi_name: "FleetAllocateRequest",
+            rust_fields: rust_property_names::<FleetAllocateRequest>(),
+        },
+        SchemaPair {
+            openapi_name: "FleetCrewSummary",
+            rust_fields: rust_property_names::<FleetCrewSummary>(),
+        },
+        SchemaPair {
+            openapi_name: "FleetSlotAssignment",
+            rust_fields: rust_property_names::<FleetSlotAssignment>(),
+        },
+        SchemaPair {
+            openapi_name: "ContestedOfficerReport",
+            rust_fields: rust_property_names::<ContestedOfficerReport>(),
+        },
+        SchemaPair {
+            openapi_name: "FleetAllocateResponse",
+            rust_fields: rust_property_names::<FleetAllocateResponse>(),
         },
         SchemaPair {
             openapi_name: "OfficerGroupConstraintDto",
