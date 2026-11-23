@@ -1,0 +1,17 @@
+{
+  "started": "2026-11-23T17:18:28.019Z",
+  "source": "https://data.stfc.space",
+  "segment": "officer",
+  "mode": "missing-only",
+  "concurrency": 6,
+  "total": 297,
+  "fetched": 7,
+  "not_modified": 0,
+  "skipped": 290,
+  "failed": 0,
+  "stale_cache_used": 0,
+  "uncovered_failures": 0,
+  "failures": [],
+  "finished": "2026-11-23T17:18:29.686Z",
+  "duration_ms": 1667
+}

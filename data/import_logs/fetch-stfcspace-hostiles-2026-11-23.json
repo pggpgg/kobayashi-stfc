@@ -1,0 +1,17 @@
+{
+  "started": "2026-11-23T17:17:49.013Z",
+  "source": "https://data.stfc.space",
+  "segment": "hostile",
+  "mode": "missing-only",
+  "concurrency": 6,
+  "total": 6437,
+  "fetched": 0,
+  "not_modified": 0,
+  "skipped": 6437,
+  "failed": 0,
+  "stale_cache_used": 0,
+  "uncovered_failures": 0,
+  "failures": [],
+  "finished": "2026-11-23T17:18:16.493Z",
+  "duration_ms": 27480
+}

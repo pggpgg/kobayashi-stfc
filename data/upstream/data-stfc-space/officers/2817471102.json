@@ -1,0 +1,1378 @@
+{
+  "id": 2817471102,
+  "art_id": 341,
+  "loca_id": 96003,
+  "faction": {
+    "id": 2064723306,
+    "loca_id": 1
+  },
+  "rarity": 4,
+  "synergy_id": 55,
+  "max_rank": 5,
+  "ability": {
+    "id": 127919672,
+    "index": null,
+    "value_is_percentage": true,
+    "values": [
+      {
+        "value": 0.1,
+        "chance": 1
+      },
+      {
+        "value": 0.15,
+        "chance": 1
+      },
+      {
+        "value": 0.3,
+        "chance": 1
+      },
+      {
+        "value": 0.5,
+        "chance": 1
+      },
+      {
+        "value": 1,
+        "chance": 1
+      }
+    ],
+    "art_id": 560,
+    "loca_id": 96005,
+    "show_percentage": true,
+    "value_type": 0,
+    "ranked_is_value_chance": 0
+  },
+  "captain_ability": {
+    "id": 1438867242,
+    "index": null,
+    "value_is_percentage": true,
+    "values": [
+      {
+        "value": 0,
+        "chance": 1
+      },
+      {
+        "value": 0,
+        "chance": 1
+      },
+      {
+        "value": 0,
+        "chance": 1
+      },
+      {
+        "value": 0,
+        "chance": 1
+      },
+      {
+        "value": 0,
+        "chance": 1
+      }
+    ],
+    "art_id": 219,
+    "loca_id": 78010,
+    "show_percentage": true,
+    "value_type": 0,
+    "ranked_is_value_chance": 0
+  },
+  "below_decks_ability": {
+    "id": 2812228248,
+    "index": null,
+    "value_is_percentage": false,
+    "values": [
+      {
+        "value": 2500,
+        "chance": 1
+      },
+      {
+        "value": 5000,
+        "chance": 1
+      },
+      {
+        "value": 10000,
+        "chance": 1
+      },
+      {
+        "value": 15000,
+        "chance": 1
+      },
+      {
+        "value": 25000,
+        "chance": 1
+      }
+    ],
+    "art_id": 588,
+    "loca_id": 96006,
+    "show_percentage": false,
+    "value_type": 0,
+    "ranked_is_value_chance": 0
+  },
+  "levels": [
+    {
+      "level": 1,
+      "xp": 200
+    },
+    {
+      "level": 2,
+      "xp": 800
+    },
+    {
+      "level": 3,
+      "xp": 1400
+    },
+    {
+      "level": 4,
+      "xp": 2200
+    },
+    {
+      "level": 5,
+      "xp": 3200
+    },
+    {
+      "level": 6,
+      "xp": 17600
+    },
+    {
+      "level": 7,
+      "xp": 24400
+    },
+    {
+      "level": 8,
+      "xp": 30400
+    },
+    {
+      "level": 9,
+      "xp": 34400
+    },
+    {
+      "level": 10,
+      "xp": 37200
+    },
+    {
+      "level": 11,
+      "xp": 120000
+    },
+    {
+      "level": 12,
+      "xp": 150000
+    },
+    {
+      "level": 13,
+      "xp": 174000
+    },
+    {
+      "level": 14,
+      "xp": 192000
+    },
+    {
+      "level": 15,
+      "xp": 198000
+    },
+    {
+      "level": 16,
+      "xp": 434000
+    },
+    {
+      "level": 17,
+      "xp": 525000
+    },
+    {
+      "level": 18,
+      "xp": 595000
+    },
+    {
+      "level": 19,
+      "xp": 637000
+    },
+    {
+      "level": 20,
+      "xp": 665000
+    },
+    {
+      "level": 21,
+      "xp": 1392000
+    },
+    {
+      "level": 22,
+      "xp": 1696000
+    },
+    {
+      "level": 23,
+      "xp": 1936000
+    },
+    {
+      "level": 24,
+      "xp": 2112000
+    },
+    {
+      "level": 25,
+      "xp": 2224000
+    },
+    {
+      "level": 26,
+      "xp": 2583000
+    },
+    {
+      "level": 27,
+      "xp": 2628000
+    },
+    {
+      "level": 28,
+      "xp": 2655000
+    },
+    {
+      "level": 29,
+      "xp": 2673000
+    },
+    {
+      "level": 30,
+      "xp": 2682000
+    },
+    {
+      "level": 31,
+      "xp": 4940000
+    },
+    {
+      "level": 32,
+      "xp": 5820000
+    },
+    {
+      "level": 33,
+      "xp": 6520000
+    },
+    {
+      "level": 34,
+      "xp": 7030000
+    },
+    {
+      "level": 35,
+      "xp": 7380000
+    },
+    {
+      "level": 36,
+      "xp": 8371000
+    },
+    {
+      "level": 37,
+      "xp": 8536000
+    },
+    {
+      "level": 38,
+      "xp": 8635000
+    },
+    {
+      "level": 39,
+      "xp": 8701000
+    },
+    {
+      "level": 40,
+      "xp": 8745000
+    },
+    {
+      "level": 41,
+      "xp": 14880000
+    },
+    {
+      "level": 42,
+      "xp": 17280000
+    },
+    {
+      "level": 43,
+      "xp": 19200000
+    },
+    {
+      "level": 44,
+      "xp": 20640000
+    },
+    {
+      "level": 45,
+      "xp": 21720000
+    },
+    {
+      "level": 46,
+      "xp": 24440000
+    },
+    {
+      "level": 47,
+      "xp": 24960000
+    },
+    {
+      "level": 48,
+      "xp": 25350000
+    },
+    {
+      "level": 49,
+      "xp": 25610000
+    },
+    {
+      "level": 50,
+      "xp": 25740000
+    },
+    {
+      "level": 51,
+      "xp": 0
+    },
+    {
+      "level": 52,
+      "xp": 0
+    },
+    {
+      "level": 53,
+      "xp": 0
+    },
+    {
+      "level": 54,
+      "xp": 0
+    },
+    {
+      "level": 55,
+      "xp": 0
+    },
+    {
+      "level": 56,
+      "xp": 0
+    },
+    {
+      "level": 57,
+      "xp": 0
+    },
+    {
+      "level": 58,
+      "xp": 0
+    },
+    {
+      "level": 59,
+      "xp": 0
+    },
+    {
+      "level": 60,
+      "xp": 0
+    },
+    {
+      "level": 61,
+      "xp": 0
+    },
+    {
+      "level": 62,
+      "xp": 0
+    },
+    {
+      "level": 63,
+      "xp": 0
+    },
+    {
+      "level": 64,
+      "xp": 0
+    },
+    {
+      "level": 65,
+      "xp": 0
+    },
+    {
+      "level": 66,
+      "xp": 0
+    },
+    {
+      "level": 67,
+      "xp": 0
+    },
+    {
+      "level": 68,
+      "xp": 0
+    },
+    {
+      "level": 69,
+      "xp": 0
+    },
+    {
+      "level": 70,
+      "xp": 0
+    },
+    {
+      "level": 71,
+      "xp": 0
+    },
+    {
+      "level": 72,
+      "xp": 0
+    },
+    {
+      "level": 73,
+      "xp": 0
+    },
+    {
+      "level": 74,
+      "xp": 0
+    },
+    {
+      "level": 75,
+      "xp": 0
+    },
+    {
+      "level": 76,
+      "xp": 0
+    },
+    {
+      "level": 77,
+      "xp": 0
+    },
+    {
+      "level": 78,
+      "xp": 0
+    },
+    {
+      "level": 79,
+      "xp": 0
+    },
+    {
+      "level": 80,
+      "xp": 0
+    },
+    {
+      "level": 81,
+      "xp": 0
+    },
+    {
+      "level": 82,
+      "xp": 0
+    },
+    {
+      "level": 83,
+      "xp": 0
+    },
+    {
+      "level": 84,
+      "xp": 0
+    },
+    {
+      "level": 85,
+      "xp": 0
+    },
+    {
+      "level": 86,
+      "xp": 0
+    },
+    {
+      "level": 87,
+      "xp": 0
+    },
+    {
+      "level": 88,
+      "xp": 0
+    },
+    {
+      "level": 89,
+      "xp": 0
+    },
+    {
+      "level": 90,
+      "xp": 0
+    },
+    {
+      "level": 91,
+      "xp": 0
+    },
+    {
+      "level": 92,
+      "xp": 0
+    },
+    {
+      "level": 93,
+      "xp": 0
+    },
+    {
+      "level": 94,
+      "xp": 0
+    },
+    {
+      "level": 95,
+      "xp": 0
+    },
+    {
+      "level": 96,
+      "xp": 0
+    },
+    {
+      "level": 97,
+      "xp": 0
+    },
+    {
+      "level": 98,
+      "xp": 0
+    },
+    {
+      "level": 99,
+      "xp": 0
+    },
+    {
+      "level": 100,
+      "xp": 0
+    }
+  ],
+  "stats": [
+    {
+      "level": 1,
+      "attack": 72,
+      "defense": 120,
+      "health": 192
+    },
+    {
+      "level": 2,
+      "attack": 78.12,
+      "defense": 130.2,
+      "health": 208.32
+    },
+    {
+      "level": 3,
+      "attack": 88.19999999999999,
+      "defense": 147,
+      "health": 235.2
+    },
+    {
+      "level": 4,
+      "attack": 100.62,
+      "defense": 167.7,
+      "health": 268.32
+    },
+    {
+      "level": 5,
+      "attack": 114.78,
+      "defense": 191.29999999999998,
+      "health": 306.08
+    },
+    {
+      "level": 6,
+      "attack": 130.5,
+      "defense": 217.5,
+      "health": 348
+    },
+    {
+      "level": 7,
+      "attack": 147.48,
+      "defense": 245.79999999999998,
+      "health": 393.28
+    },
+    {
+      "level": 8,
+      "attack": 165.66,
+      "defense": 276.1,
+      "health": 441.76
+    },
+    {
+      "level": 9,
+      "attack": 184.92000000000002,
+      "defense": 308.2,
+      "health": 493.12
+    },
+    {
+      "level": 10,
+      "attack": 205.14,
+      "defense": 341.9,
+      "health": 547.04
+    },
+    {
+      "level": 11,
+      "attack": 226.32,
+      "defense": 377.2,
+      "health": 603.52
+    },
+    {
+      "level": 12,
+      "attack": 248.34,
+      "defense": 413.9,
+      "health": 662.24
+    },
+    {
+      "level": 13,
+      "attack": 271.20000000000005,
+      "defense": 452,
+      "health": 723.2
+    },
+    {
+      "level": 14,
+      "attack": 294.84000000000003,
+      "defense": 491.4,
+      "health": 786.24
+    },
+    {
+      "level": 15,
+      "attack": 319.20000000000005,
+      "defense": 532,
+      "health": 851.2
+    },
+    {
+      "level": 16,
+      "attack": 344.28000000000003,
+      "defense": 573.8000000000001,
+      "health": 918.08
+    },
+    {
+      "level": 17,
+      "attack": 370.02,
+      "defense": 616.7,
+      "health": 986.72
+    },
+    {
+      "level": 18,
+      "attack": 396.41999999999996,
+      "defense": 660.6999999999999,
+      "health": 1057.12
+    },
+    {
+      "level": 19,
+      "attack": 423.41999999999996,
+      "defense": 705.6999999999999,
+      "health": 1129.12
+    },
+    {
+      "level": 20,
+      "attack": 451.08000000000004,
+      "defense": 751.8000000000001,
+      "health": 1202.88
+    },
+    {
+      "level": 21,
+      "attack": 479.28,
+      "defense": 798.8,
+      "health": 1278.08
+    },
+    {
+      "level": 22,
+      "attack": 508.08000000000004,
+      "defense": 846.8000000000001,
+      "health": 1354.88
+    },
+    {
+      "level": 23,
+      "attack": 537.42,
+      "defense": 895.6999999999999,
+      "health": 1433.12
+    },
+    {
+      "level": 24,
+      "attack": 567.3,
+      "defense": 945.5,
+      "health": 1512.8
+    },
+    {
+      "level": 25,
+      "attack": 597.72,
+      "defense": 996.2,
+      "health": 1593.92
+    },
+    {
+      "level": 26,
+      "attack": 628.62,
+      "defense": 1047.7,
+      "health": 1676.32
+    },
+    {
+      "level": 27,
+      "attack": 660.0600000000001,
+      "defense": 1100.1000000000001,
+      "health": 1760.16
+    },
+    {
+      "level": 28,
+      "attack": 691.98,
+      "defense": 1153.3,
+      "health": 1845.28
+    },
+    {
+      "level": 29,
+      "attack": 724.3199999999999,
+      "defense": 1207.2,
+      "health": 1931.52
+    },
+    {
+      "level": 30,
+      "attack": 757.2,
+      "defense": 1262,
+      "health": 2019.2
+    },
+    {
+      "level": 31,
+      "attack": 790.5,
+      "defense": 1317.5,
+      "health": 2108
+    },
+    {
+      "level": 32,
+      "attack": 824.22,
+      "defense": 1373.7,
+      "health": 2197.92
+    },
+    {
+      "level": 33,
+      "attack": 858.42,
+      "defense": 1430.6999999999998,
+      "health": 2289.12
+    },
+    {
+      "level": 34,
+      "attack": 893.04,
+      "defense": 1488.4,
+      "health": 2381.44
+    },
+    {
+      "level": 35,
+      "attack": 928.08,
+      "defense": 1546.8000000000002,
+      "health": 2474.88
+    },
+    {
+      "level": 36,
+      "attack": 963.54,
+      "defense": 1605.9,
+      "health": 2569.44
+    },
+    {
+      "level": 37,
+      "attack": 999.42,
+      "defense": 1665.6999999999998,
+      "health": 2665.12
+    },
+    {
+      "level": 38,
+      "attack": 1035.66,
+      "defense": 1726.1000000000001,
+      "health": 2761.76
+    },
+    {
+      "level": 39,
+      "attack": 1072.32,
+      "defense": 1787.2,
+      "health": 2859.52
+    },
+    {
+      "level": 40,
+      "attack": 1109.4,
+      "defense": 1849,
+      "health": 2958.4
+    },
+    {
+      "level": 41,
+      "attack": 1146.84,
+      "defense": 1911.3999999999999,
+      "health": 3058.24
+    },
+    {
+      "level": 42,
+      "attack": 1184.6399999999999,
+      "defense": 1974.4,
+      "health": 3159.04
+    },
+    {
+      "level": 43,
+      "attack": 1222.8000000000002,
+      "defense": 2038,
+      "health": 3260.8
+    },
+    {
+      "level": 44,
+      "attack": 1261.32,
+      "defense": 2102.2,
+      "health": 3363.52
+    },
+    {
+      "level": 45,
+      "attack": 1300.26,
+      "defense": 2167.1,
+      "health": 3467.36
+    },
+    {
+      "level": 46,
+      "attack": 1339.5,
+      "defense": 2232.5,
+      "health": 3572
+    },
+    {
+      "level": 47,
+      "attack": 1379.1,
+      "defense": 2298.5,
+      "health": 3677.6
+    },
+    {
+      "level": 48,
+      "attack": 1419.06,
+      "defense": 2365.1,
+      "health": 3784.16
+    },
+    {
+      "level": 49,
+      "attack": 1459.3799999999999,
+      "defense": 2432.2999999999997,
+      "health": 3891.68
+    },
+    {
+      "level": 50,
+      "attack": 1500,
+      "defense": 2500,
+      "health": 4000
+    },
+    {
+      "level": 51,
+      "attack": 1540.62,
+      "defense": 2567.7,
+      "health": 4108.32
+    },
+    {
+      "level": 52,
+      "attack": 1586.1000000000001,
+      "defense": 2643.5,
+      "health": 4229.6
+    },
+    {
+      "level": 53,
+      "attack": 1633.56,
+      "defense": 2722.6,
+      "health": 4356.16
+    },
+    {
+      "level": 54,
+      "attack": 1682.46,
+      "defense": 2804.1000000000004,
+      "health": 4486.56
+    },
+    {
+      "level": 55,
+      "attack": 1732.38,
+      "defense": 2887.3,
+      "health": 4619.68
+    },
+    {
+      "level": 56,
+      "attack": 1783.1999999999998,
+      "defense": 2972,
+      "health": 4755.2
+    },
+    {
+      "level": 57,
+      "attack": 1834.6799999999998,
+      "defense": 3057.7999999999997,
+      "health": 4892.48
+    },
+    {
+      "level": 58,
+      "attack": 1886.8200000000002,
+      "defense": 3144.7000000000003,
+      "health": 5031.52
+    },
+    {
+      "level": 59,
+      "attack": 1939.5,
+      "defense": 3232.5,
+      "health": 5172
+    },
+    {
+      "level": 60,
+      "attack": 1992.66,
+      "defense": 3321.1000000000004,
+      "health": 5313.76
+    },
+    {
+      "level": 61,
+      "attack": 2046.3000000000002,
+      "defense": 3410.5,
+      "health": 5456.8
+    },
+    {
+      "level": 62,
+      "attack": 2100.36,
+      "defense": 3500.6,
+      "health": 5600.96
+    },
+    {
+      "level": 63,
+      "attack": 2154.7799999999997,
+      "defense": 3591.3,
+      "health": 5746.08
+    },
+    {
+      "level": 64,
+      "attack": 2209.5,
+      "defense": 3682.5,
+      "health": 5892
+    },
+    {
+      "level": 65,
+      "attack": 2264.64,
+      "defense": 3774.4,
+      "health": 6039.04
+    },
+    {
+      "level": 66,
+      "attack": 2320.02,
+      "defense": 3866.7000000000003,
+      "health": 6186.72
+    },
+    {
+      "level": 67,
+      "attack": 2375.7599999999998,
+      "defense": 3959.6,
+      "health": 6335.36
+    },
+    {
+      "level": 68,
+      "attack": 2431.7400000000002,
+      "defense": 4052.9,
+      "health": 6484.64
+    },
+    {
+      "level": 69,
+      "attack": 2487.96,
+      "defense": 4146.6,
+      "health": 6634.56
+    },
+    {
+      "level": 70,
+      "attack": 2544.42,
+      "defense": 4240.7,
+      "health": 6785.12
+    },
+    {
+      "level": 71,
+      "attack": 2601.18,
+      "defense": 4335.299999999999,
+      "health": 6936.48
+    },
+    {
+      "level": 72,
+      "attack": 2658.12,
+      "defense": 4430.2,
+      "health": 7088.32
+    },
+    {
+      "level": 73,
+      "attack": 2715.3,
+      "defense": 4525.5,
+      "health": 7240.8
+    },
+    {
+      "level": 74,
+      "attack": 2772.66,
+      "defense": 4621.1,
+      "health": 7393.76
+    },
+    {
+      "level": 75,
+      "attack": 2830.2599999999998,
+      "defense": 4717.099999999999,
+      "health": 7547.36
+    },
+    {
+      "level": 76,
+      "attack": 2888.04,
+      "defense": 4813.4,
+      "health": 7701.44
+    },
+    {
+      "level": 77,
+      "attack": 2946,
+      "defense": 4910,
+      "health": 7856
+    },
+    {
+      "level": 78,
+      "attack": 3004.14,
+      "defense": 5006.9,
+      "health": 8011.04
+    },
+    {
+      "level": 79,
+      "attack": 3062.46,
+      "defense": 5104.1,
+      "health": 8166.56
+    },
+    {
+      "level": 80,
+      "attack": 3120.96,
+      "defense": 5201.599999999999,
+      "health": 8322.56
+    },
+    {
+      "level": 81,
+      "attack": 3179.58,
+      "defense": 5299.299999999999,
+      "health": 8478.88
+    },
+    {
+      "level": 82,
+      "attack": 3238.38,
+      "defense": 5397.3,
+      "health": 8635.68
+    },
+    {
+      "level": 83,
+      "attack": 3297.3599999999997,
+      "defense": 5495.599999999999,
+      "health": 8792.96
+    },
+    {
+      "level": 84,
+      "attack": 3356.46,
+      "defense": 5594.099999999999,
+      "health": 8950.56
+    },
+    {
+      "level": 85,
+      "attack": 3415.74,
+      "defense": 5692.9,
+      "health": 9108.64
+    },
+    {
+      "level": 86,
+      "attack": 3475.1400000000003,
+      "defense": 5791.900000000001,
+      "health": 9267.04
+    },
+    {
+      "level": 87,
+      "attack": 3534.66,
+      "defense": 5891.1,
+      "health": 9425.76
+    },
+    {
+      "level": 88,
+      "attack": 3594.3599999999997,
+      "defense": 5990.599999999999,
+      "health": 9584.96
+    },
+    {
+      "level": 89,
+      "attack": 3654.18,
+      "defense": 6090.299999999999,
+      "health": 9744.48
+    },
+    {
+      "level": 90,
+      "attack": 3714.12,
+      "defense": 6190.2,
+      "health": 9904.32
+    },
+    {
+      "level": 91,
+      "attack": 3774.18,
+      "defense": 6290.299999999999,
+      "health": 10064.48
+    },
+    {
+      "level": 92,
+      "attack": 3834.3599999999997,
+      "defense": 6390.599999999999,
+      "health": 10224.96
+    },
+    {
+      "level": 93,
+      "attack": 3894.66,
+      "defense": 6491.1,
+      "health": 10385.76
+    },
+    {
+      "level": 94,
+      "attack": 3955.08,
+      "defense": 6591.799999999999,
+      "health": 10546.88
+    },
+    {
+      "level": 95,
+      "attack": 4015.62,
+      "defense": 6692.7,
+      "health": 10708.32
+    },
+    {
+      "level": 96,
+      "attack": 4076.2799999999997,
+      "defense": 6793.8,
+      "health": 10870.08
+    },
+    {
+      "level": 97,
+      "attack": 4137.0599999999995,
+      "defense": 6895.1,
+      "health": 11032.16
+    },
+    {
+      "level": 98,
+      "attack": 4197.96,
+      "defense": 6996.599999999999,
+      "health": 11194.56
+    },
+    {
+      "level": 99,
+      "attack": 4258.92,
+      "defense": 7098.200000000001,
+      "health": 11357.12
+    },
+    {
+      "level": 100,
+      "attack": 4320,
+      "defense": 7200,
+      "health": 11520
+    }
+  ],
+  "ranks": [
+    {
+      "rank": 1,
+      "max_level": 5,
+      "shards_required": 100,
+      "rating_factor": 2,
+      "costs": []
+    },
+    {
+      "rank": 2,
+      "max_level": 10,
+      "shards_required": 200,
+      "rating_factor": 3,
+      "costs": [
+        {
+          "resource_id": 2123124315,
+          "amount": 1000
+        },
+        {
+          "resource_id": 2268080862,
+          "amount": 25000
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "max_level": 15,
+      "shards_required": 400,
+      "rating_factor": 4,
+      "costs": [
+        {
+          "resource_id": 2123124315,
+          "amount": 2000
+        },
+        {
+          "resource_id": 2268080862,
+          "amount": 50000
+        },
+        {
+          "resource_id": 2424843299,
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "max_level": 20,
+      "shards_required": 700,
+      "rating_factor": 5,
+      "costs": [
+        {
+          "resource_id": 2123124315,
+          "amount": 6000
+        },
+        {
+          "resource_id": 2268080862,
+          "amount": 75000
+        },
+        {
+          "resource_id": 2424843299,
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "max_level": 30,
+      "shards_required": 1500,
+      "rating_factor": 6,
+      "costs": [
+        {
+          "resource_id": 2123124315,
+          "amount": 16000
+        },
+        {
+          "resource_id": 2268080862,
+          "amount": 200000
+        },
+        {
+          "resource_id": 2424843299,
+          "amount": 4
+        }
+      ]
+    }
+  ],
+  "trait_config": {
+    "progression": [
+      {
+        "required_rank": 1,
+        "trait_id": 2500447456
+      },
+      {
+        "required_rank": 1,
+        "trait_id": 2286439376
+      },
+      {
+        "required_rank": 1,
+        "trait_id": 3807225757
+      }
+    ],
+    "traits": [
+      {
+        "trait_id": 2500447456,
+        "loca_id": 323,
+        "cost": [
+          {
+            "level": "1",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 1500
+              }
+            ]
+          },
+          {
+            "level": "2",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 2700
+              }
+            ]
+          },
+          {
+            "level": "3",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 3800
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "trait_id": 2286439376,
+        "loca_id": 326,
+        "cost": [
+          {
+            "level": "1",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 7650
+              }
+            ]
+          },
+          {
+            "level": "2",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 6000
+              }
+            ]
+          },
+          {
+            "level": "3",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 7000
+              }
+            ]
+          },
+          {
+            "level": "4",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 8850
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "trait_id": 3807225757,
+        "loca_id": 322,
+        "cost": [
+          {
+            "level": "1",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 10000
+              }
+            ]
+          },
+          {
+            "level": "2",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 4000
+              }
+            ]
+          },
+          {
+            "level": "3",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 7000
+              }
+            ]
+          },
+          {
+            "level": "4",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 10000
+              }
+            ]
+          },
+          {
+            "level": "5",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 15000
+              }
+            ]
+          },
+          {
+            "level": "6",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 23000
+              }
+            ]
+          },
+          {
+            "level": "7",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 42000
+              }
+            ]
+          },
+          {
+            "level": "8",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 68000
+              }
+            ]
+          },
+          {
+            "level": "9",
+            "costs": [
+              {
+                "resource_id": 2188873676,
+                "amount": 107000
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "class": 3
+}
