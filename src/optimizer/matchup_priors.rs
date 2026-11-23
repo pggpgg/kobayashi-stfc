@@ -495,6 +495,8 @@ mod tests {
             defender_profile: None,
             defender_incoming_shield_mitigation_bonus: 0.0,
             defender_incoming_shield_mitigation_bonus_rounds: 0,
+            ship_cargo_capacity: None,
+            resource_names: std::sync::Arc::new(std::collections::HashMap::new()),
         }
     }
 

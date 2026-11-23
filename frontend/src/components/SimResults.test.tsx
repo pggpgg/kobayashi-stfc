@@ -639,6 +639,53 @@ describe("SimResults", () => {
     expect(screen.getByText("Hull %*|hit")).toBeTruthy();
   });
 
+  it("#415 renders expected farming resource column alongside P(N-kill) and ending hull", () => {
+    const recs: CrewRecommendation[] = [
+      {
+        ...crewRec({
+          captain: "Jonathan Archer",
+          bridge: ["Spock", "Bones"],
+          below_decks: ["Ent-E Data"],
+          win_rate: 1.0,
+          stall_rate: 0.0,
+          loss_rate: 0.0,
+          avg_hull_remaining: 0.82,
+        }),
+        chain: {
+          kills_target: 4,
+          secondary_objective: "max_expected_loot",
+          primary_success_rate: 1.0,
+          primary_ci_low: 0.99,
+          primary_ci_high: 1.0,
+          secondary_mean_given_primary: 4_141_806,
+          secondary_ci_low: 4_141_806,
+          secondary_ci_high: 4_141_806,
+          n_primary_successes: 100,
+          ending_hull_mean_given_primary: 0.82,
+          loot: {
+            resource_id: 103783761,
+            resource_name: "Tech Module",
+            expected_loot_mean: 4_141_806,
+            expected_loot_ci_low: 4_141_806,
+            expected_loot_ci_high: 4_141_806,
+            base_drop_per_kill: 1_108_523.5,
+            loot_multiplier: 4.0,
+            cargo_capacity: 4_240_000,
+            cargo_capped: true,
+            loot_sources: ["Jonathan Archer (+300% loot)"],
+          },
+        },
+      },
+    ];
+    render(<SimResults {...baseProps} recommendations={recs} />);
+    expect(screen.getByText("P(4-kill)")).toBeTruthy();
+    expect(screen.getByText("Expected Tech Module")).toBeTruthy();
+    expect(screen.getByText("Hull %*|hit")).toBeTruthy();
+    expect(screen.getByText(/4\.14M/)).toBeTruthy();
+    expect(screen.getByText("(full)")).toBeTruthy();
+    expect(screen.getByTitle(/Cargo capacity: 4,240,000/)).toBeTruthy();
+  });
+
   it("limits selection to 5 rows", () => {
     const recs: CrewRecommendation[] = Array.from({ length: 7 }, (_, i) =>
       crewRec({

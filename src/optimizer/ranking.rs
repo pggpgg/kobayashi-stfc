@@ -1,4 +1,4 @@
-use crate::optimizer::chain::ChainSimulationSummary;
+use crate::optimizer::chain::{chain_ranking_scalar, ChainSimulationSummary};
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::SimulationResult;
 use serde::Serialize;
@@ -97,9 +97,13 @@ pub fn rank_results(simulation_results: Vec<SimulationResult>) -> Vec<RankedCrew
     let mut ranked: Vec<RankedCrewResult> = simulation_results
         .into_iter()
         .map(|result| {
-            let score = if result.chain.is_some() {
-                // Lexicographic proxy: primary dominates; secondary uses avg_hull_remaining (conditional mean).
-                result.win_rate as f32 * 1e4 + result.avg_hull_remaining.min(1.0) as f32
+            let score = if let Some(ref c) = result.chain {
+                chain_ranking_scalar(
+                    result.win_rate,
+                    result.avg_hull_remaining,
+                    c.secondary_objective,
+                    c.secondary_mean_given_primary,
+                ) as f32
             } else {
                 (result.win_rate * 0.8 + result.avg_hull_remaining * 0.2) as f32
             };
@@ -151,9 +155,13 @@ pub fn sort_ranked_rows(rows: &mut [RankedCrewResult]) {
                 .total_cmp(&l)
                 .then_with(|| left.captain.cmp(&right.captain)),
             _ => match (&left.chain, &right.chain) {
-                (Some(_), Some(_)) => right
+                (Some(lc), Some(rc)) => right
                     .win_rate
                     .total_cmp(&left.win_rate)
+                    .then_with(|| {
+                        rc.secondary_mean_given_primary
+                            .total_cmp(&lc.secondary_mean_given_primary)
+                    })
                     .then_with(|| right.avg_hull_remaining.total_cmp(&left.avg_hull_remaining)),
                 _ => right
                     .score

@@ -340,10 +340,23 @@ pub struct HostileListItem {
     pub display_name: String,
     pub level: u32,
     pub ship_class: String,
+    /// Spawn system display names from upstream `summary-hostile.json` + `translations-systems.json`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub system_names: Vec<String>,
+    /// Minimum warp range required to reach this hostile (omitted when 0 / unspawned).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub warp: Option<u32>,
+    /// True when the hostile carries at least one positive resource drop in upstream data.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub has_loot: Option<bool>,
+    /// Primary specialty/farming resource dropped by this hostile (e.g. `"Tech Module"`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub primary_resource_name: Option<String>,
 }
 
 pub fn hostiles_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
     let loca_map = registry.hostile_loca_display();
+    let catalog_meta = registry.hostile_catalog_meta();
     let list: Vec<HostileListItem> = registry
         .hostile_index()
         .map(|idx| {
@@ -352,12 +365,17 @@ pub fn hostiles_payload(registry: &DataRegistry) -> Result<String, serde_json::E
                 .map(|e| {
                     let display_name =
                         resolve_hostile_display_name(loca_map, e.loca_id, &e.hostile_name);
+                    let meta = catalog_meta.get(&e.id);
                     HostileListItem {
                         id: e.id.clone(),
                         hostile_name: e.hostile_name.clone(),
                         display_name,
                         level: e.level,
                         ship_class: e.ship_class.clone(),
+                        system_names: meta.map(|m| m.system_names.clone()).unwrap_or_default(),
+                        warp: meta.and_then(|m| (m.warp > 0).then_some(m.warp)),
+                        has_loot: meta.map(|m| m.has_loot),
+                        primary_resource_name: meta.and_then(|m| m.primary_resource_name.clone()),
                     }
                 })
                 .collect()

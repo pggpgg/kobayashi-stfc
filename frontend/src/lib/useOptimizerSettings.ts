@@ -5,7 +5,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { OptimizerStrategyType } from "./api";
+import type { ChainSecondaryObjective, OptimizerStrategyType } from "./api";
 import type { BelowDecksPoolMode } from "./optimizeWarmStart";
 
 export interface SeedSettings {
@@ -40,7 +40,7 @@ export interface ConstraintSettings {
 export interface ChainSettings {
   chainGrindEnabled: boolean;
   chainKillsTarget: number;
-  chainSecondary: "min_hull_damage" | "max_loot_per_hull_proxy";
+  chainSecondary: ChainSecondaryObjective;
 }
 export interface SearchScopeSettings {
   maxCandidates: number | null;

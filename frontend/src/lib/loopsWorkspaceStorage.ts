@@ -1,4 +1,4 @@
-import type { CrewRecommendation } from "./api";
+import type { ChainSecondaryObjective, CrewRecommendation } from "./api";
 import {
   type LoopGoalId,
   loopIdForSavedTarget,
@@ -83,6 +83,15 @@ export interface LoopBestRecord {
   chainHullScoreCiLow?: number;
   chainHullScoreCiHigh?: number;
   chainKillsTarget?: number;
+  chainSecondaryObjective?: ChainSecondaryObjective;
+  /** Mean ending attacker hull fraction [0, 1] conditional on completing the chain. */
+  chainEndingHull?: number;
+  /** Mean expected primary farming loot collected per sortie (when `max_expected_loot` ran). */
+  chainExpectedLoot?: number;
+  chainExpectedLootCiLow?: number;
+  chainExpectedLootCiHigh?: number;
+  chainLootResourceName?: string;
+  chainCargoCapped?: boolean;
   /**
    * Run settings behind this record. Optional because migrated schema-1 records
    * genuinely do not know them — and "unknown" must stay distinguishable from
@@ -328,6 +337,7 @@ export function primaryMetricForGoal(
         ),
       );
     case "kills_per_hull":
+    case "farming_loot":
       return record.chainSuccessRate != null
         ? ci(
             record.chainSuccessRate,
@@ -364,15 +374,40 @@ export function isGenuineImprovement(
   if (c.ciLow > i.ciHigh) return true;
   if (c.ciHigh < i.ciLow) return false;
 
-  if (c.value <= i.value) return false;
-  if (
-    incumbent.simsPerCrew != null &&
-    candidate.simsPerCrew != null &&
-    candidate.simsPerCrew < incumbent.simsPerCrew * OVERLAP_TRUST_RATIO
-  ) {
+  const passesSamplingTrust = () =>
+    !(
+      incumbent.simsPerCrew != null &&
+      candidate.simsPerCrew != null &&
+      candidate.simsPerCrew < incumbent.simsPerCrew * OVERLAP_TRUST_RATIO
+    );
+
+  if (c.value > i.value + 1e-12) {
+    return passesSamplingTrust();
+  }
+  if (c.value < i.value - 1e-12) {
     return false;
   }
-  return true;
+
+  // Primary metric tied (e.g. both crews complete 100% of N-kill chains): break
+  // ties using the chain goal's secondary objective so higher expected farming
+  // loot or better ending hull preservation can displace an equal-survival crew.
+  if (candidate.goalId === "farming_loot") {
+    const cLoot = candidate.chainExpectedLoot ?? 0;
+    const iLoot = incumbent.chainExpectedLoot ?? 0;
+    if (cLoot > iLoot + 1e-6) return passesSamplingTrust();
+    if (cLoot < iLoot - 1e-6) return false;
+    const cHull = candidate.chainEndingHull ?? candidate.averageHullRemaining;
+    const iHull = incumbent.chainEndingHull ?? incumbent.averageHullRemaining;
+    return cHull > iHull + 1e-9 && passesSamplingTrust();
+  }
+  if (candidate.goalId === "kills_per_hull") {
+    const cHull = candidate.chainEndingHull ?? candidate.averageHullRemaining;
+    const iHull = incumbent.chainEndingHull ?? incumbent.averageHullRemaining;
+    if (cHull <= 1 && iHull <= 1 && cHull > iHull + 1e-9) {
+      return passesSamplingTrust();
+    }
+  }
+  return false;
 }
 
 /**
@@ -392,7 +427,16 @@ function score(record: LoopBestRecord): readonly number[] {
     case "kills_per_hull":
       return [
         primary,
-        record.chainHullScore ?? record.averageHullRemaining,
+        record.chainEndingHull ??
+          record.chainHullScore ??
+          record.averageHullRemaining,
+        record.winRate,
+      ];
+    case "farming_loot":
+      return [
+        primary,
+        record.chainExpectedLoot ?? record.chainHullScore ?? 0,
+        record.chainEndingHull ?? record.averageHullRemaining,
         record.winRate,
       ];
     case "smallest_ship":
@@ -443,7 +487,18 @@ function recommendationScore(
     case "kills_per_hull":
       return [
         recommendation.chain?.primary_success_rate ?? recommendation.win_rate,
-        recommendation.chain?.secondary_mean_given_primary ??
+        recommendation.chain?.ending_hull_mean_given_primary ??
+          recommendation.chain?.secondary_mean_given_primary ??
+          recommendation.avg_hull_remaining,
+        recommendation.win_rate,
+      ];
+    case "farming_loot":
+      return [
+        recommendation.chain?.primary_success_rate ?? recommendation.win_rate,
+        recommendation.chain?.loot?.expected_loot_mean ??
+          recommendation.chain?.secondary_mean_given_primary ??
+          0,
+        recommendation.chain?.ending_hull_mean_given_primary ??
           recommendation.avg_hull_remaining,
         recommendation.win_rate,
       ];
@@ -622,6 +677,24 @@ export function saveLoopOptimizationResult(args: {
           chainHullScoreCiLow: recommendation.chain.secondary_ci_low,
           chainHullScoreCiHigh: recommendation.chain.secondary_ci_high,
           chainKillsTarget: recommendation.chain.kills_target,
+          chainSecondaryObjective: recommendation.chain.secondary_objective,
+          ...(recommendation.chain.ending_hull_mean_given_primary != null
+            ? {
+                chainEndingHull:
+                  recommendation.chain.ending_hull_mean_given_primary,
+              }
+            : {}),
+          ...(recommendation.chain.loot
+            ? {
+                chainExpectedLoot: recommendation.chain.loot.expected_loot_mean,
+                chainExpectedLootCiLow:
+                  recommendation.chain.loot.expected_loot_ci_low,
+                chainExpectedLootCiHigh:
+                  recommendation.chain.loot.expected_loot_ci_high,
+                chainLootResourceName: recommendation.chain.loot.resource_name,
+                chainCargoCapped: recommendation.chain.loot.cargo_capped,
+              }
+            : {}),
         }
       : {}),
     simsPerCrew: args.simsPerCrew,

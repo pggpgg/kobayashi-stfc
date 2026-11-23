@@ -423,6 +423,41 @@ fn patched_components_for_ids(
     (matched > 0).then_some(patched)
 }
 
+/// Extract base cargo hold capacity (`Cargo.max_resources`) for a given ship tier from raw
+/// `data.stfc.space` ship JSON, optionally applying synced component overrides. Returns `None`
+/// when no positive Cargo component is present.
+pub fn ship_cargo_capacity_from_raw(
+    raw_ship: &Value,
+    tier: u32,
+    component_ids: Option<&[i64]>,
+) -> Option<f64> {
+    let base = raw_ship_components_for_tier(raw_ship, tier)?;
+    let patched = component_ids
+        .filter(|ids| ids.iter().any(|id| *id > 0))
+        .and_then(|ids| patched_components_for_ids(&base, raw_ship, ids));
+    let components = patched.as_deref().unwrap_or(&base);
+    for comp in components {
+        let Some(data) = component_data(comp) else {
+            continue;
+        };
+        if !data
+            .get("tag")
+            .and_then(Value::as_str)
+            .is_some_and(|tag| tag.eq_ignore_ascii_case("cargo"))
+        {
+            continue;
+        }
+        if let Some(max_res) = data
+            .get("max_resources")
+            .and_then(Value::as_f64)
+            .filter(|v| v.is_finite() && *v > 0.0)
+        {
+            return Some(max_res);
+        }
+    }
+    None
+}
+
 /// Extract combat stats from a component list using the same rules as the ship normalizer.
 ///
 /// These stats are **one component tier only**. Normalized [`TierStats`] in `data/ships_extended`

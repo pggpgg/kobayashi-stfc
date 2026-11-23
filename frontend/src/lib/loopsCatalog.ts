@@ -1,10 +1,11 @@
-import type { HostileListItem } from "./api";
+import type { ChainGrindRequestBody, HostileListItem } from "./api";
 
 export type LoopGoalId =
   | "one_round"
   | "damage_dealt"
   | "no_hits"
   | "kills_per_hull"
+  | "farming_loot"
   | "smallest_ship";
 
 export interface LoopGoal {
@@ -22,9 +23,10 @@ export interface LoopGoal {
 /**
  * What the player is ranking crews by.
  *
- * Called a *ranking* preference rather than an "optimization goal" on purpose. Only
- * `kills_per_hull` changes what the server actually searches for (it turns on
- * chain-grind simulation); the rest re-rank the crews the optimizer already found.
+ * Called a *ranking* preference rather than an "optimization goal" on purpose.
+ * `kills_per_hull` and `farming_loot` change what the server actually searches for
+ * (turning on chain-grind simulation for survival vs expected resource payout); the
+ * rest re-rank the crews the optimizer already found.
  * That distinction matters because the optimizer's internal fitness is a fixed blend
  * of win rate and hull remaining, so genetic and tiered search *prune* toward that
  * before any client-side re-rank — a crew excellent at round-one kills but middling
@@ -60,10 +62,17 @@ export const LOOP_GOALS: readonly LoopGoal[] = [
   },
   {
     id: "kills_per_hull",
-    label: "Optimize for repeat kills",
+    label: "Optimize for repeat kills (survival)",
     shortLabel: "Grind",
     description:
-      "The one goal that changes the search itself: runs chain-grind simulation for consecutive kills with hull carrying over, then ranks by how often the chain completes.",
+      "Runs chain-grind simulation for consecutive kills with hull carrying over, maximizing chain completion rate and ending hull remaining.",
+  },
+  {
+    id: "farming_loot",
+    label: "Optimize for farming loot",
+    shortLabel: "Farming loot",
+    description:
+      "Runs chain-grind simulation for consecutive kills and maximizes expected primary resource payout — accounting for hostile drops, applicable officer loot bonuses, and ship cargo capacity — while keeping chain completion rate visible.",
   },
   {
     id: "smallest_ship",
@@ -126,8 +135,35 @@ const ALL_GOALS: readonly LoopGoalId[] = [
   "damage_dealt",
   "no_hits",
   "kills_per_hull",
+  "farming_loot",
   "smallest_ship",
 ];
+
+/**
+ * Default chain-grind API parameters for chain-backed loop goals.
+ * - `kills_per_hull`: repeat-kill survival (`min_hull_damage` — real ending hull %).
+ * - `farming_loot`: expected resource payout (`max_expected_loot` — drops, officer bonuses & cargo).
+ */
+export function chainGrindForLoopGoal(
+  goalId: LoopGoalId,
+  killsTarget = 5,
+): ChainGrindRequestBody | undefined {
+  if (goalId === "kills_per_hull") {
+    return {
+      enabled: true,
+      kills_target: killsTarget,
+      secondary: "min_hull_damage",
+    };
+  }
+  if (goalId === "farming_loot") {
+    return {
+      enabled: true,
+      kills_target: killsTarget,
+      secondary: "max_expected_loot",
+    };
+  }
+  return undefined;
+}
 
 /**
  * Patterns that are allowed to match zero hostiles in the installed catalog,
@@ -482,29 +518,70 @@ export function hostileMatchesLoop(
   return loop.hostilePatterns.some((pattern) => pattern.test(label));
 }
 
+function compareHostileIdStable(a: string, b: string): number {
+  const aNum = /^\d+$/.test(a) ? BigInt(a) : null;
+  const bNum = /^\d+$/.test(b) ? BigInt(b) : null;
+  if (aNum != null && bNum != null) {
+    return aNum < bNum ? -1 : aNum > bNum ? 1 : 0;
+  }
+  return a.localeCompare(b);
+}
+
+/**
+ * Order-independent preference among catalog variants sharing `(name, level, ship_class)`:
+ * prefer real spawned farming targets (with spawn systems, positive drops, positive warp,
+ * and canonical non-arrow names) over no-system/no-loot upstream ghost entries (issue #414).
+ * Returns `< 0` when `a` is strictly preferred over `b`.
+ */
+function compareLoopHostileCandidate(
+  a: HostileListItem,
+  b: HostileListItem,
+): number {
+  const aSystems = (a.system_names?.length ?? 0) > 0 ? 1 : 0;
+  const bSystems = (b.system_names?.length ?? 0) > 0 ? 1 : 0;
+  if (aSystems !== bSystems) return bSystems - aSystems;
+
+  const lootScore = (h: HostileListItem) =>
+    h.has_loot === true ? 2 : h.has_loot === false ? 0 : 1;
+  const aLoot = lootScore(a);
+  const bLoot = lootScore(b);
+  if (aLoot !== bLoot) return bLoot - aLoot;
+
+  const aWarp = (a.warp ?? 0) > 0 ? 1 : 0;
+  const bWarp = (b.warp ?? 0) > 0 ? 1 : 0;
+  if (aWarp !== bWarp) return bWarp - aWarp;
+
+  const aClean = hostileLabel(a) === hostileGroupingLabel(a) ? 1 : 0;
+  const bClean = hostileLabel(b) === hostileGroupingLabel(b) ? 1 : 0;
+  if (aClean !== bClean) return bClean - aClean;
+
+  return compareHostileIdStable(a.id, b.id);
+}
+
 export function resolveLoopHostiles(
   hostiles: readonly HostileListItem[],
   loop: LoopDefinition,
 ): HostileListItem[] {
-  const seen = new Set<string>();
-  return hostiles
-    .filter((hostile) => hostileMatchesLoop(hostile, loop))
-    .filter((hostile) => {
-      const key = loop.hostileSystems
-        ? hostile.id
-        : `${hostileGroupingLabel(hostile).toLocaleLowerCase()}|${hostile.level}|${hostile.ship_class}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .sort(
-      (a, b) =>
-        b.level - a.level ||
-        hostileLabel(a).localeCompare(hostileLabel(b), undefined, {
-          sensitivity: "base",
-        }) ||
-        a.ship_class.localeCompare(b.ship_class),
-    );
+  const bestByKey = new Map<string, HostileListItem>();
+  for (const hostile of hostiles) {
+    if (!hostileMatchesLoop(hostile, loop)) continue;
+    const key = loop.hostileSystems
+      ? hostile.id
+      : `${hostileGroupingLabel(hostile).toLocaleLowerCase()}|${hostile.level}|${hostile.ship_class}`;
+    const existing = bestByKey.get(key);
+    if (!existing || compareLoopHostileCandidate(hostile, existing) < 0) {
+      bestByKey.set(key, hostile);
+    }
+  }
+  return [...bestByKey.values()].sort(
+    (a, b) =>
+      b.level - a.level ||
+      hostileLabel(a).localeCompare(hostileLabel(b), undefined, {
+        sensitivity: "base",
+      }) ||
+      a.ship_class.localeCompare(b.ship_class) ||
+      compareHostileIdStable(a.id, b.id),
+  );
 }
 
 /**

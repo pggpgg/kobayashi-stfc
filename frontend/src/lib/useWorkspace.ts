@@ -348,7 +348,10 @@ export function useWorkspace() {
       setScenarioId(loopRun.targetId);
       if (loopRun.goalId === "kills_per_hull") {
         setChainGrindEnabled(true);
-        setChainSecondary("max_loot_per_hull_proxy");
+        setChainSecondary("min_hull_damage");
+      } else if (loopRun.goalId === "farming_loot") {
+        setChainGrindEnabled(true);
+        setChainSecondary("max_expected_loot");
       }
       // Goals that rank on something other than win rate fight the optimizer's own
       // fitness, which prunes toward a win-rate/hull blend before the client ever
@@ -392,7 +395,10 @@ export function useWorkspace() {
       setScenarioId(pending.targetId);
       if (pending.goalId === "kills_per_hull") {
         setChainGrindEnabled(true);
-        setChainSecondary("max_loot_per_hull_proxy");
+        setChainSecondary("min_hull_damage");
+      } else if (pending.goalId === "farming_loot") {
+        setChainGrindEnabled(true);
+        setChainSecondary("max_expected_loot");
       }
     }
   }, [activeProfileId, loopRunContext]);
@@ -1102,7 +1108,7 @@ export function useWorkspace() {
                 enabled: true,
                 kills_target: Math.min(50, Math.max(1, chainKillsTarget)),
                 secondary:
-                  chainSecondary === "max_loot_per_hull_proxy"
+                  chainSecondary !== "min_hull_damage"
                     ? chainSecondary
                     : undefined,
               }

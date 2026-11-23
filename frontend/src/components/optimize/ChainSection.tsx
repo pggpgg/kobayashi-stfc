@@ -1,3 +1,4 @@
+import type { ChainSecondaryObjective } from "../../lib/api";
 import type {
   OptimizerSettings,
   UpdateOptimizerSettings,
@@ -81,18 +82,20 @@ export default function ChainSection({ settings, onChange }: Props) {
                     value={chainSecondary}
                     onChange={(e) =>
                       update("chainSecondary")(
-                        e.target.value as
-                          | "min_hull_damage"
-                          | "max_loot_per_hull_proxy",
+                        e.target.value as ChainSecondaryObjective,
                       )
                     }
                     style={selectStyle}
                   >
                     <option value="min_hull_damage">
-                      Max hull after N kills (min damage)
+                      Preserve ending hull (repeat-kill survival)
+                    </option>
+                    <option value="max_expected_loot">
+                      Maximize expected farming loot (drops, bonuses &amp;
+                      cargo)
                     </option>
                     <option value="max_loot_per_hull_proxy">
-                      Loot / hull proxy (placeholder)
+                      Legacy loot / hull proxy
                     </option>
                   </select>
                 </label>
@@ -103,8 +106,9 @@ export default function ChainSection({ settings, onChange }: Props) {
                     color: "var(--text-muted)",
                   }}
                 >
-                  Repeats the same hostile. Results show how often the crew
-                  completes the chain and how much hull remains.
+                  {chainSecondary === "max_expected_loot"
+                    ? "Repeats the same hostile. Ranks by chain completion rate, then expected primary resource payout (hostile drops, officer loot bonuses, and cargo hold capacity)."
+                    : "Repeats the same hostile. Results show how often the crew completes the chain and how much ending hull remains."}
                 </p>
               </>
             )}

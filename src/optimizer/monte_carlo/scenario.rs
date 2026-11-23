@@ -957,6 +957,10 @@ pub(crate) struct SharedScenarioData {
     /// Incoming shield mitigation on the **attacker** from counter-fire (defender profile research).
     pub defender_incoming_shield_mitigation_bonus: f64,
     pub defender_incoming_shield_mitigation_bonus_rounds: u32,
+    /// Base ship cargo hold capacity (`Cargo.max_resources`) before officer `CargoCapacity` bonuses.
+    pub ship_cargo_capacity: Option<f64>,
+    /// Upstream resource id → English display name for farming loot summaries.
+    pub resource_names: std::sync::Arc<HashMap<u64, String>>,
 }
 
 fn attacker_owner_faction_from_ship(ship_rec: Option<&ShipRecord>) -> OpponentFactionTag {
@@ -2949,6 +2953,21 @@ fn build_shared_scenario_data_standalone_for_profile(
             defender_opponent.defender_is_player_ship(),
         );
 
+    let resource_names = std::sync::Arc::new(
+        crate::data::hostile_loca::load_resource_display_names(crate::runtime_paths::asset_root()),
+    );
+    let ship_cargo_capacity = ship_rec.as_ref().and_then(|s| {
+        let reg = crate::data::ship::load_hull_id_registry();
+        let hull_id = reg
+            .iter()
+            .find_map(|(&hid, sid)| (sid == &s.id).then_some(hid))?;
+        let raw = crate::data::ship::load_upstream_ship_raw(
+            Path::new(crate::data::ship::DEFAULT_UPSTREAM_SHIPS_DIR),
+            hull_id,
+        )?;
+        crate::data::ship::ship_cargo_capacity_from_raw(&raw, 1, None)
+    });
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: hostile.to_string(),
@@ -3002,6 +3021,8 @@ fn build_shared_scenario_data_standalone_for_profile(
         defender_profile: None,
         defender_incoming_shield_mitigation_bonus: 0.0,
         defender_incoming_shield_mitigation_bonus_rounds: 0,
+        ship_cargo_capacity,
+        resource_names,
     }
 }
 
@@ -3788,6 +3809,10 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             defender_opponent.defender_is_player_ship(),
         );
 
+    let ship_cargo_capacity =
+        registry.resolve_ship_cargo_capacity(ship, ship_tier, ship_level, &imported_ships);
+    let resource_names = std::sync::Arc::new(registry.resource_names().clone());
+
     SharedScenarioData {
         ship: ship.to_string(),
         hostile: scenario_hostile_key,
@@ -3841,6 +3866,8 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         defender_profile,
         defender_incoming_shield_mitigation_bonus,
         defender_incoming_shield_mitigation_bonus_rounds,
+        ship_cargo_capacity,
+        resource_names,
     }
 }
 
@@ -5202,6 +5229,8 @@ mod tests {
             defender_profile: None,
             defender_incoming_shield_mitigation_bonus: 0.0,
             defender_incoming_shield_mitigation_bonus_rounds: 0,
+            ship_cargo_capacity: None,
+            resource_names: std::sync::Arc::new(HashMap::new()),
         };
 
         let candidate = CrewCandidate {

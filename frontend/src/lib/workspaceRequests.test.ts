@@ -221,6 +221,30 @@ describe("buildWorkspaceOptimizeStartBody", () => {
       kills_target: 5,
       secondary: "max_loot_per_hull_proxy",
     });
+
+    const farmingBody = buildWorkspaceOptimizeStartBody({
+      shipId: "enterprise_nx_01",
+      scenarioId: "3919830203",
+      simsPerCrew: 1000,
+      maxCandidates: null,
+      optimizerStrategy: "portfolio",
+      belowDecksPoolMode: "strict",
+      selectedSeeds: [],
+      heuristicsOnly: false,
+      belowDecksStrategy: "ordered",
+      shipTier: 12,
+      shipLevel: 60,
+      chainGrind: {
+        enabled: true,
+        kills_target: 4,
+        secondary: "max_expected_loot",
+      },
+    });
+    expect(farmingBody.chain).toEqual({
+      enabled: true,
+      kills_target: 4,
+      secondary: "max_expected_loot",
+    });
   });
 
   it("includes constraints when form fields are set", () => {

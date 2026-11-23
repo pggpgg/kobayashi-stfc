@@ -51,7 +51,7 @@ pub struct ChainGrindRequest {
     #[serde(default)]
     pub enabled: bool,
     pub kills_target: Option<u32>,
-    /// `min_hull_damage` (default) or `max_loot_per_hull_proxy` (placeholder economy).
+    /// `min_hull_damage` (default), `max_expected_loot` (farming drops + cargo), or legacy `max_loot_per_hull_proxy`.
     pub secondary: Option<String>,
 }
 
@@ -72,10 +72,11 @@ pub fn chain_grind_params_from_request(
     }
     let sec = match c.secondary.as_deref().unwrap_or("min_hull_damage") {
         "min_hull_damage" => ChainSecondaryObjective::MinHullDamage,
+        "max_expected_loot" => ChainSecondaryObjective::MaxExpectedLoot,
         "max_loot_per_hull_proxy" => ChainSecondaryObjective::MaxLootPerHullProxy,
         other => {
             return Err(format!(
-                "chain.secondary: unknown {other:?} (expected min_hull_damage or max_loot_per_hull_proxy)"
+                "chain.secondary: unknown {other:?} (expected min_hull_damage, max_expected_loot, or max_loot_per_hull_proxy)"
             ));
         }
     };

@@ -8,6 +8,7 @@ pub(crate) mod exhaustive_adaptive;
 pub mod genetic;
 pub mod learning_signals;
 pub mod linear_eval;
+pub mod loot;
 pub mod matchup_priors;
 pub mod method_bench;
 pub mod monte_carlo;
@@ -25,6 +26,7 @@ pub mod sensitivity_sobol;
 pub mod tiered;
 
 pub use chain::{ChainGrindParams, ChainSecondaryObjective, ChainSimulationSummary};
+pub use loot::ChainLootSummary;
 
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};

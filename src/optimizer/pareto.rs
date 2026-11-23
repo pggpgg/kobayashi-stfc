@@ -247,9 +247,13 @@ pub fn highlight_rows(rows: &[RankedCrewResult]) -> Vec<RowHighlights> {
     }
 
     if chain_mode
-        && metric_has_spread(rows, considered, |r| {
+        && (metric_has_spread(rows, considered, |r| {
             r.chain.as_ref().map_or(0.0, |c| c.primary_success_rate)
-        })
+        }) || metric_has_spread(rows, considered, |r| {
+            r.chain
+                .as_ref()
+                .map_or(0.0, |c| c.secondary_mean_given_primary)
+        }))
     {
         if let Some(i) = best_index(considered, |a, b| {
             let primary =
@@ -263,7 +267,11 @@ pub fn highlight_rows(rows: &[RankedCrewResult]) -> Vec<RowHighlights> {
             match primary(ra).total_cmp(&primary(rb)) {
                 std::cmp::Ordering::Greater => true,
                 std::cmp::Ordering::Less => false,
-                std::cmp::Ordering::Equal => secondary(ra) > secondary(rb),
+                std::cmp::Ordering::Equal => match secondary(ra).total_cmp(&secondary(rb)) {
+                    std::cmp::Ordering::Greater => true,
+                    std::cmp::Ordering::Less => false,
+                    std::cmp::Ordering::Equal => ra.avg_hull_remaining > rb.avg_hull_remaining,
+                },
             }
         }) {
             out[i].tags.push(ParetoTag::BestChain);
@@ -348,11 +356,21 @@ fn reason_for(
                 pct(row.r1_kill_rate)
             )),
             ParetoTag::BestChain => row.chain.as_ref().map(|chain| {
-                format!(
-                    "Best chain crew: finishes the {}-kill chain {} of the time.",
-                    chain.kills_target,
-                    pct(chain.primary_success_rate)
-                )
+                if let Some(ref loot) = chain.loot {
+                    format!(
+                        "Best chain crew: finishes the {}-kill chain {} of the time ({:.0} expected {}).",
+                        chain.kills_target,
+                        pct(chain.primary_success_rate),
+                        loot.expected_loot_mean,
+                        loot.resource_name
+                    )
+                } else {
+                    format!(
+                        "Best chain crew: finishes the {}-kill chain {} of the time.",
+                        chain.kills_target,
+                        pct(chain.primary_success_rate)
+                    )
+                }
             }),
             ParetoTag::MostDifferent => {
                 let shared = shared_officer_count(row, &rows[0]);
@@ -623,6 +641,8 @@ mod tests {
             secondary_ci_low: secondary,
             secondary_ci_high: secondary,
             n_primary_successes: 10,
+            ending_hull_mean_given_primary: None,
+            loot: None,
         }
     }
 

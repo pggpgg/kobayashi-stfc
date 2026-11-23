@@ -104,8 +104,13 @@ pub struct ArchiveElite {
 /// Fitness proxy aligned with [`crate::optimizer::ranking::rank_results`].
 #[inline]
 fn archive_fitness(r: &SimulationResult) -> f64 {
-    if r.chain.is_some() {
-        r.win_rate * 1e4 + r.avg_hull_remaining.min(1.0)
+    if let Some(ref c) = r.chain {
+        crate::optimizer::chain::chain_ranking_scalar(
+            r.win_rate,
+            r.avg_hull_remaining,
+            c.secondary_objective,
+            c.secondary_mean_given_primary,
+        )
     } else {
         r.win_rate * 0.8 + r.avg_hull_remaining * 0.2
     }

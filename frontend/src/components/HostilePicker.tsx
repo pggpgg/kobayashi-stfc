@@ -13,8 +13,34 @@ import { type HostileListItem, hostileSortLabel } from "../lib/api";
 
 const LIST_LIMIT = 200;
 
-function hostileRowLabel(h: HostileListItem): string {
-  return `${hostileSortLabel(h)} (Lvl ${h.level})`;
+function hostileNameLevelKey(h: HostileListItem): string {
+  return `${hostileSortLabel(h).toLocaleLowerCase()}|${h.level}`;
+}
+
+function formatHostileDiscriminator(h: HostileListItem): string {
+  const systems = h.system_names?.filter(Boolean) ?? [];
+  if (systems.length > 0) {
+    const shown =
+      systems.length <= 2
+        ? systems.join(", ")
+        : `${systems.slice(0, 2).join(", ")} +${systems.length - 2}`;
+    return h.warp != null && h.warp > 0 ? `${shown}, W${h.warp}` : shown;
+  }
+  if (h.warp != null && h.warp > 0) {
+    return `W${h.warp} · #${h.id}`;
+  }
+  if (h.has_loot === false) {
+    return `no system, no loot · #${h.id}`;
+  }
+  return `no system · #${h.id}`;
+}
+
+function hostileRowLabel(h: HostileListItem, disambiguate = false): string {
+  const base = hostileSortLabel(h);
+  if (!disambiguate) {
+    return `${base} (Lvl ${h.level})`;
+  }
+  return `${base} (Lvl ${h.level} · ${formatHostileDiscriminator(h)})`;
 }
 
 interface HostilePickerProps {
@@ -39,22 +65,44 @@ export default memo(function HostilePicker({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const duplicateNameLevels = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const h of hostiles) {
+      const k = hostileNameLevelKey(h);
+      counts.set(k, (counts.get(k) ?? 0) + 1);
+    }
+    const dups = new Set<string>();
+    for (const [k, count] of counts) {
+      if (count > 1) dups.add(k);
+    }
+    return dups;
+  }, [hostiles]);
+
+  const rowLabel = useCallback(
+    (h: HostileListItem) =>
+      hostileRowLabel(h, duplicateNameLevels.has(hostileNameLevelKey(h))),
+    [duplicateNameLevels],
+  );
+
   const selected = hostiles.find((h) => h.id === value);
-  const selectedLabel = selected
-    ? hostileRowLabel(selected)
-    : value
-      ? value
-      : "";
+  const selectedLabel = selected ? rowLabel(selected) : value ? value : "";
   const displayValue = open ? query : selectedLabel;
 
   const q = query.trim().toLowerCase();
   const filtered = useMemo(() => {
     if (!q) return hostiles;
     return hostiles.filter((h) => {
-      const row = hostileRowLabel(h).toLowerCase();
-      return row.includes(q) || h.id.toLowerCase().includes(q);
+      const row = rowLabel(h).toLowerCase();
+      if (row.includes(q) || h.id.toLowerCase().includes(q)) return true;
+      if (h.system_names?.some((sys) => sys.toLowerCase().includes(q))) {
+        return true;
+      }
+      if (h.primary_resource_name?.toLowerCase().includes(q)) {
+        return true;
+      }
+      return false;
     });
-  }, [hostiles, q]);
+  }, [hostiles, q, rowLabel]);
   const limited = useMemo(() => filtered.slice(0, LIST_LIMIT), [filtered]);
 
   useEffect(() => {
@@ -244,7 +292,7 @@ export default memo(function HostilePicker({
                 handleSelect(h.id);
               }}
             >
-              {hostileRowLabel(h)}
+              {rowLabel(h)}
             </button>
           ))}
         </div>
