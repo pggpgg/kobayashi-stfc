@@ -1699,6 +1699,27 @@ pub fn apply_profile_accuracy_to_attacker_stats(
     }
 }
 
+/// Return the profile additive piercing fractions (`armor_piercing`, `shield_piercing`, `accuracy`)
+/// matching [`apply_profile_piercing_to_attacker_stats`].
+pub fn profile_piercing_fractions(
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+) -> AttackerStats {
+    let get = |stat: &str| {
+        let bonus = get_bonus_with_owner_faction_research(profile, stat, owner_faction_slug);
+        if bonus.is_finite() {
+            bonus.max(-0.999)
+        } else {
+            0.0
+        }
+    };
+    AttackerStats {
+        armor_piercing: get("armor_piercing"),
+        shield_piercing: get("shield_piercing"),
+        accuracy: get("accuracy"),
+    }
+}
+
 /// Scale each base piercing component independently before mitigation is computed.
 /// These fractional stat bonuses never add directly to damage-through `pierce`.
 pub fn apply_profile_piercing_to_attacker_stats(
@@ -1917,6 +1938,10 @@ struct OfficerStatAxisMults {
     bridge_only_attack: f64,
     bridge_only_defense: f64,
     bridge_only_health: f64,
+    captain_only_attack: f64,
+    captain_only_defense: f64,
+    captain_only_health: f64,
+    single_officer_bonuses: Vec<(String, f64, f64, f64)>,
 }
 
 /// Only the ship data consumed by officer-stat breakpoint lookup and channel routing.
@@ -1949,6 +1974,7 @@ pub(crate) struct OfficerStatContributionRef<'a> {
     pub value: f64,
     pub target_attacker: bool,
     pub opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope,
+    pub self_scope: Option<&'a crate::lcars::resolver::OfficerStatSelfScope>,
 }
 
 impl<'a> From<&'a crate::lcars::resolver::PendingOfficerStatContribution>
@@ -1960,21 +1986,93 @@ impl<'a> From<&'a crate::lcars::resolver::PendingOfficerStatContribution>
             value: row.value,
             target_attacker: row.target_attacker,
             opponent_scope: row.opponent_scope,
+            self_scope: Some(&row.self_scope),
         }
+    }
+}
+
+fn add_officer_stat_to_mults(
+    mults: &mut OfficerStatAxisMults,
+    stat_key: &str,
+    v: f64,
+    want_target_attacker: bool,
+    opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope,
+    self_scope: Option<&crate::lcars::resolver::OfficerStatSelfScope>,
+) {
+    use crate::lcars::resolver::{OfficerStatOpponentScope, OfficerStatSelfScope};
+    let add = |attack: &mut f64, defense: &mut f64, health: &mut f64| match stat_key {
+        "officer_attack" => *attack += v,
+        "officer_defense" => *defense += v,
+        "officer_health" => *health += v,
+        "officer_stat_all" => {
+            *attack += v;
+            *defense += v;
+            *health += v;
+        }
+        _ => {}
+    };
+    if want_target_attacker {
+        match self_scope {
+            Some(OfficerStatSelfScope::BridgeOfficers) => add(
+                &mut mults.bridge_only_attack,
+                &mut mults.bridge_only_defense,
+                &mut mults.bridge_only_health,
+            ),
+            Some(OfficerStatSelfScope::CaptainOnly) => add(
+                &mut mults.captain_only_attack,
+                &mut mults.captain_only_defense,
+                &mut mults.captain_only_health,
+            ),
+            Some(OfficerStatSelfScope::SingleOfficer(officer_id)) => {
+                let (mut da, mut dd, mut dh) = (0.0, 0.0, 0.0);
+                add(&mut da, &mut dd, &mut dh);
+                if let Some(existing) = mults
+                    .single_officer_bonuses
+                    .iter_mut()
+                    .find(|(id, _, _, _)| id == officer_id)
+                {
+                    existing.1 += da;
+                    existing.2 += dd;
+                    existing.3 += dh;
+                } else {
+                    mults
+                        .single_officer_bonuses
+                        .push((officer_id.clone(), da, dd, dh));
+                }
+            }
+            None | Some(OfficerStatSelfScope::AllCrewed) => add(
+                &mut mults.crew_wide_attack,
+                &mut mults.crew_wide_defense,
+                &mut mults.crew_wide_health,
+            ),
+        }
+    } else if opponent_scope == OfficerStatOpponentScope::BridgeOfficers {
+        add(
+            &mut mults.bridge_only_attack,
+            &mut mults.bridge_only_defense,
+            &mut mults.bridge_only_health,
+        );
+    } else {
+        add(
+            &mut mults.crew_wide_attack,
+            &mut mults.crew_wide_defense,
+            &mut mults.crew_wide_health,
+        );
     }
 }
 
 /// Apply pending officer-stat rows whose `target_attacker` matches `want_target_attacker`.
 /// When `want_target_attacker` is false (Phase 4c: `target: enemy` debuffs on the opponent's
 /// crewed officers), values are negated so positive LCARS magnitudes become rating penalties.
-/// `target: enemy_bridge` rows only affect [`OfficerStatAxisMults::bridge_only_*`].
+/// `target: enemy_bridge` / `self_bridge` rows affect [`OfficerStatAxisMults::bridge_only_*`];
+/// `self_captain` affects [`OfficerStatAxisMults::captain_only_*`]; `self_officer` affects only
+/// that officer's own row.
 fn apply_pending_officer_stat_contributions(
     mults: &mut OfficerStatAxisMults,
     pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
     want_target_attacker: bool,
     cond_ctx: &OfficerStatConditionContext,
 ) {
-    use crate::lcars::resolver::OfficerStatOpponentScope;
     for c in pending {
         if c.target_attacker != want_target_attacker {
             continue;
@@ -1991,33 +2089,14 @@ fn apply_pending_officer_stat_contributions(
         } else {
             -c.value
         };
-        let bridge_only =
-            !want_target_attacker && c.opponent_scope == OfficerStatOpponentScope::BridgeOfficers;
-        let add = |attack: &mut f64, defense: &mut f64, health: &mut f64| match c.stat_key.as_str()
-        {
-            "officer_attack" => *attack += v,
-            "officer_defense" => *defense += v,
-            "officer_health" => *health += v,
-            "officer_stat_all" => {
-                *attack += v;
-                *defense += v;
-                *health += v;
-            }
-            _ => {}
-        };
-        if bridge_only {
-            add(
-                &mut mults.bridge_only_attack,
-                &mut mults.bridge_only_defense,
-                &mut mults.bridge_only_health,
-            );
-        } else {
-            add(
-                &mut mults.crew_wide_attack,
-                &mut mults.crew_wide_defense,
-                &mut mults.crew_wide_health,
-            );
-        }
+        add_officer_stat_to_mults(
+            mults,
+            c.stat_key.as_str(),
+            v,
+            want_target_attacker,
+            c.opponent_scope,
+            Some(&c.self_scope),
+        );
     }
 }
 
@@ -2028,7 +2107,6 @@ fn apply_unconditional_officer_stat_contributions<'a>(
     pending: impl IntoIterator<Item = OfficerStatContributionRef<'a>>,
     want_target_attacker: bool,
 ) {
-    use crate::lcars::resolver::OfficerStatOpponentScope;
     for c in pending {
         if c.target_attacker != want_target_attacker {
             continue;
@@ -2038,32 +2116,14 @@ fn apply_unconditional_officer_stat_contributions<'a>(
         } else {
             -c.value
         };
-        let bridge_only =
-            !want_target_attacker && c.opponent_scope == OfficerStatOpponentScope::BridgeOfficers;
-        let add = |attack: &mut f64, defense: &mut f64, health: &mut f64| match c.stat_key {
-            "officer_attack" => *attack += v,
-            "officer_defense" => *defense += v,
-            "officer_health" => *health += v,
-            "officer_stat_all" => {
-                *attack += v;
-                *defense += v;
-                *health += v;
-            }
-            _ => {}
-        };
-        if bridge_only {
-            add(
-                &mut mults.bridge_only_attack,
-                &mut mults.bridge_only_defense,
-                &mut mults.bridge_only_health,
-            );
-        } else {
-            add(
-                &mut mults.crew_wide_attack,
-                &mut mults.crew_wide_defense,
-                &mut mults.crew_wide_health,
-            );
-        }
+        add_officer_stat_to_mults(
+            mults,
+            c.stat_key,
+            v,
+            want_target_attacker,
+            c.opponent_scope,
+            c.self_scope,
+        );
     }
 }
 
@@ -2161,15 +2221,26 @@ fn effective_officer_stat_row(
 ) -> crate::combat::CrewOfficerStatTotals {
     use crate::lcars::resolver::OfficerStatSeat;
     let bridge = officer.seat != OfficerStatSeat::BelowDecks;
-    let rating = |raw, keys: [&str; 4], crew, bridge_only| {
-        let mut bonus = lookup.get(keys[0]) + crew;
+    let (single_a, single_d, single_h) = if mults.single_officer_bonuses.is_empty() {
+        (0.0, 0.0, 0.0)
+    } else {
+        mults
+            .single_officer_bonuses
+            .iter()
+            .filter(|(id, _, _, _)| id == &officer.officer_id)
+            .fold((0.0, 0.0, 0.0), |(a, d, h), (_, da, dd, dh)| {
+                (a + da, d + dd, h + dh)
+            })
+    };
+    let rating = |raw, keys: [&str; 4], crew, bridge_only, captain_only, single_only| {
+        let mut bonus = lookup.get(keys[0]) + crew + single_only;
         if bridge {
             bonus += lookup.get(keys[2]) + bridge_only;
         } else {
             bonus += lookup.get(keys[3]);
         }
         if officer.seat == OfficerStatSeat::Captain {
-            bonus += lookup.get(keys[1]);
+            bonus += lookup.get(keys[1]) + captain_only;
         }
         raw * (1.0 + bonus)
     };
@@ -2184,6 +2255,8 @@ fn effective_officer_stat_row(
             ],
             mults.crew_wide_attack,
             mults.bridge_only_attack,
+            mults.captain_only_attack,
+            single_a,
         ),
         defense: rating(
             officer.raw.defense,
@@ -2195,6 +2268,8 @@ fn effective_officer_stat_row(
             ],
             mults.crew_wide_defense,
             mults.bridge_only_defense,
+            mults.captain_only_defense,
+            single_d,
         ),
         health: rating(
             officer.raw.health,
@@ -2206,6 +2281,8 @@ fn effective_officer_stat_row(
             ],
             mults.crew_wide_health,
             mults.bridge_only_health,
+            mults.captain_only_health,
+            single_h,
         ),
     }
 }
@@ -2842,6 +2919,7 @@ mod tests {
             target_attacker: true,
             conditions: vec![],
             opponent_scope: OfficerStatOpponentScope::AllCrewed,
+            self_scope: Default::default(),
         };
         assert_eq!(
             effective_crew_health_at_combat_start(
@@ -2865,6 +2943,7 @@ mod tests {
             target_attacker: false,
             conditions: vec![],
             opponent_scope: OfficerStatOpponentScope::BridgeOfficers,
+            self_scope: Default::default(),
         };
         let debuffed = compute_officer_stat_runtime_bonus_with_officers(
             totals,
@@ -2908,6 +2987,7 @@ mod tests {
             target_attacker: true,
             conditions: vec![AbilityConditionSpec::LiteralBool { value: true }],
             opponent_scope: OfficerStatOpponentScope::AllCrewed,
+            self_scope: Default::default(),
         };
         let ctx = OfficerStatConditionContext::default();
         let evaluate = |own_rows: &[PendingOfficerStatContribution],
@@ -3027,6 +3107,7 @@ mod tests {
             target_attacker,
             conditions: vec![],
             opponent_scope: OfficerStatOpponentScope::AllCrewed,
+            self_scope: Default::default(),
         };
         let breakpoints = vec![
             OfficerBonusBreakpoint {
@@ -4299,6 +4380,7 @@ mod tests {
                 shield_piercing: 2000.0,
                 accuracy: 8000.0,
             },
+            profile_piercing_fractions: None,
             base_attacker_weapon_stats: vec![],
             ship_type: ShipType::Survey,
             mystery_mitigation_factor: 0.0,
@@ -5032,6 +5114,7 @@ mod tests {
                 ship_type: "explorer".to_string(),
             }],
             opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope::default(),
+            self_scope: Default::default(),
         }];
         // Explorer attacker → +20% → rating 1800 × 1.20 = 2160 → attack_bonus = 1.0
         let ctx_explorer = OfficerStatConditionContext {
@@ -5098,6 +5181,7 @@ mod tests {
             target_attacker: false, // target:enemy
             conditions: vec![AbilityConditionSpec::DefenderIsPlayerShip],
             opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope::default(),
+            self_scope: Default::default(),
         }];
         for defender_is_player_ship in [false, true] {
             let ctx = OfficerStatConditionContext {
@@ -5147,6 +5231,7 @@ mod tests {
             target_attacker: false,
             conditions: vec![AbilityConditionSpec::DefenderIsPlayerShip],
             opponent_scope: OfficerStatOpponentScope::BridgeOfficers,
+            self_scope: Default::default(),
         }];
         let ctx_pvp = OfficerStatConditionContext {
             defender_is_player_ship: true,
@@ -5191,6 +5276,7 @@ mod tests {
             target_attacker: false,
             conditions: vec![AbilityConditionSpec::DefenderIsPlayerShip],
             opponent_scope: OfficerStatOpponentScope::AllCrewed,
+            self_scope: Default::default(),
         }];
         let osr_full_crew_debuff = compute_officer_stat_runtime_bonus(
             totals,
@@ -5260,6 +5346,7 @@ mod tests {
                 ],
             }],
             opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope::default(),
+            self_scope: Default::default(),
         }];
 
         // Both true → bonus applies (rating 1800 × 1.20 = 2160 → attack_bonus = 1.0).
@@ -5328,6 +5415,7 @@ mod tests {
             target_attacker: true,
             conditions: vec![AbilityConditionSpec::MoraleActive],
             opponent_scope: crate::lcars::resolver::OfficerStatOpponentScope::default(),
+            self_scope: Default::default(),
         }];
         let ctx = OfficerStatConditionContext::default();
         let osr = compute_officer_stat_runtime_bonus(

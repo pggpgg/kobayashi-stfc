@@ -133,7 +133,14 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 /// * 30 → 31 (2026-11): Honor upstream `warm_up` / `cool_down` weapon firing
 ///   schedules for all normalized player ships and hostiles (#419). The canaries
 ///   do not load normalized ship or hostile records.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 31;
+/// * 31 → 32 (2026-11): Track C officer fidelity push — opponent weapon damage
+///   reduction (`ModAllDamage MultiplySub`), seat-scoped launch officer stat pools
+///   (`SelfAll`/`SelfBridge`/`SelfCaptain`/`SelfOfficer`), reactive damage-taken
+///   triggers (`HullDamageTaken`/`ShieldDamageTaken`/`CriticalShotTaken`/`HitTaken`),
+///   non-crew-scaled raw `AllDefenses`/`AllPiercing` (self + enemy reduction), and
+///   timed/cumulative/on-hit enemy `CritChance Sub` (symmetric PvP). New canaries
+///   exercise the engine paths while the version invalidates catalog-resolved crews.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 32;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -344,6 +351,7 @@ fn canary_fight_summaries() -> Vec<String> {
             shield_piercing: 60.0,
             accuracy: 100.0,
         },
+        profile_piercing_fractions: None,
         base_attacker_weapon_stats: Vec::new(),
         ship_type: crate::combat::ShipType::Explorer,
         mystery_mitigation_factor: 0.0,
@@ -773,6 +781,7 @@ fn canary_fights() -> Vec<CanaryFight> {
             shield_piercing: 160.0,
             accuracy: 220.0,
         },
+        profile_piercing_fractions: None,
         base_attacker_weapon_stats: Vec::new(),
         ship_type: crate::combat::ShipType::Battleship,
         mystery_mitigation_factor: 0.0,
@@ -1192,6 +1201,7 @@ fn canary_fights() -> Vec<CanaryFight> {
             shield_piercing: 100.0,
             accuracy: 100.0,
         },
+        profile_piercing_fractions: None,
         base_attacker_weapon_stats: Vec::new(),
         ship_type: crate::combat::ShipType::Battleship,
         mystery_mitigation_factor: 0.0,
@@ -1439,6 +1449,154 @@ fn canary_fights() -> Vec<CanaryFight> {
         )],
     };
 
+    // Track C (1): weapon-scoped OpponentWeaponDamageReduction + reactive HullDamageTaken stacks.
+    let mut track_c1_attacker = canary_combatant("canary_track_c1_attacker");
+    track_c1_attacker.hull_health = 10_000.0;
+    track_c1_attacker.shield_health = 5_000.0;
+    track_c1_attacker.shield_mitigation = 0.8;
+    track_c1_attacker.weapons = [
+        crate::combat::WeaponType::Kinetic,
+        crate::combat::WeaponType::Energy,
+    ]
+    .into_iter()
+    .map(|weapon_type| crate::combat::WeaponStats {
+        attack: 120.0,
+        shots: Some(1),
+        crit_chance: Some(0.1),
+        crit_multiplier: Some(2.0),
+        weapon_type,
+        ..Default::default()
+    })
+    .collect();
+    let mut track_c1_defender = track_c1_attacker.clone();
+    track_c1_defender.id = "canary_track_c1_defender".to_string();
+    let mut opp_wd_seat = canary_seat(
+        CrewSeat::Bridge,
+        AbilityClass::BridgeAbility,
+        TimingWindow::CombatBegin,
+        AbilityEffect::OpponentWeaponDamageReduction {
+            reduction: 0.25,
+            cumulative: false,
+        },
+    );
+    opp_wd_seat.ability.weapon_scope = crate::combat::WeaponTypeScope::EnergyOnly;
+    let track_c1_crew = CrewConfiguration {
+        seats: vec![
+            opp_wd_seat,
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::DefensePhase,
+                AbilityEffect::ReactiveDamageTaken {
+                    trigger: crate::combat::DamageTakenTrigger::HullDamage,
+                    kind: crate::combat::ReactiveDamageTakenKind::CritChanceBonus(0.10),
+                    chance: 1.0,
+                    duration_rounds: 0,
+                },
+            ),
+            canary_seat(
+                CrewSeat::BelowDeck,
+                AbilityClass::BelowDeck,
+                TimingWindow::DefensePhase,
+                AbilityEffect::ReactiveDamageTaken {
+                    trigger: crate::combat::DamageTakenTrigger::HullDamage,
+                    kind: crate::combat::ReactiveDamageTakenKind::AttackerShieldMitigationBonus(
+                        0.08,
+                    ),
+                    chance: 1.0,
+                    duration_rounds: 1,
+                },
+            ),
+        ],
+    };
+
+    // Track C (2): CombatBegin BaseMitigationStatsBonus, BasePiercingStatsBonus (with profile
+    // dilution), HostileBaseDefenseStatsReduction, and TimedHostileCritChanceReduction.
+    let mut track_c2_attacker = canary_combatant("canary_track_c2_attacker");
+    track_c2_attacker.attack = 350.0;
+    track_c2_attacker.hull_health = 12_000.0;
+    track_c2_attacker.hostile_mitigation_params = Some(crate::combat::HostileMitigationParams {
+        round_native_defense_stats: false,
+        defender_stats: crate::combat::DefenderStats {
+            armor: 900.0,
+            shield_deflection: 900.0,
+            dodge: 900.0,
+        },
+        weapon_pierce_defender_stats: None,
+        base_attacker_stats: crate::combat::AttackerStats {
+            armor_piercing: 1_100.0,
+            shield_piercing: 1_100.0,
+            accuracy: 1_100.0,
+        },
+        profile_piercing_fractions: None,
+        base_attacker_weapon_stats: Vec::new(),
+        ship_type: crate::combat::ShipType::Battleship,
+        mystery_mitigation_factor: 0.0,
+        floor: 0.16,
+        ceiling: 0.72,
+    });
+    let mut track_c2_defender = canary_combatant("canary_track_c2_defender");
+    track_c2_defender.attack = 280.0;
+    track_c2_defender.crit_chance = 0.85;
+    track_c2_defender.crit_multiplier = 2.5;
+    track_c2_defender.hull_health = 14_000.0;
+    track_c2_defender.hostile_mitigation_params = Some(crate::combat::HostileMitigationParams {
+        round_native_defense_stats: false,
+        defender_stats: crate::combat::DefenderStats {
+            armor: 2_200.0,
+            shield_deflection: 2_200.0,
+            dodge: 2_200.0,
+        },
+        weapon_pierce_defender_stats: None,
+        base_attacker_stats: crate::combat::AttackerStats {
+            armor_piercing: 1_000.0,
+            shield_piercing: 1_000.0,
+            accuracy: 1_000.0,
+        },
+        profile_piercing_fractions: Some(crate::combat::AttackerStats {
+            armor_piercing: 0.5,
+            shield_piercing: 0.5,
+            accuracy: 0.5,
+        }),
+        base_attacker_weapon_stats: Vec::new(),
+        ship_type: crate::combat::ShipType::Battleship,
+        mystery_mitigation_factor: 0.0,
+        floor: 0.16,
+        ceiling: 0.72,
+    });
+    let track_c2_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::BelowDeck,
+                AbilityClass::BelowDeck,
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseMitigationStatsBonus(0.50),
+            ),
+            canary_seat(
+                CrewSeat::BelowDeck,
+                AbilityClass::BelowDeck,
+                TimingWindow::CombatBegin,
+                AbilityEffect::BasePiercingStatsBonus(0.65),
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileBaseDefenseStatsReduction(0.20),
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::RoundStart,
+                AbilityEffect::TimedHostileCritChanceReduction {
+                    reduction: 0.35,
+                    duration_rounds: 2,
+                    cumulative: false,
+                },
+            ),
+        ],
+    };
+
     vec![
         (
             "a_plain",
@@ -1608,6 +1766,20 @@ fn canary_fights() -> Vec<CanaryFight> {
             scheduled_defender,
             canary_config(8, 43),
             scheduled_crew,
+        ),
+        (
+            "track_c1_opp_wd_and_reactive",
+            track_c1_attacker,
+            track_c1_defender,
+            canary_config(6, 53),
+            track_c1_crew,
+        ),
+        (
+            "track_c2_raw_defense_piercing_crit_red",
+            track_c2_attacker,
+            track_c2_defender,
+            canary_config(6, 59),
+            track_c2_crew,
         ),
     ]
 }
@@ -2287,7 +2459,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 30, "expected thirty canary fights");
+        assert_eq!(summaries.len(), 32, "expected thirty-two canary fights");
         let decay = summaries
             .iter()
             .find(|summary| summary.starts_with("y_hostile_hyperthermic_decay:"))

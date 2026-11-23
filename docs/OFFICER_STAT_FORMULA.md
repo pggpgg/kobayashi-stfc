@@ -245,9 +245,9 @@ health_rating  = Σ officer.effective_health
 
 Examples:
 
-- **Cadet Kirk captain "Motivational"** — its bridge-only scope is not yet implemented; the effect is quarantined and reported as unsupported.
+- **Cadet Kirk captain "Motivational" (`SelfBridge`)** — routes to `OfficerStatSelfScope::BridgeOfficers`, scaling only the captain + two bridge officers' A/D/H before the rating sum (below-decks officers are unaffected).
 - **Kras bridge "Know Your Enemy" `target: enemy_bridge -20%`** — captain + the two bridge officers on the *defender's* side get -20% to each of A/D/H; below-decks officers are unaffected. (On the player-vs-hostile path the defender is a hostile with no crewed officers — no-op.)
-- **Marla bridge "Let Me Help You"** — this is an economic effect and does not apply a combat officer-stat bonus.
+- **Marla bridge (`SelfCaptain`) / captain (`RepairTime`)** — her bridge ability routes to `OfficerStatSelfScope::CaptainOnly`, scaling only the captain's A/D/H before the rating sum; her captain Repair Speed ability remains non-combat/economic.
 
 **The scoping rule is the same regardless of trigger phase.** Passive, on_combat_start, on_round_start, conditional — all apply to per-officer A/D/H before the rating sum. Differences between triggers only affect *when* the buff is active, not *who* it covers.
 

@@ -30,5 +30,6 @@ pub use parser::{
 pub use resolver::{
     index_lcars_officers_by_id, lcars_effect_coverage, resolve_crew_to_buff_set,
     resolve_officer_ability, BuffSet, DynamicOfficerStatContribution, LcarsEffectCoverage,
-    MechanicCoverageTier, OfficerStatOpponentScope, PendingOfficerStatContribution, ResolveOptions,
+    MechanicCoverageTier, OfficerStatOpponentScope, OfficerStatSelfScope,
+    PendingOfficerStatContribution, ResolveOptions,
 };

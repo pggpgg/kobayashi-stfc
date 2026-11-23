@@ -3583,6 +3583,7 @@ fn morale_boosts_all_piercing_stats_in_per_shot_dynamic_mitigation() {
         shield_mitigation: 0.8,
         hostile_mitigation_params: Some(HostileMitigationParams {
             round_native_defense_stats: false,
+            profile_piercing_fractions: None,
             base_attacker_weapon_stats: Vec::new(),
             defender_stats,
             weapon_pierce_defender_stats: None,
@@ -4664,6 +4665,7 @@ fn mitigation_trace_includes_component_breakdown_for_hostile_and_counter_paths()
     };
     let params = HostileMitigationParams {
         round_native_defense_stats: false,
+        profile_piercing_fractions: None,
         base_attacker_weapon_stats: Vec::new(),
         defender_stats: DefenderStats {
             armor: 200.0,

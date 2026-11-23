@@ -30,7 +30,8 @@ use crate::combat::abilities::{
     sum_breach_cumulative_crit_chance_per_hit, sum_breach_cumulative_crit_damage_per_crit,
     sum_dodge_bonus, sum_hostile_engagement_defensive_bonus, sum_mitigation_additive,
     AbilityEffect, ActiveAbilityEffect, ActiveHostileCritReduction, ActiveMask, CombatContext,
-    CrewConfiguration, DefenderOnHitGate, DefenderOnHitStat, TimingWindow, WeaponTypeScope,
+    CrewConfiguration, DamageTakenTrigger, DefenderOnHitGate, DefenderOnHitStat,
+    ReactiveDamageTakenKind, TimingWindow, WeaponTypeScope,
 };
 use crate::combat::condition::{condition_depends_on_post_proc_status, round_in_inclusive_first_n};
 use crate::combat::conqueror_borg_beams::{
@@ -236,14 +237,19 @@ pub struct PreCombatSetup {
     attacker_has_weapon_scoped_effects: bool,
     round_start_has_post_proc_conditions: bool,
     has_round_base_defense_or_pierce_rows: bool,
+    defender_has_round_base_defense_or_pierce_rows: bool,
     has_max_hp_multiplier_effects: bool,
     attack_phase_has_per_shot_triggers: bool,
     attack_phase_has_on_hit_timed_bonuses: bool,
+    attack_phase_has_on_hit_crit_chance_reduction: bool,
+    defender_attack_phase_has_on_hit_crit_chance_reduction: bool,
     attack_phase_has_on_hit_crit_stacks: bool,
     defense_phase_has_burning: bool,
     defender_inbound_defense_has_burning: bool,
     defense_phase_has_damage_taken_crit_stacks: bool,
     defender_inbound_defense_has_damage_taken_crit_stacks: bool,
+    defense_phase_has_reactive_damage_taken: bool,
+    defender_inbound_defense_has_reactive_damage_taken: bool,
     attacker_has_shots_bonus: bool,
     defender_has_shots_bonus: bool,
     defender_has_on_hit_stacks: bool,
@@ -260,6 +266,9 @@ pub struct PreCombatSetup {
     attacker_has_hostile_counter_debuff: bool,
     attacker_has_hostile_crit_damage_reduction: bool,
     attacker_has_hostile_crit_chance_reduction: bool,
+    defender_has_hostile_crit_chance_reduction: bool,
+    attacker_has_opponent_weapon_damage_reduction: bool,
+    defender_has_opponent_weapon_damage_reduction: bool,
     attacker_has_apex_barrier_bonus: bool,
     round_end_has_burning: bool,
     has_galaxy_growth: bool,
@@ -523,10 +532,25 @@ pub fn build_combat_setup_with_officer_stat(
             matches!(
                 e.effect,
                 AbilityEffect::BaseMitigationStatsBonus(_)
+                    | AbilityEffect::CumulativeBaseMitigationStatsBonus(_)
+                    | AbilityEffect::HostileBaseDefenseStatsReduction(_)
+                    | AbilityEffect::BasePiercingStatsBonus(_)
+                    | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
                     | AbilityEffect::BaseArmorBonus(_)
                     | AbilityEffect::BaseMitigationStatsAdd(_)
                     | AbilityEffect::HostileBasePiercingStatsReduction(_)
                     | AbilityEffect::BaseArmorPiercingAdd(_)
+            )
+        });
+    let defender_has_round_base_defense_or_pierce_rows = defender_combat_begin_effects
+        .iter()
+        .chain(defender_round_start_effects.iter())
+        .any(|e| {
+            matches!(
+                e.effect,
+                AbilityEffect::HostileBaseDefenseStatsReduction(_)
+                    | AbilityEffect::BasePiercingStatsBonus(_)
+                    | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
             )
         });
     let has_max_hp_multiplier_effects = combat_begin_effects
@@ -551,6 +575,25 @@ pub fn build_combat_setup_with_officer_stat(
     let attack_phase_has_on_hit_timed_bonuses = attack_phase_effects
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::OnHitTimedBonus { .. }));
+    let attack_phase_has_on_hit_crit_chance_reduction = attack_phase_effects.iter().any(|e| {
+        matches!(
+            e.effect,
+            AbilityEffect::TimedHostileCritChanceReduction {
+                cumulative: true,
+                ..
+            }
+        )
+    });
+    let defender_attack_phase_has_on_hit_crit_chance_reduction =
+        defender_attack_phase_effects.iter().any(|e| {
+            matches!(
+                e.effect,
+                AbilityEffect::TimedHostileCritChanceReduction {
+                    cumulative: true,
+                    ..
+                }
+            )
+        });
     let attack_phase_has_on_hit_crit_stacks = attack_phase_effects
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::OnHitCritDamageStack { .. }));
@@ -566,6 +609,12 @@ pub fn build_combat_setup_with_officer_stat(
     let defender_inbound_defense_has_damage_taken_crit_stacks = defender_defense_phase_effects
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::DamageTakenCritStack { .. }));
+    let defense_phase_has_reactive_damage_taken = defense_phase_effects
+        .iter()
+        .any(|e| matches!(e.effect, AbilityEffect::ReactiveDamageTaken { .. }));
+    let defender_inbound_defense_has_reactive_damage_taken = defender_defense_phase_effects
+        .iter()
+        .any(|e| matches!(e.effect, AbilityEffect::ReactiveDamageTaken { .. }));
     let attacker_has_shots_bonus = combat_begin_filtered
         .iter()
         .chain(round_start_effects.iter())
@@ -642,6 +691,26 @@ pub fn build_combat_setup_with_officer_stat(
         matches!(
             s.ability.effect,
             AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::TimedHostileCritChanceReduction { .. }
+        )
+    });
+    let defender_has_hostile_crit_chance_reduction = defender_crew.seats.iter().any(|s| {
+        matches!(
+            s.ability.effect,
+            AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::TimedHostileCritChanceReduction { .. }
+        )
+    });
+    let attacker_has_opponent_weapon_damage_reduction = attacker_crew.seats.iter().any(|s| {
+        matches!(
+            s.ability.effect,
+            AbilityEffect::OpponentWeaponDamageReduction { .. }
+        )
+    });
+    let defender_has_opponent_weapon_damage_reduction = defender_crew.seats.iter().any(|s| {
+        matches!(
+            s.ability.effect,
+            AbilityEffect::OpponentWeaponDamageReduction { .. }
         )
     });
     let attacker_has_apex_barrier_bonus = attacker_crew
@@ -750,14 +819,19 @@ pub fn build_combat_setup_with_officer_stat(
         attacker_has_weapon_scoped_effects,
         round_start_has_post_proc_conditions,
         has_round_base_defense_or_pierce_rows,
+        defender_has_round_base_defense_or_pierce_rows,
         has_max_hp_multiplier_effects,
         attack_phase_has_per_shot_triggers,
         attack_phase_has_on_hit_timed_bonuses,
+        attack_phase_has_on_hit_crit_chance_reduction,
+        defender_attack_phase_has_on_hit_crit_chance_reduction,
         attack_phase_has_on_hit_crit_stacks,
         defense_phase_has_burning,
         defender_inbound_defense_has_burning,
         defense_phase_has_damage_taken_crit_stacks,
         defender_inbound_defense_has_damage_taken_crit_stacks,
+        defense_phase_has_reactive_damage_taken,
+        defender_inbound_defense_has_reactive_damage_taken,
         attacker_has_shots_bonus,
         defender_has_shots_bonus,
         defender_has_on_hit_stacks,
@@ -774,6 +848,9 @@ pub fn build_combat_setup_with_officer_stat(
         attacker_has_hostile_counter_debuff,
         attacker_has_hostile_crit_damage_reduction,
         attacker_has_hostile_crit_chance_reduction,
+        defender_has_hostile_crit_chance_reduction,
+        attacker_has_opponent_weapon_damage_reduction,
+        defender_has_opponent_weapon_damage_reduction,
         attacker_has_apex_barrier_bonus,
         round_end_has_burning,
         has_galaxy_growth,
@@ -794,6 +871,10 @@ pub(crate) struct CombatTrialScratch {
     on_hit_timed_bonuses: Vec<OnHitTimedBonusEntry>,
     attacker_damage_taken_crit_stacks: Vec<DamageTakenCritStack>,
     defender_damage_taken_crit_stacks: Vec<DamageTakenCritStack>,
+    attacker_reactive_stacks: Vec<ReactiveDamageTakenStack>,
+    defender_reactive_stacks: Vec<ReactiveDamageTakenStack>,
+    attacker_timed_crit_red: Vec<TimedCritChanceReduction>,
+    defender_timed_crit_red: Vec<TimedCritChanceReduction>,
     defender_shield_break_carry: Vec<usize>,
     galaxy_growth_by_source: Vec<f64>,
     combat_ctx: CombatContext,
@@ -821,6 +902,10 @@ impl CombatTrialScratch {
             on_hit_timed_bonuses: Vec::new(),
             attacker_damage_taken_crit_stacks: Vec::new(),
             defender_damage_taken_crit_stacks: Vec::new(),
+            attacker_reactive_stacks: Vec::new(),
+            defender_reactive_stacks: Vec::new(),
+            attacker_timed_crit_red: Vec::new(),
+            defender_timed_crit_red: Vec::new(),
             defender_shield_break_carry: Vec::new(),
             galaxy_growth_by_source,
             combat_ctx: setup.combat_begin_ctx.clone(),
@@ -847,6 +932,10 @@ impl CombatTrialScratch {
         self.on_hit_timed_bonuses.clear();
         self.attacker_damage_taken_crit_stacks.clear();
         self.defender_damage_taken_crit_stacks.clear();
+        self.attacker_reactive_stacks.clear();
+        self.defender_reactive_stacks.clear();
+        self.attacker_timed_crit_red.clear();
+        self.defender_timed_crit_red.clear();
         self.defender_shield_break_carry.clear();
         if setup.has_galaxy_growth {
             if self.galaxy_growth_by_source.len() != setup.round_start_effects.len() {
@@ -894,6 +983,10 @@ pub(crate) fn simulate_combat_from_setup_reusing_attacker(
         on_hit_timed_bonuses: Vec::new(),
         attacker_damage_taken_crit_stacks: Vec::new(),
         defender_damage_taken_crit_stacks: Vec::new(),
+        attacker_reactive_stacks: Vec::new(),
+        defender_reactive_stacks: Vec::new(),
+        attacker_timed_crit_red: Vec::new(),
+        defender_timed_crit_red: Vec::new(),
         defender_shield_break_carry: Vec::new(),
         galaxy_growth_by_source: if setup.has_galaxy_growth {
             vec![0.0; setup.round_start_effects.len()]
@@ -956,6 +1049,7 @@ fn simulate_combat_from_setup_inner(
         attacker_burning_rounds: 0,
         assimilated_rounds_remaining: 0,
         defender_assimilated_rounds_remaining: 0,
+        attacker_morale_rounds_remaining: 0,
         defender_morale_rounds_remaining: 0,
         shots_bonus_entries: std::mem::take(&mut scratch.shots_bonus_entries),
         defender_shots_bonus_entries: std::mem::take(&mut scratch.defender_shots_bonus_entries),
@@ -969,6 +1063,10 @@ fn simulate_combat_from_setup_inner(
         defender_damage_taken_crit_stacks: std::mem::take(
             &mut scratch.defender_damage_taken_crit_stacks,
         ),
+        attacker_reactive_stacks: std::mem::take(&mut scratch.attacker_reactive_stacks),
+        defender_reactive_stacks: std::mem::take(&mut scratch.defender_reactive_stacks),
+        attacker_timed_crit_red: std::mem::take(&mut scratch.attacker_timed_crit_red),
+        defender_timed_crit_red: std::mem::take(&mut scratch.defender_timed_crit_red),
         defender_weapon_fire_delayed_rounds: 0,
         defender_kemocite_stacks: 0,
         defender_denticle_blade_active: false,
@@ -976,6 +1074,13 @@ fn simulate_combat_from_setup_inner(
         osr_health_base_max_hull: 0.0,
         attacker_hull_hp_multiplier_factor: 1.0,
         attacker_shield_hp_multiplier_factor: 1.0,
+        attacker_cum_opp_wd_red: ShotsBonusSums::default(),
+        defender_cum_opp_wd_red: ShotsBonusSums::default(),
+        attacker_cum_base_mitigation_bonus: 0.0,
+        attacker_cum_base_piercing_bonus: 0.0,
+        defender_cum_base_piercing_bonus: 0.0,
+        attacker_cum_hostile_crit_chance_reduction: 0.0,
+        defender_cum_hostile_crit_chance_reduction: 0.0,
     };
 
     // Re-use precomputed effects from setup
@@ -1020,6 +1125,10 @@ fn simulate_combat_from_setup_inner(
             scratch.on_hit_timed_bonuses = st.on_hit_timed_bonuses;
             scratch.attacker_damage_taken_crit_stacks = st.attacker_damage_taken_crit_stacks;
             scratch.defender_damage_taken_crit_stacks = st.defender_damage_taken_crit_stacks;
+            scratch.attacker_reactive_stacks = st.attacker_reactive_stacks;
+            scratch.defender_reactive_stacks = st.defender_reactive_stacks;
+            scratch.attacker_timed_crit_red = st.attacker_timed_crit_red;
+            scratch.defender_timed_crit_red = st.defender_timed_crit_red;
         };
     }
 
@@ -1400,7 +1509,7 @@ fn simulate_combat_from_setup_inner(
             } else {
                 &[]
             };
-        let morale_triggered = roll_morale_activation(
+        let morale_proc = roll_morale_activation(
             &mut trace,
             &mut rng,
             round_index,
@@ -1410,12 +1519,14 @@ fn simulate_combat_from_setup_inner(
             combat_ctx,
             round_start_assimilated,
         );
+        let morale_triggered = morale_proc || st.attacker_morale_rounds_remaining > 0;
         combat_ctx.attacker_morale_active = morale_triggered;
         combat_ctx.defender_morale_active = st.defender_morale_rounds_remaining > 0;
         combat_ctx.defender_hull_breach_active = st.defender_hull_breach_rounds > 0;
         combat_ctx.attacker_hull_breach_active = st.attacker_hull_breach_rounds > 0;
         combat_ctx.defender_burning_active = st.defender_burning_rounds > 0;
         combat_ctx.attacker_burning_active = st.attacker_burning_rounds > 0;
+        combat_ctx.defender_assimilated_active = st.defender_assimilated_rounds_remaining > 0;
 
         let full_round_start = if setup.round_start_has_post_proc_conditions {
             filter_effects_mask(round_start_effects, combat_ctx)
@@ -1428,41 +1539,158 @@ fn simulate_combat_from_setup_inner(
             attacker_base_mitigation_add,
             attacker_base_piercing_reduction,
             attacker_base_armor_piercing_add,
+            attacker_base_piercing_bonus,
+            attacker_hostile_base_defense_reduction,
         ) = if setup.has_round_base_defense_or_pierce_rows {
-            combat_begin_round_level
-                .iter()
-                .map(|effect| scale_active_effect(effect, combat_begin_assimilated_this_round))
-                .chain(
-                    full_round_start
-                        .iter()
-                        .map(|effect| scale_active_effect(effect, round_start_assimilated)),
-                )
-                .fold(
-                    // Preserve `Iterator::sum::<f64>()`'s `-0.0` empty-sum identity for the three
-                    // `.sum()` accumulators so serialized trace events stay bit-for-bit identical.
-                    (0.0, 0.0, -0.0, -0.0, -0.0),
-                    |(mit_b, arm_b, mit_add, pierce_red, ap_add), effect| match effect {
-                        AbilityEffect::BaseMitigationStatsBonus(v) => {
-                            (mit_b + v, arm_b, mit_add, pierce_red, ap_add)
-                        }
-                        AbilityEffect::BaseArmorBonus(v) => {
-                            (mit_b, arm_b + v, mit_add, pierce_red, ap_add)
-                        }
-                        AbilityEffect::BaseMitigationStatsAdd(v) => {
-                            (mit_b, arm_b, mit_add + v, pierce_red, ap_add)
-                        }
-                        AbilityEffect::HostileBasePiercingStatsReduction(v) => {
-                            (mit_b, arm_b, mit_add, pierce_red + v, ap_add)
-                        }
-                        AbilityEffect::BaseArmorPiercingAdd(v) => {
-                            (mit_b, arm_b, mit_add, pierce_red, ap_add + v)
-                        }
-                        _ => (mit_b, arm_b, mit_add, pierce_red, ap_add),
-                    },
-                )
+            for effect in full_round_start.iter() {
+                match scale_active_effect(effect, round_start_assimilated) {
+                    AbilityEffect::CumulativeBaseMitigationStatsBonus(v) => {
+                        st.attacker_cum_base_mitigation_bonus += v;
+                    }
+                    AbilityEffect::CumulativeBasePiercingStatsBonus(v) => {
+                        st.attacker_cum_base_piercing_bonus += v;
+                    }
+                    _ => {}
+                }
+            }
+            let (mit_b, arm_b, mit_add, pierce_red, ap_add, pierce_b, def_red) =
+                combat_begin_round_level
+                    .iter()
+                    .map(|effect| scale_active_effect(effect, combat_begin_assimilated_this_round))
+                    .chain(
+                        full_round_start
+                            .iter()
+                            .map(|effect| scale_active_effect(effect, round_start_assimilated)),
+                    )
+                    .fold(
+                        // Preserve `Iterator::sum::<f64>()`'s `-0.0` empty-sum identity for the three
+                        // `.sum()` accumulators so serialized trace events stay bit-for-bit identical.
+                        (0.0, 0.0, -0.0, -0.0, -0.0, 0.0, 0.0),
+                        |(mit_b, arm_b, mit_add, pierce_red, ap_add, pierce_b, def_red), effect| {
+                            match effect {
+                                AbilityEffect::BaseMitigationStatsBonus(v) => (
+                                    mit_b + v,
+                                    arm_b,
+                                    mit_add,
+                                    pierce_red,
+                                    ap_add,
+                                    pierce_b,
+                                    def_red,
+                                ),
+                                AbilityEffect::BaseArmorBonus(v) => (
+                                    mit_b,
+                                    arm_b + v,
+                                    mit_add,
+                                    pierce_red,
+                                    ap_add,
+                                    pierce_b,
+                                    def_red,
+                                ),
+                                AbilityEffect::BaseMitigationStatsAdd(v) => (
+                                    mit_b,
+                                    arm_b,
+                                    mit_add + v,
+                                    pierce_red,
+                                    ap_add,
+                                    pierce_b,
+                                    def_red,
+                                ),
+                                AbilityEffect::HostileBasePiercingStatsReduction(v) => (
+                                    mit_b,
+                                    arm_b,
+                                    mit_add,
+                                    pierce_red + v,
+                                    ap_add,
+                                    pierce_b,
+                                    def_red,
+                                ),
+                                AbilityEffect::BaseArmorPiercingAdd(v) => (
+                                    mit_b,
+                                    arm_b,
+                                    mit_add,
+                                    pierce_red,
+                                    ap_add + v,
+                                    pierce_b,
+                                    def_red,
+                                ),
+                                AbilityEffect::BasePiercingStatsBonus(v) => (
+                                    mit_b,
+                                    arm_b,
+                                    mit_add,
+                                    pierce_red,
+                                    ap_add,
+                                    pierce_b + v,
+                                    def_red,
+                                ),
+                                AbilityEffect::HostileBaseDefenseStatsReduction(v) => (
+                                    mit_b,
+                                    arm_b,
+                                    mit_add,
+                                    pierce_red,
+                                    ap_add,
+                                    pierce_b,
+                                    def_red + v,
+                                ),
+                                _ => (mit_b, arm_b, mit_add, pierce_red, ap_add, pierce_b, def_red),
+                            }
+                        },
+                    );
+            (
+                mit_b + st.attacker_cum_base_mitigation_bonus,
+                arm_b,
+                mit_add,
+                pierce_red,
+                ap_add,
+                pierce_b + st.attacker_cum_base_piercing_bonus,
+                def_red,
+            )
         } else {
-            (0.0, 0.0, -0.0, -0.0, -0.0)
+            (0.0, 0.0, -0.0, -0.0, -0.0, 0.0, 0.0)
         };
+        let (defender_base_piercing_bonus, defender_hostile_base_defense_reduction) =
+            if setup.defender_has_round_base_defense_or_pierce_rows {
+                let def_persp_ctx = defender_perspective_context(combat_ctx, &st);
+                let def_assim = st.defender_assimilated_rounds_remaining > 0;
+                resolve_defender_round_base_defense_and_pierce(
+                    defender_combat_begin_effects,
+                    defender_round_start_effects,
+                    &def_persp_ctx,
+                    def_assim,
+                    &mut st.defender_cum_base_piercing_bonus,
+                )
+            } else {
+                (0.0, 0.0)
+            };
+        if setup.attacker_has_hostile_crit_chance_reduction {
+            update_round_start_timed_crit_reduction(
+                attacker_crew,
+                combat_ctx,
+                round_index,
+                round_start_assimilated,
+                &mut st.attacker_timed_crit_red,
+                &mut st.attacker_cum_hostile_crit_chance_reduction,
+            );
+        }
+        let defender_combat_begin_crit_red_this_round =
+            if setup.defender_has_hostile_crit_chance_reduction {
+                let def_persp_ctx = defender_perspective_context(combat_ctx, &st);
+                let def_assim = st.defender_assimilated_rounds_remaining > 0;
+                update_round_start_timed_crit_reduction(
+                    defender_crew,
+                    &def_persp_ctx,
+                    round_index,
+                    def_assim,
+                    &mut st.defender_timed_crit_red,
+                    &mut st.defender_cum_hostile_crit_chance_reduction,
+                );
+                active_combat_begin_hostile_crit_chance_reduction(
+                    defender_crew,
+                    &def_persp_ctx,
+                    def_assim,
+                )
+            } else {
+                0.0
+            };
         if setup.round_start_has_post_proc_conditions {
             let round_start_extra = full_round_start.difference_from(&bench);
             if !round_start_extra.is_empty() {
@@ -1599,6 +1827,44 @@ fn simulate_combat_from_setup_inner(
             st.defender_on_hit_stack_entries
                 .retain(|e| e.expires_round >= round_index);
         }
+
+        let attacker_opp_wd_red_this_round = if setup.attacker_has_opponent_weapon_damage_reduction
+        {
+            let assimilated = st.assimilated_rounds_remaining > 0;
+            accumulate_round_start_opponent_wd_reduction(
+                attacker_crew,
+                combat_ctx,
+                assimilated,
+                &mut st.attacker_cum_opp_wd_red,
+            );
+            active_opponent_wd_reduction_sums(
+                attacker_crew,
+                combat_ctx,
+                assimilated,
+                st.attacker_cum_opp_wd_red,
+            )
+        } else {
+            ShotsBonusSums::default()
+        };
+        let defender_opp_wd_red_this_round = if setup.defender_has_opponent_weapon_damage_reduction
+        {
+            let def_persp_ctx = defender_perspective_context(combat_ctx, &st);
+            let assimilated = st.defender_assimilated_rounds_remaining > 0;
+            accumulate_round_start_opponent_wd_reduction(
+                defender_crew,
+                &def_persp_ctx,
+                assimilated,
+                &mut st.defender_cum_opp_wd_red,
+            );
+            active_opponent_wd_reduction_sums(
+                defender_crew,
+                &def_persp_ctx,
+                assimilated,
+                st.defender_cum_opp_wd_red,
+            )
+        } else {
+            ShotsBonusSums::default()
+        };
 
         if emit_snapshots {
             let snap = build_combat_state_snapshot(
@@ -1747,6 +2013,14 @@ fn simulate_combat_from_setup_inner(
             st.defender_damage_taken_crit_stacks
                 .retain(|stack| stack.expires_round >= round_index);
         }
+        if !st.attacker_reactive_stacks.is_empty() {
+            st.attacker_reactive_stacks
+                .retain(|stack| stack.expires_round >= round_index);
+        }
+        if !st.defender_reactive_stacks.is_empty() {
+            st.defender_reactive_stacks
+                .retain(|stack| stack.expires_round >= round_index);
+        }
         let weapon_round_base = phase_effects_round.clone();
         let mut phase_effects = EffectAccumulator::default();
         let mut after_subround_carry = EffectAccumulator::default();
@@ -1775,7 +2049,7 @@ fn simulate_combat_from_setup_inner(
             // mitigation in `fire_attacker_weapon` via `apply_morale_piercing`.
             let mut effective_pierce = attacker.weapon_pierce(weapon_index)
                 + phase_effects_round.pre_attack_pierce_bonus();
-            if morale_triggered {
+            if morale_triggered || st.attacker_morale_rounds_remaining > 0 {
                 effective_pierce *= 1.0 + MORALE_PIERCING_BONUS;
             }
             phase_effects.add_effects(
@@ -1910,8 +2184,64 @@ fn simulate_combat_from_setup_inner(
                     Some(("damage_taken_crit_stacks", None)),
                 );
             }
-            let attacker_gross_damage_before = st.attacker_hull_gross_damage_this_round
-                + st.attacker_shield_gross_damage_this_round;
+            let att_reactive = if st.attacker_reactive_stacks.is_empty() {
+                ReactiveStackTotals::default()
+            } else {
+                sum_reactive_stacks(
+                    &st.attacker_reactive_stacks,
+                    defender.weapon_type(weapon_index),
+                )
+            };
+            let def_reactive = if st.defender_reactive_stacks.is_empty() {
+                ReactiveStackTotals::default()
+            } else {
+                sum_reactive_stacks(
+                    &st.defender_reactive_stacks,
+                    attacker.weapon_type(weapon_index),
+                )
+            };
+            if att_reactive.crit_chance != 0.0 {
+                phase_effects.add_effect(
+                    TimingWindow::AttackPhase,
+                    AbilityEffect::CritChanceBonus(att_reactive.crit_chance),
+                    weapon_base,
+                    round_index,
+                    Some(("reactive_damage_taken", None)),
+                );
+            }
+            if att_reactive.base_crit_damage != 0.0 {
+                phase_effects.add_effect(
+                    TimingWindow::AttackPhase,
+                    AbilityEffect::BaseCritDamageBonus(att_reactive.base_crit_damage),
+                    weapon_base,
+                    round_index,
+                    Some(("reactive_damage_taken", None)),
+                );
+            }
+            if att_reactive.base_weapon_damage != 0.0 {
+                phase_effects.add_effect(
+                    TimingWindow::AttackPhase,
+                    AbilityEffect::BaseWeaponDamageBonus(att_reactive.base_weapon_damage),
+                    weapon_base,
+                    round_index,
+                    Some(("reactive_damage_taken", None)),
+                );
+            }
+            if att_reactive.attacker_shield_mitigation != 0.0 {
+                phase_effects.add_effect(
+                    TimingWindow::DefensePhase,
+                    AbilityEffect::AttackerShieldMitigationBonus(
+                        att_reactive.attacker_shield_mitigation,
+                    ),
+                    weapon_base,
+                    round_index,
+                    Some(("reactive_damage_taken", None)),
+                );
+            }
+            let attacker_hull_before = st.attacker_hull_gross_damage_this_round;
+            let attacker_shield_before = st.attacker_shield_gross_damage_this_round;
+            let attacker_gross_damage_before = attacker_hull_before + attacker_shield_before;
+            let mut counter_crit_hit_this_subround = false;
             let attacker_weapon_fires = attacker.weapon_fires_in_round(weapon_index, round_index);
             let defender_weapon = defender.weapon_attack(weapon_index);
             let skip_defender_weapon = defender_weapon.is_some()
@@ -1922,6 +2252,13 @@ fn simulate_combat_from_setup_inner(
                         && !st.defender_denticle_blade_active));
             if !skip_defender_weapon {
                 if let Some(defender_weapon_attack) = defender_weapon {
+                    let counter_reactive_crit_chance_reduction = att_reactive
+                        .opp_crit_chance_reduction
+                        + st.attacker_cum_hostile_crit_chance_reduction
+                        + st.attacker_timed_crit_red
+                            .iter()
+                            .map(|e| e.reduction)
+                            .sum::<f64>();
                     fire_defender_counter(FireDefenderCounter {
                         st: &mut st,
                         phase_effects_round: &mut phase_effects_round,
@@ -1945,10 +2282,12 @@ fn simulate_combat_from_setup_inner(
                         attacker_ship_type,
                         attacker_dodge_bonus,
                         attacker_mitigation_additive,
-                        attacker_base_mitigation_bonus,
+                        attacker_base_mitigation_bonus: attacker_base_mitigation_bonus
+                            - defender_hostile_base_defense_reduction,
                         attacker_base_armor_bonus,
                         attacker_base_mitigation_add,
                         attacker_base_piercing_reduction,
+                        defender_base_piercing_bonus,
                         weapon_round_base: &weapon_round_base,
                         phase_effects: &phase_effects,
                         defender_shield_break_effects,
@@ -1972,6 +2311,15 @@ fn simulate_combat_from_setup_inner(
                             .attacker_has_hostile_crit_damage_reduction,
                         attacker_has_hostile_crit_chance_reduction: setup
                             .attacker_has_hostile_crit_chance_reduction,
+                        counter_opponent_weapon_damage_reduction: attacker_opp_wd_red_this_round
+                            .for_weapon(defender.weapon_type(weapon_index))
+                            + att_reactive.opp_weapon_damage_reduction,
+                        counter_reactive_crit_chance_reduction,
+                        counter_apex_barrier_multiplier_bonus: att_reactive.apex_barrier_multiplier,
+                        defender_reactive_crit_chance_bonus: def_reactive.crit_chance,
+                        defender_reactive_base_crit_damage_bonus: def_reactive.base_crit_damage,
+                        defender_reactive_weapon_damage_bonus: def_reactive.base_weapon_damage,
+                        counter_crit_hit_this_subround: &mut counter_crit_hit_this_subround,
                         attacker_has_apex_barrier_bonus: setup.attacker_has_apex_barrier_bonus,
                         defender_has_kemocite: setup.defender_has_kemocite,
                         defender_has_on_hit_stacks: setup.defender_has_on_hit_stacks,
@@ -2006,8 +2354,10 @@ fn simulate_combat_from_setup_inner(
             let effective_apex_shred =
                 (attacker.apex_shred + phase_effects.composed_apex_shred_bonus()).max(0.0);
             // Attacker-crew ApexBarrierBonus seats are defensive (counter-fire path only);
-            // outbound damage faces only the defender's own barrier.
-            let effective_apex_barrier = defender.apex_barrier.max(0.0);
+            // outbound damage faces only the defender's own barrier (scaled by defender reactive
+            // ApexBarrierMultiplierBonus in PvP).
+            let effective_apex_barrier =
+                defender.apex_barrier.max(0.0) * (1.0 + def_reactive.apex_barrier_multiplier);
             // Programmable Matter final-damage reduction rides the per-shot apex factor: both
             // multiply the combined post-compose pool (standard + isolytic), scalar and SIMD.
             let apex_damage_factor =
@@ -2024,13 +2374,24 @@ fn simulate_combat_from_setup_inner(
             };
             let defender_alive_before_shot = st.total_hull_damage < defender.hull_health;
             let shield_before_weapon = st.defender_shield_remaining;
-            let defender_damage_before = st.total_hull_damage + st.total_shield_damage;
+            let defender_hull_before = st.total_hull_damage;
+            let defender_shield_before = st.total_shield_damage;
+            let defender_damage_before = defender_hull_before + defender_shield_before;
+            let mut outbound_crit_hit_this_subround = false;
             let mut effective_attacker_crit_reduction = effective_attacker_crit_reduction;
             if !st.defender_damage_taken_crit_stacks.is_empty() {
                 effective_attacker_crit_reduction.additive_points +=
                     damage_taken_crit_total(&st.defender_damage_taken_crit_stacks, true);
             }
             if effective_shots > 0 {
+                let outbound_reactive_crit_chance_reduction = def_reactive
+                    .opp_crit_chance_reduction
+                    + defender_combat_begin_crit_red_this_round
+                    + st.defender_cum_hostile_crit_chance_reduction
+                    + st.defender_timed_crit_red
+                        .iter()
+                        .map(|e| e.reduction)
+                        .sum::<f64>();
                 fire_attacker_weapon(FireAttackerWeapon {
                     st: &mut st,
                     phase_effects_round: &mut phase_effects_round,
@@ -2059,6 +2420,8 @@ fn simulate_combat_from_setup_inner(
                     use_simd_outbound_weapon_path,
                     attacker_accuracy_bonus,
                     attacker_base_armor_piercing_add,
+                    attacker_base_piercing_bonus,
+                    attacker_hostile_base_defense_reduction,
                     phase_effects: &mut phase_effects,
                     hull_breach_effects,
                     defender_inbound_defense_filtered: &defender_inbound_defense_filtered,
@@ -2070,10 +2433,21 @@ fn simulate_combat_from_setup_inner(
                     defense_phase_has_burning: setup.defense_phase_has_burning,
                     defender_inbound_defense_has_burning: setup
                         .defender_inbound_defense_has_burning,
+                    outbound_opponent_weapon_damage_reduction: defender_opp_wd_red_this_round
+                        .for_weapon(attacker.weapon_type(weapon_index))
+                        + def_reactive.opp_weapon_damage_reduction,
+                    outbound_reactive_crit_chance_reduction,
+                    defender_reactive_shield_mitigation_bonus: def_reactive
+                        .attacker_shield_mitigation,
+                    outbound_crit_hit_this_subround: &mut outbound_crit_hit_this_subround,
                 });
             }
 
             // Damage-taken effects resolve after both volleys of this sub-round.
+            let attacker_took_hull =
+                st.attacker_hull_gross_damage_this_round > attacker_hull_before;
+            let attacker_took_shield =
+                st.attacker_shield_gross_damage_this_round > attacker_shield_before;
             if setup.defense_phase_has_damage_taken_crit_stacks
                 && st.attacker_hull_gross_damage_this_round
                     + st.attacker_shield_gross_damage_this_round
@@ -2088,6 +2462,57 @@ fn simulate_combat_from_setup_inner(
                     defense_phase_assimilated,
                 );
             }
+            if setup.defense_phase_has_reactive_damage_taken
+                && (attacker_took_hull || attacker_took_shield || counter_crit_hit_this_subround)
+            {
+                let breach_before = st.defender_hull_breach_rounds;
+                grant_reactive_damage_taken_stacks(
+                    &mut st.attacker_reactive_stacks,
+                    &mut st.defender_burning_rounds,
+                    &mut st.defender_hull_breach_rounds,
+                    &mut st.attacker_morale_rounds_remaining,
+                    &mut trace,
+                    &mut rng,
+                    round_index,
+                    &attacker,
+                    defense_phase_filtered.iter(),
+                    defense_phase_assimilated,
+                    ReactiveDamageTakenEvents {
+                        took_hull: attacker_took_hull,
+                        took_shield: attacker_took_shield,
+                        took_crit: counter_crit_hit_this_subround,
+                    },
+                );
+                combat_ctx.defender_burning_active = st.defender_burning_rounds > 0;
+                combat_ctx.defender_hull_breach_active = st.defender_hull_breach_rounds > 0;
+                combat_ctx.attacker_morale_active =
+                    morale_triggered || st.attacker_morale_rounds_remaining > 0;
+                if breach_before == 0
+                    && st.defender_hull_breach_rounds > 0
+                    && !hull_breach_effects.is_empty()
+                {
+                    copy_ctx_dynamic(aux_ctx, combat_ctx);
+                    let hb_filtered =
+                        filter_effects_by_condition_borrowed(hull_breach_effects, aux_ctx);
+                    record_ability_activations(
+                        &mut trace,
+                        round_index,
+                        "hull_breach",
+                        &attacker,
+                        hb_filtered.iter(),
+                        st.assimilated_rounds_remaining > 0,
+                    );
+                    phase_effects_round.add_effects(
+                        TimingWindow::HullBreach,
+                        hb_filtered.iter(),
+                        weapon_base,
+                        st.assimilated_rounds_remaining > 0,
+                        round_index,
+                    );
+                }
+            }
+            let defender_took_hull = st.total_hull_damage > defender_hull_before;
+            let defender_took_shield = st.total_shield_damage > defender_shield_before;
             if setup.defender_inbound_defense_has_damage_taken_crit_stacks
                 && st.total_hull_damage + st.total_shield_damage > defender_damage_before
                 && st.total_hull_damage < defender.hull_health
@@ -2100,6 +2525,31 @@ fn simulate_combat_from_setup_inner(
                     defender_inbound_defense_filtered.iter(),
                     st.defender_assimilated_rounds_remaining > 0,
                 );
+            }
+            if setup.defender_inbound_defense_has_reactive_damage_taken
+                && (defender_took_hull || defender_took_shield || outbound_crit_hit_this_subround)
+                && st.total_hull_damage < defender.hull_health
+            {
+                grant_reactive_damage_taken_stacks(
+                    &mut st.defender_reactive_stacks,
+                    &mut st.attacker_burning_rounds,
+                    &mut st.attacker_hull_breach_rounds,
+                    &mut st.defender_morale_rounds_remaining,
+                    &mut trace,
+                    &mut rng,
+                    round_index,
+                    defender,
+                    defender_inbound_defense_filtered.iter(),
+                    st.defender_assimilated_rounds_remaining > 0,
+                    ReactiveDamageTakenEvents {
+                        took_hull: defender_took_hull,
+                        took_shield: defender_took_shield,
+                        took_crit: outbound_crit_hit_this_subround,
+                    },
+                );
+                combat_ctx.attacker_burning_active = st.attacker_burning_rounds > 0;
+                combat_ctx.attacker_hull_breach_active = st.attacker_hull_breach_rounds > 0;
+                combat_ctx.defender_morale_active = st.defender_morale_rounds_remaining > 0;
             }
 
             // Client trigger10 (enemy takes hit) fires after the weapon. A volley
@@ -2143,6 +2593,73 @@ fn simulate_combat_from_setup_inner(
                                 source_idx,
                             });
                         }
+                    }
+                }
+            }
+
+            if setup.attack_phase_has_on_hit_crit_chance_reduction
+                && defender_alive_before_shot
+                && st.total_hull_damage < defender.hull_health
+                && effective_shots > 0
+                && attacker.weapon_attack(weapon_index).is_some()
+            {
+                let weapon_type = attacker.weapon_type(weapon_index);
+                for effect in attack_phase_filtered.iter() {
+                    if !effect.weapon_scope.matches(weapon_type) {
+                        continue;
+                    }
+                    if let AbilityEffect::TimedHostileCritChanceReduction {
+                        reduction,
+                        cumulative: true,
+                        ..
+                    } = scale_active_effect(effect, attack_phase_assimilated)
+                    {
+                        st.attacker_cum_hostile_crit_chance_reduction += reduction;
+                        record_ability_activations(
+                            &mut trace,
+                            round_index,
+                            "after_hit",
+                            &attacker,
+                            std::slice::from_ref(effect),
+                            attack_phase_assimilated,
+                        );
+                    }
+                }
+            }
+            if setup.defender_attack_phase_has_on_hit_crit_chance_reduction
+                && !skip_defender_weapon
+                && defender_weapon.is_some()
+                && st.total_attacker_hull_damage < attacker.hull_health
+            {
+                let def_persp_ctx = defender_perspective_context(combat_ctx, &st);
+                let def_assim = st.defender_assimilated_rounds_remaining > 0;
+                let weapon_type = defender.weapon_type(weapon_index);
+                for effect in defender_attack_phase_effects.iter() {
+                    if !effect.weapon_scope.matches(weapon_type) {
+                        continue;
+                    }
+                    if effect
+                        .condition
+                        .as_ref()
+                        .is_some_and(|c| !c.evaluate(&def_persp_ctx))
+                    {
+                        continue;
+                    }
+                    if let AbilityEffect::TimedHostileCritChanceReduction {
+                        reduction,
+                        cumulative: true,
+                        ..
+                    } = scale_active_effect(effect, def_assim)
+                    {
+                        st.defender_cum_hostile_crit_chance_reduction += reduction;
+                        record_ability_activations(
+                            &mut trace,
+                            round_index,
+                            "after_hit",
+                            defender,
+                            std::slice::from_ref(effect),
+                            def_assim,
+                        );
                     }
                 }
             }
@@ -2317,6 +2834,7 @@ fn simulate_combat_from_setup_inner(
         st.assimilated_rounds_remaining = st.assimilated_rounds_remaining.saturating_sub(1);
         st.defender_assimilated_rounds_remaining =
             st.defender_assimilated_rounds_remaining.saturating_sub(1);
+        st.attacker_morale_rounds_remaining = st.attacker_morale_rounds_remaining.saturating_sub(1);
         st.defender_morale_rounds_remaining = st.defender_morale_rounds_remaining.saturating_sub(1);
 
         trace.record_if(|| CombatEvent {
@@ -3565,6 +4083,8 @@ struct FireAttackerWeapon<'a> {
     use_simd_outbound_weapon_path: bool,
     attacker_accuracy_bonus: f64,
     attacker_base_armor_piercing_add: f64,
+    attacker_base_piercing_bonus: f64,
+    attacker_hostile_base_defense_reduction: f64,
     phase_effects: &'a mut EffectAccumulator,
     hull_breach_effects: &'a [ActiveAbilityEffect],
     defender_inbound_defense_filtered: &'a ActiveMask<'a>,
@@ -3578,6 +4098,10 @@ struct FireAttackerWeapon<'a> {
     attack_phase_has_per_shot_triggers: bool,
     defense_phase_has_burning: bool,
     defender_inbound_defense_has_burning: bool,
+    outbound_opponent_weapon_damage_reduction: f64,
+    outbound_reactive_crit_chance_reduction: f64,
+    defender_reactive_shield_mitigation_bonus: f64,
+    outbound_crit_hit_this_subround: &'a mut bool,
 }
 
 /// Attacker outbound fire for one weapon sub-round: the per-shot hit loop (attack roll, mitigation,
@@ -3616,6 +4140,8 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         use_simd_outbound_weapon_path,
         attacker_accuracy_bonus,
         attacker_base_armor_piercing_add,
+        attacker_base_piercing_bonus,
+        attacker_hostile_base_defense_reduction,
         phase_effects,
         hull_breach_effects,
         defender_inbound_defense_filtered,
@@ -3626,6 +4152,10 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         attack_phase_has_per_shot_triggers,
         defense_phase_has_burning,
         defender_inbound_defense_has_burning,
+        outbound_opponent_weapon_damage_reduction,
+        outbound_reactive_crit_chance_reduction,
+        defender_reactive_shield_mitigation_bonus,
+        outbound_crit_hit_this_subround,
     } = p;
     let weapon_index_u = weapon_index as u32;
     let defender_inbound_assimilated = st.defender_assimilated_rounds_remaining > 0;
@@ -3672,13 +4202,37 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 } else {
                     1.0
                 };
-            let effective_attack = match config.weapon_damage_profile_additive_pool {
-                Some(p) if p > 0.0 && p.is_finite() => {
-                    // Experimental: one additive pool for profile weapon_damage + dynamic pre-attack sum.
-                    // Galaxy growth `g` shares the same additive pool as `p` (see findings doc).
-                    attacker_weapon_attack * (p + pre_mult + g_galaxy) / (1.0 + p)
+            let effective_attack = if outbound_opponent_weapon_damage_reduction > 0.0 {
+                match config.weapon_damage_profile_additive_pool {
+                    Some(p) if p > 0.0 && p.is_finite() => {
+                        attacker_weapon_attack
+                            * (p + pre_mult + g_galaxy - outbound_opponent_weapon_damage_reduction)
+                                .max(0.0)
+                            / (1.0 + p)
+                    }
+                    _ if p_prof > 0.0 && p_prof.is_finite() => {
+                        let pool = 1.0 + p_prof;
+                        attacker_weapon_attack
+                            * pre_mult
+                            * ((pool + g_galaxy - outbound_opponent_weapon_damage_reduction)
+                                .max(0.0)
+                                / pool)
+                    }
+                    _ => {
+                        attacker_weapon_attack
+                            * (pre_mult - outbound_opponent_weapon_damage_reduction).max(0.0)
+                            * galaxy_dilution
+                    }
                 }
-                _ => attacker_weapon_attack * pre_mult * galaxy_dilution,
+            } else {
+                match config.weapon_damage_profile_additive_pool {
+                    Some(p) if p > 0.0 && p.is_finite() => {
+                        // Experimental: one additive pool for profile weapon_damage + dynamic pre-attack sum.
+                        // Galaxy growth `g` shares the same additive pool as `p` (see findings doc).
+                        attacker_weapon_attack * (p + pre_mult + g_galaxy) / (1.0 + p)
+                    }
+                    _ => attacker_weapon_attack * pre_mult * galaxy_dilution,
+                }
             };
             // The component-base contribution is separate from the profile-scaled
             // weapon value.  Multiplying the latter by a base-damage bonus would
@@ -3717,6 +4271,18 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             let mut armor_piercing_delta = 0.0;
             let effective_mitigation = if let Some(params) = &defender.hostile_mitigation_params {
                 let mut adjusted_attacker = params.base_attacker_stats;
+                if attacker_base_piercing_bonus != 0.0 {
+                    let prof = params.profile_piercing_fractions.unwrap_or_default();
+                    let scale = |stat: f64, p_prof: f64| {
+                        let pool = (1.0 + p_prof.max(0.0)).max(EPSILON);
+                        stat * ((pool + attacker_base_piercing_bonus).max(0.0) / pool)
+                    };
+                    adjusted_attacker.armor_piercing =
+                        scale(adjusted_attacker.armor_piercing, prof.armor_piercing);
+                    adjusted_attacker.shield_piercing =
+                        scale(adjusted_attacker.shield_piercing, prof.shield_piercing);
+                    adjusted_attacker.accuracy = scale(adjusted_attacker.accuracy, prof.accuracy);
+                }
                 adjusted_attacker.accuracy += attacker_accuracy_bonus;
                 if attacker_base_armor_piercing_add != 0.0 {
                     let without_addition = params
@@ -3752,8 +4318,18 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 if combat_ctx.attacker_morale_active {
                     adjusted_attacker = apply_morale_piercing(adjusted_attacker);
                 }
+                let adjusted_defender = if attacker_hostile_base_defense_reduction > 0.0 {
+                    let def_mult = (1.0 - attacker_hostile_base_defense_reduction).max(0.0);
+                    DefenderStats {
+                        armor: params.defender_stats.armor * def_mult,
+                        shield_deflection: params.defender_stats.shield_deflection * def_mult,
+                        dodge: params.defender_stats.dodge * def_mult,
+                    }
+                } else {
+                    params.defender_stats
+                };
                 let breakdown = mitigation_breakdown(
-                    params.defender_stats,
+                    adjusted_defender,
                     adjusted_attacker,
                     params.ship_type,
                     params.mystery_mitigation_factor,
@@ -3911,7 +4487,8 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             let breach_crit_damage_add = breach_crit_damage_per_crit * st.breach_crits as f64;
             let crit = resolve_vehicle_weapon_crit(
                 attacker.weapon_crit_chance(weapon_index),
-                phase_effects.crit_chance_bonus() + breach_crit_chance_add,
+                phase_effects.crit_chance_bonus() + breach_crit_chance_add
+                    - outbound_reactive_crit_chance_reduction,
                 attacker.weapon_crit_multiplier(weapon_index)
                     + phase_effects.base_crit_damage_bonus(),
                 phase_effects.crit_damage_multiplier(),
@@ -3924,6 +4501,9 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             );
             let crit_multiplier = crit.multiplier;
             let is_crit = crit.is_crit;
+            if is_crit {
+                *outbound_crit_hit_this_subround = true;
+            }
             // Grow the cumulative breach crit counters after this shot resolves, so the
             // bonus benefits subsequent hits/crits (not the current one).
             if hull_breach_active {
@@ -4249,7 +4829,8 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 } else {
                     let pre_bypass_shield_mitigation = (defender.shield_mitigation
                         + phase_effects.composed_shield_mitigation_bonus()
-                        + inb_shield_mit)
+                        + inb_shield_mit
+                        + defender_reactive_shield_mitigation_bonus)
                         .clamp(0.0, 1.0);
                     let total_bypass_fraction = (phase_effects.composed_shield_mitigation_bypass()
                         + inb_shield_bypass)
@@ -4496,6 +5077,7 @@ struct FireDefenderCounter<'a> {
     attacker_base_armor_bonus: f64,
     attacker_base_mitigation_add: f64,
     attacker_base_piercing_reduction: f64,
+    defender_base_piercing_bonus: f64,
     weapon_round_base: &'a EffectAccumulator,
     phase_effects: &'a EffectAccumulator,
     defender_shield_break_effects: &'a [ActiveAbilityEffect],
@@ -4514,6 +5096,13 @@ struct FireDefenderCounter<'a> {
     attacker_has_hostile_counter_debuff: bool,
     attacker_has_hostile_crit_damage_reduction: bool,
     attacker_has_hostile_crit_chance_reduction: bool,
+    counter_opponent_weapon_damage_reduction: f64,
+    counter_reactive_crit_chance_reduction: f64,
+    counter_apex_barrier_multiplier_bonus: f64,
+    defender_reactive_crit_chance_bonus: f64,
+    defender_reactive_base_crit_damage_bonus: f64,
+    defender_reactive_weapon_damage_bonus: f64,
+    counter_crit_hit_this_subround: &'a mut bool,
     attacker_has_apex_barrier_bonus: bool,
     defender_has_kemocite: bool,
     defender_has_on_hit_stacks: bool,
@@ -4555,6 +5144,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         attacker_base_armor_bonus,
         attacker_base_mitigation_add,
         attacker_base_piercing_reduction,
+        defender_base_piercing_bonus,
         weapon_round_base,
         phase_effects,
         defender_shield_break_effects,
@@ -4573,6 +5163,13 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         attacker_has_hostile_counter_debuff,
         attacker_has_hostile_crit_damage_reduction,
         attacker_has_hostile_crit_chance_reduction,
+        counter_opponent_weapon_damage_reduction,
+        counter_reactive_crit_chance_reduction,
+        counter_apex_barrier_multiplier_bonus,
+        defender_reactive_crit_chance_bonus,
+        defender_reactive_base_crit_damage_bonus,
+        defender_reactive_weapon_damage_bonus,
+        counter_crit_hit_this_subround,
         attacker_has_apex_barrier_bonus,
         defender_has_kemocite,
         defender_has_on_hit_stacks,
@@ -4724,13 +5321,31 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 .get(weapon_index)
                 .copied()
                 .unwrap_or(params.base_attacker_stats);
-            let piercing_multiplier =
-                (1.0 + counter_pierce_bonus_fraction - attacker_base_piercing_reduction).max(0.0)
-                    * hostile_counter_piercing_factor;
-            let opponent = AttackerStats {
-                armor_piercing: opponent.armor_piercing * piercing_multiplier,
-                shield_piercing: opponent.shield_piercing * piercing_multiplier,
-                accuracy: opponent.accuracy * piercing_multiplier,
+            let opponent = if let Some(prof) = params.profile_piercing_fractions {
+                let scale = |stat: f64, p_prof: f64| {
+                    let pool = (1.0 + p_prof.max(0.0)).max(EPSILON);
+                    stat * ((pool + counter_pierce_bonus_fraction + defender_base_piercing_bonus
+                        - attacker_base_piercing_reduction)
+                        .max(0.0)
+                        / pool)
+                        * hostile_counter_piercing_factor
+                };
+                AttackerStats {
+                    armor_piercing: scale(opponent.armor_piercing, prof.armor_piercing),
+                    shield_piercing: scale(opponent.shield_piercing, prof.shield_piercing),
+                    accuracy: scale(opponent.accuracy, prof.accuracy),
+                }
+            } else {
+                let piercing_multiplier =
+                    (1.0 + counter_pierce_bonus_fraction + defender_base_piercing_bonus
+                        - attacker_base_piercing_reduction)
+                        .max(0.0)
+                        * hostile_counter_piercing_factor;
+                AttackerStats {
+                    armor_piercing: opponent.armor_piercing * piercing_multiplier,
+                    shield_piercing: opponent.shield_piercing * piercing_multiplier,
+                    accuracy: opponent.accuracy * piercing_multiplier,
+                }
             };
             // Morale increases the three raw piercing stats, before their
             // ratios enter the mitigation curve.
@@ -4887,19 +5502,59 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             );
         }
     }
+    if counter_opponent_weapon_damage_reduction > 0.0 {
+        defender_phase_template.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(-counter_opponent_weapon_damage_reduction),
+            defender_weapon_attack,
+            round_index,
+            Some(("opponent_weapon_damage_reduction", None)),
+        );
+    }
+    if defender_reactive_weapon_damage_bonus > 0.0 {
+        defender_phase_template.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(defender_reactive_weapon_damage_bonus),
+            defender_weapon_attack,
+            round_index,
+            Some(("reactive_damage_taken", None)),
+        );
+    }
+    if defender_reactive_crit_chance_bonus > 0.0 {
+        defender_phase_template.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::CritChanceBonus(defender_reactive_crit_chance_bonus),
+            defender_weapon_attack,
+            round_index,
+            Some(("reactive_damage_taken", None)),
+        );
+    }
+    if defender_reactive_base_crit_damage_bonus > 0.0 {
+        defender_phase_template.add_effect(
+            TimingWindow::AttackPhase,
+            AbilityEffect::BaseCritDamageBonus(defender_reactive_base_crit_damage_bonus),
+            defender_weapon_attack,
+            round_index,
+            Some(("reactive_damage_taken", None)),
+        );
+    }
 
     let mut counter_hull_damage_this_subround = false;
 
     // Player apex barrier = flat stat (profile / component sources) + condition-filtered
     // crew seats (officer / ship hull / research ApexBarrierBonus, e.g. Athena's Valor
-    // gated on Venari Ral defenders).
-    let counter_apex_barrier = if attacker_has_apex_barrier_bonus {
+    // gated on Venari Ral defenders), scaled by any reactive ApexBarrierMultiplierBonus
+    // (e.g. Mirror Uhura).
+    let mut counter_apex_barrier = if attacker_has_apex_barrier_bonus {
         (attacker.apex_barrier
             + crate::combat::abilities::attacker_apex_barrier_bonus_active(attacker_crew, aux_ctx))
         .max(0.0)
     } else {
         attacker.apex_barrier.max(0.0)
     };
+    if counter_apex_barrier_multiplier_bonus > 0.0 {
+        counter_apex_barrier *= 1.0 + counter_apex_barrier_multiplier_bonus;
+    }
     let counter_apex_factor =
         compute_apex_damage_factor(defender.apex_shred.max(0.0), counter_apex_barrier);
 
@@ -5129,7 +5784,9 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         // Native damage-taken reductions subtract from the crit bonus before the floor.
         let def_crit = resolve_vehicle_weapon_crit(
             defender.weapon_crit_chance(weapon_index),
-            defender_phase_effects.crit_chance_bonus() - hostile_crit_chance_reduction,
+            defender_phase_effects.crit_chance_bonus()
+                - hostile_crit_chance_reduction
+                - counter_reactive_crit_chance_reduction,
             defender.weapon_crit_multiplier(weapon_index)
                 + defender_phase_effects.base_crit_damage_bonus()
                 + counter_crit_damage_bonus,
@@ -5142,6 +5799,9 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             &mut *rng,
         );
         let def_is_crit = def_crit.is_crit;
+        if def_is_crit {
+            *counter_crit_hit_this_subround = true;
+        }
         let mut def_crit_mult = def_crit.multiplier;
         // Hostile crit-damage reduction (U.S.S. Crozier "Gunboat Diplomacy", Borg
         // Operating Table tech, profile `player_crit_damage_reduction`, …). The
@@ -5670,6 +6330,18 @@ struct ShotsBonusSums {
 }
 
 impl ShotsBonusSums {
+    #[inline]
+    fn add(&mut self, scope: WeaponTypeScope, val: f64) {
+        if !val.is_finite() || val == 0.0 {
+            return;
+        }
+        match scope {
+            WeaponTypeScope::All => self.all += val,
+            WeaponTypeScope::KineticOnly => self.kinetic_only += val,
+            WeaponTypeScope::EnergyOnly => self.energy_only += val,
+        }
+    }
+
     fn from_entries(entries: &[ShotsBonusEntry]) -> Self {
         let mut sums = Self::default();
         for e in entries {
@@ -5713,6 +6385,243 @@ struct DamageTakenCritStack {
     expires_round: u32,
     amount: f64,
     reduce_opponent: bool,
+}
+
+struct TimedCritChanceReduction {
+    seat_idx: usize,
+    expires_round: u32,
+    reduction: f64,
+}
+
+fn resolve_defender_round_base_defense_and_pierce(
+    combat_begin_effects: &[ActiveAbilityEffect],
+    round_start_effects: &[ActiveAbilityEffect],
+    def_persp_ctx: &CombatContext,
+    assimilated: bool,
+    cum_pierce: &mut f64,
+) -> (f64, f64) {
+    let mut pierce_bonus = 0.0_f64;
+    let mut def_red = 0.0_f64;
+    for effect in combat_begin_effects
+        .iter()
+        .chain(round_start_effects.iter())
+    {
+        if effect
+            .condition
+            .as_ref()
+            .is_some_and(|c| !c.evaluate(def_persp_ctx))
+        {
+            continue;
+        }
+        match scale_active_effect(effect, assimilated) {
+            AbilityEffect::BasePiercingStatsBonus(v) => pierce_bonus += v,
+            AbilityEffect::CumulativeBasePiercingStatsBonus(v) => *cum_pierce += v,
+            AbilityEffect::HostileBaseDefenseStatsReduction(v) => def_red += v,
+            _ => {}
+        }
+    }
+    (pierce_bonus + *cum_pierce, def_red)
+}
+
+fn update_round_start_timed_crit_reduction(
+    crew: &CrewConfiguration,
+    ctx: &CombatContext,
+    round_index: u32,
+    assimilated: bool,
+    timed: &mut Vec<TimedCritChanceReduction>,
+    cum: &mut f64,
+) {
+    timed.retain(|entry| entry.expires_round >= round_index);
+    for (seat_idx, seat) in crew.seats.iter().enumerate() {
+        if seat.ability.timing != TimingWindow::RoundStart {
+            continue;
+        }
+        let AbilityEffect::TimedHostileCritChanceReduction {
+            reduction,
+            duration_rounds,
+            cumulative,
+        } = scale_effect(seat.ability.effect, assimilated)
+        else {
+            continue;
+        };
+        if seat
+            .ability
+            .condition
+            .as_ref()
+            .is_some_and(|c| !c.evaluate(ctx))
+        {
+            continue;
+        }
+        if cumulative {
+            *cum += reduction.max(0.0);
+        } else {
+            let expires_round = round_index.saturating_add(duration_rounds.max(1) - 1);
+            if let Some(existing) = timed.iter_mut().find(|e| e.seat_idx == seat_idx) {
+                existing.expires_round = existing.expires_round.max(expires_round);
+                existing.reduction = reduction.max(0.0);
+            } else {
+                timed.push(TimedCritChanceReduction {
+                    seat_idx,
+                    expires_round,
+                    reduction: reduction.max(0.0),
+                });
+            }
+        }
+    }
+}
+
+fn active_combat_begin_hostile_crit_chance_reduction(
+    crew: &CrewConfiguration,
+    ctx: &CombatContext,
+    assimilated: bool,
+) -> f64 {
+    crew.seats
+        .iter()
+        .filter(|seat| seat.ability.timing == TimingWindow::CombatBegin)
+        .filter(|seat| {
+            seat.ability
+                .condition
+                .as_ref()
+                .is_none_or(|c| c.evaluate(ctx))
+        })
+        .filter_map(
+            |seat| match scale_effect(seat.ability.effect, assimilated) {
+                AbilityEffect::HostileCritChanceReduction(v) => Some(v.max(0.0)),
+                _ => None,
+            },
+        )
+        .sum()
+}
+
+struct ReactiveDamageTakenStack {
+    expires_round: u32,
+    kind: ReactiveDamageTakenKind,
+    weapon_scope: WeaponTypeScope,
+}
+
+#[derive(Default)]
+struct ReactiveStackTotals {
+    crit_chance: f64,
+    base_crit_damage: f64,
+    attacker_shield_mitigation: f64,
+    base_weapon_damage: f64,
+    opp_weapon_damage_reduction: f64,
+    opp_crit_chance_reduction: f64,
+    apex_barrier_multiplier: f64,
+}
+
+struct ReactiveDamageTakenEvents {
+    took_hull: bool,
+    took_shield: bool,
+    took_crit: bool,
+}
+
+fn sum_reactive_stacks(
+    stacks: &[ReactiveDamageTakenStack],
+    opp_weapon_type: WeaponType,
+) -> ReactiveStackTotals {
+    let mut out = ReactiveStackTotals::default();
+    for s in stacks {
+        match s.kind {
+            ReactiveDamageTakenKind::CritChanceBonus(v) => out.crit_chance += v,
+            ReactiveDamageTakenKind::BaseCritDamageBonus(v) => out.base_crit_damage += v,
+            ReactiveDamageTakenKind::AttackerShieldMitigationBonus(v) => {
+                out.attacker_shield_mitigation += v
+            }
+            ReactiveDamageTakenKind::BaseWeaponDamageBonus(v) => out.base_weapon_damage += v,
+            ReactiveDamageTakenKind::OpponentWeaponDamageReduction(v) => {
+                if s.weapon_scope.matches(opp_weapon_type) {
+                    out.opp_weapon_damage_reduction += v;
+                }
+            }
+            ReactiveDamageTakenKind::HostileCritChanceReduction(v) => {
+                out.opp_crit_chance_reduction += v
+            }
+            ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v) => {
+                out.apex_barrier_multiplier += v
+            }
+            ReactiveDamageTakenKind::ApplyDefenderBurning
+            | ReactiveDamageTakenKind::ApplyDefenderHullBreach
+            | ReactiveDamageTakenKind::ApplyAttackerMorale => {}
+        }
+    }
+    out
+}
+
+#[allow(clippy::too_many_arguments)]
+fn grant_reactive_damage_taken_stacks<'a, I>(
+    stacks: &mut Vec<ReactiveDamageTakenStack>,
+    opp_burning_rounds: &mut u32,
+    opp_hull_breach_rounds: &mut u32,
+    self_morale_rounds: &mut u32,
+    trace: &mut TraceCollector,
+    rng: &mut Rng,
+    round_index: u32,
+    combatant: &Combatant,
+    effects: I,
+    assimilated: bool,
+    events: ReactiveDamageTakenEvents,
+) where
+    I: IntoIterator<Item = &'a ActiveAbilityEffect>,
+{
+    for effect in effects {
+        let AbilityEffect::ReactiveDamageTaken {
+            trigger,
+            kind,
+            chance,
+            duration_rounds,
+        } = scale_active_effect(effect, assimilated)
+        else {
+            continue;
+        };
+        let matched = match trigger {
+            DamageTakenTrigger::AnyDamage => events.took_hull || events.took_shield,
+            DamageTakenTrigger::HullDamage => events.took_hull,
+            DamageTakenTrigger::ShieldDamage => events.took_shield,
+            DamageTakenTrigger::CriticalHit => events.took_crit,
+        };
+        if !matched {
+            continue;
+        }
+        let c = chance.clamp(0.0, 1.0);
+        if c < 1.0 {
+            let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
+            if roll >= c {
+                continue;
+            }
+        }
+        match kind {
+            ReactiveDamageTakenKind::ApplyDefenderBurning => {
+                *opp_burning_rounds = (*opp_burning_rounds).max(duration_rounds.max(1));
+            }
+            ReactiveDamageTakenKind::ApplyDefenderHullBreach => {
+                *opp_hull_breach_rounds = (*opp_hull_breach_rounds).max(duration_rounds.max(1));
+            }
+            ReactiveDamageTakenKind::ApplyAttackerMorale => {
+                *self_morale_rounds = (*self_morale_rounds).max(duration_rounds.max(1));
+            }
+            _ => {
+                let expires_round = if duration_rounds == 0 {
+                    u32::MAX
+                } else {
+                    round_index.saturating_add(duration_rounds - 1)
+                };
+                stacks.push(ReactiveDamageTakenStack {
+                    expires_round,
+                    kind,
+                    weapon_scope: effect.weapon_scope,
+                });
+            }
+        }
+        record_ability_activations(
+            trace,
+            round_index,
+            "after_damage_taken",
+            combatant,
+            std::slice::from_ref(effect),
+            assimilated,
+        );
+    }
 }
 
 fn damage_taken_crit_total(stacks: &[DamageTakenCritStack], reduce_opponent: bool) -> f64 {
@@ -5779,6 +6688,7 @@ struct CombatRunState {
     attacker_burning_rounds: u32,
     assimilated_rounds_remaining: u32,
     defender_assimilated_rounds_remaining: u32,
+    attacker_morale_rounds_remaining: u32,
     defender_morale_rounds_remaining: u32,
     shots_bonus_entries: Vec<ShotsBonusEntry>,
     defender_shots_bonus_entries: Vec<ShotsBonusEntry>,
@@ -5797,6 +6707,10 @@ struct CombatRunState {
     on_hit_timed_bonuses: Vec<OnHitTimedBonusEntry>,
     attacker_damage_taken_crit_stacks: Vec<DamageTakenCritStack>,
     defender_damage_taken_crit_stacks: Vec<DamageTakenCritStack>,
+    attacker_reactive_stacks: Vec<ReactiveDamageTakenStack>,
+    defender_reactive_stacks: Vec<ReactiveDamageTakenStack>,
+    attacker_timed_crit_red: Vec<TimedCritChanceReduction>,
+    defender_timed_crit_red: Vec<TimedCritChanceReduction>,
     defender_weapon_fire_delayed_rounds: u32,
     /// Successful Kemocite Weaponry round-end stacks (Xindi group armadas).
     defender_kemocite_stacks: u32,
@@ -5810,6 +6724,102 @@ struct CombatRunState {
     attacker_hull_hp_multiplier_factor: f64,
     /// Conditional max-shield factor currently carried between rounds; prevents repeated compounding.
     attacker_shield_hp_multiplier_factor: f64,
+    /// Cumulative round-start opponent weapon damage reductions (e.g. Garak).
+    attacker_cum_opp_wd_red: ShotsBonusSums,
+    defender_cum_opp_wd_red: ShotsBonusSums,
+    /// Cumulative round-start raw base mitigation/piercing bonuses (e.g. Gossa, Borg Queen BD).
+    attacker_cum_base_mitigation_bonus: f64,
+    attacker_cum_base_piercing_bonus: f64,
+    defender_cum_base_piercing_bonus: f64,
+    /// Cumulative opponent crit-chance reductions (e.g. Changeling Kira RoundStart, Sela on-hit).
+    attacker_cum_hostile_crit_chance_reduction: f64,
+    defender_cum_hostile_crit_chance_reduction: f64,
+}
+
+fn defender_perspective_context(ctx: &CombatContext, st: &CombatRunState) -> CombatContext {
+    let mut swapped = ctx.clone();
+    swapped.attacker_ship_type = ctx.defender_ship_type;
+    swapped.defender_ship_type = ctx.attacker_ship_type;
+    swapped.attacker_hull_pct = ctx.defender_hull_pct;
+    swapped.defender_hull_pct = ctx.attacker_hull_pct;
+    swapped.attacker_shield_pct = ctx.defender_shield_pct;
+    swapped.defender_shield_pct = ctx.attacker_shield_pct;
+    swapped.attacker_morale_active = st.defender_morale_rounds_remaining > 0;
+    swapped.defender_morale_active = ctx.attacker_morale_active;
+    swapped.attacker_burning_active = ctx.defender_burning_active;
+    swapped.defender_burning_active = ctx.attacker_burning_active;
+    swapped.attacker_hull_breach_active = ctx.defender_hull_breach_active;
+    swapped.defender_hull_breach_active = ctx.attacker_hull_breach_active;
+    swapped.defender_assimilated_active = st.assimilated_rounds_remaining > 0;
+    swapped.defender_is_player_ship = ctx.defender_is_player_ship;
+    swapped.defender_is_npc_hostile = false;
+    swapped
+}
+
+fn accumulate_round_start_opponent_wd_reduction(
+    crew: &CrewConfiguration,
+    ctx: &CombatContext,
+    assimilated: bool,
+    cum_sums: &mut ShotsBonusSums,
+) {
+    for seat in &crew.seats {
+        if seat.ability.timing != TimingWindow::RoundStart {
+            continue;
+        }
+        let AbilityEffect::OpponentWeaponDamageReduction {
+            reduction,
+            cumulative: true,
+        } = scale_effect(seat.ability.effect, assimilated)
+        else {
+            continue;
+        };
+        if reduction <= 0.0 || !reduction.is_finite() {
+            continue;
+        }
+        if seat
+            .ability
+            .condition
+            .as_ref()
+            .is_none_or(|c| c.evaluate(ctx))
+        {
+            cum_sums.add(seat.ability.weapon_scope, reduction);
+        }
+    }
+}
+
+fn active_opponent_wd_reduction_sums(
+    crew: &CrewConfiguration,
+    ctx: &CombatContext,
+    assimilated: bool,
+    mut sums: ShotsBonusSums,
+) -> ShotsBonusSums {
+    for seat in &crew.seats {
+        if !matches!(
+            seat.ability.timing,
+            TimingWindow::CombatBegin | TimingWindow::RoundStart
+        ) {
+            continue;
+        }
+        let AbilityEffect::OpponentWeaponDamageReduction {
+            reduction,
+            cumulative: false,
+        } = scale_effect(seat.ability.effect, assimilated)
+        else {
+            continue;
+        };
+        if reduction <= 0.0 || !reduction.is_finite() {
+            continue;
+        }
+        if seat
+            .ability
+            .condition
+            .as_ref()
+            .is_none_or(|c| c.evaluate(ctx))
+        {
+            sums.add(seat.ability.weapon_scope, reduction);
+        }
+    }
+    sums
 }
 
 /// The four hull/shield percentages of a [`CombatContext`] snapshot.
@@ -6834,6 +7844,7 @@ mod reusable_attacker_tests {
                     shield_piercing: 1000.0,
                     accuracy: 1000.0,
                 },
+                profile_piercing_fractions: None,
                 base_attacker_weapon_stats: weapons.clone(),
                 ship_type: ShipType::Explorer,
                 mystery_mitigation_factor: 0.0,
@@ -6982,6 +7993,7 @@ mod reusable_attacker_tests {
                 defender_stats: defense,
                 weapon_pierce_defender_stats: None,
                 base_attacker_stats: raw,
+                profile_piercing_fractions: None,
                 base_attacker_weapon_stats: vec![],
                 ship_type: ShipType::Explorer,
                 mystery_mitigation_factor: 0.0,
@@ -7225,6 +8237,7 @@ mod reusable_attacker_tests {
                 defender_stats: defense,
                 weapon_pierce_defender_stats: None,
                 base_attacker_stats: aggregate,
+                profile_piercing_fractions: None,
                 base_attacker_weapon_stats: weapons.to_vec(),
                 ship_type: ShipType::Battleship,
                 mystery_mitigation_factor: 0.0,

@@ -281,7 +281,7 @@ fn unsupported_source_families_remain_visible_for_passive_and_below_deck_seats()
     for (captain, below) in [
         ("origins-burnham-e854d6", ""),
         ("tyler-1dcc4d", ""),
-        ("", "brad-boimler-ee5262"),
+        ("", "vil-winn-adami-6c42f3"),
         ("", "tom-paris-3640cc"),
     ] {
         let below = if below.is_empty() {
@@ -303,6 +303,21 @@ fn unsupported_source_families_remain_visible_for_passive_and_below_deck_seats()
             "marker must not become a static buff"
         );
     }
+
+    // Brad Boimler below-deck (non-crew-scaled AllDefenses MultiplyAdd) is now modeled as raw
+    // BaseMitigationStatsBonus rather than quarantined.
+    let boimler = resolve_crew_to_buff_set(
+        "",
+        &[],
+        &["brad-boimler-ee5262".into()],
+        &officers,
+        &ResolveOptions::default(),
+    );
+    assert!(boimler
+        .crew
+        .seats
+        .iter()
+        .any(|s| matches!(s.ability.effect, AbilityEffect::BaseMitigationStatsBonus(_))));
 }
 
 #[test]
@@ -327,7 +342,7 @@ fn enemy_all_ships_critical_debuff_is_not_mapped_to_our_critical_chance() {
     );
     assert!(buff.crew.seats.iter().any(|s| matches!(
         s.ability.effect,
-        AbilityEffect::UnsupportedOfficerEffect { .. }
+        AbilityEffect::HostileCritChanceReduction(v) if v > 0.0
     )));
     assert!(!buff
         .crew

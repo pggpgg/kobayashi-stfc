@@ -222,6 +222,7 @@ fn scenarios() -> Vec<Scenario> {
     let mut s = Scenario::new("hostile_dynamic_mitigation_morale");
     s.defender.hostile_mitigation_params = Some(HostileMitigationParams {
         round_native_defense_stats: false,
+        profile_piercing_fractions: None,
         base_attacker_weapon_stats: Vec::new(),
         defender_stats: DefenderStats {
             armor: 1_500.0,

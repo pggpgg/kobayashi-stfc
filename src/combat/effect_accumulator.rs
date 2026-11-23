@@ -1080,8 +1080,12 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
+                | AbilityEffect::HostileBaseDefenseStatsReduction(_)
+                | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
                 | AbilityEffect::BaseArmorBonus(_)
-                | AbilityEffect::BaseMitigationStatsBonus(_) => {}
+                | AbilityEffect::BaseMitigationStatsBonus(_)
+                | AbilityEffect::CumulativeBaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
@@ -1114,6 +1118,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_)
                 | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::TimedHostileCritChanceReduction { .. }
+                | AbilityEffect::OpponentWeaponDamageReduction { .. }
                 | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
@@ -1121,6 +1127,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::DamageTakenCritStack { .. }
+                | AbilityEffect::ReactiveDamageTaken { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1281,8 +1288,12 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
+                | AbilityEffect::HostileBaseDefenseStatsReduction(_)
+                | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
                 | AbilityEffect::BaseArmorBonus(_)
-                | AbilityEffect::BaseMitigationStatsBonus(_) => {}
+                | AbilityEffect::BaseMitigationStatsBonus(_)
+                | AbilityEffect::CumulativeBaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
@@ -1315,6 +1326,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_)
                 | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::TimedHostileCritChanceReduction { .. }
+                | AbilityEffect::OpponentWeaponDamageReduction { .. }
                 | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
@@ -1322,6 +1335,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::DamageTakenCritStack { .. }
+                | AbilityEffect::ReactiveDamageTaken { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1464,8 +1478,12 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
+                | AbilityEffect::HostileBaseDefenseStatsReduction(_)
+                | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
                 | AbilityEffect::BaseArmorBonus(_)
-                | AbilityEffect::BaseMitigationStatsBonus(_) => {}
+                | AbilityEffect::BaseMitigationStatsBonus(_)
+                | AbilityEffect::CumulativeBaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
@@ -1498,6 +1516,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_)
                 | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::TimedHostileCritChanceReduction { .. }
+                | AbilityEffect::OpponentWeaponDamageReduction { .. }
                 | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
@@ -1505,6 +1525,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::DamageTakenCritStack { .. }
+                | AbilityEffect::ReactiveDamageTaken { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -1676,6 +1697,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_)
                 | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::TimedHostileCritChanceReduction { .. }
+                | AbilityEffect::OpponentWeaponDamageReduction { .. }
                 | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
@@ -1683,6 +1706,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::DamageTakenCritStack { .. }
+                | AbilityEffect::ReactiveDamageTaken { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier { .. }
@@ -1695,8 +1719,12 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
+                | AbilityEffect::HostileBaseDefenseStatsReduction(_)
+                | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
                 | AbilityEffect::BaseArmorBonus(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
+                | AbilityEffect::CumulativeBaseMitigationStatsBonus(_)
                 | AbilityEffect::DodgeBonus(_)
                 | AbilityEffect::AccuracyBonus(_) => {}
             },
@@ -1840,8 +1868,12 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
+                | AbilityEffect::HostileBaseDefenseStatsReduction(_)
+                | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
                 | AbilityEffect::BaseArmorBonus(_)
-                | AbilityEffect::BaseMitigationStatsBonus(_) => {}
+                | AbilityEffect::BaseMitigationStatsBonus(_)
+                | AbilityEffect::CumulativeBaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
@@ -1874,6 +1906,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_)
                 | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::TimedHostileCritChanceReduction { .. }
+                | AbilityEffect::OpponentWeaponDamageReduction { .. }
                 | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
@@ -1881,6 +1915,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::DamageTakenCritStack { .. }
+                | AbilityEffect::ReactiveDamageTaken { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -2067,8 +2102,12 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
+                | AbilityEffect::HostileBaseDefenseStatsReduction(_)
+                | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
                 | AbilityEffect::BaseArmorBonus(_)
-                | AbilityEffect::BaseMitigationStatsBonus(_) => {}
+                | AbilityEffect::BaseMitigationStatsBonus(_)
+                | AbilityEffect::CumulativeBaseMitigationStatsBonus(_) => {}
                 AbilityEffect::DodgeBonus(_) => {}
                 AbilityEffect::OnKillHullRegen(_) => {}
                 AbilityEffect::HostileCritDamageReduction { .. }
@@ -2101,6 +2140,8 @@ impl EffectAccumulator {
                 | AbilityEffect::BridgeAbilityEffectivenessBonus(_) => {}
                 AbilityEffect::CritChanceBonus(_)
                 | AbilityEffect::HostileCritChanceReduction(_)
+                | AbilityEffect::TimedHostileCritChanceReduction { .. }
+                | AbilityEffect::OpponentWeaponDamageReduction { .. }
                 | AbilityEffect::UnsupportedOfficerEffect { .. } => {}
                 AbilityEffect::CritDamageMultiplier(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
@@ -2108,6 +2149,7 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseCritDamageBonus(_) => {}
                 AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::DamageTakenCritStack { .. }
+                | AbilityEffect::ReactiveDamageTaken { .. }
                 | AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::DefenderOnHitStack { .. } => {}
                 AbilityEffect::DecayingAttackMultiplier {
@@ -2171,8 +2213,17 @@ pub(crate) fn record_ability_activations<'a>(
     for effect in effects {
         // Post-hit grants are logged only when the granting volley actually fired.
         if (phase != "after_hit" && matches!(effect.effect, AbilityEffect::OnHitTimedBonus { .. }))
+            || (phase == "attack"
+                && matches!(
+                    effect.effect,
+                    AbilityEffect::TimedHostileCritChanceReduction { .. }
+                ))
             || (phase != "after_damage_taken"
-                && matches!(effect.effect, AbilityEffect::DamageTakenCritStack { .. }))
+                && matches!(
+                    effect.effect,
+                    AbilityEffect::DamageTakenCritStack { .. }
+                        | AbilityEffect::ReactiveDamageTaken { .. }
+                ))
         {
             continue;
         }
@@ -2210,8 +2261,12 @@ fn preserves_non_officer_research_value(effect: &ActiveAbilityEffect) -> bool {
             effect.effect,
             AbilityEffect::GalaxyAdditiveWeaponDamageGrowth { .. }
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
+                | AbilityEffect::HostileBaseDefenseStatsReduction(_)
+                | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
                 | AbilityEffect::BaseArmorBonus(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
+                | AbilityEffect::CumulativeBaseMitigationStatsBonus(_)
                 | AbilityEffect::ShieldRegenMaxFraction(_)
                 | AbilityEffect::BaseWeaponDamageBonus(_)
                 | AbilityEffect::ComponentBaseWeaponDamageBonus(_)
@@ -2381,6 +2436,22 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::HostileCritChanceReduction(v) => {
             AbilityEffect::HostileCritChanceReduction(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
+        AbilityEffect::TimedHostileCritChanceReduction {
+            reduction,
+            duration_rounds,
+            cumulative,
+        } => AbilityEffect::TimedHostileCritChanceReduction {
+            reduction: reduction * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            duration_rounds,
+            cumulative,
+        },
+        AbilityEffect::OpponentWeaponDamageReduction {
+            reduction,
+            cumulative,
+        } => AbilityEffect::OpponentWeaponDamageReduction {
+            reduction: reduction * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            cumulative,
+        },
         AbilityEffect::UnsupportedOfficerEffect {
             coefficient,
             chance,
@@ -2397,6 +2468,69 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
             duration_rounds,
             reduce_opponent,
         },
+        AbilityEffect::ReactiveDamageTaken {
+            trigger,
+            kind,
+            chance,
+            duration_rounds,
+        } => {
+            use crate::combat::abilities::ReactiveDamageTakenKind;
+            let (scaled_kind, scaled_chance) = match kind {
+                ReactiveDamageTakenKind::CritChanceBonus(v) => (
+                    ReactiveDamageTakenKind::CritChanceBonus(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
+                ReactiveDamageTakenKind::BaseCritDamageBonus(v) => (
+                    ReactiveDamageTakenKind::BaseCritDamageBonus(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
+                ReactiveDamageTakenKind::AttackerShieldMitigationBonus(v) => (
+                    ReactiveDamageTakenKind::AttackerShieldMitigationBonus(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
+                ReactiveDamageTakenKind::BaseWeaponDamageBonus(v) => (
+                    ReactiveDamageTakenKind::BaseWeaponDamageBonus(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
+                ReactiveDamageTakenKind::OpponentWeaponDamageReduction(v) => (
+                    ReactiveDamageTakenKind::OpponentWeaponDamageReduction(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
+                ReactiveDamageTakenKind::HostileCritChanceReduction(v) => (
+                    ReactiveDamageTakenKind::HostileCritChanceReduction(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
+                ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v) => (
+                    ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
+                ReactiveDamageTakenKind::ApplyDefenderBurning
+                | ReactiveDamageTakenKind::ApplyDefenderHullBreach
+                | ReactiveDamageTakenKind::ApplyAttackerMorale => {
+                    (kind, chance * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+                }
+            };
+            AbilityEffect::ReactiveDamageTaken {
+                trigger,
+                kind: scaled_kind,
+                chance: scaled_chance,
+                duration_rounds,
+            }
+        }
         AbilityEffect::CritDamageMultiplier(m) => AbilityEffect::CritDamageMultiplier(
             1.0 + (m - 1.0) * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
         ),
@@ -2446,6 +2580,24 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::BaseMitigationStatsBonus(v) => {
             AbilityEffect::BaseMitigationStatsBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::CumulativeBaseMitigationStatsBonus(v) => {
+            AbilityEffect::CumulativeBaseMitigationStatsBonus(
+                v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            )
+        }
+        AbilityEffect::HostileBaseDefenseStatsReduction(v) => {
+            AbilityEffect::HostileBaseDefenseStatsReduction(
+                v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            )
+        }
+        AbilityEffect::BasePiercingStatsBonus(v) => {
+            AbilityEffect::BasePiercingStatsBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::CumulativeBasePiercingStatsBonus(v) => {
+            AbilityEffect::CumulativeBasePiercingStatsBonus(
+                v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            )
         }
         AbilityEffect::HostileCritDamageReduction { .. } => effect,
         AbilityEffect::HostileLethalEndOfRound { .. }

@@ -82,9 +82,10 @@ fn snw_pike_captain_self_shield_mitigation_compiles_to_attacker_bonus() {
     }
 }
 
-/// The currently compilable target=self `shieldmitigation` rows route to the attacker
-/// channel. Janeway and WOK Carol use `HullDamageTaken`, which is explicitly unsupported until
-/// an incoming-hull-damage timing exists; these rows must not be counted as compiled support.
+/// All target=self `shieldmitigation` / `shield_mitigation` rows route to the attacker
+/// self-mitigation channel (either static/CombatBegin `AttackerShieldMitigationBonus` or reactive
+/// `HullDamageTaken` `ReactiveDamageTaken { kind: AttackerShieldMitigationBonus(..), .. }`),
+/// never leaking into the defender-side `ShieldMitigationBonus`.
 #[test]
 fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
     let Ok(file) = build_officer_model_file_default() else {
@@ -92,7 +93,7 @@ fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
     };
 
     let mut checked = HashSet::new();
-    let mut unsupported_hull_damage = HashSet::new();
+    let mut reactive_hull_damage = HashSet::new();
     let mut leaked: Vec<String> = Vec::new();
 
     for officer in &file.officers {
@@ -105,10 +106,13 @@ fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
         .flatten()
         {
             for (idx, effect) in ability.effects.iter().enumerate() {
-                if effect.effect_type != "tag"
-                    || effect.tag.as_deref().unwrap_or("") != "shieldmitigation:unmapped"
-                    || effect.target.as_deref() != Some("self")
-                {
+                let is_self_shield_mit_tag = effect.effect_type == "tag"
+                    && effect.tag.as_deref().unwrap_or("") == "shieldmitigation:unmapped"
+                    && effect.target.as_deref() == Some("self");
+                let is_self_shield_mit_stat = effect.effect_type == "stat_modify"
+                    && effect.stat.as_deref() == Some("shield_mitigation")
+                    && effect.target.as_deref() == Some("self");
+                if !is_self_shield_mit_tag && !is_self_shield_mit_stat {
                     continue;
                 }
                 let Some(spec) = lcars_effect_to_combat_effect_spec(
@@ -119,20 +123,25 @@ fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
                     Some(1),
                     None,
                 ) else {
-                    if effect.trigger.as_deref() == Some("unsupported_HullDamageTaken") {
-                        unsupported_hull_damage.insert(officer.id.clone());
-                    } else {
-                        leaked.push(format!(
-                            "{}::{} unexpectedly failed to compile ({:?})",
-                            officer.id, ability.name, effect.trigger
-                        ));
-                    }
+                    leaked.push(format!(
+                        "{}::{} unexpectedly failed to compile ({:?})",
+                        officer.id, ability.name, effect.trigger
+                    ));
                     continue;
                 };
                 let (_, compiled, _) = compile_officer_combat_spec(&spec).expect("compile");
-                checked.insert(officer.id.clone());
                 match compiled {
-                    AbilityEffect::AttackerShieldMitigationBonus(_) => {}
+                    AbilityEffect::AttackerShieldMitigationBonus(_) => {
+                        checked.insert(officer.id.clone());
+                    }
+                    AbilityEffect::ReactiveDamageTaken {
+                        trigger: kobayashi::combat::DamageTakenTrigger::HullDamage,
+                        kind:
+                            kobayashi::combat::ReactiveDamageTakenKind::AttackerShieldMitigationBonus(_),
+                        ..
+                    } => {
+                        reactive_hull_damage.insert(officer.id.clone());
+                    }
                     AbilityEffect::ShieldMitigationBonus(v) => {
                         leaked.push(format!(
                             "{}::{} ShieldMitigationBonus({v})",
@@ -154,12 +163,18 @@ fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
         "one-of-eleven-ee0ee9".to_string(),
         "snw-pike-c94ac4".to_string(),
     ]);
-    assert_eq!(checked, expected_checked, "supported source rows only");
-    let expected_unsupported = HashSet::from([
+    assert_eq!(
+        checked, expected_checked,
+        "CombatBegin self shield-mitigation rows"
+    );
+    let expected_reactive = HashSet::from([
         "kathryn-janeway-bd4a19".to_string(),
         "wok-carol-52a350".to_string(),
     ]);
-    assert_eq!(unsupported_hull_damage, expected_unsupported);
+    assert_eq!(
+        reactive_hull_damage, expected_reactive,
+        "HullDamageTaken reactive self shield-mitigation rows"
+    );
     assert!(
         leaked.is_empty(),
         "target=self shieldmitigation effects leaked off the AttackerShieldMitigationBonus channel: {leaked:?}"

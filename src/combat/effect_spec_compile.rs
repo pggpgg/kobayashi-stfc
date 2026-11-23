@@ -2,14 +2,14 @@
 
 use crate::combat::abilities::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext,
-    WeaponTypeScope, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    DamageTakenTrigger, ReactiveDamageTakenKind, WeaponTypeScope, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::condition::combine_optional_and;
 use crate::combat::types::{enemy_type_from_engagement_slug, OpponentFactionTag, ShipType};
 use crate::combat::TimingWindow;
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
-    AbilityTriggerSpec, CombatEffectSpec, DurationSpec, ValueSpec,
+    AbilityTriggerSpec, CombatEffectSpec, DamageTakenTriggerKind, DurationSpec, ValueSpec,
 };
 use crate::data::ship_ability_resolve;
 
@@ -326,6 +326,8 @@ fn effect_has_intrinsic_duration(effect: &AbilityEffect) -> bool {
             | AbilityEffect::OnHitCritDamageStack { .. }
             | AbilityEffect::OnHitTimedBonus { .. }
             | AbilityEffect::DamageTakenCritStack { .. }
+            | AbilityEffect::ReactiveDamageTaken { .. }
+            | AbilityEffect::TimedHostileCritChanceReduction { .. }
             | AbilityEffect::DefenderOnHitStack { .. }
             | AbilityEffect::HostileCritDamageReduction { .. }
             | AbilityEffect::HostileLethalEndOfRound { .. }
@@ -381,17 +383,32 @@ pub fn compile_officer_combat_spec_full(
         // Round-start shot grants each expire relative to their own proc.
         // Any trigger window is expressed by an explicit condition.
         || (timing == TimingWindow::RoundStart && spec.modifier == AbilityModifierSpec::ShotsBonus)
+        // Non-cumulative RoundStart opponent weapon damage reductions (e.g. Lorca `num_rounds=1`)
+        // and non-cumulative RoundStart raw defense/piercing bonuses (e.g. Kumak, Navi, Hendorff,
+        // Ikat'Ika) re-evaluate their condition each round rather than clipping to round 1 only.
+        || (timing == TimingWindow::RoundStart
+            && matches!(
+                effect,
+                AbilityEffect::OpponentWeaponDamageReduction {
+                    cumulative: false,
+                    ..
+                } | AbilityEffect::BaseMitigationStatsBonus(_)
+                    | AbilityEffect::BasePiercingStatsBonus(_)
+            ))
         // State durations describe each proc after it fires, not an expiry
         // window for the ability itself. In particular, a hit-triggered burn
         // with a two-round duration can still proc in round three or later.
         || matches!(effect, AbilityEffect::Assimilated { .. } | AbilityEffect::HullBreach { .. } | AbilityEffect::Burning { .. } | AbilityEffect::RandomDefenderState { .. })
-        // On-hit stacks manage expiry per weapon inside the engine; a RoundRange gate would
-        // clip re-arming past `spec.duration` (the duration bounds each stack, not the trigger).
+        // On-hit and damage-taken stacks manage expiry per grant inside the engine; a RoundRange
+        // gate would clip re-arming past `spec.duration` (the duration bounds each stack, not the
+        // trigger).
         || matches!(
             effect,
             AbilityEffect::OnHitCritDamageStack { .. }
                 | AbilityEffect::OnHitTimedBonus { .. }
                 | AbilityEffect::DamageTakenCritStack { .. }
+                | AbilityEffect::ReactiveDamageTaken { .. }
+                | AbilityEffect::TimedHostileCritChanceReduction { .. }
                 | AbilityEffect::DefenderOnHitStack { .. }
         );
     let condition = if skip_round_gate {
@@ -407,39 +424,270 @@ pub fn compile_officer_combat_spec_full(
     })
 }
 
-/// Extract the weapon-type scope from a condition-spec list (top level and one `And` level).
+/// Extract the weapon-type scope from a condition-spec list (recursively traversing `And` nodes).
 /// The [`AbilityConditionSpec::AttackerWeaponScope`] variant itself compiles to
 /// `LiteralBool(true)` in the tree ([`compile_condition`]); this out-of-band extraction is what
 /// the engine consumes. Conflicting scopes (kinetic AND energy) collapse to `All` — no known
 /// upstream row carries both.
 pub fn weapon_scope_from_conditions(conditions: &[AbilityConditionSpec]) -> WeaponTypeScope {
-    let mut scope = WeaponTypeScope::All;
-    let mut apply = |slug: &str| {
-        let found = match slug {
-            "kinetic" => WeaponTypeScope::KineticOnly,
-            "energy" => WeaponTypeScope::EnergyOnly,
-            _ => return,
-        };
-        scope = if scope == WeaponTypeScope::All || scope == found {
-            found
-        } else {
-            WeaponTypeScope::All
-        };
-    };
-    for cond in conditions {
-        match cond {
-            AbilityConditionSpec::AttackerWeaponScope { scope: slug } => apply(slug.as_str()),
-            AbilityConditionSpec::And { all } => {
-                for inner in all {
-                    if let AbilityConditionSpec::AttackerWeaponScope { scope: slug } = inner {
-                        apply(slug.as_str());
-                    }
+    fn walk(conds: &[AbilityConditionSpec], scope: &mut WeaponTypeScope) {
+        for cond in conds {
+            match cond {
+                AbilityConditionSpec::AttackerWeaponScope { scope: slug } => {
+                    let found = match slug.as_str() {
+                        "kinetic" => WeaponTypeScope::KineticOnly,
+                        "energy" => WeaponTypeScope::EnergyOnly,
+                        _ => continue,
+                    };
+                    *scope = if *scope == WeaponTypeScope::All || *scope == found {
+                        found
+                    } else {
+                        WeaponTypeScope::All
+                    };
                 }
+                AbilityConditionSpec::And { all } => walk(all, scope),
+                _ => {}
             }
-            _ => {}
         }
     }
+    let mut scope = WeaponTypeScope::All;
+    walk(conditions, &mut scope);
     scope
+}
+
+type CompiledEffectResult =
+    Result<(TimingWindow, AbilityEffect, Option<AbilityCondition>), EffectSpecCompileError>;
+
+fn try_compile_reactive_damage_taken(
+    spec: &CombatEffectSpec,
+    timing: TimingWindow,
+    op: &str,
+    compiled_condition: &Option<AbilityCondition>,
+) -> Option<CompiledEffectResult> {
+    if timing != TimingWindow::DefensePhase
+        || spec.modifier == AbilityModifierSpec::UnsupportedOfficerEffect
+    {
+        return None;
+    }
+    let trigger = match spec.officer.damage_taken_trigger? {
+        DamageTakenTriggerKind::AnyDamage => DamageTakenTrigger::AnyDamage,
+        DamageTakenTriggerKind::HullDamage => DamageTakenTrigger::HullDamage,
+        DamageTakenTriggerKind::ShieldDamage => DamageTakenTrigger::ShieldDamage,
+        DamageTakenTriggerKind::CriticalHit => DamageTakenTrigger::CriticalHit,
+    };
+    // Preserve existing `HitTaken` pathways (Archer/Trip `DamageTakenCritStack` and legacy
+    // `HitTaken` officers) — only route verified `OpponentWeaponDamageReduction` (Mudd) here.
+    if trigger == DamageTakenTrigger::AnyDamage
+        && spec.modifier != AbilityModifierSpec::OpponentWeaponDamageReduction
+    {
+        return None;
+    }
+    let duration_rounds = match spec.duration.as_ref() {
+        Some(DurationSpec::Rounds { rounds }) => (*rounds).max(1),
+        _ => 0,
+    };
+    let is_self_target = matches!(
+        spec.target,
+        AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+    );
+    let scalar_chance = spec
+        .chance
+        .as_ref()
+        .and_then(|c| c.scalar)
+        .filter(|c| c.is_finite())
+        .unwrap_or(1.0)
+        .clamp(0.0, 1.0);
+    let state_chance = spec
+        .chance
+        .as_ref()
+        .and_then(|c| c.scalar)
+        .filter(|c| c.is_finite())
+        .unwrap_or(0.0)
+        .clamp(0.0, 1.0);
+    let unsupported = || {
+        Err(EffectSpecCompileError::UnsupportedModifierOperation {
+            modifier: spec.modifier,
+            operation: spec.operation,
+        })
+    };
+
+    let (kind, chance, effective_duration) = match spec.modifier {
+        AbilityModifierSpec::CritChance => {
+            if !is_self_target || op != "add" {
+                return Some(unsupported());
+            }
+            let v = match spec
+                .value
+                .as_ref()
+                .ok_or(EffectSpecCompileError::MissingScalarValue)
+                .and_then(scalar_fraction)
+            {
+                Ok(v) if v.is_finite() && v >= 0.0 => v,
+                Ok(_) => return Some(unsupported()),
+                Err(e) => return Some(Err(e)),
+            };
+            (
+                ReactiveDamageTakenKind::CritChanceBonus(v),
+                scalar_chance,
+                duration_rounds,
+            )
+        }
+        AbilityModifierSpec::CritDamage => {
+            if !is_self_target || op != "add" {
+                return Some(unsupported());
+            }
+            let v = match spec
+                .value
+                .as_ref()
+                .ok_or(EffectSpecCompileError::MissingScalarValue)
+                .and_then(scalar_fraction)
+            {
+                Ok(v) if v.is_finite() && v >= 0.0 => v,
+                Ok(_) => return Some(unsupported()),
+                Err(e) => return Some(Err(e)),
+            };
+            (
+                ReactiveDamageTakenKind::BaseCritDamageBonus(v),
+                scalar_chance,
+                duration_rounds,
+            )
+        }
+        AbilityModifierSpec::ShieldMitigation => {
+            if !is_self_target || op != "add" {
+                return Some(unsupported());
+            }
+            let v = match spec
+                .value
+                .as_ref()
+                .ok_or(EffectSpecCompileError::MissingScalarValue)
+                .and_then(scalar_fraction)
+            {
+                Ok(v) if v.is_finite() && v >= 0.0 => v,
+                Ok(_) => return Some(unsupported()),
+                Err(e) => return Some(Err(e)),
+            };
+            (
+                ReactiveDamageTakenKind::AttackerShieldMitigationBonus(v),
+                scalar_chance,
+                duration_rounds,
+            )
+        }
+        AbilityModifierSpec::WeaponDamage => {
+            if !is_self_target {
+                return Some(unsupported());
+            }
+            let v = match spec
+                .value
+                .as_ref()
+                .ok_or(EffectSpecCompileError::MissingScalarValue)
+                .and_then(scalar_fraction)
+            {
+                Ok(v) => v,
+                Err(e) => return Some(Err(e)),
+            };
+            let bonus = match op {
+                "multiply" | "mul_add" | "multiplyadd" | "multiply_base_add"
+                | "multiplybaseadd" | "set" => v - 1.0,
+                "add" => v,
+                _ => return Some(unsupported()),
+            };
+            if !bonus.is_finite() || bonus < 0.0 {
+                return Some(unsupported());
+            }
+            (
+                ReactiveDamageTakenKind::BaseWeaponDamageBonus(bonus),
+                scalar_chance,
+                duration_rounds,
+            )
+        }
+        AbilityModifierSpec::OpponentWeaponDamageReduction => {
+            if spec.target != AbilityTargetSpec::DefenderOpponent || op != "add" {
+                return Some(unsupported());
+            }
+            let v = match spec
+                .value
+                .as_ref()
+                .ok_or(EffectSpecCompileError::MissingScalarValue)
+                .and_then(scalar_fraction)
+            {
+                Ok(v) if v.is_finite() && v >= 0.0 => v,
+                Ok(_) => return Some(unsupported()),
+                Err(e) => return Some(Err(e)),
+            };
+            (
+                ReactiveDamageTakenKind::OpponentWeaponDamageReduction(v),
+                scalar_chance,
+                duration_rounds,
+            )
+        }
+        AbilityModifierSpec::HostileCritChanceReduction => {
+            if spec.target != AbilityTargetSpec::DefenderOpponent || op != "add" {
+                return Some(unsupported());
+            }
+            let v = match spec
+                .value
+                .as_ref()
+                .ok_or(EffectSpecCompileError::MissingScalarValue)
+                .and_then(scalar_fraction)
+            {
+                Ok(v) if v.is_finite() && v >= 0.0 => v,
+                Ok(_) => return Some(unsupported()),
+                Err(e) => return Some(Err(e)),
+            };
+            (
+                ReactiveDamageTakenKind::HostileCritChanceReduction(v),
+                scalar_chance,
+                duration_rounds,
+            )
+        }
+        AbilityModifierSpec::ApexBarrier => {
+            if !is_self_target || op != "multiply" {
+                return Some(unsupported());
+            }
+            let v = match spec
+                .value
+                .as_ref()
+                .ok_or(EffectSpecCompileError::MissingScalarValue)
+                .and_then(scalar_fraction)
+            {
+                Ok(v) if v.is_finite() && v >= 0.0 => v,
+                Ok(_) => return Some(unsupported()),
+                Err(e) => return Some(Err(e)),
+            };
+            (
+                ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v),
+                scalar_chance,
+                duration_rounds,
+            )
+        }
+        AbilityModifierSpec::StateBurning => (
+            ReactiveDamageTakenKind::ApplyDefenderBurning,
+            state_chance,
+            duration_rounds.max(1),
+        ),
+        AbilityModifierSpec::StateHullBreach => (
+            ReactiveDamageTakenKind::ApplyDefenderHullBreach,
+            state_chance,
+            duration_rounds.max(1),
+        ),
+        AbilityModifierSpec::StateMorale => (
+            ReactiveDamageTakenKind::ApplyAttackerMorale,
+            state_chance,
+            duration_rounds.max(1),
+        ),
+        _ => return Some(unsupported()),
+    };
+
+    Some(Ok((
+        timing,
+        AbilityEffect::ReactiveDamageTaken {
+            trigger,
+            kind,
+            chance,
+            duration_rounds: effective_duration,
+        },
+        compiled_condition.clone(),
+    )))
 }
 
 fn compile_officer_combat_spec_impl(
@@ -449,6 +697,11 @@ fn compile_officer_combat_spec_impl(
     let compiled_condition = compile_conditions_and(&spec.conditions)?;
     let op = lcars_op_from_officer_spec(spec);
     let op = op.as_str();
+
+    if let Some(reactive) = try_compile_reactive_damage_taken(spec, timing, op, &compiled_condition)
+    {
+        return reactive;
+    }
 
     match spec.modifier {
         AbilityModifierSpec::WeaponDamage => {
@@ -561,10 +814,41 @@ fn compile_officer_combat_spec_impl(
                 compiled_condition.clone(),
             ))
         }
+        AbilityModifierSpec::OpponentWeaponDamageReduction => {
+            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart)
+                || spec.target != AbilityTargetSpec::DefenderOpponent
+                || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let reduction = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            if !reduction.is_finite() || reduction < 0.0 {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let cumulative = timing == TimingWindow::RoundStart
+                && !matches!(spec.duration.as_ref(), Some(DurationSpec::Rounds { .. }));
+            Ok((
+                timing,
+                AbilityEffect::OpponentWeaponDamageReduction {
+                    reduction,
+                    cumulative,
+                },
+                compiled_condition.clone(),
+            ))
+        }
         AbilityModifierSpec::HostileCritChanceReduction => {
             if !matches!(spec.target, AbilityTargetSpec::DefenderOpponent)
                 || spec.operation != AbilityOperationSpec::Add
-                || timing != TimingWindow::CombatBegin
             {
                 return Err(EffectSpecCompileError::UnsupportedModifierOperation {
                     modifier: spec.modifier,
@@ -582,11 +866,41 @@ fn compile_officer_combat_spec_impl(
                     operation: spec.operation,
                 });
             }
-            Ok((
-                timing,
-                AbilityEffect::HostileCritChanceReduction(amount),
-                compiled_condition.clone(),
-            ))
+            match timing {
+                TimingWindow::CombatBegin => Ok((
+                    timing,
+                    AbilityEffect::HostileCritChanceReduction(amount),
+                    compiled_condition.clone(),
+                )),
+                TimingWindow::RoundStart => {
+                    let (duration_rounds, cumulative) = match spec.duration.as_ref() {
+                        Some(DurationSpec::Rounds { rounds }) => ((*rounds).max(1), false),
+                        _ => (0, true),
+                    };
+                    Ok((
+                        timing,
+                        AbilityEffect::TimedHostileCritChanceReduction {
+                            reduction: amount,
+                            duration_rounds,
+                            cumulative,
+                        },
+                        compiled_condition.clone(),
+                    ))
+                }
+                TimingWindow::AttackPhase if spec.officer.post_weapon_grant => Ok((
+                    timing,
+                    AbilityEffect::TimedHostileCritChanceReduction {
+                        reduction: amount,
+                        duration_rounds: 0,
+                        cumulative: true,
+                    },
+                    compiled_condition.clone(),
+                )),
+                _ => Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                }),
+            }
         }
         AbilityModifierSpec::CritChance => {
             let v = scalar_fraction(
@@ -1042,7 +1356,10 @@ fn compile_officer_combat_spec_impl(
             ))
         }
         AbilityModifierSpec::BaseMitigationStatsBonus | AbilityModifierSpec::BaseArmorBonus => {
-            if timing != TimingWindow::RoundStart {
+            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart)
+                || (spec.modifier == AbilityModifierSpec::BaseArmorBonus
+                    && timing != TimingWindow::RoundStart)
+            {
                 return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
             }
             if !matches!(
@@ -1067,6 +1384,104 @@ fn compile_officer_combat_spec_impl(
                 } else {
                     AbilityEffect::BaseMitigationStatsBonus(fraction)
                 },
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::CumulativeBaseMitigationStatsBonus => {
+            if timing != TimingWindow::RoundStart {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if !matches!(
+                spec.target,
+                AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+            ) || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let fraction = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::CumulativeBaseMitigationStatsBonus(fraction),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::HostileBaseDefenseStatsReduction => {
+            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if spec.target != AbilityTargetSpec::DefenderOpponent
+                || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let fraction = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::HostileBaseDefenseStatsReduction(fraction.max(0.0)),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::BasePiercingStatsBonus => {
+            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if !matches!(
+                spec.target,
+                AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+            ) || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let fraction = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::BasePiercingStatsBonus(fraction),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::CumulativeBasePiercingStatsBonus => {
+            if timing != TimingWindow::RoundStart {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if !matches!(
+                spec.target,
+                AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+            ) || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let fraction = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::CumulativeBasePiercingStatsBonus(fraction),
                 compiled_condition.clone(),
             ))
         }

@@ -185,6 +185,7 @@ impl OfficerStatRoundContext {
                     value: c.value,
                     target_attacker: c.target_attacker,
                     opponent_scope: c.opponent_scope,
+                    self_scope: None,
                 })
         };
 
@@ -473,6 +474,7 @@ mod tests {
                     target_attacker: c.target_attacker,
                     conditions: vec![],
                     opponent_scope: c.opponent_scope,
+                    self_scope: Default::default(),
                 })
                 .collect();
             let ship = ShipRecord {
@@ -514,6 +516,7 @@ mod tests {
                 target_attacker,
                 conditions,
                 opponent_scope,
+                self_scope: Default::default(),
             }
         };
         let dynamic =

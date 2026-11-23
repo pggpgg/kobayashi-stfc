@@ -248,6 +248,7 @@ fn defense_fixture() -> (Combatant, Combatant) {
                 shield_piercing: 500.0,
                 accuracy: 500.0,
             },
+            profile_piercing_fractions: None,
             base_attacker_weapon_stats: Vec::new(),
             ship_type: ShipType::Battleship,
             mystery_mitigation_factor: 0.0,
@@ -410,4 +411,194 @@ fn unresolved_hit_mechanics_remain_inert_in_multishot_hostile_fights() {
             .iter()
             .any(|e| e.event_type == "burning_trigger"));
     }
+}
+
+#[test]
+fn launch_officer_stat_scopes_isolate_all_bridge_captain_and_self_officer_pools() {
+    use kobayashi::lcars::OfficerStatSelfScope;
+
+    let below = ["tom-paris-3640cc".to_owned()];
+    let profile = PlayerProfile::default();
+    let ctx = OfficerStatConditionContext::default();
+
+    // 1. SelfAll Defense: Nine Of Eleven (+45%..+85%) and Reginald Barclay (+5%..+30%).
+    for (id, expected) in [
+        ("nine-of-eleven-8c475b", 0.85),
+        ("reginald-barclay-111169", 0.30),
+    ] {
+        let buff = crew("arrock-0791b2", &[id.to_owned()], &below, 5);
+        let actual = buff
+            .static_buffs
+            .get("officer_defense")
+            .copied()
+            .unwrap_or(0.0);
+        assert!(
+            (actual - expected).abs() < 1e-12,
+            "{id}: got {actual}, expected {expected}"
+        );
+    }
+
+    // 2. SelfBridge: Cadet Kirk captain (+8% A/D/H on captain+bridge, NOT below decks).
+    let kirk_buff = crew(
+        "cadet-kirk-a80563",
+        &["arrock-0791b2".to_owned()],
+        &below,
+        1,
+    );
+    assert!(
+        kirk_buff
+            .pending_officer_stat_contributions
+            .iter()
+            .any(|c| {
+                c.target_attacker
+                    && c.stat_key == "officer_stat_all"
+                    && c.self_scope == OfficerStatSelfScope::BridgeOfficers
+                    && (c.value - 0.08).abs() < 1e-12
+            }),
+        "Cadet Kirk must emit BridgeOfficers officer_stat_all contribution"
+    );
+    let bridge_atk = kirk_buff.bridge_officer_stat_totals.attack;
+    let total_atk = kirk_buff.officer_stat_totals.attack;
+    let below_atk = total_atk - bridge_atk;
+    assert!(below_atk > 0.0 && bridge_atk > 0.0);
+    // Threshold strictly between (total + 0.08 * bridge) and (total + 0.08 * total):
+    // proves below decks did NOT receive Cadet Kirk's bridge-only bonus.
+    let ship_bridge_only = ShipRecord {
+        officer_bonus: OfficerBonusTable {
+            attack: vec![
+                OfficerBonusBreakpoint {
+                    value: total_atk + 0.08 * bridge_atk - 1.0,
+                    bonus: 0.40,
+                },
+                OfficerBonusBreakpoint {
+                    value: total_atk + 0.08 * bridge_atk + 0.04 * below_atk,
+                    bonus: 0.80,
+                },
+            ],
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    let kirk_osr = compute_officer_stat_runtime_bonus_with_officers(
+        kirk_buff.officer_stat_totals,
+        kirk_buff.bridge_officer_stat_totals,
+        &kirk_buff.officer_stat_rows,
+        &ship_bridge_only,
+        &profile,
+        None,
+        &kirk_buff.static_buffs,
+        &kirk_buff.pending_officer_stat_contributions,
+        &ctx,
+        &[],
+    );
+    assert_eq!(kirk_osr.attack_bonus, 0.40);
+
+    // 3. SelfCaptain: Marla bridge (+90% A/D/H at T5 for captain ONLY, not Marla or below decks).
+    let marla_buff = crew("arrock-0791b2", &["marla-9732c7".to_owned()], &below, 5);
+    assert!(marla_buff
+        .pending_officer_stat_contributions
+        .iter()
+        .any(|c| {
+            c.target_attacker
+                && c.stat_key == "officer_stat_all"
+                && c.self_scope == OfficerStatSelfScope::CaptainOnly
+                && (c.value - 0.90).abs() < 1e-12
+        }));
+    let cap_raw_atk = marla_buff.officer_stat_rows[0].raw.attack;
+    let marla_raw_atk = marla_buff.officer_stat_rows[1].raw.attack;
+    let marla_total_atk = marla_buff.officer_stat_totals.attack;
+    assert!(cap_raw_atk > 0.0 && marla_raw_atk > 0.0);
+    let ship_cap_only = ShipRecord {
+        officer_bonus: OfficerBonusTable {
+            attack: vec![
+                OfficerBonusBreakpoint {
+                    value: marla_total_atk + 0.90 * cap_raw_atk - 1.0,
+                    bonus: 0.30,
+                },
+                OfficerBonusBreakpoint {
+                    value: marla_total_atk + 0.90 * cap_raw_atk + 0.45 * marla_raw_atk,
+                    bonus: 0.90,
+                },
+            ],
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    let marla_osr = compute_officer_stat_runtime_bonus_with_officers(
+        marla_buff.officer_stat_totals,
+        marla_buff.bridge_officer_stat_totals,
+        &marla_buff.officer_stat_rows,
+        &ship_cap_only,
+        &profile,
+        None,
+        &marla_buff.static_buffs,
+        &marla_buff.pending_officer_stat_contributions,
+        &ctx,
+        &[],
+    );
+    assert_eq!(marla_osr.attack_bonus, 0.30);
+
+    // 4. SelfOfficer: Wesley Crusher (+200% A/D/H at T5 for Wesley ONLY).
+    let wesley_buff = crew(
+        "arrock-0791b2",
+        &["wesley-crusher-834fce".to_owned()],
+        &below,
+        5,
+    );
+    assert!(wesley_buff
+        .pending_officer_stat_contributions
+        .iter()
+        .any(|c| {
+            c.target_attacker
+                && c.stat_key == "officer_stat_all"
+                && c.self_scope
+                    == OfficerStatSelfScope::SingleOfficer("wesley-crusher-834fce".into())
+                && (c.value - 2.0).abs() < 1e-12
+        }));
+    let wesley_raw_atk = wesley_buff
+        .officer_stat_rows
+        .iter()
+        .find(|r| r.officer_id == "wesley-crusher-834fce")
+        .unwrap()
+        .raw
+        .attack;
+    let wesley_other_atk = wesley_buff.officer_stat_totals.attack - wesley_raw_atk;
+    let ship_self_only = ShipRecord {
+        officer_bonus: OfficerBonusTable {
+            attack: vec![
+                OfficerBonusBreakpoint {
+                    value: wesley_buff.officer_stat_totals.attack + 2.0 * wesley_raw_atk - 1.0,
+                    bonus: 0.35,
+                },
+                OfficerBonusBreakpoint {
+                    value: wesley_buff.officer_stat_totals.attack
+                        + 2.0 * wesley_raw_atk
+                        + 0.5 * wesley_other_atk,
+                    bonus: 0.95,
+                },
+            ],
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    let wesley_osr = compute_officer_stat_runtime_bonus_with_officers(
+        wesley_buff.officer_stat_totals,
+        wesley_buff.bridge_officer_stat_totals,
+        &wesley_buff.officer_stat_rows,
+        &ship_self_only,
+        &profile,
+        None,
+        &wesley_buff.static_buffs,
+        &wesley_buff.pending_officer_stat_contributions,
+        &ctx,
+        &[],
+    );
+    assert_eq!(wesley_osr.attack_bonus, 0.35);
+
+    // 5. Flat Add (Origins Burnham) must remain quarantined pending native placement evidence.
+    let origins = crew("origins-burnham-e854d6", &[], &[], 1);
+    assert!(origins.crew.seats.iter().any(|s| matches!(
+        s.ability.effect,
+        AbilityEffect::UnsupportedOfficerEffect { .. }
+    )));
 }

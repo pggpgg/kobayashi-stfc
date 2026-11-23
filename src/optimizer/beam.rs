@@ -310,7 +310,9 @@ fn score_single_effect(
             scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.4;
             scores[BEAM_CAPTAIN_DIVERSITY] += w * m * 1.6;
         }
-        AbilityEffect::BaseMitigationStatsBonus(v) | AbilityEffect::BaseArmorBonus(v) => {
+        AbilityEffect::BaseMitigationStatsBonus(v)
+        | AbilityEffect::CumulativeBaseMitigationStatsBonus(v)
+        | AbilityEffect::BaseArmorBonus(v) => {
             let m = soft_mag(v, 0.25);
             scores[BEAM_SURVIVABILITY] += w * m * 2.4;
             scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.8;
@@ -331,10 +333,17 @@ fn score_single_effect(
             scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.2;
             scores[BEAM_CAPTAIN_DIVERSITY] += w * m * 1.4;
         }
-        AbilityEffect::HostileCritChanceReduction(v) => {
+        AbilityEffect::HostileCritChanceReduction(v)
+        | AbilityEffect::TimedHostileCritChanceReduction { reduction: v, .. } => {
             let m = soft_mag(v, 0.15);
             scores[BEAM_SURVIVABILITY] += w * m * 2.2;
             scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.6;
+        }
+        AbilityEffect::OpponentWeaponDamageReduction { reduction, .. } => {
+            let m = soft_mag(reduction, 0.20);
+            scores[BEAM_SURVIVABILITY] += w * m * 3.0;
+            scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.5;
+            scores[BEAM_CAPTAIN_DIVERSITY] += w * m * 1.4;
         }
         AbilityEffect::HostileBasePiercingStatsReduction(v)
         | AbilityEffect::HostileCounterStatDebuff { reduction: v, .. } => {
@@ -342,6 +351,14 @@ fn score_single_effect(
             scores[BEAM_SURVIVABILITY] += w * m * 2.6;
             scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.0;
             scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 1.2;
+        }
+        AbilityEffect::HostileBaseDefenseStatsReduction(v)
+        | AbilityEffect::BasePiercingStatsBonus(v)
+        | AbilityEffect::CumulativeBasePiercingStatsBonus(v) => {
+            let m = soft_mag(v, 0.35);
+            scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 2.7;
+            scores[BEAM_DAMAGE] += w * m * 1.6;
+            scores[BEAM_R1_BURST] += w * m * 1.4 * early_mult;
         }
         AbilityEffect::PierceBonus(v) | AbilityEffect::AccuracyBonus(v) => {
             let m = soft_mag(v, 0.20);
@@ -425,6 +442,70 @@ fn score_single_effect(
             } else {
                 scores[BEAM_DAMAGE] += w * m * 2.0;
                 scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.5;
+            }
+        }
+        AbilityEffect::ReactiveDamageTaken {
+            kind,
+            chance,
+            duration_rounds,
+            ..
+        } => {
+            let p = chance.clamp(0.0, 1.0);
+            let dur_boost = if duration_rounds == 0 { 1.4 } else { 1.0 };
+            match kind {
+                crate::combat::ReactiveDamageTakenKind::CritChanceBonus(v) => {
+                    let m = soft_mag(v * p * dur_boost, 0.10);
+                    scores[BEAM_DAMAGE] += w * m * 2.1;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.6;
+                }
+                crate::combat::ReactiveDamageTakenKind::BaseCritDamageBonus(v) => {
+                    let m = soft_mag(v * p * dur_boost, 0.20);
+                    scores[BEAM_DAMAGE] += w * m * 1.9;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.4;
+                }
+                crate::combat::ReactiveDamageTakenKind::BaseWeaponDamageBonus(v) => {
+                    let m = soft_mag(v * p * dur_boost, 0.20);
+                    scores[BEAM_DAMAGE] += w * m * 2.0;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.5;
+                }
+                crate::combat::ReactiveDamageTakenKind::AttackerShieldMitigationBonus(v) => {
+                    let m = soft_mag(v * p, 0.10);
+                    scores[BEAM_SURVIVABILITY] += w * m * 2.2;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.0;
+                }
+                crate::combat::ReactiveDamageTakenKind::OpponentWeaponDamageReduction(v) => {
+                    let m = soft_mag(v * p, 0.20);
+                    scores[BEAM_SURVIVABILITY] += w * m * 2.3;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.0;
+                }
+                crate::combat::ReactiveDamageTakenKind::HostileCritChanceReduction(v) => {
+                    let m = soft_mag(v * p * dur_boost, 0.15);
+                    scores[BEAM_SURVIVABILITY] += w * m * 1.9;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.5;
+                }
+                crate::combat::ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v) => {
+                    let m = soft_mag(v * p, 0.50);
+                    scores[BEAM_SURVIVABILITY] += w * m * 2.1;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.8;
+                }
+                crate::combat::ReactiveDamageTakenKind::ApplyDefenderBurning => {
+                    *provides_state |= STATE_BURNING;
+                    let m = soft_mag(p, 0.35);
+                    scores[BEAM_DAMAGE] += w * m * 1.4;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.3;
+                }
+                crate::combat::ReactiveDamageTakenKind::ApplyDefenderHullBreach => {
+                    *provides_state |= STATE_HULL_BREACH;
+                    let m = soft_mag(p, 0.35);
+                    scores[BEAM_DAMAGE] += w * m * 1.6;
+                    scores[BEAM_CAPTAIN_DIVERSITY] += w * m * 1.2;
+                }
+                crate::combat::ReactiveDamageTakenKind::ApplyAttackerMorale => {
+                    *provides_state |= STATE_MORALE;
+                    let m = soft_mag(p, 0.35);
+                    scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 1.5;
+                    scores[BEAM_CAPTAIN_DIVERSITY] += w * m * 1.2;
+                }
             }
         }
         AbilityEffect::DefenderShieldDrainPerRound { fraction, .. } => {

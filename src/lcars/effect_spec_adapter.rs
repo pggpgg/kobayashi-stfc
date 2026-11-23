@@ -7,8 +7,8 @@
 use crate::combat::TimingWindow;
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
-    AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, DurationSpec, EffectSource, OfficerSpecAttrs,
-    OfficerStatScaling, ValueSpec,
+    AbilityTriggerSpec, ChanceSpec, CombatEffectSpec, DamageTakenTriggerKind, DurationSpec,
+    EffectSource, OfficerSpecAttrs, OfficerStatScaling, ValueSpec,
 };
 use crate::lcars::parser::{
     LcarsCondition, LcarsDuration, LcarsEffect, LcarsLevelStats, LcarsOfficer,
@@ -484,6 +484,9 @@ pub fn known_officer_stat(stat: &str) -> bool {
 fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
     match stat.trim() {
         "weapon_damage" | "attack" => Some(AbilityModifierSpec::WeaponDamage),
+        "opponent_weapon_damage_reduction" => {
+            Some(AbilityModifierSpec::OpponentWeaponDamageReduction)
+        }
         "hull_hp" | "hull" | "hull_hp_additive_pool" => Some(AbilityModifierSpec::HullHp),
         "shield_hp" | "shield" | "shield_hp_additive_pool" => Some(AbilityModifierSpec::ShieldHp),
         "crit_chance" => Some(AbilityModifierSpec::CritChance),
@@ -493,6 +496,17 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "pierce" | "armor_pierce" | "shield_pierce" => Some(AbilityModifierSpec::Pierce),
         "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
         "armor" => Some(AbilityModifierSpec::MitigationAdditive),
+        "base_mitigation_stats_bonus" => Some(AbilityModifierSpec::BaseMitigationStatsBonus),
+        "cumulative_base_mitigation_stats_bonus" => {
+            Some(AbilityModifierSpec::CumulativeBaseMitigationStatsBonus)
+        }
+        "hostile_base_defense_stats_reduction" => {
+            Some(AbilityModifierSpec::HostileBaseDefenseStatsReduction)
+        }
+        "base_piercing_stats_bonus" => Some(AbilityModifierSpec::BasePiercingStatsBonus),
+        "cumulative_base_piercing_stats_bonus" => {
+            Some(AbilityModifierSpec::CumulativeBasePiercingStatsBonus)
+        }
         "base_armor_bonus" => Some(AbilityModifierSpec::BaseArmorBonus),
         "base_mitigation_stats_add" => Some(AbilityModifierSpec::BaseMitigationStatsAdd),
         "hostile_base_piercing_stats_reduction" => {
@@ -679,6 +693,9 @@ fn officer_target_from_effect(effect: &LcarsEffect) -> AbilityTargetSpec {
     {
         Some(ref t) if t == "enemy_bridge" => AbilityTargetSpec::EnemyBridgeOfficers,
         Some(ref t) if t == "enemy" => AbilityTargetSpec::DefenderOpponent,
+        Some(ref t) if t == "self_bridge" => AbilityTargetSpec::SelfBridgeOfficers,
+        Some(ref t) if t == "self_captain" => AbilityTargetSpec::SelfCaptain,
+        Some(ref t) if t == "self_officer" => AbilityTargetSpec::SelfOfficer,
         Some(ref t) if t == "self" || t.is_empty() => AbilityTargetSpec::AttackerSelf,
         None => AbilityTargetSpec::AttackerSelf,
         _ => AbilityTargetSpec::AttackerSelf,
@@ -892,12 +909,24 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
     // Officer-specific carry is now typed (was stuffed into `attributes`); `attributes` stays
     // empty for officer specs and is reserved for genuinely producer-specific keys (e.g. stfc_cc).
     let attributes = serde_json::Map::new();
+    let damage_taken_trigger = effect.trigger.as_deref().and_then(|t| {
+        match t.trim().to_ascii_lowercase().replace('-', "_").as_str() {
+            "on_hull_damage_taken" => Some(DamageTakenTriggerKind::HullDamage),
+            "on_shield_damage_taken" => Some(DamageTakenTriggerKind::ShieldDamage),
+            "on_critical_shot_taken" | "criticalshottaken" => {
+                Some(DamageTakenTriggerKind::CriticalHit)
+            }
+            "hittaken" => Some(DamageTakenTriggerKind::AnyDamage),
+            _ => None,
+        }
+    });
     let mut officer = OfficerSpecAttrs {
         lcars_op: Some(op_norm.clone()),
         post_weapon_grant: effect
             .trigger
             .as_deref()
             .is_some_and(|trigger| trigger.trim().eq_ignore_ascii_case("EnemyTakesHit")),
+        damage_taken_trigger,
         ..Default::default()
     };
     if effect

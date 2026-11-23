@@ -207,6 +207,7 @@ fn raw_context(ship_type: ShipType, weapon_count: usize) -> HostileMitigationPar
             shield_piercing: 1_600.0,
             accuracy: 1_500.0,
         },
+        profile_piercing_fractions: None,
         base_attacker_weapon_stats: (0..weapon_count)
             .map(|index| AttackerStats {
                 armor_piercing: 1_000.0 + index as f64 * 90.0,
@@ -615,6 +616,7 @@ fn catalog_case() -> Result<Case, String> {
             defender_stats: ship.to_defender_stats(),
             weapon_pierce_defender_stats: None,
             base_attacker_stats: hostile.to_attacker_stats(),
+            profile_piercing_fractions: None,
             base_attacker_weapon_stats: hostile.counter_weapon_attacker_stats(),
             ship_type: case.attacker_type,
             mystery_mitigation_factor: 0.0,
@@ -649,6 +651,7 @@ fn catalog_case() -> Result<Case, String> {
             defender_stats: hostile.to_defender_stats(),
             weapon_pierce_defender_stats: None,
             base_attacker_stats: ship.to_attacker_stats(),
+            profile_piercing_fractions: None,
             base_attacker_weapon_stats: Vec::new(),
             ship_type: case.defender_type,
             mystery_mitigation_factor: hostile.mystery_mitigation_factor.unwrap_or(0.0),

@@ -344,9 +344,9 @@ fn reasons_with_officer_samples_groups_distinct_and_caps_samples() {
     assert_eq!(samples, &vec!["alpha"]);
 }
 
-/// Exact source-trigger quarantine for the bundled canonical officer model. The three source
-/// events are intentionally unsupported until matching engine timing exists, and must remain
-/// visible as drops rather than being aliased to another event window.
+/// Exact source-trigger quarantine for the bundled canonical officer model. `BattleWon` is a
+/// post-victory overworld/multi-fight trigger without an in-combat engine window and must remain
+/// visible as a drop rather than being aliased to `Kill` or `CombatBegin`.
 #[test]
 fn production_unsupported_trigger_drop_counts() {
     // skip in minimal checkouts — matches resolver_bundled_lcars_yaml_* convention
@@ -363,28 +363,14 @@ fn production_unsupported_trigger_drop_counts() {
             .count()
     };
     assert_eq!(
-        count("unknown_trigger:unsupported_HullDamageTaken"),
-        10,
-        "HullDamageTaken rows must stay quarantined"
-    );
-    assert_eq!(
-        count("unknown_trigger:unsupported_ShieldDamageTaken"),
-        2,
-        "ShieldDamageTaken rows must stay quarantined"
-    );
-    assert_eq!(
         count("unknown_trigger:unsupported_BattleWon"),
         2,
         "BattleWon rows must stay quarantined"
     );
     assert_eq!(
         drops.len(),
-        16,
-        "no other source rows are currently dropped"
-    );
-    assert_eq!(
-        count("unknown_trigger:unknown_trigger"),
         2,
-        "other unknown trigger rows remain explicitly reported"
+        "only BattleWon source rows are currently dropped (drops={:?})",
+        drops.drops
     );
 }
