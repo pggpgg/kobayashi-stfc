@@ -92,6 +92,9 @@ fn ship_ability_condition_specs(ability: &ShipAbility) -> Vec<AbilityConditionSp
     if ability.condition_defender_is_npc_hostile {
         parts.push(AbilityConditionSpec::DefenderIsNpcHostile);
     }
+    if ability.condition_defender_is_player_ship {
+        parts.push(AbilityConditionSpec::DefenderIsPlayerShip);
+    }
     if let Some(ref round_cap) = ability.round_cap {
         parts.push(AbilityConditionSpec::RoundRange {
             min: 1,
@@ -224,6 +227,7 @@ mod tests {
             condition_opponent_ship_class: None,
             condition_opponent_ship_class_not: None,
             condition_defender_is_npc_hostile: false,
+            condition_defender_is_player_ship: false,
             condition_opponent_hostile_tags: None,
             round_cap: Some(5),
             level_scaled_values: None,
@@ -266,6 +270,7 @@ mod tests {
             condition_opponent_ship_class: None,
             condition_opponent_ship_class_not: Some("armada".into()),
             condition_defender_is_npc_hostile: false,
+            condition_defender_is_player_ship: false,
             condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,
@@ -296,6 +301,7 @@ mod tests {
             condition_opponent_ship_class: None,
             condition_opponent_ship_class_not: None,
             condition_defender_is_npc_hostile: false,
+            condition_defender_is_player_ship: false,
             condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,

@@ -10,9 +10,10 @@ After classification, merges data/upstream/data-stfc-space/ship_ability_catalog_
 
 Optional catalog fields (omit when false):
   condition_morale, condition_defender_burning, condition_defender_hull_breach,
-  condition_defender_is_npc_hostile,
+  condition_defender_is_npc_hostile, condition_defender_is_player_ship,
   condition_opponent_faction (slug matching OpponentFactionTag serde names, e.g. klingon),
-  condition_opponent_ship_class (battleship | explorer | interceptor; defender hull class in PvE)
+  condition_opponent_ship_class (battleship | explorer | interceptor; defender hull class in PvE),
+  condition_opponent_ship_class_not (negative defender hull class gate, e.g. armada)
 
 Usage (repo root):  python3 scripts/generate_full_ship_ability_catalog.py
 """
@@ -84,8 +85,10 @@ def modeled(
     condition_defender_burning: bool = False,
     condition_defender_hull_breach: bool = False,
     condition_defender_is_npc_hostile: bool = False,
+    condition_defender_is_player_ship: bool = False,
     condition_opponent_faction: str | None = None,
     condition_opponent_ship_class: str | None = None,
+    condition_opponent_ship_class_not: str | None = None,
     condition_opponent_hostile_tags: list[str] | None = None,
     round_cap: int | None = None,
     values_scale_with_ship_level: bool = False,
@@ -106,10 +109,14 @@ def modeled(
         d["condition_defender_hull_breach"] = True
     if condition_defender_is_npc_hostile:
         d["condition_defender_is_npc_hostile"] = True
+    if condition_defender_is_player_ship:
+        d["condition_defender_is_player_ship"] = True
     if condition_opponent_faction:
         d["condition_opponent_faction"] = condition_opponent_faction
     if condition_opponent_ship_class:
         d["condition_opponent_ship_class"] = condition_opponent_ship_class
+    if condition_opponent_ship_class_not:
+        d["condition_opponent_ship_class_not"] = condition_opponent_ship_class_not
     cap = None if duration_rounds is not None else round_cap
     if cap is not None and cap > 0:
         d["round_cap"] = int(cap)
@@ -186,9 +193,15 @@ def classify_single_ability(_loca: int, text: str) -> dict:
     if not p.strip():
         return dict(NOOP)
 
-    # The current engagement tags cannot distinguish Solo Wave Defense.
-    if "solo wave defense" in p:
+    # The current engagement tags cannot distinguish Solo Wave Defense or Veil systems.
+    if "solo wave defense" in p or "in the veil" in p:
         return dict(NOOP)
+
+    non_armada_hostile = "non-armada hostile" in p
+    vs_players = (
+        "versus players" in p or "vs players" in p or "against players" in p
+    )
+    against_hostiles = "against hostile" in p or "when fighting hostile" in p
 
     rc = first_n_rounds_cap(p)
 
@@ -419,6 +432,9 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             "isolytic_defense",
             value_is_percentage=False,
             ignore_upstream_value_is_percentage=True,
+            condition_defender_is_npc_hostile=non_armada_hostile or against_hostiles,
+            condition_defender_is_player_ship=vs_players,
+            condition_opponent_ship_class_not="armada" if non_armada_hostile else None,
         )
     if "isolytic" in p and "increas" in p:
         return m(
@@ -426,6 +442,9 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             "isolytic_damage",
             value_is_percentage=False,
             ignore_upstream_value_is_percentage=True,
+            condition_defender_is_npc_hostile=non_armada_hostile or against_hostiles,
+            condition_defender_is_player_ship=vs_players,
+            condition_opponent_ship_class_not="armada" if non_armada_hostile else None,
         )
 
     # Apex
@@ -435,6 +454,9 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             "apex_shred",
             value_is_percentage=False,
             ignore_upstream_value_is_percentage=True,
+            condition_defender_is_npc_hostile=non_armada_hostile or against_hostiles,
+            condition_defender_is_player_ship=vs_players,
+            condition_opponent_ship_class_not="armada" if non_armada_hostile else None,
         )
     if "apex barrier" in p and "increas" in p:
         return m(
@@ -442,6 +464,9 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             "apex_barrier",
             value_is_percentage=False,
             ignore_upstream_value_is_percentage=True,
+            condition_defender_is_npc_hostile=non_armada_hostile or against_hostiles,
+            condition_defender_is_player_ship=vs_players,
+            condition_opponent_ship_class_not="armada" if non_armada_hostile else None,
         )
 
     # Opponent hull class (Explorer / Battleship / Interceptor) — see `CombatContext::defender_ship_type`.
@@ -475,8 +500,8 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             return m(
                 "combat_begin",
                 "accuracy",
-                value_is_percentage=True,
-                ignore_upstream_value_is_percentage=False,
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
                 condition_opponent_ship_class=slug_sc,
             )
 
@@ -606,8 +631,9 @@ def classify_single_ability(_loca: int, text: str) -> dict:
             return m(
                 "combat_begin",
                 "accuracy",
-                value_is_percentage=True,
-                ignore_upstream_value_is_percentage=False,
+                value_is_percentage=False,
+                ignore_upstream_value_is_percentage=True,
+                condition_defender_is_npc_hostile=against_hostiles,
             )
         if "ignor" in p and "shield" in p:
             # "ignores X% of ... shields" is a shield-mitigation bypass
@@ -678,7 +704,7 @@ def main() -> None:
             "Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; "
             "optional condition_morale, condition_defender_burning, condition_defender_hull_breach, "
             "condition_opponent_faction, condition_opponent_ship_class, condition_opponent_ship_class_not, "
-            "condition_defender_is_npc_hostile, round_cap. "
+            "condition_defender_is_npc_hostile, condition_defender_is_player_ship, round_cap. "
             "combat_noop: catalogued only. See src/data/ship_ability_resolve.rs and docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md."
         ),
         "entries": dict(sorted(entries.items(), key=lambda kv: int(kv[0]))),

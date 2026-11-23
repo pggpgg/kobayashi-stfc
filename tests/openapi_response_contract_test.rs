@@ -4,6 +4,7 @@ use axum::body::Body;
 use axum::extract::connect_info::ConnectInfo;
 use axum::http::{Method, Request, StatusCode};
 use kobayashi::data::data_registry::DataRegistry;
+use kobayashi::data::profile_index::DEMO_PROFILE_ID;
 use kobayashi::server::openapi::OPENAPI_YAML;
 use kobayashi::server::routes::build_router;
 use serde_json::Value;
@@ -121,4 +122,90 @@ async fn read_only_get_json_matches_openapi_schemas() {
     let estimate =
         get_json_200("/api/optimize/estimate?ship=Saladin&hostile=2918121098&sims=100").await;
     assert_valid(&spec, "OptimizeEstimateResponse", &estimate);
+}
+
+async fn post_json_200(path: &str, payload: Value) -> Value {
+    let registry = DataRegistry::load().expect("data registry");
+    let app = build_router(registry);
+    let addr: SocketAddr = "127.0.0.1:12345".parse().expect("loopback");
+    let mut req = Request::builder()
+        .method(Method::POST)
+        .uri(path)
+        .header("content-type", "application/json")
+        .header("x-profile-id", DEMO_PROFILE_ID)
+        .body(Body::from(payload.to_string()))
+        .expect("request");
+    req.extensions_mut().insert(ConnectInfo(addr));
+    let resp = app.oneshot(req).await.expect("oneshot");
+    let status = resp.status();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .expect("body");
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "POST {path} expected 200; body={}",
+        String::from_utf8_lossy(&body)
+    );
+    serde_json::from_slice(&body).unwrap_or_else(|e| {
+        panic!(
+            "POST {path} invalid JSON: {e}; body={}",
+            String::from_utf8_lossy(&body)
+        )
+    })
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn track_b_post_json_matches_openapi_schemas() {
+    let spec = openapi_spec_json();
+
+    let cf = post_json_200(
+        "/api/crew/counterfactual",
+        serde_json::json!({
+            "ship": "uss_saladin",
+            "hostile": "1140710508",
+            "below_decks_slots": 2,
+            "num_sims": 60,
+            "seed": 17,
+            "unavailable_officers": ["Cadet Uhura"],
+            "max_substitutes_per_slot": 2,
+            "max_substitute_crews": 3,
+            "crew": {
+                "captain": "Cadet Uhura",
+                "bridge": ["Badgey", "Nesmith"],
+                "below_deck": ["Odo", "Harry Kim"]
+            }
+        }),
+    )
+    .await;
+    assert_valid(&spec, "CrewCounterfactualResponse", &cf);
+
+    let fleet = post_json_200(
+        "/api/fleet/allocate",
+        serde_json::json!({
+            "objective": "min_regret",
+            "sims_per_crew": 60,
+            "candidates_per_slot": 24,
+            "seed": 23,
+            "slots": [
+                {
+                    "label": "Dock 1",
+                    "ship": "uss_saladin",
+                    "hostile": "1140710508",
+                    "below_decks_slots": 2,
+                    "priority_weight": 1.0
+                },
+                {
+                    "label": "Dock 2",
+                    "ship": "enterprise_nx_01",
+                    "hostile": "1120713907",
+                    "below_decks_slots": 2,
+                    "priority_weight": 1.0
+                }
+            ]
+        }),
+    )
+    .await;
+    assert_valid(&spec, "FleetAllocateResponse", &fleet);
 }

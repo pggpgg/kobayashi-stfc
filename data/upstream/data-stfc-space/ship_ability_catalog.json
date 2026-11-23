@@ -1,5 +1,5 @@
 {
-  "description": "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. Optional overrides (merged last): ship_ability_catalog_overrides.json. Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; optional condition_morale, condition_defender_burning, condition_defender_hull_breach, condition_opponent_faction, condition_opponent_ship_class, condition_opponent_ship_class_not, condition_defender_is_npc_hostile, round_cap. combat_noop: catalogued only. See src/data/ship_ability_resolve.rs and docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md.",
+  "description": "Maps upstream ship ability id (ships/*.json ability[].id) to Kobayashi timing/effect_type. Regenerate: python3 scripts/generate_full_ship_ability_catalog.py. Optional overrides (merged last): ship_ability_catalog_overrides.json. Fields: value_is_percentage, ignore_upstream_value_is_percentage, duration_rounds, value_override; optional condition_morale, condition_defender_burning, condition_defender_hull_breach, condition_opponent_faction, condition_opponent_ship_class, condition_opponent_ship_class_not, condition_defender_is_npc_hostile, condition_defender_is_player_ship, round_cap. combat_noop: catalogued only. See src/data/ship_ability_resolve.rs and docs/SHIP_ABILITY_COMBAT_NOOP_AUDIT.md.",
   "entries": {
     "34867572": {
       "timing": "combat_begin",
@@ -49,7 +49,9 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_ship_class_not": "armada"
     },
     "108924704": {
       "timing": "combat_begin",
@@ -82,7 +84,8 @@
       "timing": "combat_begin",
       "effect_type": "apex_barrier",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_player_ship": true
     },
     "390670439": {
       "timing": "combat_begin",
@@ -129,7 +132,8 @@
       "timing": "combat_begin",
       "effect_type": "apex_barrier",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_player_ship": true
     },
     "509252162": {
       "timing": "combat_begin",
@@ -295,9 +299,10 @@
     },
     "1054619032": {
       "timing": "combat_begin",
-      "effect_type": "isolytic_damage",
+      "effect_type": "combat_noop",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
     },
     "1087128295": {
       "timing": "combat_begin",
@@ -345,7 +350,9 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_ship_class_not": "armada"
     },
     "1244824002": {
       "timing": "combat_begin",
@@ -411,7 +418,9 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_ship_class_not": "armada"
     },
     "1463338054": {
       "timing": "combat_begin",
@@ -457,13 +466,16 @@
       "timing": "combat_begin",
       "effect_type": "apex_shred",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_ship_class_not": "armada"
     },
     "1721384497": {
       "timing": "combat_begin",
       "effect_type": "apex_barrier",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_player_ship": true
     },
     "1738424547": {
       "timing": "combat_begin",
@@ -498,8 +510,9 @@
     "1800726742": {
       "timing": "combat_begin",
       "effect_type": "accuracy",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true
     },
     "1823660918": {
       "timing": "combat_begin",
@@ -556,7 +569,9 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_ship_class_not": "armada"
     },
     "1960089851": {
       "timing": "combat_begin",
@@ -596,7 +611,9 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_ship_class_not": "armada"
     },
     "2057434885": {
       "timing": "combat_begin",
@@ -735,13 +752,16 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_ship_class_not": "armada"
     },
     "2500322687": {
       "timing": "combat_begin",
-      "effect_type": "isolytic_damage",
+      "effect_type": "combat_noop",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
     },
     "2506949026": {
       "timing": "combat_begin",
@@ -789,7 +809,9 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_ship_class_not": "armada"
     },
     "2686586954": {
       "timing": "combat_begin",
@@ -802,7 +824,9 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_ship_class_not": "armada"
     },
     "2704762692": {
       "timing": "combat_begin",
@@ -917,8 +941,8 @@
     "3033866568": {
       "timing": "combat_begin",
       "effect_type": "accuracy",
-      "value_is_percentage": true,
-      "ignore_upstream_value_is_percentage": false,
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
       "condition_opponent_ship_class": "interceptor"
     },
     "3046584086": {
@@ -973,7 +997,9 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_ship_class_not": "armada"
     },
     "3432906971": {
       "timing": "attack_phase",
@@ -1060,9 +1086,10 @@
     },
     "4108466526": {
       "timing": "combat_begin",
-      "effect_type": "isolytic_damage",
+      "effect_type": "combat_noop",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "value_override": 0
     },
     "4132047263": {
       "timing": "combat_begin",

@@ -341,21 +341,25 @@ fn extend_defender_crew_with_opponent_crit_damage_reduction_profile_bonus(
     });
 }
 
-/// [`AttackerStats`] for hostile mitigation: ship components, profile
-/// piercing-stat multipliers, LCARS static keys (`accuracy`, `accuracy_cb_mult` from passive or combat-begin
-/// `stat_modify`), and combat-begin hull [`ShipAbility`] accuracy.
-pub(crate) fn effective_attacker_stats_for_mitigation(
+/// [`AttackerStats`] for mitigation against an explicit opponent category: ship components,
+/// profile piercing-stat multipliers, LCARS static keys (`accuracy`, `accuracy_cb_mult` from
+/// passive or combat-begin `stat_modify`), and combat-begin hull [`ShipAbility`] accuracy.
+fn effective_attacker_stats_for_mitigation_against(
     ship_rec: &ShipRecord,
     profile: &PlayerProfile,
     static_buffs: &HashMap<String, f64>,
     defender_ship_type: ShipType,
+    defender_is_npc_hostile: bool,
+    defender_is_player_ship: bool,
 ) -> AttackerStats {
     let mut s = ship_rec.to_attacker_stats();
     apply_profile_piercing_to_attacker_stats(&mut s, profile, ship_rec.faction.as_deref());
     s.accuracy *= 1.0
-        + crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities(
+        + crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities_for_opponent(
             ship_rec.abilities.as_deref().unwrap_or(&[]),
             defender_ship_type,
+            defender_is_npc_hostile,
+            defender_is_player_ship,
         );
     s.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
     let cbm = static_buffs.get("accuracy_cb_mult").copied().unwrap_or(1.0);
@@ -365,14 +369,35 @@ pub(crate) fn effective_attacker_stats_for_mitigation(
     s
 }
 
+/// [`AttackerStats`] for hostile mitigation: ship components, profile
+/// piercing-stat multipliers, LCARS static keys (`accuracy`, `accuracy_cb_mult` from passive or combat-begin
+/// `stat_modify`), and combat-begin hull [`ShipAbility`] accuracy.
+pub(crate) fn effective_attacker_stats_for_mitigation(
+    ship_rec: &ShipRecord,
+    profile: &PlayerProfile,
+    static_buffs: &HashMap<String, f64>,
+    defender_ship_type: ShipType,
+) -> AttackerStats {
+    effective_attacker_stats_for_mitigation_against(
+        ship_rec,
+        profile,
+        static_buffs,
+        defender_ship_type,
+        true,
+        false,
+    )
+}
+
 /// Merge optional per-weapon piercing/accuracy from [`crate::data::ship::WeaponRecord`] with tier
-/// aggregates, then apply the same piercing bonuses as [`effective_attacker_stats_for_mitigation`].
-fn effective_attacker_stats_for_ship_weapon_row(
+/// aggregates, then apply the same piercing bonuses as [`effective_attacker_stats_for_mitigation_against`].
+fn effective_attacker_stats_for_ship_weapon_row_against(
     ship_rec: &ShipRecord,
     row: Option<&crate::data::ship::WeaponRecord>,
     profile: &PlayerProfile,
     static_buffs: &HashMap<String, f64>,
     defender_ship_type: ShipType,
+    defender_is_npc_hostile: bool,
+    defender_is_player_ship: bool,
 ) -> AttackerStats {
     let base = ship_rec.to_attacker_stats();
     let mut s = if let Some(w) = row {
@@ -386,9 +411,11 @@ fn effective_attacker_stats_for_ship_weapon_row(
     };
     apply_profile_piercing_to_attacker_stats(&mut s, profile, ship_rec.faction.as_deref());
     s.accuracy *= 1.0
-        + crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities(
+        + crate::data::ship_ability_resolve::sum_combat_begin_accuracy_from_ship_abilities_for_opponent(
             ship_rec.abilities.as_deref().unwrap_or(&[]),
             defender_ship_type,
+            defender_is_npc_hostile,
+            defender_is_player_ship,
         );
     s.accuracy += static_buffs.get("accuracy").copied().unwrap_or(0.0);
     let cbm = static_buffs.get("accuracy_cb_mult").copied().unwrap_or(1.0);
@@ -396,6 +423,26 @@ fn effective_attacker_stats_for_ship_weapon_row(
         s.accuracy *= cbm;
     }
     s
+}
+
+/// Merge optional per-weapon piercing/accuracy from [`crate::data::ship::WeaponRecord`] with tier
+/// aggregates for NPC hostile targets.
+fn effective_attacker_stats_for_ship_weapon_row(
+    ship_rec: &ShipRecord,
+    row: Option<&crate::data::ship::WeaponRecord>,
+    profile: &PlayerProfile,
+    static_buffs: &HashMap<String, f64>,
+    defender_ship_type: ShipType,
+) -> AttackerStats {
+    effective_attacker_stats_for_ship_weapon_row_against(
+        ship_rec,
+        row,
+        profile,
+        static_buffs,
+        defender_ship_type,
+        true,
+        false,
+    )
 }
 
 /// When normalized weapon rows include per-component piercing or accuracy, set each
@@ -472,12 +519,14 @@ pub(crate) fn ship_weapons_with_pierce_vs_defender_ship(
         if !has_row {
             continue;
         }
-        let stats = effective_attacker_stats_for_ship_weapon_row(
+        let stats = effective_attacker_stats_for_ship_weapon_row_against(
             ship_rec,
             row,
             profile,
             static_buffs,
             ship_type,
+            false,
+            true,
         );
         w.pierce = Some(pierce_damage_through_bonus(
             defender_stats,
@@ -537,11 +586,13 @@ fn player_inbound_mitigation_params_from_shared(
     }
     let opponent = shared.defender_ship_rec.as_ref()?;
     let profile = shared.defender_profile.as_ref()?;
-    let stats = effective_attacker_stats_for_mitigation(
+    let stats = effective_attacker_stats_for_mitigation_against(
         opponent,
         profile,
         &shared.player_defender_static_buffs,
         ship_rec.ship_type(),
+        false,
+        true,
     );
     let weapons = opponent
         .weapons
@@ -549,12 +600,14 @@ fn player_inbound_mitigation_params_from_shared(
         .unwrap_or(&[])
         .iter()
         .map(|row| {
-            effective_attacker_stats_for_ship_weapon_row(
+            effective_attacker_stats_for_ship_weapon_row_against(
                 opponent,
                 Some(row),
                 profile,
                 &shared.player_defender_static_buffs,
                 ship_rec.ship_type(),
+                false,
+                true,
             )
         })
         .collect();
@@ -583,11 +636,13 @@ pub fn mitigation_and_pierce_for_player_vs_player(
     static_buffs: &HashMap<String, f64>,
 ) -> (f64, f64) {
     let ship_type = defender_ship.ship_type();
-    let attacker_stats = effective_attacker_stats_for_mitigation(
+    let attacker_stats = effective_attacker_stats_for_mitigation_against(
         attacker_ship,
         attacker_profile,
         static_buffs,
         ship_type,
+        false,
+        true,
     );
     let defender_stats = defender_ship.to_defender_stats();
     let defender_mitigation = mitigation_for_hostile(
@@ -612,11 +667,13 @@ pub(crate) fn ship_weapons_with_pierce_vs_player_defender(
 ) -> Vec<crate::combat::WeaponStats> {
     let mut weapons = defender_ship.to_weapons();
     let Some(rows) = defender_ship.weapons.as_ref() else {
-        let stats = effective_attacker_stats_for_mitigation(
+        let stats = effective_attacker_stats_for_mitigation_against(
             defender_ship,
             defender_profile,
             defender_static_buffs,
             attacker_ship_type,
+            false,
+            true,
         );
         let pierce =
             pierce_damage_through_bonus(attacker_defender_stats, stats, attacker_ship_type);
@@ -632,12 +689,14 @@ pub(crate) fn ship_weapons_with_pierce_vs_player_defender(
     }
     for (i, w) in weapons.iter_mut().enumerate() {
         let row = rows.get(i);
-        let stats = effective_attacker_stats_for_ship_weapon_row(
+        let stats = effective_attacker_stats_for_ship_weapon_row_against(
             defender_ship,
             row,
             defender_profile,
             defender_static_buffs,
             attacker_ship_type,
+            false,
+            true,
         );
         w.pierce = Some(pierce_damage_through_bonus(
             attacker_defender_stats,
@@ -4907,6 +4966,7 @@ mod tests {
                 condition_opponent_ship_class: None,
                 condition_opponent_ship_class_not: None,
                 condition_defender_is_npc_hostile: false,
+                condition_defender_is_player_ship: false,
                 condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,
@@ -5013,6 +5073,7 @@ mod tests {
                 condition_opponent_ship_class: None,
                 condition_opponent_ship_class_not: None,
                 condition_defender_is_npc_hostile: false,
+                condition_defender_is_player_ship: false,
                 condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,
@@ -5051,6 +5112,7 @@ mod tests {
                 condition_opponent_ship_class: Some("interceptor".into()),
                 condition_opponent_ship_class_not: None,
                 condition_defender_is_npc_hostile: false,
+                condition_defender_is_player_ship: false,
                 condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,
@@ -5088,6 +5150,7 @@ mod tests {
                 condition_opponent_ship_class: None,
                 condition_opponent_ship_class_not: None,
                 condition_defender_is_npc_hostile: false,
+                condition_defender_is_player_ship: false,
                 condition_opponent_hostile_tags: None,
                 round_cap: Some(3),
                 level_scaled_values: None,
@@ -5198,6 +5261,7 @@ mod tests {
                 condition_opponent_ship_class: None,
                 condition_opponent_ship_class_not: None,
                 condition_defender_is_npc_hostile: false,
+                condition_defender_is_player_ship: false,
                 condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,

@@ -400,6 +400,9 @@ pub fn ability_condition_from_ship_ability(ability: &ShipAbility) -> Option<Abil
     if ability.condition_defender_is_npc_hostile {
         parts.push(AbilityCondition::DefenderIsNpcHostile);
     }
+    if ability.condition_defender_is_player_ship {
+        parts.push(AbilityCondition::DefenderIsPlayerShip);
+    }
     if let Some(ref tags) = ability.condition_opponent_hostile_tags {
         if !tags.is_empty() {
             if let Some(mask) = required_mask_from_condition_slugs(tags) {
@@ -686,6 +689,7 @@ mod tests {
             condition_opponent_ship_class: Some("battleship".into()),
             condition_opponent_ship_class_not: None,
             condition_defender_is_npc_hostile: false,
+            condition_defender_is_player_ship: false,
             condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,
@@ -722,6 +726,7 @@ mod tests {
             condition_opponent_ship_class: None,
             condition_opponent_ship_class_not: Some("armada".into()),
             condition_defender_is_npc_hostile: false,
+            condition_defender_is_player_ship: false,
             condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,

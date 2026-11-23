@@ -303,10 +303,13 @@ pub fn ship_ability_effect_from_catalog(
 }
 
 /// Fractional accuracy bonus from hull abilities at combat begin, applied to the ship's base rating
-/// before hostile mitigation / pierce-through (see [`crate::optimizer::monte_carlo::scenario::effective_attacker_stats_for_mitigation`]).
-pub fn sum_combat_begin_accuracy_from_ship_abilities(
+/// before mitigation / pierce-through for an explicit opponent category (NPC hostile vs player ship).
+/// See [`crate::optimizer::monte_carlo::scenario::effective_attacker_stats_for_mitigation`].
+pub fn sum_combat_begin_accuracy_from_ship_abilities_for_opponent(
     abilities: &[ShipAbility],
     defender_ship_type: ShipType,
+    defender_is_npc_hostile: bool,
+    defender_is_player_ship: bool,
 ) -> f64 {
     let mut sum = 0.0;
     for a in abilities {
@@ -317,11 +320,34 @@ pub fn sum_combat_begin_accuracy_from_ship_abilities(
             "accuracy" | "accuracy_bonus" => {}
             _ => continue,
         }
+        if a.condition_morale
+            || a.condition_defender_burning
+            || a.condition_defender_hull_breach
+            || a.condition_opponent_faction.is_some()
+            || a.condition_opponent_hostile_tags.is_some()
+        {
+            continue;
+        }
+        if a.condition_defender_is_npc_hostile && !defender_is_npc_hostile {
+            continue;
+        }
+        if a.condition_defender_is_player_ship && !defender_is_player_ship {
+            continue;
+        }
         if let Some(ref slug) = a.condition_opponent_ship_class {
-            if let Some(expected) = ShipType::from_data_slug(slug) {
-                if defender_ship_type != expected {
-                    continue;
-                }
+            let Some(expected) = ShipType::from_data_slug(slug) else {
+                continue;
+            };
+            if defender_ship_type != expected {
+                continue;
+            }
+        }
+        if let Some(ref slug) = a.condition_opponent_ship_class_not {
+            let Some(excluded) = ShipType::from_data_slug(slug) else {
+                continue;
+            };
+            if defender_ship_type == excluded {
+                continue;
             }
         }
         if a.round_cap.is_some() {
@@ -330,6 +356,20 @@ pub fn sum_combat_begin_accuracy_from_ship_abilities(
         sum += a.value;
     }
     sum
+}
+
+/// Fractional accuracy bonus from hull abilities at combat begin against an NPC hostile, applied
+/// to the ship's base rating before hostile mitigation / pierce-through.
+pub fn sum_combat_begin_accuracy_from_ship_abilities(
+    abilities: &[ShipAbility],
+    defender_ship_type: ShipType,
+) -> f64 {
+    sum_combat_begin_accuracy_from_ship_abilities_for_opponent(
+        abilities,
+        defender_ship_type,
+        true,
+        false,
+    )
 }
 
 /// One ship hull ability → one seat context, or None if unsupported.
@@ -540,6 +580,7 @@ mod tests {
                 condition_opponent_ship_class: None,
                 condition_opponent_ship_class_not: None,
                 condition_defender_is_npc_hostile: false,
+                condition_defender_is_player_ship: false,
                 condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,
@@ -557,6 +598,7 @@ mod tests {
                 condition_opponent_ship_class: None,
                 condition_opponent_ship_class_not: None,
                 condition_defender_is_npc_hostile: false,
+                condition_defender_is_player_ship: false,
                 condition_opponent_hostile_tags: None,
                 round_cap: None,
                 level_scaled_values: None,
@@ -583,6 +625,7 @@ mod tests {
             condition_opponent_ship_class: None,
             condition_opponent_ship_class_not: None,
             condition_defender_is_npc_hostile: false,
+            condition_defender_is_player_ship: false,
             condition_opponent_hostile_tags: None,
             round_cap: Some(5),
             level_scaled_values: None,
@@ -608,6 +651,7 @@ mod tests {
             condition_opponent_ship_class: None,
             condition_opponent_ship_class_not: None,
             condition_defender_is_npc_hostile: false,
+            condition_defender_is_player_ship: false,
             condition_opponent_hostile_tags: None,
             round_cap: Some(2),
             level_scaled_values: None,
@@ -731,6 +775,7 @@ mod tests {
             condition_opponent_ship_class: Some("interceptor".to_string()),
             condition_opponent_ship_class_not: None,
             condition_defender_is_npc_hostile: false,
+            condition_defender_is_player_ship: false,
             condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,
@@ -760,6 +805,7 @@ mod tests {
             condition_opponent_ship_class: None,
             condition_opponent_ship_class_not: None,
             condition_defender_is_npc_hostile: false,
+            condition_defender_is_player_ship: false,
             condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,
@@ -789,6 +835,7 @@ mod tests {
             condition_opponent_ship_class: None,
             condition_opponent_ship_class_not: None,
             condition_defender_is_npc_hostile: false,
+            condition_defender_is_player_ship: false,
             condition_opponent_hostile_tags: None,
             round_cap: None,
             level_scaled_values: None,

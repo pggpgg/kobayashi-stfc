@@ -206,6 +206,7 @@ fn crit_mitigation_rating_conversion_matches_official_example() {
         condition_opponent_ship_class: None,
         condition_opponent_ship_class_not: None,
         condition_defender_is_npc_hostile: false,
+        condition_defender_is_player_ship: false,
         condition_opponent_hostile_tags: None,
         round_cap: None,
         level_scaled_values: None,

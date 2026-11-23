@@ -613,6 +613,45 @@ fn canary_fight_summaries() -> Vec<String> {
             result.total_damage, result.rounds_simulated, result.defender_hull_remaining,
         ));
     }
+
+    // Player-only defensive passives (e.g. Grade 7 Apex Aegis) apply only in PvP ship combat.
+    let mut pvp_attacker = canary_combatant("canary_aa_attacker");
+    pvp_attacker.attack = 1_100.0;
+    pvp_attacker.hull_health = 10_000.0;
+    let mut pvp_defender = canary_combatant("canary_aa_defender");
+    pvp_defender.attack = 800.0;
+    pvp_defender.hull_health = 10_000.0;
+    let mut pvp_barrier = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::CombatBegin,
+        AbilityEffect::ApexBarrierBonus(10_000.0),
+    );
+    pvp_barrier.ability.condition = Some(AbilityCondition::DefenderIsPlayerShip);
+    let pvp_crew = CrewConfiguration {
+        seats: vec![pvp_barrier],
+    };
+    for (label, npc) in [
+        ("aa_pvp_barrier_active", false),
+        ("aa_pvp_barrier_inert_pve", true),
+    ] {
+        let result = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+            &pvp_attacker,
+            &pvp_defender,
+            &canary_config(1, 73),
+            &pvp_crew,
+            crate::combat::OpponentFactionTag::Unknown,
+            crate::combat::ShipType::Battleship,
+            crate::combat::ShipType::Interceptor,
+            npc,
+            !npc,
+            &CrewConfiguration::default(),
+        );
+        summaries.push(format!(
+            "{label}:dmg={:.6};rounds={};ahull={:.6};",
+            result.total_damage, result.rounds_simulated, result.attacker_hull_remaining,
+        ));
+    }
     summaries
 }
 
@@ -2459,7 +2498,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 32, "expected thirty-two canary fights");
+        assert_eq!(summaries.len(), 34, "expected thirty-four canary fights");
         let decay = summaries
             .iter()
             .find(|summary| summary.starts_with("y_hostile_hyperthermic_decay:"))

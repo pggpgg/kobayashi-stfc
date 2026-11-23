@@ -146,6 +146,10 @@ pub struct ShipAbility {
     /// text that must stay inert in PvP (e.g. Dauntless Seek and Destroy cannot target players).
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub condition_defender_is_npc_hostile: bool,
+    /// Gated on the defender being a player ship (not an NPC hostile): "versus players" ability
+    /// text that must stay inert in PvE (e.g. Grade 7 Apex Aegis).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub condition_defender_is_player_ship: bool,
     /// Gated on defending hostile tags (AND: every listed slug must map to a set bit on the defender mask). See [`crate::combat::hostile_tags`].
     #[serde(default)]
     pub condition_opponent_hostile_tags: Option<Vec<String>>,
@@ -1079,6 +1083,7 @@ impl ShipRecord {
                 || ability.condition_opponent_ship_class.is_some()
                 || ability.condition_opponent_ship_class_not.is_some()
                 || ability.condition_defender_is_npc_hostile
+                || ability.condition_defender_is_player_ship
                 || ability.condition_opponent_hostile_tags.is_some()
                 || !ability.value.is_finite()
             {
