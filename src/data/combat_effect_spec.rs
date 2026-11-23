@@ -111,6 +111,15 @@ pub enum AbilityTargetSpec {
     /// Alias for [`Self::AttackerSelf`] (SelfShip terminology).
     #[serde(alias = "self_ship")]
     SelfShip,
+    /// Captain + bridge officers on this side (canonical `SelfBridge`, e.g. Cadet Kirk, Cadet Sulu).
+    #[serde(alias = "self_bridge")]
+    SelfBridgeOfficers,
+    /// Captain seat only on this side (canonical `SelfCaptain`, e.g. Marla, Ro Mudd).
+    #[serde(alias = "self_captain")]
+    SelfCaptain,
+    /// Owning officer seat only (canonical `SelfOfficer`, e.g. Wesley Crusher).
+    #[serde(alias = "self_officer")]
+    SelfOfficer,
     /// Opponent hull the ability references (enemy ship).
     DefenderOpponent,
     /// Opponent captain + bridge officers only (canonical `EnemyBridge`, e.g. Kras OA).
@@ -126,6 +135,10 @@ pub enum AbilityTargetSpec {
 #[serde(rename_all = "snake_case")]
 pub enum AbilityModifierSpec {
     WeaponDamage,
+    /// Native `ModAllDamage` / `MultiplySub` on opponent ships: subtracts a positive fraction from
+    /// the opponent's weapon-damage percentage pool (`MultVal`), optionally scoped by weapon type
+    /// (`ModuleEnergy` / `ModuleKinetic`).
+    OpponentWeaponDamageReduction,
     HullHp,
     ShieldHp,
     CritChance,
@@ -149,8 +162,18 @@ pub enum AbilityModifierSpec {
     #[serde(rename = "armor")]
     MitigationAdditive,
     /// Fraction added to each raw base armor, shield-deflection and dodge multiplier.
-    /// Eligibility is sampled at round start and retained for that round.
+    /// Supported at combat begin (including launch passives) and round start.
     BaseMitigationStatsBonus,
+    /// Cumulative round-start fraction added to raw base armor, shield-deflection and dodge.
+    CumulativeBaseMitigationStatsBonus,
+    /// Fraction subtracted from opponent raw armor, shield-deflection and dodge (e.g. Badgey).
+    HostileBaseDefenseStatsReduction,
+    /// Fraction added to raw base armor-piercing, shield-piercing and accuracy in the shared
+    /// native `MultVal` pool.
+    BasePiercingStatsBonus,
+    /// Cumulative round-start fraction added to raw base armor-piercing, shield-piercing and
+    /// accuracy (e.g. Borg Queen below-decks).
+    CumulativeBasePiercingStatsBonus,
     /// Fraction added only to the raw base Armor percentage pool at round start.
     BaseArmorBonus,
     /// Raw amount added to each defense component after its fractional bonuses.
@@ -454,6 +477,17 @@ fn is_false(b: &bool) -> bool {
 /// and `skip_serializing_if` keeps them out of the serialized form when empty (so non-officer
 /// specs serialize unchanged). Promoting them to typed fields makes officer specs self-describing
 /// and lets the spec validator reason about them.
+/// Specific incoming damage-taken event for reactive `DefensePhase` officer abilities
+/// (`HullDamageTaken`, `ShieldDamageTaken`, `CriticalShotTaken`, `HitTaken`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DamageTakenTriggerKind {
+    AnyDamage,
+    HullDamage,
+    ShieldDamage,
+    CriticalHit,
+}
+
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct OfficerSpecAttrs {
     /// Raw LCARS operator string after dash/underscore normalization (resolver `normalize_operator`).
@@ -468,6 +502,9 @@ pub struct OfficerSpecAttrs {
     /// Finite critical-chance/cascade bonuses grant after one weapon volley.
     #[serde(default, skip_serializing_if = "is_false")]
     pub post_weapon_grant: bool,
+    /// Incoming weapon-volley trigger discriminant for reactive `DefensePhase` officer abilities.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub damage_taken_trigger: Option<DamageTakenTriggerKind>,
     /// STFC state ids from canonical `multi_state=[…]` (each id is also its own weight). Empty →
     /// the compiler falls back to `DEFAULT_RANDOM_STATE_WEIGHTS`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -480,6 +517,7 @@ impl OfficerSpecAttrs {
         self.lcars_op.is_none()
             && !self.requires_critical
             && !self.post_weapon_grant
+            && self.damage_taken_trigger.is_none()
             && self.random_state_weights.is_empty()
     }
 }

@@ -108,6 +108,20 @@ pub enum OfficerStatOpponentScope {
     BridgeOfficers,
 }
 
+/// Which friendly crewed officers receive a `target: self*` officer-stat modifier.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum OfficerStatSelfScope {
+    /// Every crewed officer on the owning side (`SelfAll`).
+    #[default]
+    AllCrewed,
+    /// Captain + bridge slots only (`SelfBridge`, e.g. Cadet Kirk, Cadet Sulu, Next Gen Data).
+    BridgeOfficers,
+    /// Captain seat only (`SelfCaptain`, e.g. Marla, Ro Mudd).
+    CaptainOnly,
+    /// Only the owning officer's own seat (`SelfOfficer`, e.g. Wesley Crusher).
+    SingleOfficer(String),
+}
+
 /// Officer-rating buff contribution whose application depends on conditions that can only be
 /// evaluated once fight-setup state is known. See [`BuffSet::pending_officer_stat_contributions`].
 #[derive(Debug, Clone)]
@@ -130,8 +144,10 @@ pub struct PendingOfficerStatContribution {
     /// contribution is silently dropped.
     pub conditions: Vec<AbilityConditionSpec>,
     /// When [`Self::target_attacker`] is false, limits which opponent officers receive the
-    /// debuff. Ignored for `target: self` rows (always crew-wide on the owning side).
+    /// debuff. Ignored for `target: self` rows.
     pub opponent_scope: OfficerStatOpponentScope,
+    /// When [`Self::target_attacker`] is true, limits which friendly officers receive the bonus.
+    pub self_scope: OfficerStatSelfScope,
 }
 
 /// Phase 4d: officer-rating contribution evaluated each combat round when its compiled
@@ -215,7 +231,12 @@ pub(crate) fn effect_trigger_timing(effect: &LcarsEffect) -> Option<TimingWindow
         }
         "after_shot" | "on_after_shot" | "subround_end" | "on_subround_end" | "after_weapon"
         | "on_after_weapon" => Some(TimingWindow::AfterSubround),
-        "hittaken" | "on_defense" => Some(TimingWindow::DefensePhase),
+        "hittaken"
+        | "on_defense"
+        | "on_hull_damage_taken"
+        | "on_shield_damage_taken"
+        | "on_critical_shot_taken"
+        | "criticalshottaken" => Some(TimingWindow::DefensePhase),
         "roundend" | "on_round_end" => Some(TimingWindow::RoundEnd),
         "battlewon" | "on_kill" => Some(TimingWindow::Kill),
         "hulldamagetaken" | "on_hull_breach" => Some(TimingWindow::HullBreach),
@@ -237,9 +258,17 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
         return false;
     }
     if effect.effect_type == "stat_modify" {
-        if effective_stat_for_effect(effect) == Some("unsupported_officer_effect") {
-            // Keep the inert diagnostic marker as a seat, even for a
-            // launch/passive source, so each simulated crew can be warned.
+        if matches!(
+            effective_stat_for_effect(effect),
+            Some(
+                "unsupported_officer_effect"
+                    | "base_mitigation_stats_bonus"
+                    | "base_piercing_stats_bonus"
+            )
+        ) {
+            // Keep inert diagnostic markers and raw-defense/piercing base-stat bonuses as
+            // CombatBegin seats so Pike scaling, Assimilation, PvP symmetry, and the nonlinear
+            // mitigation curve apply uniformly.
             return false;
         }
         if effect.condition.is_some()
@@ -573,6 +602,9 @@ fn officer_rating_coverage_pathway(
         spec.target,
         crate::data::combat_effect_spec::AbilityTargetSpec::AttackerSelf
             | crate::data::combat_effect_spec::AbilityTargetSpec::SelfShip
+            | crate::data::combat_effect_spec::AbilityTargetSpec::SelfBridgeOfficers
+            | crate::data::combat_effect_spec::AbilityTargetSpec::SelfCaptain
+            | crate::data::combat_effect_spec::AbilityTargetSpec::SelfOfficer
     );
     if !spec.conditions.is_empty() || !target_attacker {
         return Some("officer_stat_pending".to_string());
@@ -886,12 +918,27 @@ pub fn resolve_crew_to_buff_set(
                 spec.target,
                 crate::data::combat_effect_spec::AbilityTargetSpec::AttackerSelf
                     | crate::data::combat_effect_spec::AbilityTargetSpec::SelfShip
+                    | crate::data::combat_effect_spec::AbilityTargetSpec::SelfBridgeOfficers
+                    | crate::data::combat_effect_spec::AbilityTargetSpec::SelfCaptain
+                    | crate::data::combat_effect_spec::AbilityTargetSpec::SelfOfficer
             );
             let opponent_scope = match spec.target {
                 crate::data::combat_effect_spec::AbilityTargetSpec::EnemyBridgeOfficers => {
                     OfficerStatOpponentScope::BridgeOfficers
                 }
                 _ => OfficerStatOpponentScope::AllCrewed,
+            };
+            let self_scope = match spec.target {
+                crate::data::combat_effect_spec::AbilityTargetSpec::SelfBridgeOfficers => {
+                    OfficerStatSelfScope::BridgeOfficers
+                }
+                crate::data::combat_effect_spec::AbilityTargetSpec::SelfCaptain => {
+                    OfficerStatSelfScope::CaptainOnly
+                }
+                crate::data::combat_effect_spec::AbilityTargetSpec::SelfOfficer => {
+                    OfficerStatSelfScope::SingleOfficer(officer.id.clone())
+                }
+                _ => OfficerStatSelfScope::AllCrewed,
             };
             // Pending enemy-target rows have a typed contract: `value` is the positive
             // reduction magnitude consumed by PvP defender-side profile computation.
@@ -930,18 +977,23 @@ pub fn resolve_crew_to_buff_set(
                     target_attacker,
                     conditions: spec.conditions.clone(),
                     opponent_scope,
+                    self_scope,
                 });
                 continue;
             }
-            if !target_attacker {
-                // No conditions, but target:enemy: keep in pending for Phase 4c rather than
-                // discard. Attacker-side compute will silently ignore non-attacker entries.
+            if !target_attacker
+                || (officer_stat_key && self_scope != OfficerStatSelfScope::AllCrewed)
+            {
+                // Preserve enemy-targeted rows for Phase 4c and seat-scoped friendly rows
+                // (SelfBridge / SelfCaptain / SelfOfficer) in pending so crew-wide `static_buffs`
+                // never broadens seat-scoped bonuses to below decks.
                 pending_officer_stat_contributions.push(PendingOfficerStatContribution {
                     stat_key: stat.to_string(),
                     value: pending_value,
                     target_attacker,
                     conditions: Vec::new(),
                     opponent_scope,
+                    self_scope,
                 });
                 continue;
             }
@@ -2137,19 +2189,34 @@ mod tests {
             officer_tiers: None,
             officer_levels: None,
         };
-        // Khan's bridge CritChance is sourced from HullDamageTaken. That trigger has no
-        // matching engine event window yet, so it must not become a passive static buff.
+        // Khan's bridge CritChance is sourced from HullDamageTaken and compiles into a reactive
+        // DefensePhase seat (never a passive static buff).
         let khan = resolve_crew_to_buff_set("khan-3f1d1e", &[], &[], &officers, &options);
         assert!(
             !khan.static_buffs.contains_key("crit_chance"),
             "Khan's HullDamageTaken ability must not be treated as a passive crit bonus"
         );
         assert!(
-            drops.drops.iter().any(|drop| {
-                drop.officer_id == "khan-3f1d1e"
-                    && drop.reason == "unknown_trigger:unsupported_HullDamageTaken"
+            khan.crew.seats.iter().any(|s| {
+                s.ability.timing == TimingWindow::DefensePhase
+                    && matches!(
+                        s.ability.effect,
+                        crate::combat::AbilityEffect::ReactiveDamageTaken {
+                            trigger: crate::combat::DamageTakenTrigger::HullDamage,
+                            kind: crate::combat::ReactiveDamageTakenKind::CritChanceBonus(v),
+                            duration_rounds: 0,
+                            ..
+                        } if (v - 0.05).abs() < 1e-12
+                    )
             }),
-            "Khan's unsupported HullDamageTaken trigger must remain visible in drop diagnostics"
+            "Khan rank 5 should resolve to cumulative HullDamage ReactiveDamageTaken CritChanceBonus(0.05)"
+        );
+        assert!(
+            !drops
+                .drops
+                .iter()
+                .any(|drop| drop.officer_id == "khan-3f1d1e"),
+            "Khan's HullDamageTaken ability should no longer be dropped"
         );
 
         // Scotty: native launch MULT rank 5 contributes a fraction of the shared HP pool.

@@ -72,6 +72,7 @@ fn raw_context() -> HostileMitigationParams {
             shield_piercing: 160.0,
             accuracy: 220.0,
         },
+        profile_piercing_fractions: None,
         base_attacker_weapon_stats: vec![
             AttackerStats {
                 armor_piercing: 100.0,

@@ -111,6 +111,7 @@ fn hostile_counter_stat_debuff_reduces_the_firing_weapons_raw_stats_only_during_
             defender_stats: defense,
             weapon_pierce_defender_stats: None,
             base_attacker_stats: weapon_stats[0],
+            profile_piercing_fractions: None,
             base_attacker_weapon_stats: weapon_stats.to_vec(),
             ship_type: ShipType::Explorer,
             mystery_mitigation_factor: 0.0,

@@ -2027,6 +2027,28 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
     parallel: bool,
     chain_grind: Option<ChainGrindParams>,
 ) -> Vec<SimulationResult> {
+    run_monte_carlo_scout_phase_with_shared_top_k(
+        shared,
+        candidates,
+        iterations,
+        seed,
+        parallel,
+        chain_grind,
+        1,
+    )
+}
+
+/// Tiered scout phase with top-`K` progressive abandonment so a dominant `#1` crew does not
+/// prematurely prune contenders competing for ranks `2..=K`.
+pub(crate) fn run_monte_carlo_scout_phase_with_shared_top_k(
+    shared: SharedScenarioData,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+    parallel: bool,
+    chain_grind: Option<ChainGrindParams>,
+    top_k: usize,
+) -> Vec<SimulationResult> {
     let cfg = ScoutEarlyStopCfg::for_scout_iterations(iterations.max(1));
     let abandon = ProgressiveAbandonCfg::for_scout_iterations(iterations.max(1));
     run_monte_carlo_inner(
@@ -2036,7 +2058,7 @@ pub(crate) fn run_monte_carlo_scout_phase_with_shared(
         seed,
         parallel,
         Some(cfg),
-        Some((abandon, 1)),
+        Some((abandon, top_k.max(1))),
         SeedPanelPolicy::CommonScenario,
         chain_grind,
     )

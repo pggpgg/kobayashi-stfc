@@ -50,6 +50,35 @@ pub enum CrewSeat {
 /// Max `(state_id, weight)` pairs on [`AbilityEffect::RandomDefenderState`] (Hierarch uses 3).
 pub const RANDOM_DEFENDER_STATE_OUTCOMES_CAP: usize = 8;
 
+/// Which incoming weapon-volley event triggers [`AbilityEffect::ReactiveDamageTaken`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DamageTakenTrigger {
+    /// Canonical `HitTaken`: any hull or shield damage taken from an incoming weapon volley.
+    AnyDamage,
+    /// Canonical `HullDamageTaken`: gross hull damage > 0 from an incoming weapon volley.
+    HullDamage,
+    /// Canonical `ShieldDamageTaken`: gross shield damage > 0 from an incoming weapon volley.
+    ShieldDamage,
+    /// Canonical `CriticalShotTaken`: at least one critical hit landed in an incoming weapon volley.
+    CriticalHit,
+}
+
+/// Effect granted once per qualifying incoming weapon volley by [`AbilityEffect::ReactiveDamageTaken`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ReactiveDamageTakenKind {
+    CritChanceBonus(f64),
+    BaseCritDamageBonus(f64),
+    AttackerShieldMitigationBonus(f64),
+    BaseWeaponDamageBonus(f64),
+    OpponentWeaponDamageReduction(f64),
+    HostileCritChanceReduction(f64),
+    /// Multiplicative bonus applied to existing Apex Barrier (`barrier * (1 + sum)`).
+    ApexBarrierMultiplierBonus(f64),
+    ApplyDefenderBurning,
+    ApplyDefenderHullBreach,
+    ApplyAttackerMorale,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AbilityEffect {
     AttackMultiplier(f64),
@@ -151,8 +180,20 @@ pub enum AbilityEffect {
     /// in `0..1`; the resolver normalizes sheet-style magnitudes (`> 1`) as percent points (`÷ 100`).
     MitigationAdditive(f64),
     /// Additive fraction on all three raw base defensive stats, not mitigation probability.
-    /// Only round-start effects are supported; their eligibility lasts for that round.
+    /// Supported at combat begin (including launch passives) and round start.
     BaseMitigationStatsBonus(f64),
+    /// Cumulative round-start additive fraction on all three raw base defensive stats
+    /// (e.g. Gossa below-decks vs Assimilated players).
+    CumulativeBaseMitigationStatsBonus(f64),
+    /// Native `ModAllDefenses` / `MultiplySub` on enemy ship: reduces enemy raw Armor, Shield
+    /// Deflection and Dodge before mitigation (e.g. Badgey officer).
+    HostileBaseDefenseStatsReduction(f64),
+    /// Native `ModAllPiercing` / `MultiplyAdd` on self ship: adds to the shared native `MultVal`
+    /// percentage pool for raw Armor Piercing, Shield Piercing and Accuracy.
+    BasePiercingStatsBonus(f64),
+    /// Cumulative round-start additive fraction on raw Armor Piercing, Shield Piercing and
+    /// Accuracy (e.g. Borg Queen below-decks vs Assimilated players).
+    CumulativeBasePiercingStatsBonus(f64),
     /// Additive fraction on raw base Armor, sampled at round start.
     BaseArmorBonus(f64),
     /// Raw points added to armor, shield deflection and dodge, after base scaling.
@@ -175,9 +216,25 @@ pub enum AbilityEffect {
     /// Additive critical hit chance for this shot stack (absolute probability, e.g. 0.05 = +5%).
     /// Applied at crit roll after [`Combatant::crit_chance`], then clamped to [0, 1].
     CritChanceBonus(f64),
+    /// Native `ModAllDamage` / `MultiplySub` on opponent ships: subtracts `reduction` from the
+    /// opposing ship's weapon-damage percentage pool on weapons matching `ability.weapon_scope`.
+    /// When `cumulative` is true (e.g. Garak round-start without `num_rounds`), stacks each
+    /// eligible round.
+    OpponentWeaponDamageReduction {
+        reduction: f64,
+        cumulative: bool,
+    },
     /// Additive reduction to the opposing ship's critical-hit chance. Resolved
     /// on incoming fire only while the combat-begin conditions hold.
     HostileCritChanceReduction(f64),
+    /// Timed or cumulative opponent critical-hit chance reduction resolved at `RoundStart`
+    /// (e.g. TOS Uhura 1R, Nog 2R, Pon 3R, Changeling Kira cumulative) or `AttackPhase`
+    /// (`EnemyTakesHit` post-weapon volley, e.g. Sela).
+    TimedHostileCritChanceReduction {
+        reduction: f64,
+        duration_rounds: u32,
+        cumulative: bool,
+    },
     /// Officer effect whose target, units or timing are not yet represented.
     /// Keep the original coefficient/chance for diagnostics;
     /// it has no combat effect and consumes no RNG roll.
@@ -204,6 +261,16 @@ pub enum AbilityEffect {
         amount: f64,
         duration_rounds: u32,
         reduce_opponent: bool,
+    },
+    /// Triggered once per qualifying incoming weapon volley at `after_damage_taken`
+    /// (multi-shot weapons trigger once per attack). `duration_rounds == 0` means permanent
+    /// cumulative for the remainder of the fight; `duration_rounds >= 1` expires after
+    /// `round_index + duration_rounds - 1` (inclusive).
+    ReactiveDamageTaken {
+        trigger: DamageTakenTrigger,
+        kind: ReactiveDamageTakenKind,
+        chance: f64,
+        duration_rounds: u32,
     },
     /// On-hit crit-damage stack (Seska "each time you score a hit (Once per weapon)"): each
     /// attacker weapon's hit (re)arms one stack of `+bonus` (additive fraction on the crit-damage
@@ -1527,9 +1594,9 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
             *chance = cap_one(*chance);
             *bonus = scale(*bonus);
         }
-        AbilityEffect::CritChanceBonus(c) | AbilityEffect::HostileCritChanceReduction(c) => {
-            *c = cap_one(*c)
-        }
+        AbilityEffect::CritChanceBonus(c)
+        | AbilityEffect::HostileCritChanceReduction(c)
+        | AbilityEffect::TimedHostileCritChanceReduction { reduction: c, .. } => *c = cap_one(*c),
         AbilityEffect::UnsupportedOfficerEffect {
             coefficient,
             chance,
@@ -1555,14 +1622,35 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         }
         AbilityEffect::OnHitCritDamageStack { bonus, .. }
         | AbilityEffect::DamageTakenCritStack { amount: bonus, .. } => *bonus = scale(*bonus),
+        AbilityEffect::ReactiveDamageTaken { kind, chance, .. } => {
+            *chance = cap_one(*chance);
+            match kind {
+                ReactiveDamageTakenKind::CritChanceBonus(v)
+                | ReactiveDamageTakenKind::HostileCritChanceReduction(v) => *v = cap_one(*v),
+                ReactiveDamageTakenKind::BaseCritDamageBonus(v)
+                | ReactiveDamageTakenKind::AttackerShieldMitigationBonus(v)
+                | ReactiveDamageTakenKind::BaseWeaponDamageBonus(v)
+                | ReactiveDamageTakenKind::OpponentWeaponDamageReduction(v)
+                | ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v) => *v = scale(*v),
+                ReactiveDamageTakenKind::ApplyDefenderBurning
+                | ReactiveDamageTakenKind::ApplyDefenderHullBreach
+                | ReactiveDamageTakenKind::ApplyAttackerMorale => {}
+            }
+        }
         AbilityEffect::ShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::AttackerShieldMitigationBonus(v) => *v = scale(*v),
         AbilityEffect::MitigationAdditive(v) => *v = scale(*v),
-        AbilityEffect::BaseMitigationStatsBonus(v) | AbilityEffect::BaseArmorBonus(v) => {
-            *v = scale(*v)
-        }
+        AbilityEffect::BaseMitigationStatsBonus(v)
+        | AbilityEffect::CumulativeBaseMitigationStatsBonus(v)
+        | AbilityEffect::HostileBaseDefenseStatsReduction(v)
+        | AbilityEffect::BasePiercingStatsBonus(v)
+        | AbilityEffect::CumulativeBasePiercingStatsBonus(v)
+        | AbilityEffect::BaseArmorBonus(v) => *v = scale(*v),
         AbilityEffect::BaseMitigationStatsAdd(v) => *v = scale(*v),
         AbilityEffect::HostileBasePiercingStatsReduction(v) => *v = scale(*v),
+        AbilityEffect::OpponentWeaponDamageReduction { reduction, .. } => {
+            *reduction = scale(*reduction)
+        }
         AbilityEffect::BaseArmorPiercingAdd(v) => *v = scale(*v),
         AbilityEffect::BaseArmorPiercingPerCrewHealth(v)
         | AbilityEffect::BaseMitigationStatsPerCrewHealth(v) => *v = scale(*v),
@@ -1687,7 +1775,32 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
             | AbilityEffect::BaseCritDamageBonus(m) => *m *= multiplier,
             AbilityEffect::PierceBonus(p) => *p *= multiplier,
             AbilityEffect::CritChanceBonus(c) => *c *= multiplier,
-            AbilityEffect::HostileCritChanceReduction(c) => *c *= multiplier,
+            AbilityEffect::HostileCritChanceReduction(c)
+            | AbilityEffect::TimedHostileCritChanceReduction { reduction: c, .. } => {
+                *c *= multiplier
+            }
+            AbilityEffect::BaseMitigationStatsBonus(v)
+            | AbilityEffect::CumulativeBaseMitigationStatsBonus(v)
+            | AbilityEffect::HostileBaseDefenseStatsReduction(v)
+            | AbilityEffect::BasePiercingStatsBonus(v)
+            | AbilityEffect::CumulativeBasePiercingStatsBonus(v) => *v *= multiplier,
+            AbilityEffect::OpponentWeaponDamageReduction { reduction, .. } => {
+                *reduction *= multiplier
+            }
+            AbilityEffect::ReactiveDamageTaken { kind, chance, .. } => match kind {
+                ReactiveDamageTakenKind::CritChanceBonus(v)
+                | ReactiveDamageTakenKind::BaseCritDamageBonus(v)
+                | ReactiveDamageTakenKind::AttackerShieldMitigationBonus(v)
+                | ReactiveDamageTakenKind::BaseWeaponDamageBonus(v)
+                | ReactiveDamageTakenKind::OpponentWeaponDamageReduction(v)
+                | ReactiveDamageTakenKind::HostileCritChanceReduction(v)
+                | ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v) => *v *= multiplier,
+                ReactiveDamageTakenKind::ApplyDefenderBurning
+                | ReactiveDamageTakenKind::ApplyDefenderHullBreach
+                | ReactiveDamageTakenKind::ApplyAttackerMorale => {
+                    *chance = (*chance * multiplier).clamp(0.0, 1.0);
+                }
+            },
             // Full factor (`1 + bonus`): scale only the bonus, else a <1 effectiveness
             // debuff would push a crit below ×1.0 (weaker than a normal hit).
             AbilityEffect::CritDamageMultiplier(c) => {

@@ -1,8 +1,9 @@
 //! Calibration anchors for first-class officer A/D/H — docs/OFFICER_STAT_FORMULA.md §"Examples
 //! to validate the spec against" (§261-263).
 //!
-//! Kras's enemy-bridge routing remains modeled. Cadet Kirk's bridge-only scope is
-//! quarantined, and Marla's stat effect is economic rather than a combat bonus.
+//! Kras's enemy-bridge routing, Cadet Kirk's bridge-only scope, and Marla's captain-only bridge
+//! scope are modeled via seat-scoped pending contributions (never leaking into crew-wide static
+//! `officer_stat_all`); flat `Add` officer-stat anchors (Origins Burnham) remain quarantined.
 //! Recorded in-game damage deltas remain pending for these anchors.
 
 use std::collections::HashMap;
@@ -15,7 +16,8 @@ use kobayashi::data::profile::{
 use kobayashi::data::ship::{OfficerBonusBreakpoint, OfficerBonusTable, ShipRecord};
 use kobayashi::lcars::{
     build_officer_model_file_default, index_lcars_officers_by_id, resolve_crew_to_buff_set,
-    BuffSet, OfficerStatOpponentScope, PendingOfficerStatContribution, ResolveOptions,
+    BuffSet, OfficerStatOpponentScope, OfficerStatSelfScope, PendingOfficerStatContribution,
+    ResolveOptions,
 };
 
 /// Load the bundled production LCARS catalog. Returns `None` when the data file is absent so the
@@ -89,18 +91,46 @@ fn representative_explorer() -> ShipRecord {
     }
 }
 
-// Cadet Kirk's bridge-only scope is quarantined; Marla's bonus is economic.
+// Seat-scoped launch officer-stat buffs (Cadet Kirk SelfBridge, Marla SelfCaptain) route through
+// pending scoped contributions instead of crew-wide `static_buffs["officer_stat_all"]`; flat-Add
+// officer-stat anchors (Origins Burnham) remain quarantined.
 #[test]
 fn unsupported_or_economic_stat_anchors_do_not_boost_combat_crew() {
     use kobayashi::combat::AbilityEffect;
     let kirk = resolve_as_captain("cadet-kirk-a80563").unwrap();
     assert!(!kirk.static_buffs.contains_key("officer_stat_all"));
-    assert!(kirk.crew.seats.iter().any(|seat| matches!(
+    assert!(
+        kirk.pending_officer_stat_contributions.iter().any(|p| {
+            p.target_attacker
+                && p.stat_key == "officer_stat_all"
+                && p.self_scope == OfficerStatSelfScope::BridgeOfficers
+                && (p.value - 0.08).abs() < 1e-9
+        }),
+        "Cadet Kirk R1 captain should route +8% to BridgeOfficers only: {:?}",
+        kirk.pending_officer_stat_contributions
+    );
+
+    let marla = resolve_as_captain("marla-9732c7").unwrap();
+    assert!(!marla.static_buffs.contains_key("officer_stat_all"));
+    assert!(
+        marla.pending_officer_stat_contributions.iter().any(|p| {
+            p.target_attacker
+                && p.stat_key == "officer_stat_all"
+                && p.self_scope == OfficerStatSelfScope::CaptainOnly
+                && (p.value - 0.50).abs() < 1e-9
+        }),
+        "Marla R1 bridge should route +50% to CaptainOnly: {:?}",
+        marla.pending_officer_stat_contributions
+    );
+
+    let origins_burnham = resolve_as_captain("origins-burnham-e854d6").unwrap();
+    assert!(!origins_burnham
+        .static_buffs
+        .contains_key("officer_stat_all"));
+    assert!(origins_burnham.crew.seats.iter().any(|seat| matches!(
         seat.ability.effect,
         AbilityEffect::UnsupportedOfficerEffect { .. }
     )));
-    let marla = resolve_as_captain("marla-9732c7").unwrap();
-    assert!(!marla.static_buffs.contains_key("officer_stat_all"));
 }
 
 // ---------------------------------------------------------------------------

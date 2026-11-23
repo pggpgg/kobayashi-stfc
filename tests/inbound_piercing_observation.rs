@@ -37,6 +37,7 @@ fn raw_inbound_piercing_is_not_added_a_second_time_after_mitigation() {
                 shield_piercing: 1_298_802.0,
                 accuracy: 765_496.0,
             },
+            profile_piercing_fractions: None,
             base_attacker_weapon_stats: Vec::new(),
             ship_type: ShipType::Explorer,
             mystery_mitigation_factor: 0.0,

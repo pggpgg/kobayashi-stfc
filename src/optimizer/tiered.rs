@@ -33,7 +33,7 @@ use crate::optimizer::monte_carlo::scenario::{
     SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
-    crew_candidate_ordered_hash, run_monte_carlo_scout_phase_with_shared,
+    crew_candidate_ordered_hash, run_monte_carlo_scout_phase_with_shared_top_k,
     run_monte_carlo_with_shared_variable_iterations, zeroed_loss_result, SimulationResult,
 };
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
@@ -353,6 +353,7 @@ fn run_tiered_scout_batches<F>(
     scout_by_hash: &mut HashMap<u64, SimulationResult>,
     shared: SharedScenarioData,
     scout_iterations: usize,
+    top_k: usize,
     seed: u64,
     chain_grind: &Option<ChainGrindParams>,
     preconfirmed: Option<&HashMap<u64, SimulationResult>>,
@@ -416,13 +417,14 @@ where
                 break;
             }
             let chunk = &batch_scout[next..next + chunk_len];
-            let fresh = run_monte_carlo_scout_phase_with_shared(
+            let fresh = run_monte_carlo_scout_phase_with_shared_top_k(
                 shared.clone(),
                 chunk,
                 scout_iterations,
                 seed,
                 true,
                 chain_grind.clone(),
+                top_k,
             );
             let actual = fresh.iter().map(|r| r.trials_run as u64).sum::<u64>();
             if let Some(acc) = refine_pass_accum {
@@ -634,6 +636,7 @@ where
             &mut scout_by_hash,
             shared.clone(),
             coarse_sims,
+            k,
             seed,
             &chain_grind,
             preconfirmed,
@@ -706,6 +709,7 @@ where
                     &mut scout_by_hash,
                     shared.clone(),
                     scout_cap,
+                    k,
                     seed,
                     &chain_grind,
                     preconfirmed,
@@ -937,13 +941,14 @@ pub(crate) fn run_priority_queue_scout_with_shared(
     let min_scout = minimal_scout.max(64).min(scout_cap.max(1));
 
     // ── Phase 1: minimal scout on all candidates ──────────────────────
-    let minimal_results = run_monte_carlo_scout_phase_with_shared(
+    let minimal_results = run_monte_carlo_scout_phase_with_shared_top_k(
         shared.clone(),
         candidates,
         min_scout,
         seed,
         true, // parallel
         chain_grind.clone(),
+        k,
     );
     debug_assert_eq!(minimal_results.len(), n);
     let minimal_trials = simulation_trials_sum(&minimal_results);
@@ -991,7 +996,7 @@ pub(crate) fn run_priority_queue_scout_with_shared(
     let survivor_candidates: Vec<CrewCandidate> =
         survivors.iter().map(|(_, _, c)| c.clone()).collect();
 
-    let full_results = run_monte_carlo_scout_phase_with_shared(
+    let full_results = run_monte_carlo_scout_phase_with_shared_top_k(
         shared,
         &survivor_candidates,
         scout_cap.max(1),
@@ -1000,6 +1005,7 @@ pub(crate) fn run_priority_queue_scout_with_shared(
         seed,
         true,
         chain_grind,
+        k,
     );
     let deep_trials = simulation_trials_sum(&full_results);
 

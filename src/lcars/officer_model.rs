@@ -894,10 +894,10 @@ fn effect_condition_from_canonical(
     {
         match hull_health_condition_from_canonical_attributes(token, attrs, a.target.as_deref()) {
             Some(mut condition) => {
-                // Powered Armor has a fight-start hull sample at round start.
+                // Powered Armor and Hendorff have a fight-start hull sample at round start.
                 // Keep the established hull basis for all other abilities.
                 if token == "HullHealthBelowStartOfCombat"
-                    && a.ability_id.as_deref() == Some(POWERED_ARMOR)
+                    && matches!(a.ability_id.as_deref(), Some(POWERED_ARMOR | "1815450665"))
                 {
                     condition.stat = Some("attacker_hull_pct_of_fight_start".into());
                 }
@@ -1047,15 +1047,24 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 operator: None,
                 value: None,
                 trigger: Some(trigger.to_string()),
-                // Morale currently has no duration field in the runtime effect;
-                // do not turn its proc duration into an ability-expiry gate.
-                duration: Some(if state_type == StateType::Morale {
-                    LcarsDuration::Permanent("permanent".to_string())
-                } else {
-                    num_rounds_from_attributes(a.attributes.as_deref())
-                        .map(|rounds| LcarsDuration::Rounds { rounds })
-                        .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
-                }),
+                // Morale currently has no duration field in the round-start runtime effect;
+                // do not turn its proc duration into an ability-expiry gate. Reactive
+                // damage-taken Morale (e.g. Sulu CriticalShotTaken `num_rounds=2`) honors
+                // its declared duration.
+                duration: Some(
+                    if state_type == StateType::Morale
+                        && !matches!(
+                            a.trigger.as_deref(),
+                            Some("HullDamageTaken" | "ShieldDamageTaken" | "CriticalShotTaken")
+                        )
+                    {
+                        LcarsDuration::Permanent("permanent".to_string())
+                    } else {
+                        num_rounds_from_attributes(a.attributes.as_deref())
+                            .map(|rounds| LcarsDuration::Rounds { rounds })
+                            .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
+                    },
+                ),
                 scaling: scaling_from_ranks(&[], &a.chance_by_rank, "AddState", None),
                 condition: cond.clone(),
                 chance: chance_field,
@@ -1076,6 +1085,7 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                         "unsupported_officer_effect"
                             | "hull_hp_additive_pool"
                             | "shield_hp_additive_pool"
+                            | "hostile_base_defense_stats_reduction"
                     ) {
                         v
                     } else {
@@ -1102,13 +1112,42 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 LcarsDuration::Rounds {
                     rounds: num_rounds_from_attributes(a.attributes.as_deref()).unwrap_or(2),
                 }
+            } else if stat == "opponent_weapon_damage_reduction"
+                && matches!(
+                    a.trigger.as_deref(),
+                    Some("CombatStart" | "RoundStart" | "HitTaken")
+                )
+            {
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|rounds| LcarsDuration::Rounds { rounds })
+                    .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
+            } else if matches!(
+                a.trigger.as_deref(),
+                Some("HullDamageTaken" | "ShieldDamageTaken" | "CriticalShotTaken")
+            ) {
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|rounds| LcarsDuration::Rounds { rounds })
+                    .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
+            } else if stat == "hostile_crit_chance_reduction"
+                && matches!(
+                    a.trigger.as_deref(),
+                    Some("CombatStart" | "RoundStart" | "EnemyTakesHit")
+                )
+            {
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|rounds| LcarsDuration::Rounds { rounds })
+                    .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
             } else if matches!(
                 stat.as_str(),
-                "crit_damage"
-                    | "crit_damage_flat"
-                    | "crit_chance"
-                    | "hostile_crit_chance_reduction"
-                    | "weapon_damage"
+                "base_mitigation_stats_bonus" | "base_piercing_stats_bonus"
+            ) && a.trigger.as_deref() == Some("RoundStart")
+            {
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|rounds| LcarsDuration::Rounds { rounds })
+                    .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
+            } else if matches!(
+                stat.as_str(),
+                "crit_damage" | "crit_damage_flat" | "crit_chance" | "weapon_damage"
             ) && a.trigger.as_deref() == Some("CombatStart")
             {
                 // A source-declared combat-start duration applies from round one;
@@ -1451,27 +1490,55 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         && !crew_scaled
         && !a.chance_by_rank.is_empty()
         && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
-    let supported_launch_attack = modifier == "OfficerStatAttack"
-        && a.slot == "officer"
-        && a.target.as_deref() == Some("SelfAll")
-        && a.trigger.as_deref() == Some("ShipLaunched")
+    let supported_self_all_piercing = modifier == "AllPiercing"
         && op.eq_ignore_ascii_case("MultiplyAdd")
-        && a.conditions.is_empty()
+        && a.target.as_deref() == Some("SelfShip")
+        && matches!(
+            a.trigger.as_deref(),
+            Some("ShipLaunched" | "CombatStart" | "RoundStart")
+        )
+        && !crew_scaled
+        && !a.chance_by_rank.is_empty()
+        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
+    let supported_self_all_defenses = modifier == "AllDefenses"
+        && op.eq_ignore_ascii_case("MultiplyAdd")
+        && a.target.as_deref() == Some("SelfShip")
+        && matches!(
+            a.trigger.as_deref(),
+            Some("ShipLaunched" | "CombatStart" | "RoundStart")
+        )
+        && !crew_scaled
+        && !a.chance_by_rank.is_empty()
+        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
+    let supported_enemy_all_defenses_reduction = modifier == "AllDefenses"
+        && op.eq_ignore_ascii_case("MultiplySub")
+        && a.target.as_deref() == Some("EnemyShip")
+        && a.trigger.as_deref() == Some("CombatStart")
+        && !crew_scaled
+        && !a.chance_by_rank.is_empty()
+        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
+    let supported_hendorff_hull_below_start = supported_self_all_defenses
+        && a.ability_id.as_deref() == Some("1815450665")
+        && a.trigger.as_deref() == Some("RoundStart")
+        && a.conditions.as_slice() == ["HullHealthBelowStartOfCombat"]
+        && a.attributes
+            .as_deref()
+            .and_then(percentage_from_canonical_attributes)
+            .is_some();
+    let supported_launch_officer_stat = matches!(
+        modifier,
+        "OfficerStatAttack" | "OfficerStatDefense" | "OfficerStatHealth" | "OfficerStatAll"
+    ) && matches!(
+        a.target.as_deref(),
+        Some("SelfAll" | "SelfBridge" | "SelfCaptain" | "SelfOfficer")
+    ) && a.trigger.as_deref() == Some("ShipLaunched")
+        && op.eq_ignore_ascii_case("MultiplyAdd")
+        && !crew_scaled
         && a.attributes
             .as_deref()
             .is_none_or(|attrs| attrs.trim().is_empty())
         && !a.value_by_rank.is_empty()
         && a.chance_by_rank.len() == a.value_by_rank.len()
-        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
-    let supported_computer_precision = modifier == "OfficerStatDefense"
-        && a.ability_id.as_deref() == Some(COMPUTER_PRECISION)
-        && a.target.as_deref() == Some("SelfAll")
-        && a.trigger.as_deref() == Some("ShipLaunched")
-        && op.eq_ignore_ascii_case("MultiplyAdd")
-        && a.conditions.is_empty()
-        && a.attributes
-            .as_deref()
-            .is_none_or(|attrs| attrs.trim().is_empty())
         && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
     let supported_powered_armor = modifier == "ShipArmor"
         && a.ability_id.as_deref() == Some(POWERED_ARMOR)
@@ -1484,6 +1551,20 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             .and_then(percentage_from_canonical_attributes)
             .is_some()
         && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
+    let supported_enemy_weapon_damage_reduction = modifier == "AllDamage"
+        && op.eq_ignore_ascii_case("MultiplySub")
+        && matches!(a.target.as_deref(), Some("EnemyShip" | "EnemyAllShips"))
+        && matches!(
+            a.trigger.as_deref(),
+            Some("CombatStart" | "RoundStart" | "HitTaken")
+        )
+        && !crew_scaled
+        && !a
+            .conditions
+            .iter()
+            .any(|c| c.trim().eq_ignore_ascii_case("SelfDefending"))
+        && !a.chance_by_rank.is_empty()
+        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
     // The generic crit modifiers run before the roll. They cannot grant a
     // stack after a qualifying critical weapon, or reduce an opponent's
     // crit damage outside the verified damage-taken stack path.
@@ -1494,28 +1575,47 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             .as_deref()
             .is_some_and(|target| target.starts_with("Enemy"))
         && !(stacks_on_damage_taken(a) && op == "Sub");
-    let unsupported_source_pattern = (modifier == "OfficerStatAttack" && !supported_launch_attack)
+    let unsupported_source_pattern = (matches!(modifier, "OfficerStatAttack" | "OfficerStatDefense")
+        && !supported_launch_officer_stat)
         || unsupported_critical_shot_modifier
         || unsupported_enemy_crit_damage
-        || (modifier == "OfficerStatDefense" && !supported_computer_precision)
-        || (modifier == "AllPiercing" && !supported_enemy_piercing_reduction)
-        || (modifier == "AllDefenses" && !supported_ortegas_defense)
-        // Enemy weapon damage reductions need an opponent-side weapon pool.
-        // The self weapon damage path would add these positive coefficients
-        // to the owner's attack and cannot bind the opponent's weapon type.
+        || (modifier == "AllPiercing"
+            && !supported_enemy_piercing_reduction
+            && !supported_self_all_piercing)
+        || (modifier == "AllDefenses"
+            && !supported_ortegas_defense
+            && !supported_self_all_defenses
+            && !supported_enemy_all_defenses_reduction)
+        // Enemy weapon damage reductions outside the verified CombatStart/RoundStart
+        // opponent-weapon pool path (e.g. SelfDefending-only Carol or HitTaken Mudd)
+        // stay quarantined with diagnostics.
         || (modifier == "AllDamage"
             && op.eq_ignore_ascii_case("MultiplySub")
-            && matches!(a.target.as_deref(), Some("EnemyShip" | "EnemyAllShips")))
-        // Existing LCARS self-stat routing does not preserve these seat scopes
-        // or flat-add units; applying them crew-wide would alter combat stats.
+            && matches!(a.target.as_deref(), Some("EnemyShip" | "EnemyAllShips"))
+            && !supported_enemy_weapon_damage_reduction)
+        // Flat Add officer-stat rows (e.g. Origins trio) and non-launch seat-scoped rows
+        // stay quarantined until verified.
         || (matches!(modifier, "OfficerStatAll" | "OfficerStatHealth")
-            && (matches!(a.target.as_deref(), Some("SelfCaptain" | "SelfBridge" | "SelfOfficer"))
+            && ((matches!(
+                a.target.as_deref(),
+                Some("SelfCaptain" | "SelfBridge" | "SelfOfficer")
+            ) && !supported_launch_officer_stat)
                 || op.eq_ignore_ascii_case("Add")))
         || (crew_scaled && op.eq_ignore_ascii_case("MultiplyBaseAdd")
             && matches!(modifier, "AllDamage" | "ShieldPiercing" | "Shields"))
-        // The start-relative hull condition is bound only for Powered Armor's round-start path.
-        || (!supported_powered_armor && a.conditions.iter().any(|condition|
-            condition.trim().eq_ignore_ascii_case("HullHealthBelowStartOfCombat")))
+        // Crew-scaled enemy shield drains (e.g. Michael Burnham HullDamageTaken officer_stat=1)
+        // require a verified officer-stat-scaled shield removal path; stay quarantined.
+        || (crew_scaled && op.eq_ignore_ascii_case("MultiplyBaseSub")
+            && matches!(modifier, "ShieldHPRepair" | "ShieldRegen"))
+        // The start-relative hull condition is bound only for verified round-start paths
+        // (Powered Armor and Hendorff).
+        || (!supported_powered_armor
+            && !supported_hendorff_hull_below_start
+            && a.conditions.iter().any(|condition| {
+                condition
+                    .trim()
+                    .eq_ignore_ascii_case("HullHealthBelowStartOfCombat")
+            }))
         // Enemy hull drains are neither attacker healing nor flat self damage.
         // Their cumulative timing is not yet represented by this effect path.
         || (matches!(modifier, "HullHPRepair" | "HullRegen")
@@ -1556,9 +1656,12 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
 
     let result = match modifier {
         "CritChance"
-            if a.target.as_deref() == Some("EnemyShip")
+            if matches!(a.target.as_deref(), Some("EnemyShip" | "EnemyAllShips"))
                 && op.eq_ignore_ascii_case("Sub")
-                && a.trigger.as_deref() == Some("CombatStart") =>
+                && matches!(
+                    a.trigger.as_deref(),
+                    Some("CombatStart" | "RoundStart" | "CriticalShotTaken" | "EnemyTakesHit")
+                ) =>
         {
             // Opponent critical chance is a different combat stat from our
             // own chance. Carry a positive reduction to the inbound path.
@@ -1576,6 +1679,9 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             let operation = if stacks_on_damage_taken(a) && op == "Sub" { "sub" } else { "add" };
             MappedEffect::StatModify("crit_damage_flat".into(), operation.into(), val)
         }
+        "AllDamage" if supported_enemy_weapon_damage_reduction => {
+            MappedEffect::StatModify("opponent_weapon_damage_reduction".into(), "add".into(), val)
+        }
         "AllDamage" => {
             let (op_str, v) = if op.eq_ignore_ascii_case("MultiplyAdd") {
                 ("multiply", 1.0 + val)
@@ -1584,9 +1690,8 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             };
             MappedEffect::StatModify("weapon_damage".into(), op_str.into(), v)
         }
-        "OfficerStatAttack" if supported_launch_attack => {
-            // Crew Attack is a rating input for ship breakpoints. Each rank
-            // contributes its fraction to the pool for every occupied seat.
+        "OfficerStatAttack" if supported_launch_officer_stat => {
+            // Crew Attack is a rating input for ship breakpoints; seat scope is preserved on target.
             MappedEffect::StatModify("officer_attack".into(), "add".into(), val)
         }
         "Accuracy" => {
@@ -1600,7 +1705,7 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
                 MappedEffect::StatModify("accuracy".into(), "multiply".into(), 1.0 + val)
             }
         }
-        "OfficerStatDefense" if supported_computer_precision => {
+        "OfficerStatDefense" if supported_launch_officer_stat => {
             MappedEffect::StatModify("officer_defense".into(), "add".into(), val)
         }
         "ShipArmor" if supported_powered_armor => {
@@ -1644,9 +1749,6 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "AddRandomState" => MappedEffect::Tag("addrandomstate:unmapped".into()),
         "OffAbilityEffect" => MappedEffect::Tag("offabilityeffect:unmapped".into()),
         "AllDefenses" => {
-            // The SNW Ortegas source has a dedicated crew-health pathway.
-            // Other all-defense abilities are quarantined above until their
-            // individual raw-stat source and stacking are verified.
             if a.ability_id.as_deref() == Some("2416006584")
                 && op.eq_ignore_ascii_case("MultiplyBaseAdd")
                 && a.attributes.as_deref().and_then(officer_stat_from_canonical_attributes)
@@ -1656,6 +1758,17 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
                 // combat start. Keep it deferred until the scenario has profile
                 // and crew-stat conditions; it is not a percentage of Armor.
                 MappedEffect::StatModify("base_mitigation_stats_per_crew_health".into(), "add".into(), val)
+            } else if supported_self_all_defenses {
+                let is_cumulative = a.trigger.as_deref() == Some("RoundStart")
+                    && num_rounds_from_attributes(a.attributes.as_deref()).is_none();
+                let stat = if is_cumulative {
+                    "cumulative_base_mitigation_stats_bonus"
+                } else {
+                    "base_mitigation_stats_bonus"
+                };
+                MappedEffect::StatModify(stat.into(), "add".into(), val)
+            } else if supported_enemy_all_defenses_reduction {
+                MappedEffect::StatModify("hostile_base_defense_stats_reduction".into(), "add".into(), val)
             } else if op.eq_ignore_ascii_case("MultiplySub") || op.eq_ignore_ascii_case("MultiplyBaseSub")
             {
                 MappedEffect::StatModify("shield_mitigation".into(), "add".into(), -val)
@@ -1672,10 +1785,18 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             // crew Health, resolved after profile and setup conditions.
             MappedEffect::StatModify("base_armor_piercing_per_crew_health".into(), "add".into(), val)
         }
-        "AllPiercing" if op.eq_ignore_ascii_case("MultiplySub")
-            && a.target.as_deref() == Some("EnemyShip") =>
-        {
+        "AllPiercing" if supported_enemy_piercing_reduction => {
             MappedEffect::StatModify("hostile_base_piercing_stats_reduction".into(), "add".into(), val)
+        }
+        "AllPiercing" if supported_self_all_piercing => {
+            let is_cumulative = a.trigger.as_deref() == Some("RoundStart")
+                && num_rounds_from_attributes(a.attributes.as_deref()).is_none();
+            let stat = if is_cumulative {
+                "cumulative_base_piercing_stats_bonus"
+            } else {
+                "base_piercing_stats_bonus"
+            };
+            MappedEffect::StatModify(stat.into(), "add".into(), val)
         }
         "ArmorPiercing" | "AllPiercing" => {
             MappedEffect::StatModify("shield_pierce".into(), "add".into(), val)
@@ -1702,7 +1823,23 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "Shields" => MappedEffect::StatModify("shield_hp".into(), "multiply".into(), val),
         "HullHPMax" => MappedEffect::StatModify("hull_hp".into(), "multiply".into(), 1.0 + val),
         "ApexShred" => MappedEffect::StatModify("apex_shred".into(), "add".into(), val),
-        "ApexBarrier" => MappedEffect::StatModify("apex_barrier".into(), "add".into(), val),
+        "ApexBarrier" => {
+            let op_str = if op.eq_ignore_ascii_case("MultiplyAdd") {
+                "multiply"
+            } else {
+                "add"
+            };
+            MappedEffect::StatModify("apex_barrier".into(), op_str.into(), val)
+        }
+        "ShieldMitigation"
+            if matches!(
+                a.trigger.as_deref(),
+                Some("HullDamageTaken" | "ShieldDamageTaken" | "CriticalShotTaken")
+            ) && op.eq_ignore_ascii_case("Add")
+                && a.target.as_deref() == Some("SelfShip") =>
+        {
+            MappedEffect::StatModify("shield_mitigation".into(), "add".into(), val)
+        }
         "IsolyticDamage" => MappedEffect::StatModify("isolytic_damage".into(), "add".into(), val),
         "IsolyticDefense" => MappedEffect::StatModify("isolytic_defense".into(), "add".into(), val),
         "IsolyticCascade" | "IsolyticCascadeDamage" => {
@@ -1813,12 +1950,13 @@ fn map_trigger(canonical: &str) -> &'static str {
         // This source event is specifically the target's shields going down; the effect may
         // still benefit SelfShip, so don't infer event side from the effect recipient.
         "TargetShieldsDepleted" => "on_enemy_shield_break",
-        // These canonical events are distinct from the currently implemented engine windows:
-        // HullBreach means entering a proc-driven breached state, ReceiveDamage is counter-fire
-        // hull damage, and Kill is an in-combat kill rather than a completed battle. Keep them
-        // visible to the adapter's unknown-trigger drop report until matching timing exists.
-        "HullDamageTaken" => "unsupported_HullDamageTaken",
-        "ShieldDamageTaken" => "unsupported_ShieldDamageTaken",
+        // Incoming weapon-volley triggers resolve in DefensePhase via `ReactiveDamageTaken`
+        // (once per qualifying incoming weapon volley at `after_damage_taken`).
+        "HullDamageTaken" => "on_hull_damage_taken",
+        "ShieldDamageTaken" => "on_shield_damage_taken",
+        "CriticalShotTaken" => "on_critical_shot_taken",
+        // BattleWon is a post-victory overworld/multi-fight buff (not in-combat Kill).
+        // Keep visible to the adapter's unknown-trigger drop report until matching timing exists.
         "BattleWon" => "unsupported_BattleWon",
         "Kill" | "EnemyKilled" => "on_kill",
         // Unknown and out-of-combat triggers must not become unconditional combat passives.
@@ -1877,10 +2015,20 @@ fn reload_speed_tag_duration(a: &CanonicalAbility) -> LcarsDuration {
 
 fn map_target(a: &CanonicalAbility) -> &'static str {
     let t = a.target.as_deref().unwrap_or("").to_lowercase();
+    let is_officer_stat = a
+        .modifier
+        .as_deref()
+        .is_some_and(|m| m.starts_with("OfficerStat"));
     if t.contains("enemybridge") {
         "enemy_bridge"
     } else if t.contains("enemy") {
         "enemy"
+    } else if is_officer_stat && t == "selfbridge" {
+        "self_bridge"
+    } else if is_officer_stat && t == "selfcaptain" {
+        "self_captain"
+    } else if is_officer_stat && t == "selfofficer" {
+        "self_officer"
     } else {
         "self"
     }
@@ -2124,8 +2272,18 @@ mod canonical_condition_tests {
         };
 
         let incoming_and_victory = [
-            ("HullDamageTaken", None),
-            ("ShieldDamageTaken", None),
+            (
+                "HullDamageTaken",
+                Some(crate::combat::abilities::TimingWindow::DefensePhase),
+            ),
+            (
+                "ShieldDamageTaken",
+                Some(crate::combat::abilities::TimingWindow::DefensePhase),
+            ),
+            (
+                "CriticalShotTaken",
+                Some(crate::combat::abilities::TimingWindow::DefensePhase),
+            ),
             ("BattleWon", None),
             (
                 "HitTaken",
@@ -2149,44 +2307,37 @@ mod canonical_condition_tests {
             "canonical trigger timing must preserve event semantics"
         );
 
-        for canonical in ["HullDamageTaken", "ShieldDamageTaken", "BattleWon"] {
-            let effect = effect_for(canonical, "self");
-            let mut report = crate::lcars::effect_spec_adapter::LcarsDropReport::default();
-            let spec =
-                crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec_with_report(
-                    &effect,
-                    "test-effect",
-                    "test-officer",
-                    "test-ability",
-                    None,
-                    None,
-                    0,
-                    Some(&mut report),
-                );
-            assert!(
-                spec.is_none(),
-                "unsupported {canonical} must not compile as another event"
+        let canonical = "BattleWon";
+        let effect = effect_for(canonical, "self");
+        let mut report = crate::lcars::effect_spec_adapter::LcarsDropReport::default();
+        let spec =
+            crate::lcars::effect_spec_adapter::lcars_effect_to_combat_effect_spec_with_report(
+                &effect,
+                "test-effect",
+                "test-officer",
+                "test-ability",
+                None,
+                None,
+                0,
+                Some(&mut report),
             );
-            assert_eq!(report.drops.len(), 1);
-            assert_eq!(
-                report.drops[0].reason,
-                format!("unknown_trigger:unsupported_{canonical}")
-            );
-        }
+        assert!(
+            spec.is_none(),
+            "unsupported {canonical} must not compile as another event"
+        );
+        assert_eq!(report.drops.len(), 1);
+        assert_eq!(
+            report.drops[0].reason,
+            format!("unknown_trigger:unsupported_{canonical}")
+        );
     }
 
     #[test]
     fn unsupported_canonical_trigger_does_not_become_passive() {
-        assert_eq!(
-            map_trigger("HullDamageTaken"),
-            "unsupported_HullDamageTaken"
-        );
+        assert_eq!(map_trigger("HullDamageTaken"), "on_hull_damage_taken");
         assert_eq!(map_trigger("BattleWon"), "unsupported_BattleWon");
-        assert_eq!(map_trigger("CriticalShotTaken"), "unknown_trigger");
-        assert_eq!(
-            map_trigger("ShieldDamageTaken"),
-            "unsupported_ShieldDamageTaken"
-        );
+        assert_eq!(map_trigger("CriticalShotTaken"), "on_critical_shot_taken");
+        assert_eq!(map_trigger("ShieldDamageTaken"), "on_shield_damage_taken");
         assert_eq!(map_trigger("ShipRecalled"), "unknown_trigger");
         assert_eq!(map_trigger("HitTaken"), "HitTaken");
         assert_eq!(

@@ -94,6 +94,7 @@ fn fight_with_trace_mode(
                 shield_piercing: 750.0,
                 accuracy: 4500.0,
             },
+            profile_piercing_fractions: None,
             base_attacker_weapon_stats: Vec::new(),
             ship_type: ShipType::Explorer,
             mystery_mitigation_factor: 0.0,

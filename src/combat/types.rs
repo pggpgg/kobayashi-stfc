@@ -172,7 +172,7 @@ pub struct CrewOfficerStatTotals {
     pub health: f64,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
 pub struct AttackerStats {
     pub armor_piercing: f64,
     pub shield_piercing: f64,
@@ -470,6 +470,10 @@ pub struct HostileMitigationParams {
     /// uses that same context for callers constructing combatants directly.
     pub weapon_pierce_defender_stats: Option<DefenderStats>,
     pub base_attacker_stats: AttackerStats,
+    /// Optional profile piercing bonus fractions (`armor_piercing`, `shield_piercing`, `accuracy`)
+    /// already folded into `base_attacker_stats`, used to dilute `BasePiercingStatsBonus` into
+    /// the shared native `MultVal` percentage pool. `None` treats `base_attacker_stats` as raw.
+    pub profile_piercing_fractions: Option<AttackerStats>,
     /// Opponent piercing/accuracy in weapon order. Empty/missing rows use aggregate stats.
     pub base_attacker_weapon_stats: Vec<AttackerStats>,
     pub ship_type: ShipType,
