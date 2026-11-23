@@ -23,6 +23,10 @@
       "weapons": [
         {
           "attack": 285068246.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 574726416.0,
@@ -36,6 +40,10 @@
         },
         {
           "attack": 285068246.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 574726416.0,
@@ -49,6 +57,10 @@
         },
         {
           "attack": 285068246.0,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 574726416.0,
@@ -62,6 +74,10 @@
         },
         {
           "attack": 18754490.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 574726416.0,
@@ -75,6 +91,10 @@
         },
         {
           "attack": 71267061.5,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 574726416.0,
@@ -105,6 +125,10 @@
       "weapons": [
         {
           "attack": 302172340.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 620704529.0,
@@ -118,6 +142,10 @@
         },
         {
           "attack": 302172340.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 620704529.0,
@@ -131,6 +159,10 @@
         },
         {
           "attack": 302172340.5,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 620704529.0,
@@ -144,6 +176,10 @@
         },
         {
           "attack": 19879759.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 620704529.0,
@@ -157,6 +193,10 @@
         },
         {
           "attack": 75543085.0,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 620704529.0,
@@ -187,6 +227,10 @@
       "weapons": [
         {
           "attack": 320302681.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 670360892.0,
@@ -200,6 +244,10 @@
         },
         {
           "attack": 320302681.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 670360892.0,
@@ -213,6 +261,10 @@
         },
         {
           "attack": 320302681.0,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 670360892.0,
@@ -226,6 +278,10 @@
         },
         {
           "attack": 21072545.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 670360892.0,
@@ -239,6 +295,10 @@
         },
         {
           "attack": 80075670.0,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 670360892.0,
@@ -269,6 +329,10 @@
       "weapons": [
         {
           "attack": 339520842.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 723989763.0,
@@ -282,6 +346,10 @@
         },
         {
           "attack": 339520842.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 723989763.0,
@@ -295,6 +363,10 @@
         },
         {
           "attack": 339520842.0,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 723989763.0,
@@ -308,6 +380,10 @@
         },
         {
           "attack": 22336897.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 723989763.0,
@@ -321,6 +397,10 @@
         },
         {
           "attack": 84880210.5,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 723989763.0,
@@ -351,6 +431,10 @@
       "weapons": [
         {
           "attack": 363287301.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 781908944.0,
@@ -364,6 +448,10 @@
         },
         {
           "attack": 363287301.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 781908944.0,
@@ -377,6 +465,10 @@
         },
         {
           "attack": 363287301.0,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 781908944.0,
@@ -390,6 +482,10 @@
         },
         {
           "attack": 23900480.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 781908944.0,
@@ -403,6 +499,10 @@
         },
         {
           "attack": 90821825.0,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 781908944.0,
@@ -433,6 +533,10 @@
       "weapons": [
         {
           "attack": 388717412.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 852280749.0,
@@ -446,6 +550,10 @@
         },
         {
           "attack": 388717412.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 852280749.0,
@@ -459,6 +567,10 @@
         },
         {
           "attack": 388717412.0,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 852280749.0,
@@ -472,6 +584,10 @@
         },
         {
           "attack": 25573514.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 852280749.0,
@@ -485,6 +601,10 @@
         },
         {
           "attack": 97179353.0,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 852280749.0,
@@ -515,6 +635,10 @@
       "weapons": [
         {
           "attack": 415927630.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 928986016.0,
@@ -528,6 +652,10 @@
         },
         {
           "attack": 415927630.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 928986016.0,
@@ -541,6 +669,10 @@
         },
         {
           "attack": 415927630.5,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 928986016.0,
@@ -554,6 +686,10 @@
         },
         {
           "attack": 27363660.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 928986016.0,
@@ -567,6 +703,10 @@
         },
         {
           "attack": 103981907.5,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 928986016.0,
@@ -597,6 +737,10 @@
       "weapons": [
         {
           "attack": 449201841.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1012594758.0,
@@ -610,6 +754,10 @@
         },
         {
           "attack": 449201841.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1012594758.0,
@@ -623,6 +771,10 @@
         },
         {
           "attack": 449201841.0,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1012594758.0,
@@ -636,6 +788,10 @@
         },
         {
           "attack": 29552753.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1012594758.0,
@@ -649,6 +805,10 @@
         },
         {
           "attack": 112300460.0,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1012594758.0,
@@ -679,6 +839,10 @@
       "weapons": [
         {
           "attack": 485137988.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1113854234.0,
@@ -692,6 +856,10 @@
         },
         {
           "attack": 485137988.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1113854234.0,
@@ -705,6 +873,10 @@
         },
         {
           "attack": 485137988.5,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1113854234.0,
@@ -718,6 +890,10 @@
         },
         {
           "attack": 31916973.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1113854234.0,
@@ -731,6 +907,10 @@
         },
         {
           "attack": 121284497.0,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1113854234.0,
@@ -761,6 +941,10 @@
       "weapons": [
         {
           "attack": 523949027.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1225239657.0,
@@ -774,6 +958,10 @@
         },
         {
           "attack": 523949027.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1225239657.0,
@@ -787,6 +975,10 @@
         },
         {
           "attack": 523949027.0,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1225239657.0,
@@ -800,6 +992,10 @@
         },
         {
           "attack": 34470331.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1225239657.0,
@@ -813,6 +1009,10 @@
         },
         {
           "attack": 130987257.0,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1225239657.0,
@@ -843,6 +1043,10 @@
       "weapons": [
         {
           "attack": 571104440.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1360016019.0,
@@ -856,6 +1060,10 @@
         },
         {
           "attack": 571104440.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1360016019.0,
@@ -869,6 +1077,10 @@
         },
         {
           "attack": 571104440.0,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1360016019.0,
@@ -882,6 +1094,10 @@
         },
         {
           "attack": 37572661.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1360016019.0,
@@ -895,6 +1111,10 @@
         },
         {
           "attack": 142776110.0,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1360016019.0,
@@ -925,6 +1145,10 @@
       "weapons": [
         {
           "attack": 622503839.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1509617781.0,
@@ -938,6 +1162,10 @@
         },
         {
           "attack": 622503839.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1509617781.0,
@@ -951,6 +1179,10 @@
         },
         {
           "attack": 622503839.5,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1509617781.0,
@@ -964,6 +1196,10 @@
         },
         {
           "attack": 40954200.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1509617781.0,
@@ -977,6 +1213,10 @@
         },
         {
           "attack": 155625959.5,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1509617781.0,
@@ -1007,6 +1247,10 @@
       "weapons": [
         {
           "attack": 673903239.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1659219543.0,
@@ -1020,6 +1264,10 @@
         },
         {
           "attack": 673903239.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1659219543.0,
@@ -1033,6 +1281,10 @@
         },
         {
           "attack": 673903239.0,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1659219543.0,
@@ -1046,6 +1298,10 @@
         },
         {
           "attack": 44335740.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1659219543.0,
@@ -1059,6 +1315,10 @@
         },
         {
           "attack": 168475809.5,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1659219543.0,
@@ -1089,6 +1349,10 @@
       "weapons": [
         {
           "attack": 725302638.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1808821306.0,
@@ -1102,6 +1366,10 @@
         },
         {
           "attack": 725302638.5,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1808821306.0,
@@ -1115,6 +1383,10 @@
         },
         {
           "attack": 725302638.5,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1808821306.0,
@@ -1128,6 +1400,10 @@
         },
         {
           "attack": 47717279.5,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1808821306.0,
@@ -1141,6 +1417,10 @@
         },
         {
           "attack": 181325659.5,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1808821306.0,
@@ -1171,6 +1451,10 @@
       "weapons": [
         {
           "attack": 776702038.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1958423068.0,
@@ -1184,6 +1468,10 @@
         },
         {
           "attack": 776702038.0,
+          "firing_schedule": {
+            "first_round": 2,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1958423068.0,
@@ -1197,6 +1485,10 @@
         },
         {
           "attack": 776702038.0,
+          "firing_schedule": {
+            "first_round": 3,
+            "interval_rounds": 3
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1958423068.0,
@@ -1210,6 +1502,10 @@
         },
         {
           "attack": 51098819.0,
+          "firing_schedule": {
+            "first_round": 1,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1958423068.0,
@@ -1223,6 +1519,10 @@
         },
         {
           "attack": 194175509.5,
+          "firing_schedule": {
+            "first_round": 4,
+            "interval_rounds": 4
+          },
           "shots": 2,
           "pierce": null,
           "armor_piercing": 1958423068.0,

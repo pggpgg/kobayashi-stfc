@@ -218,8 +218,10 @@ impl HostileRecord {
         }
     }
 
+    /// Honor upstream `warm_up` / `cool_down` weapon schedules for all hostiles
+    /// whose weapon components carry positive schedule bounds (issue #419).
     fn uses_native_weapon_schedule(&self) -> bool {
-        self.hostile_tag_mask() & crate::combat::hostile_tags::HOSTILE_TAG_MASK_XINDI_AQUATIC != 0
+        true
     }
 
     /// Per-weapon stats from normalized `components` entries whose `data.tag` is `"Weapon"`.

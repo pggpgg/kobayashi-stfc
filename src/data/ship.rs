@@ -49,10 +49,10 @@ pub struct WeaponRecord {
     pub weapon_type: Option<String>,
 }
 
-/// Only opt reviewed native ship schedules into combat.
-pub fn has_reviewed_weapon_schedule(raw_ship: &Value) -> bool {
-    uses_native_weapon_sequence(raw_ship)
-        || raw_ship.get("id").and_then(Value::as_u64) == Some(2_289_346_504)
+/// Enable upstream `warm_up` / `cool_down` firing schedules for all ships whose
+/// weapon components expose positive schedule bounds (issue #419).
+pub fn has_reviewed_weapon_schedule(_raw_ship: &Value) -> bool {
+    true
 }
 
 /// The Enterprise-D's recorded phaser/torpedo sequence follows the component
