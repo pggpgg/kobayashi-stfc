@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::combat::{
     Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, EnemyType,
-    ShipType, TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    OpponentFactionTag, ShipType, TimingWindow, EPSILON, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::forbidden_chaos::ForbiddenChaosList;
 use crate::data::import::ForbiddenTechEntry;
@@ -27,6 +27,21 @@ pub const QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID: i64 = 2439729135;
 const TEMPORAL_CONDUIT_FID: i64 = 258_464_522;
 const TEMPORAL_CONDUIT_HULL_BREACH: u64 = 1_202_092_082;
 const TEMPORAL_CONDUIT_APEX_BARRIER: u64 = 3_438_063_136;
+
+/// **Silicon-based Parasites** (Update 96 chaos tech): Weapon Damage vs Solo Outposts and
+/// Outpost Retaliation Attackers on FKR ships or the U.S.S. Vengeance. Never merged flat.
+pub const SILICON_BASED_PARASITES_CHAOS_TECH_FID: i64 = 2_509_318_364;
+const SILICON_PARASITES_WEAPON_DAMAGE_BUFF_ID: u64 = 1_083_514_166;
+
+/// **`[PRO] Infusion Modulator`** (Update 96 forbidden tech): Infusion Capacitors, Weapon Damage,
+/// and Critical Damage vs FKR Hostiles on FKR ships or the U.S.S. Vengeance. Never merged flat.
+pub const INFUSION_MODULATOR_FORBIDDEN_TECH_FID: i64 = 2_933_035_524;
+const INFUSION_MODULATOR_CAPACITORS_BUFF_ID: u64 = 2_751_824_553;
+const INFUSION_MODULATOR_WEAPON_DAMAGE_BUFF_ID: u64 = 3_264_000_304;
+const INFUSION_MODULATOR_CRIT_DAMAGE_BUFF_ID: u64 = 2_136_167_773;
+
+/// Data ship id for U.S.S. Vengeance (`data/ships_extended/uss_vengeance.json`).
+pub const USS_VENGEANCE_SHIP_ID: &str = "uss_vengeance";
 
 /// S31 Torpedo Pods — upstream copy is **Battleship**-scoped; hostile-only lines use [`AbilityCondition`]
 /// with [`AbilityCondition::DefenderIsNpcHostile`].
@@ -85,6 +100,8 @@ pub(crate) fn skips_entire_flat_merge(fid: i64) -> bool {
         || is_borg_operating_table_forbidden_tech_fid(fid)
         || is_ship_class_gated_torpedo_family_forbidden_tech_fid(fid)
         || fid == TEMPORAL_CONDUIT_FID
+        || fid == SILICON_BASED_PARASITES_CHAOS_TECH_FID
+        || fid == INFUSION_MODULATOR_FORBIDDEN_TECH_FID
 }
 
 /// Bonuses that exist in the catalog for sync/scaling but must not become unconditional profile modifiers.
@@ -114,6 +131,20 @@ pub fn forbidden_tech_bonus_combat_route(
     if fid == TEMPORAL_CONDUIT_FID {
         return match stat {
             "apex_barrier" | "hull_breach_chance" => Some(ForbiddenTechBonusCombatRoute::TimedSeat),
+            _ => None,
+        };
+    }
+    if fid == SILICON_BASED_PARASITES_CHAOS_TECH_FID {
+        return match stat {
+            "weapon_damage" => Some(ForbiddenTechBonusCombatRoute::TimedSeat),
+            _ => None,
+        };
+    }
+    if fid == INFUSION_MODULATOR_FORBIDDEN_TECH_FID {
+        return match stat {
+            "infusion_capacitors" | "weapon_damage" | "crit_damage" => {
+                Some(ForbiddenTechBonusCombatRoute::TimedSeat)
+            }
             _ => None,
         };
     }
@@ -609,6 +640,153 @@ pub fn temporal_conduit_chaos_tech_seats(
                     boostable: false,
                     effect,
                     condition: Some(condition),
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            })
+        })
+        .collect()
+}
+
+fn fkr_or_vengeance_condition() -> AbilityCondition {
+    AbilityCondition::Or(vec![
+        AbilityCondition::AttackerOwnerFactionIs(OpponentFactionTag::Federation),
+        AbilityCondition::AttackerOwnerFactionIs(OpponentFactionTag::Klingon),
+        AbilityCondition::AttackerOwnerFactionIs(OpponentFactionTag::Romulan),
+        AbilityCondition::AttackerShipIdIs(USS_VENGEANCE_SHIP_ID.to_string()),
+    ])
+}
+
+/// Silicon-based Parasites (Update 96 chaos tech): Weapon Damage vs Solo Outposts and Outpost
+/// Retaliation Attackers while installed on an FKR ship or the U.S.S. Vengeance.
+/// Uses exact upstream rank curves; credits/medals economy buffs stay out of combat.
+pub fn silicon_based_parasites_chaos_tech_seats(
+    imported: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+) -> Vec<CrewSeatContext> {
+    if !effective_fids.contains(&SILICON_BASED_PARASITES_CHAOS_TECH_FID) {
+        return Vec::new();
+    }
+    let Some(record) = catalog
+        .items
+        .iter()
+        .find(|row| row.fid == Some(SILICON_BASED_PARASITES_CHAOS_TECH_FID))
+    else {
+        return Vec::new();
+    };
+    let equipped = imported
+        .iter()
+        .rev()
+        .find(|row| row.fid == SILICON_BASED_PARASITES_CHAOS_TECH_FID);
+    let gate = AbilityCondition::And(vec![
+        fkr_or_vengeance_condition(),
+        AbilityCondition::Or(vec![
+            AbilityCondition::EngagementIncludes(EnemyType::OutpostArmadas),
+            AbilityCondition::EngagementIncludes(EnemyType::OutpostRetaliationAttackers),
+        ]),
+    ]);
+    record
+        .bonuses
+        .iter()
+        .filter_map(|bonus| {
+            let curve = bonus.rank_curve.as_ref()?;
+            if bonus.stat != "weapon_damage"
+                || curve.buff_id != SILICON_PARASITES_WEAPON_DAMAGE_BUFF_ID
+            {
+                return None;
+            }
+            let value =
+                forbidden_tech_bonus_value_for_imported_entry(bonus, record, equipped, false);
+            if !value.is_finite() || value <= 0.0 {
+                return None;
+            }
+            Some(CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    weapon_scope: Default::default(),
+                    name: "Silicon-based Parasites: Outpost Weapon Damage".to_owned(),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: AbilityEffect::AttackMultiplier(value),
+                    condition: Some(gate.clone()),
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            })
+        })
+        .collect()
+}
+
+/// `[PRO] Infusion Modulator` (Update 96 forbidden tech): Infusion Capacitors (T1+), Weapon Damage
+/// (T3+), and Critical Damage (T6+) vs FKR Hostiles while installed on an FKR ship or U.S.S. Vengeance.
+/// Uses exact upstream rank curves; base loot (T8+) stays out of combat.
+pub fn infusion_modulator_forbidden_tech_seats(
+    imported: &[ForbiddenTechEntry],
+    effective_fids: &[i64],
+    catalog: &ForbiddenChaosList,
+) -> Vec<CrewSeatContext> {
+    if !effective_fids.contains(&INFUSION_MODULATOR_FORBIDDEN_TECH_FID) {
+        return Vec::new();
+    }
+    let Some(record) = catalog
+        .items
+        .iter()
+        .find(|row| row.fid == Some(INFUSION_MODULATOR_FORBIDDEN_TECH_FID))
+    else {
+        return Vec::new();
+    };
+    let equipped = imported
+        .iter()
+        .rev()
+        .find(|row| row.fid == INFUSION_MODULATOR_FORBIDDEN_TECH_FID);
+    let gate = AbilityCondition::And(vec![
+        fkr_or_vengeance_condition(),
+        AbilityCondition::DefenderIsNpcHostile,
+        AbilityCondition::Or(vec![
+            AbilityCondition::DefenderFactionIs(OpponentFactionTag::Federation),
+            AbilityCondition::DefenderFactionIs(OpponentFactionTag::Klingon),
+            AbilityCondition::DefenderFactionIs(OpponentFactionTag::Romulan),
+        ]),
+    ]);
+    record
+        .bonuses
+        .iter()
+        .filter_map(|bonus| {
+            let curve = bonus.rank_curve.as_ref()?;
+            let value =
+                forbidden_tech_bonus_value_for_imported_entry(bonus, record, equipped, false);
+            if !value.is_finite() || value <= 0.0 {
+                return None;
+            }
+            let (name, effect) = match (bonus.stat.as_str(), curve.buff_id) {
+                ("infusion_capacitors", INFUSION_MODULATOR_CAPACITORS_BUFF_ID) => (
+                    "[PRO] Infusion Modulator: Infusion Capacitors",
+                    AbilityEffect::InfusionCapacitors(value),
+                ),
+                ("weapon_damage", INFUSION_MODULATOR_WEAPON_DAMAGE_BUFF_ID) => (
+                    "[PRO] Infusion Modulator: Weapon Damage",
+                    AbilityEffect::AttackMultiplier(value),
+                ),
+                ("crit_damage", INFUSION_MODULATOR_CRIT_DAMAGE_BUFF_ID) => (
+                    "[PRO] Infusion Modulator: Critical Damage",
+                    AbilityEffect::BaseCritDamageBonus(value),
+                ),
+                _ => return None,
+            };
+            Some(CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    weapon_scope: Default::default(),
+                    name: name.to_owned(),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect,
+                    condition: Some(gate.clone()),
                 },
                 boosted: false,
                 officer_id: None,

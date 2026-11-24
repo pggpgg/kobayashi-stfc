@@ -206,8 +206,18 @@ pub struct PreCombatSetup {
     pub evo_assim_instant_loss: bool,
     /// Faction-gated lethal strike (Tal Shiar / Mo'Kai / S31 / Q): wrong hull → instant loss.
     pub faction_gate_instant_loss: bool,
+    /// Hostile **Thorn in My Side** (`Experimental Defense Array`): forbidden officer on board → instant loss.
+    pub lethal_attacker_officer_instant_loss: bool,
     /// Hostile **Isolytic Vulnerability**: player outbound hits apply only the isolytic leg to defender HP.
     pub defender_isolytic_vulnerability: bool,
+    /// Hostile **Inertial Diverters** (`Experimental Defense Array` / `Polaron Arsenal`): negates
+    /// Standard Damage while still allowing Infusion Damage ∄ and Isolytic Damage.
+    pub defender_negates_standard_damage: bool,
+    /// Hostile **Shield Sweep**: restores 100% of base shield HP whenever shields deplete.
+    pub defender_shield_restore_on_deplete: bool,
+    /// Hostile **Polaron Weaponry** additive damage bonus on Polaron (`weapon_type == 6`) weapons
+    /// (*Known Weakness* +25% same-faction and/or *On Lookout* +50% non-counter triangle).
+    pub defender_polaron_damage_bonus: f64,
     /// Strike Down: force player incoming shield mitigation to 0% for the fight.
     pub attacker_shield_mitigation_forced_zero: bool,
     /// Programmable Matter: multiplier on the player's outbound post-apex damage pool
@@ -667,6 +677,7 @@ pub fn build_combat_setup_with_officer_stat(
         matches!(
             s.ability.effect,
             AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::CritMitigationRating(_)
         )
     });
     let attacker_has_shield_drain = attacker_crew.seats.iter().any(|s| {
@@ -685,6 +696,7 @@ pub fn build_combat_setup_with_officer_stat(
         matches!(
             s.ability.effect,
             AbilityEffect::HostileCritDamageReduction { .. }
+                | AbilityEffect::CritMitigationRating(_)
         )
     });
     let attacker_has_hostile_crit_chance_reduction = attacker_crew.seats.iter().any(|s| {
@@ -729,11 +741,29 @@ pub fn build_combat_setup_with_officer_stat(
 
     let defender_isolytic_vulnerability =
         crate::combat::abilities::hostile_isolytic_vulnerability_active(&defender_crew);
+    let defender_negates_standard_damage =
+        crate::combat::abilities::hostile_negates_standard_damage_active(&defender_crew);
+    let defender_shield_restore_on_deplete =
+        crate::combat::abilities::hostile_shield_restore_on_deplete_active(&defender_crew);
+    let defender_polaron_damage_bonus =
+        crate::combat::abilities::hostile_polaron_damage_bonus_active(
+            &defender_crew,
+            config.attacker_owner_faction,
+            defender_faction,
+            attacker_ship_type,
+            defender_ship_type,
+        );
     let faction_gate_instant_loss = crate::combat::abilities::hostile_faction_gate_instant_loss(
         &defender_crew,
         config.attacker_owner_faction,
         &attacker.id,
     );
+    let lethal_attacker_officer_instant_loss =
+        crate::combat::abilities::hostile_lethal_attacker_officer_instant_loss(
+            &defender_crew,
+            &attacker_crew,
+            &config.attacker_roster_officer_ids,
+        );
     let attacker_shield_mitigation_forced_zero =
         crate::combat::abilities::hostile_attacker_shield_mitigation_zero_active(&defender_crew);
     let outbound_final_damage_factor = 1.0
@@ -784,7 +814,11 @@ pub fn build_combat_setup_with_officer_stat(
         quantum_beam_instant_loss,
         evo_assim_instant_loss,
         faction_gate_instant_loss,
+        lethal_attacker_officer_instant_loss,
         defender_isolytic_vulnerability,
+        defender_negates_standard_damage,
+        defender_shield_restore_on_deplete,
+        defender_polaron_damage_bonus,
         attacker_shield_mitigation_forced_zero,
         outbound_final_damage_factor,
         defender_shield_damage_routing_regen,
@@ -1143,6 +1177,7 @@ fn simulate_combat_from_setup_inner(
         )
         || setup.evo_assim_instant_loss
         || setup.faction_gate_instant_loss
+        || setup.lethal_attacker_officer_instant_loss
     {
         let instant_loss_hull = max_att_hull;
         let attacker_hull_remaining = (attacker.hull_health - instant_loss_hull).max(0.0);
@@ -2323,6 +2358,7 @@ fn simulate_combat_from_setup_inner(
                         attacker_has_apex_barrier_bonus: setup.attacker_has_apex_barrier_bonus,
                         defender_has_kemocite: setup.defender_has_kemocite,
                         defender_has_on_hit_stacks: setup.defender_has_on_hit_stacks,
+                        defender_polaron_damage_bonus: setup.defender_polaron_damage_bonus,
                     });
                 }
             }
@@ -2428,6 +2464,8 @@ fn simulate_combat_from_setup_inner(
                     hostile_combat_begin_isolytic_defense,
                     defender_receive_damage_effects,
                     defender_isolytic_vulnerability: setup.defender_isolytic_vulnerability,
+                    defender_negates_standard_damage: setup.defender_negates_standard_damage,
+                    defender_shield_restore_on_deplete: setup.defender_shield_restore_on_deplete,
                     shield_routing_mitigation_override,
                     attack_phase_has_per_shot_triggers: setup.attack_phase_has_per_shot_triggers,
                     defense_phase_has_burning: setup.defense_phase_has_burning,
@@ -4091,6 +4129,8 @@ struct FireAttackerWeapon<'a> {
     hostile_combat_begin_isolytic_defense: f64,
     defender_receive_damage_effects: &'a [ActiveAbilityEffect],
     defender_isolytic_vulnerability: bool,
+    defender_negates_standard_damage: bool,
+    defender_shield_restore_on_deplete: bool,
     /// `Some(effective mitigation)` while Breen shield-damage routing is active: replaces the
     /// normal mitigation/bypass composition so all damage routes to shields, less only the
     /// setup-resolved designed-counter bypass. `None` = normal path.
@@ -4148,6 +4188,8 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         hostile_combat_begin_isolytic_defense,
         defender_receive_damage_effects,
         defender_isolytic_vulnerability,
+        defender_negates_standard_damage,
+        defender_shield_restore_on_deplete,
         shield_routing_mitigation_override,
         attack_phase_has_per_shot_triggers,
         defense_phase_has_burning,
@@ -4179,6 +4221,23 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 inbound_defender_effects.composed_shield_mitigation_bypass(),
             )
         };
+    let attacker_is_polaron_weapon = attacker.weapon_type(weapon_index) == WeaponType::Polaron;
+    // Infusion Capacitors convert pre-mitigation Standard Damage into Infusion Damage ∄,
+    // bypassing Standard Mitigation and Shields (1,000 capacitors = 1%). Spike boosts total
+    // capacitors multiplicatively: `effective = flat * (1 + spike)`.
+    let flat_infusion_capacitors = phase_effects.composed_infusion_capacitors().max(0.0);
+    let infusion_capacitor_spike = phase_effects.composed_infusion_capacitor_spike().max(0.0);
+    let effective_infusion_capacitors = flat_infusion_capacitors * (1.0 + infusion_capacitor_spike);
+    let infusion_ratio = if effective_infusion_capacitors > 0.0 {
+        effective_infusion_capacitors / 100_000.0
+    } else {
+        0.0
+    };
+    let use_simd_outbound_weapon_path = use_simd_outbound_weapon_path
+        && infusion_ratio == 0.0
+        && !defender_negates_standard_damage
+        && !defender_shield_restore_on_deplete;
+
     // Every batch flushes at four hits; inactive lanes never reach the kernel or HP loop.
     let mut simd_damage_batch = [0.0_f64; 4];
     let mut simd_isolytic_batch = [0.0_f64; 4];
@@ -4485,6 +4544,19 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             // as additive percentage points on the crit multiplier (per-crit stat bonus).
             let breach_crit_chance_add = breach_crit_chance_per_hit * st.breach_hits as f64;
             let breach_crit_damage_add = breach_crit_damage_per_crit * st.breach_crits as f64;
+            let outbound_mult_crit_red = if attacker_is_polaron_weapon {
+                0.0
+            } else {
+                let base_mult = effective_attacker_crit_reduction
+                    .multiplicative_fraction
+                    .clamp(0.0, 0.95);
+                let cm_red = effective_attacker_crit_reduction.crit_mitigation_reduction();
+                if cm_red > 0.0 {
+                    (1.0 - (1.0 - base_mult) * (1.0 - cm_red)).clamp(0.0, 0.95)
+                } else {
+                    effective_attacker_crit_reduction.multiplicative_fraction
+                }
+            };
             let crit = resolve_vehicle_weapon_crit(
                 attacker.weapon_crit_chance(weapon_index),
                 phase_effects.crit_chance_bonus() + breach_crit_chance_add
@@ -4493,8 +4565,12 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                     + phase_effects.base_crit_damage_bonus(),
                 phase_effects.crit_damage_multiplier(),
                 breach_crit_damage_add,
-                effective_attacker_crit_reduction.additive_points,
-                effective_attacker_crit_reduction.multiplicative_fraction,
+                if attacker_is_polaron_weapon {
+                    0.0
+                } else {
+                    effective_attacker_crit_reduction.additive_points
+                },
+                outbound_mult_crit_red,
                 attacker.crit_damage_floor,
                 hull_breach_active,
                 &mut *rng,
@@ -4807,14 +4883,38 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                 effective_isolytic_cascade,
             );
 
+            // Standard leg vs Infusion Damage ∄:
+            // - Every 1,000 effective Infusion Capacitors converts 1% of pre-mitigation Standard
+            //   damage into Infusion Damage ∄ (bypasses Standard Mitigation and Shields, subject to
+            //   Apex Barrier). Remaining unconverted standard fraction is `(1 - ratio).max(0)`.
+            // - Under Inertial Diverters (`defender_negates_standard_damage`), the standard leg is
+            //   0 while both Infusion Damage ∄ and Isolytic Damage still apply.
+            // - Under Isolytic Vulnerability (`defender_isolytic_vulnerability`), only Isolytic
+            //   Damage applies (standard and infusion are both 0).
+            let standard_damage_leg =
+                if defender_isolytic_vulnerability || defender_negates_standard_damage {
+                    0.0
+                } else if infusion_ratio > 0.0 {
+                    damage * (1.0 - infusion_ratio).max(0.0)
+                } else {
+                    damage
+                };
+            let infusion_taken = if infusion_ratio > 0.0 && !defender_isolytic_vulnerability {
+                phase_effects.compose_isolytic_base_damage(unmitigated_weapon_damage)
+                    * infusion_ratio
+            } else {
+                0.0
+            };
+
             // Apex barrier: apply once to combined pool (standard_net + isolytic_taken), unless the
             // defender has Isolytic Vulnerability — then only the isolytic leg depletes HP.
             let damage_before_apex = combine_outbound_damage_before_apex(
-                damage,
+                standard_damage_leg,
                 isolytic_taken,
                 defender_isolytic_vulnerability,
             );
             let damage_after_apex = damage_before_apex * apex_damage_factor;
+            let infusion_after_apex = infusion_taken * apex_damage_factor;
 
             // Shield mitigation: S * damage to shield, (1-S) * damage to hull (STFC Toolbox game-mechanics).
             // Additive bonuses (e.g. Quantum Slipstream cumulative debuff) compose first,
@@ -4893,15 +4993,24 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
 
             st.total_isolytic_damage += isolytic_taken.max(0.0) * apex_damage_factor;
 
-            let (actual_shield_damage, hull_damage_this_round) = apply_shield_hull_split(
+            let shield_before_hit = st.defender_shield_remaining;
+            let (actual_shield_damage, pool_hull_damage) = apply_shield_hull_split(
                 damage_after_apex,
                 shield_mitigation,
                 st.defender_shield_remaining,
             );
+            // Infusion Damage ∄ bypasses shields completely and applies directly to hull.
+            let hull_damage_this_round = pool_hull_damage + infusion_after_apex;
             let hull_damage_before_hit = st.total_hull_damage;
 
             st.defender_shield_remaining =
                 (st.defender_shield_remaining - actual_shield_damage).max(0.0);
+            if defender_shield_restore_on_deplete
+                && shield_before_hit > 0.0
+                && st.defender_shield_remaining <= 0.0
+            {
+                st.defender_shield_remaining = defender.shield_health.max(0.0);
+            }
             st.total_hull_damage += hull_damage_this_round;
             st.total_shield_damage += actual_shield_damage;
 
@@ -4956,72 +5065,84 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                         ..EventSource::default()
                     },
                     weapon_index: Some(weapon_index_u),
-                    values: Map::from_iter([
-                        (
-                            "damage_after_apex".to_string(),
-                            Value::from(round_f64(damage_after_apex)),
-                        ),
-                        (
-                            "isolytic_component".to_string(),
-                            Value::from(round_f64(isolytic_taken)),
-                        ),
-                        (
-                            "isolytic_vulnerability".to_string(),
-                            Value::Bool(defender_isolytic_vulnerability),
-                        ),
-                        (
-                            "shield_mitigation".to_string(),
-                            Value::from(round_f64(shield_mitigation)),
-                        ),
-                        (
-                            "shield_damage".to_string(),
-                            Value::from(round_f64(actual_shield_damage)),
-                        ),
-                        (
-                            "hull_damage".to_string(),
-                            Value::from(round_f64(hull_damage_this_round)),
-                        ),
-                        (
-                            "applied_weapon_damage".to_string(),
-                            Value::from(round_f64(applied_weapon_damage)),
-                        ),
-                        (
-                            "applied_isolytic_damage".to_string(),
-                            Value::from(round_f64(applied_weapon_damage * isolytic_fraction)),
-                        ),
-                        (
-                            "hull_overkill_damage".to_string(),
-                            Value::from(round_f64(
-                                (hull_damage_this_round - applied_hull_damage).max(0.0),
-                            )),
-                        ),
-                        (
-                            "discarded_shield_damage".to_string(),
-                            Value::from(round_f64(
-                                (damage_after_apex - actual_shield_damage - hull_damage_this_round)
-                                    .max(0.0),
-                            )),
-                        ),
-                        (
-                            "running_hull_damage".to_string(),
-                            Value::from(round_f64(st.total_hull_damage)),
-                        ),
-                        (
-                            "defender_shield_remaining".to_string(),
-                            Value::from(round_f64(st.defender_shield_remaining)),
-                        ),
-                        (
-                            "shield_broke".to_string(),
-                            Value::Bool(
-                                shield_before_weapon > 0.0 && st.defender_shield_remaining <= 0.0,
+                    values: {
+                        let mut values = Map::from_iter([
+                            (
+                                "damage_after_apex".to_string(),
+                                Value::from(round_f64(damage_after_apex)),
                             ),
-                        ),
-                        (
-                            "assimilated_active".to_string(),
-                            Value::Bool(st.assimilated_rounds_remaining > 0),
-                        ),
-                        ("hit_index".to_string(), Value::from(hit_index)),
-                    ]),
+                            (
+                                "isolytic_component".to_string(),
+                                Value::from(round_f64(isolytic_taken)),
+                            ),
+                            (
+                                "isolytic_vulnerability".to_string(),
+                                Value::Bool(defender_isolytic_vulnerability),
+                            ),
+                            (
+                                "shield_mitigation".to_string(),
+                                Value::from(round_f64(shield_mitigation)),
+                            ),
+                            (
+                                "shield_damage".to_string(),
+                                Value::from(round_f64(actual_shield_damage)),
+                            ),
+                            (
+                                "hull_damage".to_string(),
+                                Value::from(round_f64(hull_damage_this_round)),
+                            ),
+                            (
+                                "applied_weapon_damage".to_string(),
+                                Value::from(round_f64(applied_weapon_damage)),
+                            ),
+                            (
+                                "applied_isolytic_damage".to_string(),
+                                Value::from(round_f64(applied_weapon_damage * isolytic_fraction)),
+                            ),
+                            (
+                                "hull_overkill_damage".to_string(),
+                                Value::from(round_f64(
+                                    (hull_damage_this_round - applied_hull_damage).max(0.0),
+                                )),
+                            ),
+                            (
+                                "discarded_shield_damage".to_string(),
+                                Value::from(round_f64(
+                                    (damage_after_apex + infusion_after_apex
+                                        - actual_shield_damage
+                                        - hull_damage_this_round)
+                                        .max(0.0),
+                                )),
+                            ),
+                            (
+                                "running_hull_damage".to_string(),
+                                Value::from(round_f64(st.total_hull_damage)),
+                            ),
+                            (
+                                "defender_shield_remaining".to_string(),
+                                Value::from(round_f64(st.defender_shield_remaining)),
+                            ),
+                            (
+                                "shield_broke".to_string(),
+                                Value::Bool(
+                                    shield_before_weapon > 0.0
+                                        && st.defender_shield_remaining <= 0.0,
+                                ),
+                            ),
+                            (
+                                "assimilated_active".to_string(),
+                                Value::Bool(st.assimilated_rounds_remaining > 0),
+                            ),
+                            ("hit_index".to_string(), Value::from(hit_index)),
+                        ]);
+                        if infusion_after_apex > 0.0 {
+                            values.insert(
+                                "infusion_component".to_string(),
+                                Value::from(round_f64(infusion_after_apex)),
+                            );
+                        }
+                        values
+                    },
                 }
             });
             if emit_snapshots {
@@ -5106,6 +5227,7 @@ struct FireDefenderCounter<'a> {
     attacker_has_apex_barrier_bonus: bool,
     defender_has_kemocite: bool,
     defender_has_on_hit_stacks: bool,
+    defender_polaron_damage_bonus: f64,
 }
 
 /// Defender counter-fire for one weapon sub-round: hostile weapon shots vs the player ship,
@@ -5173,7 +5295,9 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         attacker_has_apex_barrier_bonus,
         defender_has_kemocite,
         defender_has_on_hit_stacks,
+        defender_polaron_damage_bonus,
     } = p;
+    let is_polaron_weapon = defender.weapon_type(weapon_index) == WeaponType::Polaron;
     // Defender counter-attack: hostile weapon fire vs the player ship (attacker struct).
     // Uses the same damage-through, isolytic, apex, and shield/hull helpers as outbound shots
     // so the two paths stay in sync. Shot count mirrors outbound: `effective_shots_for_weapon`
@@ -5403,6 +5527,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     // untraced Monte Carlo trial agree with its traced replay. Pure counter damage remains eligible
     // for the SIMD arithmetic kernel.
     let use_simd_counter_damage = use_experimental_simd_damage_after_apex_base
+        && !is_polaron_weapon
         && !defender_has_filtered_effects
         && defender_shield_break_carry.is_empty()
         && receive_damage_effects.is_empty()
@@ -5501,6 +5626,15 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 Some(("hostile_kemocite", None)),
             );
         }
+    }
+    if is_polaron_weapon && defender_polaron_damage_bonus > 0.0 {
+        defender_phase_template.add_effect(
+            TimingWindow::CombatBegin,
+            AbilityEffect::AttackMultiplier(defender_polaron_damage_bonus),
+            defender_weapon_attack,
+            round_index,
+            Some(("hostile_polaron_weaponry", None)),
+        );
     }
     if counter_opponent_weapon_damage_reduction > 0.0 {
         defender_phase_template.add_effect(
@@ -5774,11 +5908,17 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 counter_pierce *= 1.0 + counter_pierce_bonus_fraction;
             }
         }
-        let counter_damage_through = compute_damage_through_factor(
-            counter_mitigation_mult,
-            counter_pierce,
-            defender_phase_effects.defense_mitigation_bonus(),
-        );
+        // Polaron Weapons ∃ completely bypass Standard Mitigation, Apex Barrier, Critical
+        // Mitigation, and Shields.
+        let counter_damage_through = if is_polaron_weapon {
+            1.0
+        } else {
+            compute_damage_through_factor(
+                counter_mitigation_mult,
+                counter_pierce,
+                defender_phase_effects.defense_mitigation_bonus(),
+            )
+        };
         let attacker_hull_breach_active_for_crit = st.attacker_hull_breach_rounds > 0;
         // Existing multiplicative counter-fire reduction is applied below.
         // Native damage-taken reductions subtract from the crit bonus before the floor.
@@ -5804,11 +5944,16 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         }
         let mut def_crit_mult = def_crit.multiplier;
         // Hostile crit-damage reduction (U.S.S. Crozier "Gunboat Diplomacy", Borg
-        // Operating Table tech, profile `player_crit_damage_reduction`, …). The
-        // per-round duration gate already lives inside the resolver; here we just
-        // apply the resolved fraction.
-        if def_is_crit && hostile_crit_reduction.multiplicative_fraction > 0.0 {
-            def_crit_mult *= (1.0 - hostile_crit_reduction.multiplicative_fraction).max(0.05);
+        // Operating Table tech, Toryn Critical Mitigation rating, profile
+        // `player_crit_damage_reduction`, …). Polaron Weapons bypass Critical Mitigation.
+        if def_is_crit && !is_polaron_weapon {
+            if hostile_crit_reduction.multiplicative_fraction > 0.0 {
+                def_crit_mult *= (1.0 - hostile_crit_reduction.multiplicative_fraction).max(0.05);
+            }
+            let cm_red = hostile_crit_reduction.crit_mitigation_reduction();
+            if cm_red > 0.0 {
+                def_crit_mult *= (1.0 - cm_red).max(0.05);
+            }
         }
         if def_is_crit && defender.crit_damage_floor > 0.0 {
             // Hostile critical-damage floors are modeled as protection against player CDR:
@@ -5928,9 +6073,23 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             continue;
         }
 
-        let counter_after_apex =
-            (counter_after_attack_phase + counter_iso_taken) * counter_apex_factor;
-        let att_shield_mitigation = if st.attacker_shield_remaining > 0.0 {
+        // Polaron Weapons ∃ bypass Apex Barrier and Shields, mitigated only by Polaron Mitigation ∃
+        // (`1 / (1 + effective_pm / 50_000)` where `effective_pm = flat * (1 + multiplier)`).
+        let counter_after_apex = if is_polaron_weapon {
+            let base_pm = phase_effects.composed_polaron_mitigation().max(0.0);
+            let pm_mult = phase_effects
+                .composed_polaron_mitigation_multiplier()
+                .max(0.0);
+            let effective_pm = base_pm * (1.0 + pm_mult);
+            let polaron_mitigation_factor = 1.0 / (1.0 + effective_pm / 50_000.0);
+            counter_after_attack_phase * polaron_mitigation_factor
+                + counter_iso_taken * counter_apex_factor
+        } else {
+            (counter_after_attack_phase + counter_iso_taken) * counter_apex_factor
+        };
+        let att_shield_mitigation = if is_polaron_weapon {
+            0.0
+        } else if st.attacker_shield_remaining > 0.0 {
             effective_counter_incoming_shield_mitigation(
                 attacker.shield_mitigation,
                 config,

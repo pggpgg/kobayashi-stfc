@@ -1050,6 +1050,66 @@ fn compile_officer_combat_spec_impl(
                 compiled_condition.clone(),
             ))
         }
+        AbilityModifierSpec::CritMitigationRating => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::CritMitigationRating(v.max(0.0)),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::InfusionCapacitors => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::InfusionCapacitors(v.max(0.0)),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::InfusionCapacitorSpike => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::InfusionCapacitorSpike(v.max(0.0)),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::PolaronMitigation => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::PolaronMitigation(v.max(0.0)),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::PolaronMitigationMultiplier => {
+            let v = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::PolaronMitigationMultiplier(v.max(0.0)),
+                compiled_condition.clone(),
+            ))
+        }
         AbilityModifierSpec::OfficerShieldRegenFlat => {
             let v = scalar_fraction(
                 spec.value
@@ -1987,6 +2047,19 @@ pub fn compile_research_attack_effect(
         )),
         AbilityModifierSpec::ApexShred => Ok(AbilityEffect::ApexShredBonus(v)),
         AbilityModifierSpec::ApexBarrier => Ok(AbilityEffect::ApexBarrierBonus(v)),
+        AbilityModifierSpec::CritMitigationRating => {
+            Ok(AbilityEffect::CritMitigationRating(v.max(0.0)))
+        }
+        AbilityModifierSpec::InfusionCapacitors => {
+            Ok(AbilityEffect::InfusionCapacitors(v.max(0.0)))
+        }
+        AbilityModifierSpec::InfusionCapacitorSpike => {
+            Ok(AbilityEffect::InfusionCapacitorSpike(v.max(0.0)))
+        }
+        AbilityModifierSpec::PolaronMitigation => Ok(AbilityEffect::PolaronMitigation(v.max(0.0))),
+        AbilityModifierSpec::PolaronMitigationMultiplier => {
+            Ok(AbilityEffect::PolaronMitigationMultiplier(v.max(0.0)))
+        }
         AbilityModifierSpec::HostileCritDamageReduction => {
             Ok(AbilityEffect::HostileCritDamageReduction {
                 reduction: v.clamp(0.0, 0.95),

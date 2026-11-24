@@ -484,6 +484,45 @@ pub(crate) fn hostile_ability_effect_from_catalog(
             }
             Some(AbilityEffect::HostileIsolyticVulnerability)
         }
+        "hostile_negates_standard_damage" | "inertial_diverters" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileNegatesStandardDamage)
+        }
+        "hostile_shield_restore_on_deplete" | "shield_sweep_restore" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileShieldRestoreOnDeplete)
+        }
+        "hostile_polaron_weaponry" | "polaron_weaponry" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostilePolaronDamageBonus {
+                same_faction_bonus: value.max(0.0),
+                non_counter_bonus: 0.5,
+            })
+        }
+        "hostile_lethal_if_yuki_on_board" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileLethalIfAttackerOfficer {
+                forbid_yuki: true,
+                forbid_tal: false,
+            })
+        }
+        "hostile_lethal_if_yuki_or_tal_on_board" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::HostileLethalIfAttackerOfficer {
+                forbid_yuki: true,
+                forbid_tal: true,
+            })
+        }
         // Attacker-only hull abilities that must not apply on hostile defender crew.
         "conqueror_borg_beam_suppression"
         | "borg_conqueror_beam_suppression"

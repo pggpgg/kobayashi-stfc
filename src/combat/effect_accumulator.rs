@@ -69,11 +69,15 @@ pub(crate) enum EffectStatKey {
     /// [`EffectAccumulator::composed_attacker_shield_mitigation_bonus`] and adds to
     /// `attacker.shield_mitigation` in `effective_incoming_shield_mitigation`.
     AttackerShieldMitigationBonus = 16,
+    InfusionCapacitors = 17,
+    InfusionCapacitorSpike = 18,
+    PolaronMitigation = 19,
+    PolaronMitigationMultiplier = 20,
 }
 
 /// Number of [`EffectStatKey`] variants. Kept in sync with the enum manually — a unit test below
 /// asserts every variant in [`EffectStatKey::ALL`] is present and that no index exceeds this.
-pub(crate) const EFFECT_STAT_KEY_COUNT: usize = 17;
+pub(crate) const EFFECT_STAT_KEY_COUNT: usize = 21;
 
 impl EffectStatKey {
     /// All variants in declaration order (matches discriminant). Used for trace iteration and
@@ -96,6 +100,10 @@ impl EffectStatKey {
         EffectStatKey::ShieldMitigationBonus,
         EffectStatKey::ShieldMitigationBypass,
         EffectStatKey::AttackerShieldMitigationBonus,
+        EffectStatKey::InfusionCapacitors,
+        EffectStatKey::InfusionCapacitorSpike,
+        EffectStatKey::PolaronMitigation,
+        EffectStatKey::PolaronMitigationMultiplier,
     ];
 
     /// Discriminant as index into a fixed-size array.
@@ -185,6 +193,10 @@ impl EffectStatKey {
             EffectStatKey::ShieldMitigationBonus => "shield_mitigation_bonus",
             EffectStatKey::ShieldMitigationBypass => "shield_mitigation_bypass",
             EffectStatKey::AttackerShieldMitigationBonus => "attacker_shield_mitigation_bonus",
+            EffectStatKey::InfusionCapacitors => "infusion_capacitors",
+            EffectStatKey::InfusionCapacitorSpike => "infusion_capacitor_spike",
+            EffectStatKey::PolaronMitigation => "polaron_mitigation",
+            EffectStatKey::PolaronMitigationMultiplier => "polaron_mitigation_multiplier",
         }
     }
 }
@@ -586,6 +598,24 @@ impl EffectAccumulator {
             .composed_for(EffectStatKey::AttackerShieldMitigationBonus)
     }
 
+    pub(crate) fn composed_infusion_capacitors(&self) -> f64 {
+        self.stacks.composed_for(EffectStatKey::InfusionCapacitors)
+    }
+
+    pub(crate) fn composed_infusion_capacitor_spike(&self) -> f64 {
+        self.stacks
+            .composed_for(EffectStatKey::InfusionCapacitorSpike)
+    }
+
+    pub(crate) fn composed_polaron_mitigation(&self) -> f64 {
+        self.stacks.composed_for(EffectStatKey::PolaronMitigation)
+    }
+
+    pub(crate) fn composed_polaron_mitigation_multiplier(&self) -> f64 {
+        self.stacks
+            .composed_for(EffectStatKey::PolaronMitigationMultiplier)
+    }
+
     #[inline]
     pub(crate) fn crit_chance_bonus(&self) -> f64 {
         self.crit_chance_bonus
@@ -930,6 +960,54 @@ impl EffectAccumulator {
                 self.trace_crit_damage_mult(source, timing, *m);
                 return;
             }
+            if let AbilityEffect::InfusionCapacitors(v) = effect {
+                if v.is_finite() {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::InfusionCapacitors,
+                        v,
+                        timing,
+                        source,
+                        "InfusionCapacitors",
+                    );
+                }
+                return;
+            }
+            if let AbilityEffect::InfusionCapacitorSpike(v) = effect {
+                if v.is_finite() {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::InfusionCapacitorSpike,
+                        v,
+                        timing,
+                        source,
+                        "InfusionCapacitorSpike",
+                    );
+                }
+                return;
+            }
+            if let AbilityEffect::PolaronMitigation(v) = effect {
+                if v.is_finite() {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::PolaronMitigation,
+                        v,
+                        timing,
+                        source,
+                        "PolaronMitigation",
+                    );
+                }
+                return;
+            }
+            if let AbilityEffect::PolaronMitigationMultiplier(v) = effect {
+                if v.is_finite() {
+                    self.add_stack_flat_traced(
+                        EffectStatKey::PolaronMitigationMultiplier,
+                        v,
+                        timing,
+                        source,
+                        "PolaronMitigationMultiplier",
+                    );
+                }
+                return;
+            }
         }
 
         match timing {
@@ -1102,6 +1180,15 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileNegatesStandardDamage
+                | AbilityEffect::HostileShieldRestoreOnDeplete
+                | AbilityEffect::HostilePolaronDamageBonus { .. }
+                | AbilityEffect::HostileLethalIfAttackerOfficer { .. }
+                | AbilityEffect::CritMitigationRating(_)
+                | AbilityEffect::InfusionCapacitors(_)
+                | AbilityEffect::InfusionCapacitorSpike(_)
+                | AbilityEffect::PolaronMitigation(_)
+                | AbilityEffect::PolaronMitigationMultiplier(_)
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
@@ -1310,6 +1397,15 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileNegatesStandardDamage
+                | AbilityEffect::HostileShieldRestoreOnDeplete
+                | AbilityEffect::HostilePolaronDamageBonus { .. }
+                | AbilityEffect::HostileLethalIfAttackerOfficer { .. }
+                | AbilityEffect::CritMitigationRating(_)
+                | AbilityEffect::InfusionCapacitors(_)
+                | AbilityEffect::InfusionCapacitorSpike(_)
+                | AbilityEffect::PolaronMitigation(_)
+                | AbilityEffect::PolaronMitigationMultiplier(_)
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
@@ -1500,6 +1596,15 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileNegatesStandardDamage
+                | AbilityEffect::HostileShieldRestoreOnDeplete
+                | AbilityEffect::HostilePolaronDamageBonus { .. }
+                | AbilityEffect::HostileLethalIfAttackerOfficer { .. }
+                | AbilityEffect::CritMitigationRating(_)
+                | AbilityEffect::InfusionCapacitors(_)
+                | AbilityEffect::InfusionCapacitorSpike(_)
+                | AbilityEffect::PolaronMitigation(_)
+                | AbilityEffect::PolaronMitigationMultiplier(_)
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
@@ -1681,6 +1786,15 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileNegatesStandardDamage
+                | AbilityEffect::HostileShieldRestoreOnDeplete
+                | AbilityEffect::HostilePolaronDamageBonus { .. }
+                | AbilityEffect::HostileLethalIfAttackerOfficer { .. }
+                | AbilityEffect::CritMitigationRating(_)
+                | AbilityEffect::InfusionCapacitors(_)
+                | AbilityEffect::InfusionCapacitorSpike(_)
+                | AbilityEffect::PolaronMitigation(_)
+                | AbilityEffect::PolaronMitigationMultiplier(_)
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
@@ -1890,6 +2004,15 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileNegatesStandardDamage
+                | AbilityEffect::HostileShieldRestoreOnDeplete
+                | AbilityEffect::HostilePolaronDamageBonus { .. }
+                | AbilityEffect::HostileLethalIfAttackerOfficer { .. }
+                | AbilityEffect::CritMitigationRating(_)
+                | AbilityEffect::InfusionCapacitors(_)
+                | AbilityEffect::InfusionCapacitorSpike(_)
+                | AbilityEffect::PolaronMitigation(_)
+                | AbilityEffect::PolaronMitigationMultiplier(_)
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
@@ -2124,6 +2247,15 @@ impl EffectAccumulator {
                 | AbilityEffect::BreachCumulativeCritChancePerHit(_)
                 | AbilityEffect::BreachCumulativeCritDamagePerCrit(_)
                 | AbilityEffect::HostileIsolyticVulnerability
+                | AbilityEffect::HostileNegatesStandardDamage
+                | AbilityEffect::HostileShieldRestoreOnDeplete
+                | AbilityEffect::HostilePolaronDamageBonus { .. }
+                | AbilityEffect::HostileLethalIfAttackerOfficer { .. }
+                | AbilityEffect::CritMitigationRating(_)
+                | AbilityEffect::InfusionCapacitors(_)
+                | AbilityEffect::InfusionCapacitorSpike(_)
+                | AbilityEffect::PolaronMitigation(_)
+                | AbilityEffect::PolaronMitigationMultiplier(_)
                 | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
                 | AbilityEffect::HostileLethalCombatBegin { .. }
                 | AbilityEffect::HostileSelfMorale { .. }
@@ -2614,7 +2746,26 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         AbilityEffect::BreachCumulativeCritChancePerHit(_)
         | AbilityEffect::BreachCumulativeCritDamagePerCrit(_) => effect,
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { .. } => effect,
+        AbilityEffect::CritMitigationRating(v) => {
+            AbilityEffect::CritMitigationRating(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::InfusionCapacitors(v) => {
+            AbilityEffect::InfusionCapacitors(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::InfusionCapacitorSpike(v) => {
+            AbilityEffect::InfusionCapacitorSpike(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::PolaronMitigation(v) => {
+            AbilityEffect::PolaronMitigation(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::PolaronMitigationMultiplier(v) => {
+            AbilityEffect::PolaronMitigationMultiplier(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
         AbilityEffect::HostileIsolyticVulnerability
+        | AbilityEffect::HostileNegatesStandardDamage
+        | AbilityEffect::HostileShieldRestoreOnDeplete
+        | AbilityEffect::HostilePolaronDamageBonus { .. }
+        | AbilityEffect::HostileLethalIfAttackerOfficer { .. }
         | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
         | AbilityEffect::HostileLethalCombatBegin { .. }
         | AbilityEffect::HostileSelfMorale { .. }

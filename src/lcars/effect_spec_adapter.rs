@@ -343,6 +343,15 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
                 faction: slug.to_string(),
             })
         }
+        "attacker_owner_faction_is" | "attacker_owner_faction" | "self_faction_is" => {
+            let slug = c.faction.as_deref().or(c.tag.as_deref()).ok_or_else(|| {
+                "attacker owner faction condition requires `faction` or `tag` with a known faction slug"
+                    .to_string()
+            })?;
+            Ok(AbilityConditionSpec::AttackerOwnerFactionIs {
+                faction: slug.to_string(),
+            })
+        }
         "defender_hull_faction_id" | "enemy_hull_faction" | "enemy_hull_faction_id" => {
             let id = c.faction_id.ok_or_else(|| {
                 format!(
@@ -529,6 +538,11 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         }
         "apex_shred" => Some(AbilityModifierSpec::ApexShred),
         "apex_barrier" => Some(AbilityModifierSpec::ApexBarrier),
+        "crit_mitigation_rating" => Some(AbilityModifierSpec::CritMitigationRating),
+        "infusion_capacitors" => Some(AbilityModifierSpec::InfusionCapacitors),
+        "infusion_capacitor_spike" => Some(AbilityModifierSpec::InfusionCapacitorSpike),
+        "polaron_mitigation" => Some(AbilityModifierSpec::PolaronMitigation),
+        "polaron_mitigation_multiplier" => Some(AbilityModifierSpec::PolaronMitigationMultiplier),
         "shield_regen" | "shield_hp_repair" => Some(AbilityModifierSpec::OfficerShieldRegenFlat),
         "shield_regen_max_fraction"
         | "shield_hp_repair_max_fraction"

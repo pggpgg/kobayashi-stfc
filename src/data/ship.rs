@@ -91,11 +91,12 @@ pub fn component_firing_schedule(
     })
 }
 
-/// Maps the upstream numeric `weapon_type` (1 = Energy, 2 = Kinetic) to the slug stored on [`WeaponRecord`].
+/// Maps the upstream numeric `weapon_type` (1 = Energy, 2 = Kinetic, 6 = Polaron) to the slug stored on [`WeaponRecord`].
 pub fn weapon_type_slug_from_upstream(v: Option<i64>) -> Option<&'static str> {
     match v {
         Some(1) => Some("energy"),
         Some(2) => Some("kinetic"),
+        Some(6) => Some("polaron"),
         _ => None,
     }
 }
@@ -105,6 +106,7 @@ pub fn weapon_type_from_slug(slug: Option<&str>) -> crate::combat::WeaponType {
     match slug {
         Some("energy") => crate::combat::WeaponType::Energy,
         Some("kinetic") => crate::combat::WeaponType::Kinetic,
+        Some("polaron") => crate::combat::WeaponType::Polaron,
         _ => crate::combat::WeaponType::Unknown,
     }
 }

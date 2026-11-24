@@ -240,6 +240,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut items: Vec<_> = by_name.into_values().collect();
+    items.sort_by(|a, b| {
+        a.fid
+            .unwrap_or(i64::MAX)
+            .cmp(&b.fid.unwrap_or(i64::MAX))
+            .then_with(|| a.name.cmp(&b.name))
+    });
     // Spreadsheet summaries cannot replace client-verified per-level snapshots.
     if let Some(previous) = output_path
         .to_str()

@@ -353,10 +353,51 @@ fn map_condition_token(
         "TargetNotSoloArmada" => Ok(AbilityConditionSpec::EngagementIncludes {
             enemy_type: "group_armadas".into(),
         }),
+        "SelfAtWaveDefenseChallenge" => Ok(AbilityConditionSpec::EngagementIncludes {
+            enemy_type: "waves".into(),
+        }),
+        "SelfFkrOrVengeance" => Ok(AbilityConditionSpec::Or {
+            any: vec![
+                AbilityConditionSpec::AttackerOwnerFactionIs {
+                    faction: "federation".into(),
+                },
+                AbilityConditionSpec::AttackerOwnerFactionIs {
+                    faction: "klingon".into(),
+                },
+                AbilityConditionSpec::AttackerOwnerFactionIs {
+                    faction: "romulan".into(),
+                },
+                AbilityConditionSpec::AttackerShipIdIs {
+                    ship_id: "uss_vengeance".into(),
+                },
+            ],
+        }),
+        "EnemyFkr" => Ok(AbilityConditionSpec::Or {
+            any: vec![
+                AbilityConditionSpec::DefenderFactionIs {
+                    faction: "federation".into(),
+                },
+                AbilityConditionSpec::DefenderFactionIs {
+                    faction: "klingon".into(),
+                },
+                AbilityConditionSpec::DefenderFactionIs {
+                    faction: "romulan".into(),
+                },
+            ],
+        }),
+        "EnemyOutpostOrRetaliator" => Ok(AbilityConditionSpec::Or {
+            any: vec![
+                AbilityConditionSpec::EngagementIncludes {
+                    enemy_type: "outpost_armadas".into(),
+                },
+                AbilityConditionSpec::EngagementIncludes {
+                    enemy_type: "outpost_retaliation_attackers".into(),
+                },
+            ],
+        }),
         "EnemySentinel"
         | "CombatGameContext"
         | "SelfAtStation"
-        | "SelfAtWaveDefenseChallenge"
         | "SelfAtAssault2"
         | "TargetIsInvadingEntity" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
         "TargetIsArmadaOrInvadingEntity" => Ok(AbilityConditionSpec::DefenderShipTypeIs {

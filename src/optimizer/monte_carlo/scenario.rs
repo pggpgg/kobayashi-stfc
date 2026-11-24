@@ -31,8 +31,8 @@ use crate::data::profile::{
     apply_profile_piercing_to_attacker_stats, apply_profile_to_attacker_with_health_pool,
     apply_static_buffs_to_combatant, borg_alcove_hull_hp_bonus_fraction,
     borg_operating_table_forbidden_tech_seats, forbidden_tech_derived_attack_phase_seats,
-    forbidden_tech_level_tier_scaling_enabled_from_env, load_profile,
-    merge_building_bonuses_from_sources, merge_research_bonuses_into_profile,
+    forbidden_tech_level_tier_scaling_enabled_from_env, infusion_modulator_forbidden_tech_seats,
+    load_profile, merge_building_bonuses_from_sources, merge_research_bonuses_into_profile,
     merge_ship_setup_research_bonuses_into_profile, merge_tech_fids_into_profile_with_level_tier,
     quantum_slipstream_forbidden_tech_round_start_seats,
     replace_research_setup_bonuses_with_native_snapshot, research_derived_attack_phase_seats,
@@ -41,8 +41,9 @@ use crate::data::profile::{
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship,
-    take_static_health_pool_bonus, temporal_conduit_chaos_tech_seats, PlayerProfile,
-    SupportBuffResearchGateState, USS_VOYAGER_SHIP_ID,
+    silicon_based_parasites_chaos_tech_seats, take_static_health_pool_bonus,
+    temporal_conduit_chaos_tech_seats, PlayerProfile, SupportBuffResearchGateState,
+    USS_VOYAGER_SHIP_ID,
 };
 use crate::data::profile_index::{
     self, profile_path, BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
@@ -2765,6 +2766,16 @@ fn build_shared_scenario_data_standalone_for_profile(
                 &effective_fids,
                 catalog,
             ));
+            forbidden_tech_derived_seats.extend(silicon_based_parasites_chaos_tech_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+            ));
+            forbidden_tech_derived_seats.extend(infusion_modulator_forbidden_tech_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+            ));
             forbidden_tech_derived_seats.extend(ship_class_gated_torpedo_family_derived_seats(
                 &ft_entries,
                 &effective_fids,
@@ -3497,6 +3508,16 @@ pub(crate) fn build_shared_scenario_data_from_registry(
                 ),
             );
             forbidden_tech_derived_seats.extend(temporal_conduit_chaos_tech_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+            ));
+            forbidden_tech_derived_seats.extend(silicon_based_parasites_chaos_tech_seats(
+                &ft_entries,
+                &effective_fids,
+                catalog,
+            ));
+            forbidden_tech_derived_seats.extend(infusion_modulator_forbidden_tech_seats(
                 &ft_entries,
                 &effective_fids,
                 catalog,

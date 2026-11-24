@@ -387,9 +387,11 @@ pub struct SimulationResult {
     pub total_isolytic_damage: f64,
 }
 
-/// Weapon damage type (kinetic vs energy). Sourced from upstream `weapon_type` (1 = Energy,
-/// 2 = Kinetic); `Unknown` when the data source carries no type (legacy fixtures, scalar-attack
-/// fallback). Weapon-type-scoped effects match `Unknown` leniently, preserving pre-typed behavior.
+/// Weapon damage type (energy, kinetic, or polaron). Sourced from upstream `weapon_type`
+/// (1 = Energy, 2 = Kinetic, 6 = Polaron); `Unknown` when the data source carries no type
+/// (legacy fixtures, scalar-attack fallback). Weapon-type-scoped effects match `Unknown`
+/// leniently, preserving pre-typed behavior; `Polaron` weapons bypass standard mitigation,
+/// Apex Barrier, Critical Mitigation, and shields and do not match Kinetic/Energy scopes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum WeaponType {
@@ -397,6 +399,7 @@ pub enum WeaponType {
     Unknown,
     Energy,
     Kinetic,
+    Polaron,
 }
 
 impl WeaponType {

@@ -103,10 +103,11 @@
     },
     "49117123": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_polaron_weaponry",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 0.25,
+      "source_note": "Update 96 Klingon Polaron Prototype: Polaron Weapons (weapon_type=6) bypass Standard Mitigation, Apex Barrier, Critical Mitigation, and Shields; +25% same-faction Known Weakness and +50% non-counter On Lookout."
     },
     "56799195": {
       "timing": "round_start",
@@ -543,10 +544,11 @@
     },
     "323291059": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_polaron_weaponry",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 0.25,
+      "source_note": "Update 96 Federation Polaron Prototype: Polaron Weapons (weapon_type=6) bypass Standard Mitigation, Apex Barrier, Critical Mitigation, and Shields; +25% same-faction Known Weakness and +50% non-counter On Lookout."
     },
     "324656870": {
       "timing": "combat_begin",
@@ -1564,10 +1566,11 @@
     },
     "817894448": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hostile_polaron_weaponry",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 0.25,
+      "source_note": "Update 96 Romulan Polaron Prototype: Polaron Weapons (weapon_type=6) bypass Standard Mitigation, Apex Barrier, Critical Mitigation, and Shields; +25% same-faction Known Weakness and +50% non-counter On Lookout."
     },
     "825965675": {
       "timing": "combat_begin",
@@ -4311,10 +4314,27 @@
     },
     "2343275730": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "value_override": 50,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_negates_standard_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 0
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_shield_restore_on_deplete",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 0
+        }
+      ],
+      "source_note": "Update 96 Polaron Arsenal (loca 96507, Polaron War Open Strongholds): +5000% Isolytic Dampeners, Inertial Diverters, Shield Sweep."
     },
     "2345379113": {
       "timing": "combat_begin",
@@ -5484,7 +5504,55 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 50.0
+      "value_override": 50,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_negates_standard_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 0
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_shield_restore_on_deplete",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 0
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_lethal_unless_attacker_faction",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 0,
+          "allowed_attacker_factions": [
+            "federation",
+            "klingon",
+            "romulan"
+          ],
+          "allowed_attacker_ship_ids": [
+            "uss_vengeance"
+          ]
+        },
+        {
+          "timing": "combat_begin",
+          "effect_type": "hostile_lethal_if_yuki_on_board",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 0
+        },
+        {
+          "timing": "round_end",
+          "effect_type": "hostile_lethal_end_of_round",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 0,
+          "round_interval": 8,
+          "shots": 1
+        }
+      ],
+      "source_note": "Update 96 Experimental Defense Array (loca 96501): +5000% Isolytic Dampeners, Inertial Diverters (negates Standard Damage; Infusion and Isolytic apply), Shield Sweep (100% shield restore on deplete), Not Worthy (lethal unless FKR or U.S.S. Vengeance), Thorn in My Side (lethal if Yuki on board), Test of Power (round-8 100% Hyperthermic Decay lethal)."
     },
     "2922610677": {
       "timing": "round_end",
