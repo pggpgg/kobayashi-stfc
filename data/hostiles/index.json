@@ -1,5 +1,5 @@
 {
-  "data_version": "stfcspace-hostiles-2026-11-17+native-vger-gorn-l62-2026-11-10",
+  "data_version": "stfcspace-hostiles-2026-11-23+native-vger-gorn-l62-2026-11-10",
   "source_note": "data.stfc.space hostile detail (cached under data/upstream/data-stfc-space/hostiles) Includes reviewed native-static L62 V'ger Gorn Hunter supplement; no data.stfc.space detail record is claimed.",
   "hostiles": [
     {
@@ -373,7 +373,7 @@
     },
     {
       "id": "23136336",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 37,
       "ship_class": "explorer",
       "rarity": 1,
@@ -760,7 +760,7 @@
     },
     {
       "id": "52751756",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 33,
       "ship_class": "explorer",
       "rarity": 1,
@@ -904,7 +904,7 @@
     },
     {
       "id": "69836137",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 45,
       "ship_class": "battleship",
       "rarity": 1,
@@ -1111,7 +1111,7 @@
     },
     {
       "id": "84378506",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 31,
       "ship_class": "battleship",
       "rarity": 1,
@@ -1354,7 +1354,7 @@
     },
     {
       "id": "102429249",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 45,
       "ship_class": "explorer",
       "rarity": 1,
@@ -1588,7 +1588,7 @@
     },
     {
       "id": "114077227",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 49,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -1867,7 +1867,7 @@
     },
     {
       "id": "135361226",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 46,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -2074,7 +2074,7 @@
     },
     {
       "id": "154755942",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 30,
       "ship_class": "battleship",
       "rarity": 1,
@@ -2227,7 +2227,7 @@
     },
     {
       "id": "163923194",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 32,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -2326,7 +2326,7 @@
     },
     {
       "id": "172338667",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 50,
       "ship_class": "explorer",
       "rarity": 1,
@@ -2524,7 +2524,7 @@
     },
     {
       "id": "190491787",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 50,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -4306,7 +4306,7 @@
     },
     {
       "id": "318396982",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 44,
       "ship_class": "battleship",
       "rarity": 1,
@@ -4693,7 +4693,7 @@
     },
     {
       "id": "352139098",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 40,
       "ship_class": "battleship",
       "rarity": 1,
@@ -4936,7 +4936,7 @@
     },
     {
       "id": "375718615",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 48,
       "ship_class": "explorer",
       "rarity": 1,
@@ -5440,7 +5440,7 @@
     },
     {
       "id": "414412951",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 41,
       "ship_class": "battleship",
       "rarity": 1,
@@ -5476,7 +5476,7 @@
     },
     {
       "id": "417011218",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 50,
       "ship_class": "explorer",
       "rarity": 1,
@@ -6421,7 +6421,7 @@
     },
     {
       "id": "490637419",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 41,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -6655,7 +6655,7 @@
     },
     {
       "id": "508587585",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 47,
       "ship_class": "battleship",
       "rarity": 1,
@@ -7123,7 +7123,7 @@
     },
     {
       "id": "543646896",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 36,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -7573,7 +7573,7 @@
     },
     {
       "id": "572980277",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 46,
       "ship_class": "explorer",
       "rarity": 1,
@@ -7618,7 +7618,7 @@
     },
     {
       "id": "576774475",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 33,
       "ship_class": "battleship",
       "rarity": 1,
@@ -7870,7 +7870,7 @@
     },
     {
       "id": "600298186",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 38,
       "ship_class": "explorer",
       "rarity": 1,
@@ -8968,7 +8968,7 @@
     },
     {
       "id": "692631622",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 44,
       "ship_class": "battleship",
       "rarity": 1,
@@ -9319,7 +9319,7 @@
     },
     {
       "id": "717933261",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 41,
       "ship_class": "explorer",
       "rarity": 1,
@@ -9526,7 +9526,7 @@
     },
     {
       "id": "728679911",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 49,
       "ship_class": "explorer",
       "rarity": 1,
@@ -9697,7 +9697,7 @@
     },
     {
       "id": "744452337",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 31,
       "ship_class": "battleship",
       "rarity": 1,
@@ -9985,7 +9985,7 @@
     },
     {
       "id": "775568138",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 34,
       "ship_class": "explorer",
       "rarity": 1,
@@ -10030,7 +10030,7 @@
     },
     {
       "id": "777899729",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 30,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -10282,7 +10282,7 @@
     },
     {
       "id": "793012293",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 48,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -10804,7 +10804,7 @@
     },
     {
       "id": "826339424",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 46,
       "ship_class": "explorer",
       "rarity": 1,
@@ -10966,7 +10966,7 @@
     },
     {
       "id": "836462989",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 40,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -11056,7 +11056,7 @@
     },
     {
       "id": "843736039",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 33,
       "ship_class": "battleship",
       "rarity": 1,
@@ -11074,7 +11074,7 @@
     },
     {
       "id": "844672760",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 37,
       "ship_class": "battleship",
       "rarity": 1,
@@ -11209,7 +11209,7 @@
     },
     {
       "id": "851305914",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 36,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -11659,7 +11659,7 @@
     },
     {
       "id": "881411157",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 48,
       "ship_class": "explorer",
       "rarity": 1,
@@ -12073,7 +12073,7 @@
     },
     {
       "id": "918803819",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 45,
       "ship_class": "battleship",
       "rarity": 1,
@@ -12262,7 +12262,7 @@
     },
     {
       "id": "929903111",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 43,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -12793,7 +12793,7 @@
     },
     {
       "id": "962351024",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 33,
       "ship_class": "explorer",
       "rarity": 1,
@@ -13054,7 +13054,7 @@
     },
     {
       "id": "985310611",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 31,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -13450,7 +13450,7 @@
     },
     {
       "id": "1006730151",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 43,
       "ship_class": "explorer",
       "rarity": 1,
@@ -13459,7 +13459,7 @@
     },
     {
       "id": "1006812651",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 46,
       "ship_class": "battleship",
       "rarity": 1,
@@ -13477,7 +13477,7 @@
     },
     {
       "id": "1007872342",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 42,
       "ship_class": "battleship",
       "rarity": 1,
@@ -13945,7 +13945,7 @@
     },
     {
       "id": "1041661063",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 40,
       "ship_class": "battleship",
       "rarity": 1,
@@ -14836,7 +14836,7 @@
     },
     {
       "id": "1107147565",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 34,
       "ship_class": "battleship",
       "rarity": 1,
@@ -15826,7 +15826,7 @@
     },
     {
       "id": "1185219127",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 44,
       "ship_class": "explorer",
       "rarity": 1,
@@ -16123,7 +16123,7 @@
     },
     {
       "id": "1209296559",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 48,
       "ship_class": "explorer",
       "rarity": 1,
@@ -16447,7 +16447,7 @@
     },
     {
       "id": "1229485126",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 38,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -16870,7 +16870,7 @@
     },
     {
       "id": "1262621972",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 31,
       "ship_class": "explorer",
       "rarity": 1,
@@ -16888,7 +16888,7 @@
     },
     {
       "id": "1262772259",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 36,
       "ship_class": "explorer",
       "rarity": 1,
@@ -16924,7 +16924,7 @@
     },
     {
       "id": "1264793961",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 48,
       "ship_class": "battleship",
       "rarity": 1,
@@ -16942,7 +16942,7 @@
     },
     {
       "id": "1265252102",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 46,
       "ship_class": "battleship",
       "rarity": 1,
@@ -17635,7 +17635,7 @@
     },
     {
       "id": "1327059298",
-      "hostile_name": "I.S.S. Enterprise-E &#128128;",
+      "hostile_name": "I.S.S. Enterprise-E",
       "level": 60,
       "ship_class": "survey",
       "rarity": 1,
@@ -17851,7 +17851,7 @@
     },
     {
       "id": "1344078281",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 50,
       "ship_class": "battleship",
       "rarity": 1,
@@ -18058,7 +18058,7 @@
     },
     {
       "id": "1358190327",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 32,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -18184,7 +18184,7 @@
     },
     {
       "id": "1365616028",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 40,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -18454,7 +18454,7 @@
     },
     {
       "id": "1382431620",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 35,
       "ship_class": "battleship",
       "rarity": 1,
@@ -18580,7 +18580,7 @@
     },
     {
       "id": "1394041896",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 30,
       "ship_class": "battleship",
       "rarity": 1,
@@ -18931,7 +18931,7 @@
     },
     {
       "id": "1418436737",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 37,
       "ship_class": "explorer",
       "rarity": 1,
@@ -19174,7 +19174,7 @@
     },
     {
       "id": "1431646358",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 39,
       "ship_class": "explorer",
       "rarity": 1,
@@ -19543,7 +19543,7 @@
     },
     {
       "id": "1458249176",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 32,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -19777,7 +19777,7 @@
     },
     {
       "id": "1480656307",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 44,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -19813,7 +19813,7 @@
     },
     {
       "id": "1484465647",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 42,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -19876,7 +19876,7 @@
     },
     {
       "id": "1487215310",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 30,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -20371,7 +20371,7 @@
     },
     {
       "id": "1523572065",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 50,
       "ship_class": "battleship",
       "rarity": 1,
@@ -20587,7 +20587,7 @@
     },
     {
       "id": "1545334711",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 36,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -21280,7 +21280,7 @@
     },
     {
       "id": "1597089632",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 35,
       "ship_class": "battleship",
       "rarity": 1,
@@ -21586,7 +21586,7 @@
     },
     {
       "id": "1615633343",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 45,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -21757,7 +21757,7 @@
     },
     {
       "id": "1624718925",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 49,
       "ship_class": "battleship",
       "rarity": 1,
@@ -21973,7 +21973,7 @@
     },
     {
       "id": "1641963606",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 30,
       "ship_class": "explorer",
       "rarity": 1,
@@ -21982,7 +21982,7 @@
     },
     {
       "id": "1642111768",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 37,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -22099,7 +22099,7 @@
     },
     {
       "id": "1650083816",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 36,
       "ship_class": "explorer",
       "rarity": 1,
@@ -22180,7 +22180,7 @@
     },
     {
       "id": "1655692963",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 43,
       "ship_class": "battleship",
       "rarity": 1,
@@ -22225,7 +22225,7 @@
     },
     {
       "id": "1657443733",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 47,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -22549,7 +22549,7 @@
     },
     {
       "id": "1681643617",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 39,
       "ship_class": "explorer",
       "rarity": 1,
@@ -22603,7 +22603,7 @@
     },
     {
       "id": "1684826642",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 50,
       "ship_class": "explorer",
       "rarity": 1,
@@ -22783,7 +22783,7 @@
     },
     {
       "id": "1698989492",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 33,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -23278,7 +23278,7 @@
     },
     {
       "id": "1737218519",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 47,
       "ship_class": "explorer",
       "rarity": 1,
@@ -23359,7 +23359,7 @@
     },
     {
       "id": "1743696621",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 33,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -23629,7 +23629,7 @@
     },
     {
       "id": "1766809240",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 49,
       "ship_class": "explorer",
       "rarity": 1,
@@ -23809,7 +23809,7 @@
     },
     {
       "id": "1779605591",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 48,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -23917,7 +23917,7 @@
     },
     {
       "id": "1784518278",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 41,
       "ship_class": "battleship",
       "rarity": 1,
@@ -24007,7 +24007,7 @@
     },
     {
       "id": "1792566809",
-      "hostile_name": "I.S.S. Enterprise-E &#128128;",
+      "hostile_name": "I.S.S. Enterprise-E",
       "level": 70,
       "ship_class": "survey",
       "rarity": 1,
@@ -24124,7 +24124,7 @@
     },
     {
       "id": "1799328226",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 34,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -24259,7 +24259,7 @@
     },
     {
       "id": "1808014070",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 42,
       "ship_class": "battleship",
       "rarity": 1,
@@ -24673,7 +24673,7 @@
     },
     {
       "id": "1845709936",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 38,
       "ship_class": "explorer",
       "rarity": 1,
@@ -24781,7 +24781,7 @@
     },
     {
       "id": "1852423435",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 47,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -25042,7 +25042,7 @@
     },
     {
       "id": "1871400822",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 35,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -25141,7 +25141,7 @@
     },
     {
       "id": "1878627520",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 34,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -25438,7 +25438,7 @@
     },
     {
       "id": "1895118181",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 47,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -25465,7 +25465,7 @@
     },
     {
       "id": "1897797786",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 33,
       "ship_class": "battleship",
       "rarity": 1,
@@ -25915,7 +25915,7 @@
     },
     {
       "id": "1924120433",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 34,
       "ship_class": "explorer",
       "rarity": 1,
@@ -26338,7 +26338,7 @@
     },
     {
       "id": "1957015793",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 40,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -26446,7 +26446,7 @@
     },
     {
       "id": "1964794749",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 31,
       "ship_class": "battleship",
       "rarity": 1,
@@ -26851,7 +26851,7 @@
     },
     {
       "id": "1992718418",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 42,
       "ship_class": "battleship",
       "rarity": 1,
@@ -26896,7 +26896,7 @@
     },
     {
       "id": "1997266386",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 34,
       "ship_class": "explorer",
       "rarity": 1,
@@ -26977,7 +26977,7 @@
     },
     {
       "id": "2000506987",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 43,
       "ship_class": "explorer",
       "rarity": 1,
@@ -27256,7 +27256,7 @@
     },
     {
       "id": "2019766221",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 46,
       "ship_class": "explorer",
       "rarity": 1,
@@ -27346,7 +27346,7 @@
     },
     {
       "id": "2025525972",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 47,
       "ship_class": "explorer",
       "rarity": 1,
@@ -27364,7 +27364,7 @@
     },
     {
       "id": "2026913260",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 42,
       "ship_class": "explorer",
       "rarity": 1,
@@ -27904,7 +27904,7 @@
     },
     {
       "id": "2071521452",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 45,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -28291,7 +28291,7 @@
     },
     {
       "id": "2100230568",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 38,
       "ship_class": "battleship",
       "rarity": 1,
@@ -28363,7 +28363,7 @@
     },
     {
       "id": "2103764322",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 39,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -28633,7 +28633,7 @@
     },
     {
       "id": "2129897831",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 31,
       "ship_class": "explorer",
       "rarity": 1,
@@ -28948,7 +28948,7 @@
     },
     {
       "id": "2162171954",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 42,
       "ship_class": "explorer",
       "rarity": 1,
@@ -29038,7 +29038,7 @@
     },
     {
       "id": "2169317310",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 44,
       "ship_class": "battleship",
       "rarity": 1,
@@ -29092,7 +29092,7 @@
     },
     {
       "id": "2172038656",
-      "hostile_name": "I.S.S. Enterprise-E &#128128;",
+      "hostile_name": "I.S.S. Enterprise-E",
       "level": 50,
       "ship_class": "survey",
       "rarity": 1,
@@ -29506,7 +29506,7 @@
     },
     {
       "id": "2202624817",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 38,
       "ship_class": "explorer",
       "rarity": 1,
@@ -29560,7 +29560,7 @@
     },
     {
       "id": "2209909927",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 38,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -29893,7 +29893,7 @@
     },
     {
       "id": "2232802264",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 41,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -30046,7 +30046,7 @@
     },
     {
       "id": "2246237566",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 44,
       "ship_class": "explorer",
       "rarity": 1,
@@ -30100,7 +30100,7 @@
     },
     {
       "id": "2251932592",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 45,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -30136,7 +30136,7 @@
     },
     {
       "id": "2254690766",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 42,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -30748,7 +30748,7 @@
     },
     {
       "id": "2294728931",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 33,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -30847,7 +30847,7 @@
     },
     {
       "id": "2301221249",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 32,
       "ship_class": "battleship",
       "rarity": 1,
@@ -30883,7 +30883,7 @@
     },
     {
       "id": "2303275158",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 30,
       "ship_class": "battleship",
       "rarity": 1,
@@ -30991,7 +30991,7 @@
     },
     {
       "id": "2307776805",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 45,
       "ship_class": "explorer",
       "rarity": 1,
@@ -31603,7 +31603,7 @@
     },
     {
       "id": "2352271663",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 49,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -31945,7 +31945,7 @@
     },
     {
       "id": "2374089758",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 37,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -32431,7 +32431,7 @@
     },
     {
       "id": "2410050077",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 46,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -32521,7 +32521,7 @@
     },
     {
       "id": "2417202220",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 38,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -32926,7 +32926,7 @@
     },
     {
       "id": "2459342694",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 35,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -33079,7 +33079,7 @@
     },
     {
       "id": "2468468143",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 35,
       "ship_class": "explorer",
       "rarity": 1,
@@ -33907,7 +33907,7 @@
     },
     {
       "id": "2525305979",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 41,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -34222,7 +34222,7 @@
     },
     {
       "id": "2543405477",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 39,
       "ship_class": "battleship",
       "rarity": 1,
@@ -35266,7 +35266,7 @@
     },
     {
       "id": "2609983970",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 32,
       "ship_class": "explorer",
       "rarity": 1,
@@ -35806,7 +35806,7 @@
     },
     {
       "id": "2647967145",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 36,
       "ship_class": "battleship",
       "rarity": 1,
@@ -35995,7 +35995,7 @@
     },
     {
       "id": "2658859800",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 41,
       "ship_class": "battleship",
       "rarity": 1,
@@ -36085,7 +36085,7 @@
     },
     {
       "id": "2663481501",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 50,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -36193,7 +36193,7 @@
     },
     {
       "id": "2674277535",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 46,
       "ship_class": "battleship",
       "rarity": 1,
@@ -36229,7 +36229,7 @@
     },
     {
       "id": "2678567337",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 46,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -36787,7 +36787,7 @@
     },
     {
       "id": "2718494633",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 35,
       "ship_class": "battleship",
       "rarity": 1,
@@ -37453,7 +37453,7 @@
     },
     {
       "id": "2773528822",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 39,
       "ship_class": "battleship",
       "rarity": 1,
@@ -37750,7 +37750,7 @@
     },
     {
       "id": "2797440999",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 36,
       "ship_class": "explorer",
       "rarity": 1,
@@ -38182,7 +38182,7 @@
     },
     {
       "id": "2824754391",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 40,
       "ship_class": "battleship",
       "rarity": 1,
@@ -38416,7 +38416,7 @@
     },
     {
       "id": "2850166169",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 50,
       "ship_class": "battleship",
       "rarity": 1,
@@ -38875,7 +38875,7 @@
     },
     {
       "id": "2884151122",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 48,
       "ship_class": "battleship",
       "rarity": 1,
@@ -38911,7 +38911,7 @@
     },
     {
       "id": "2886331983",
-      "hostile_name": "I.S.S. Enterprise-E &#128128;",
+      "hostile_name": "I.S.S. Enterprise-E",
       "level": 60,
       "ship_class": "survey",
       "rarity": 1,
@@ -39730,7 +39730,7 @@
     },
     {
       "id": "2937708490",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 49,
       "ship_class": "explorer",
       "rarity": 1,
@@ -40702,7 +40702,7 @@
     },
     {
       "id": "3015847809",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 31,
       "ship_class": "explorer",
       "rarity": 1,
@@ -40873,7 +40873,7 @@
     },
     {
       "id": "3030474691",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 32,
       "ship_class": "battleship",
       "rarity": 1,
@@ -40891,7 +40891,7 @@
     },
     {
       "id": "3031380295",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 41,
       "ship_class": "explorer",
       "rarity": 1,
@@ -41062,7 +41062,7 @@
     },
     {
       "id": "3043571437",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 32,
       "ship_class": "explorer",
       "rarity": 1,
@@ -41152,7 +41152,7 @@
     },
     {
       "id": "3046990884",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 34,
       "ship_class": "battleship",
       "rarity": 1,
@@ -41242,7 +41242,7 @@
     },
     {
       "id": "3054223871",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 45,
       "ship_class": "explorer",
       "rarity": 1,
@@ -41377,7 +41377,7 @@
     },
     {
       "id": "3064001180",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 48,
       "ship_class": "battleship",
       "rarity": 1,
@@ -41791,7 +41791,7 @@
     },
     {
       "id": "3088327007",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 43,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -42007,7 +42007,7 @@
     },
     {
       "id": "3099444810",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 37,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -42124,7 +42124,7 @@
     },
     {
       "id": "3108830851",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 36,
       "ship_class": "battleship",
       "rarity": 1,
@@ -42214,7 +42214,7 @@
     },
     {
       "id": "3115392159",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 43,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -42268,7 +42268,7 @@
     },
     {
       "id": "3118773504",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 43,
       "ship_class": "battleship",
       "rarity": 1,
@@ -42646,7 +42646,7 @@
     },
     {
       "id": "3152705957",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 47,
       "ship_class": "battleship",
       "rarity": 1,
@@ -42763,7 +42763,7 @@
     },
     {
       "id": "3158682748",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 34,
       "ship_class": "battleship",
       "rarity": 1,
@@ -43078,7 +43078,7 @@
     },
     {
       "id": "3176611275",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 39,
       "ship_class": "battleship",
       "rarity": 1,
@@ -43132,7 +43132,7 @@
     },
     {
       "id": "3179077547",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 45,
       "ship_class": "battleship",
       "rarity": 1,
@@ -43465,7 +43465,7 @@
     },
     {
       "id": "3210755214",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 44,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -43744,7 +43744,7 @@
     },
     {
       "id": "3227224307",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 30,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -44473,7 +44473,7 @@
     },
     {
       "id": "3279772514",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 39,
       "ship_class": "explorer",
       "rarity": 1,
@@ -44482,7 +44482,7 @@
     },
     {
       "id": "3282734027",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 38,
       "ship_class": "battleship",
       "rarity": 1,
@@ -44797,7 +44797,7 @@
     },
     {
       "id": "3309452887",
-      "hostile_name": "I.S.S. Enterprise-E &#128128;",
+      "hostile_name": "I.S.S. Enterprise-E",
       "level": 50,
       "ship_class": "survey",
       "rarity": 1,
@@ -45490,7 +45490,7 @@
     },
     {
       "id": "3362684537",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 30,
       "ship_class": "explorer",
       "rarity": 1,
@@ -45742,7 +45742,7 @@
     },
     {
       "id": "3375984332",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 34,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -45796,7 +45796,7 @@
     },
     {
       "id": "3381317135",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 36,
       "ship_class": "battleship",
       "rarity": 1,
@@ -45877,7 +45877,7 @@
     },
     {
       "id": "3389154983",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 31,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -47290,7 +47290,7 @@
     },
     {
       "id": "3493425191",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 50,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -47506,7 +47506,7 @@
     },
     {
       "id": "3506543542",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 42,
       "ship_class": "explorer",
       "rarity": 1,
@@ -48073,7 +48073,7 @@
     },
     {
       "id": "3550601584",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 31,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -48082,7 +48082,7 @@
     },
     {
       "id": "3552027917",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 35,
       "ship_class": "explorer",
       "rarity": 1,
@@ -48289,7 +48289,7 @@
     },
     {
       "id": "3565238162",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 35,
       "ship_class": "explorer",
       "rarity": 1,
@@ -48334,7 +48334,7 @@
     },
     {
       "id": "3569611807",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 47,
       "ship_class": "explorer",
       "rarity": 1,
@@ -48397,7 +48397,7 @@
     },
     {
       "id": "3576500307",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 43,
       "ship_class": "explorer",
       "rarity": 1,
@@ -48460,7 +48460,7 @@
     },
     {
       "id": "3583605218",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 30,
       "ship_class": "explorer",
       "rarity": 1,
@@ -48487,7 +48487,7 @@
     },
     {
       "id": "3586553153",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 42,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -48595,7 +48595,7 @@
     },
     {
       "id": "3591041946",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 48,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -49666,7 +49666,7 @@
     },
     {
       "id": "3663628255",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 32,
       "ship_class": "explorer",
       "rarity": 1,
@@ -49846,7 +49846,7 @@
     },
     {
       "id": "3681529217",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 37,
       "ship_class": "explorer",
       "rarity": 1,
@@ -49882,7 +49882,7 @@
     },
     {
       "id": "3684287700",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 35,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -50800,7 +50800,7 @@
     },
     {
       "id": "3745614036",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 40,
       "ship_class": "explorer",
       "rarity": 1,
@@ -51052,7 +51052,7 @@
     },
     {
       "id": "3766714892",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 44,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -51115,7 +51115,7 @@
     },
     {
       "id": "3769640095",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 37,
       "ship_class": "battleship",
       "rarity": 1,
@@ -51151,7 +51151,7 @@
     },
     {
       "id": "3772457526",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 40,
       "ship_class": "explorer",
       "rarity": 1,
@@ -51475,7 +51475,7 @@
     },
     {
       "id": "3800374615",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 39,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -52402,7 +52402,7 @@
     },
     {
       "id": "3876892112",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 40,
       "ship_class": "explorer",
       "rarity": 1,
@@ -52483,7 +52483,7 @@
     },
     {
       "id": "3881900125",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 39,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -53698,7 +53698,7 @@
     },
     {
       "id": "3963571345",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 49,
       "ship_class": "battleship",
       "rarity": 1,
@@ -55291,7 +55291,7 @@
     },
     {
       "id": "4086545944",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 49,
       "ship_class": "battleship",
       "rarity": 1,
@@ -55894,7 +55894,7 @@
     },
     {
       "id": "4134903073",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 49,
       "ship_class": "interceptor",
       "rarity": 1,
@@ -55984,7 +55984,7 @@
     },
     {
       "id": "4142104417",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 37,
       "ship_class": "battleship",
       "rarity": 1,
@@ -56524,7 +56524,7 @@
     },
     {
       "id": "4180226603",
-      "hostile_name": "Romulan Elite Assassin &#128128;",
+      "hostile_name": "Romulan Elite Assassin",
       "level": 33,
       "ship_class": "explorer",
       "rarity": 1,
@@ -56596,7 +56596,7 @@
     },
     {
       "id": "4183423006",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 47,
       "ship_class": "battleship",
       "rarity": 1,
@@ -56677,7 +56677,7 @@
     },
     {
       "id": "4188832873",
-      "hostile_name": "I.S.S. Enterprise-E &#128128;",
+      "hostile_name": "I.S.S. Enterprise-E",
       "level": 70,
       "ship_class": "survey",
       "rarity": 1,
@@ -57118,7 +57118,7 @@
     },
     {
       "id": "4216926996",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 38,
       "ship_class": "battleship",
       "rarity": 1,
@@ -57469,7 +57469,7 @@
     },
     {
       "id": "4243889446",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 32,
       "ship_class": "battleship",
       "rarity": 1,
@@ -57577,7 +57577,7 @@
     },
     {
       "id": "4255404386",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 41,
       "ship_class": "explorer",
       "rarity": 1,
@@ -57766,7 +57766,7 @@
     },
     {
       "id": "4272422878",
-      "hostile_name": "Federation Elite Assassin &#128128;",
+      "hostile_name": "Federation Elite Assassin",
       "level": 44,
       "ship_class": "explorer",
       "rarity": 1,
@@ -57946,7 +57946,7 @@
     },
     {
       "id": "4289228087",
-      "hostile_name": "Klingon Elite Assassin &#128128;",
+      "hostile_name": "Klingon Elite Assassin",
       "level": 43,
       "ship_class": "battleship",
       "rarity": 1,

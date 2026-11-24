@@ -1,0 +1,17 @@
+{
+  "started": "2026-11-23T17:18:29.688Z",
+  "source": "https://data.stfc.space",
+  "segment": "forbidden_tech",
+  "mode": "missing-only",
+  "concurrency": 6,
+  "total": 74,
+  "fetched": 3,
+  "not_modified": 0,
+  "skipped": 71,
+  "failed": 0,
+  "stale_cache_used": 0,
+  "uncovered_failures": 0,
+  "failures": [],
+  "finished": "2026-11-23T17:18:30.307Z",
+  "duration_ms": 619
+}

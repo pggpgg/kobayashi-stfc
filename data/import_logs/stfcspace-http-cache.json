@@ -1,0 +1,649 @@
+{
+  "schema_version": 1,
+  "entries": {
+    "https://data.stfc.space/building/summary.json": {
+      "etag": "\"52aa839450454194a0a611e5a23841b9\"",
+      "lastModified": "Thu, 12 Nov 2026 11:29:43 GMT"
+    },
+    "https://data.stfc.space/consumable/summary.json": {
+      "etag": "\"b6596bd46c0a2245568f582bd1728063\"",
+      "lastModified": "Thu, 12 Nov 2026 11:29:48 GMT"
+    },
+    "https://data.stfc.space/forbidden_tech/1005637686.json": {
+      "etag": "\"092eada9f1b9bcd6da789483e62b0d5b\"",
+      "lastModified": "Thu, 12 Nov 2026 11:29:48 GMT"
+    },
+    "https://data.stfc.space/forbidden_tech/2509318364.json": {
+      "etag": "\"d7457d23457251a45efa42b45064967c\"",
+      "lastModified": "Thu, 12 Nov 2026 11:29:48 GMT"
+    },
+    "https://data.stfc.space/forbidden_tech/2933035524.json": {
+      "etag": "\"c35f27f4ed1dc67f4e7a6a75d1053873\"",
+      "lastModified": "Thu, 12 Nov 2026 11:29:49 GMT"
+    },
+    "https://data.stfc.space/forbidden_tech/summary.json": {
+      "etag": "\"fb4408b40fd4fa1433d36f527e036cf1\"",
+      "lastModified": "Thu, 12 Nov 2026 11:29:49 GMT"
+    },
+    "https://data.stfc.space/hazards/summary.json": {
+      "etag": "\"460b0b50112584f3a8d19423afb865ca\"",
+      "lastModified": "Thu, 12 Nov 2026 11:29:49 GMT"
+    },
+    "https://data.stfc.space/hostile/summary.json": {
+      "etag": "\"5f146ddb9dee98119624e373ddf8e37c\"",
+      "lastModified": "Thu, 12 Nov 2026 11:30:57 GMT"
+    },
+    "https://data.stfc.space/mission/summary.json": {
+      "etag": "\"f51d4a789b02d88683c56ab5ab82d284\"",
+      "lastModified": "Thu, 12 Nov 2026 11:31:49 GMT"
+    },
+    "https://data.stfc.space/officer/1384069720.json": {
+      "etag": "\"c4543e494fc056e0999f845789a07c54\"",
+      "lastModified": "Thu, 12 Nov 2026 11:31:49 GMT"
+    },
+    "https://data.stfc.space/officer/1578897011.json": {
+      "etag": "\"c181c525952585f3298c9531efb32651\"",
+      "lastModified": "Thu, 12 Nov 2026 11:31:49 GMT"
+    },
+    "https://data.stfc.space/officer/1843096541.json": {
+      "etag": "\"4431d0c12af72f6d0901ff4fada07ee8\"",
+      "lastModified": "Thu, 12 Nov 2026 11:31:49 GMT"
+    },
+    "https://data.stfc.space/officer/2817471102.json": {
+      "etag": "\"b488236cf1c069f84d5cb0db340c0193\"",
+      "lastModified": "Thu, 12 Nov 2026 11:31:50 GMT"
+    },
+    "https://data.stfc.space/officer/337016775.json": {
+      "etag": "\"bcfe78a188924e0a8838e519ae89c62a\"",
+      "lastModified": "Thu, 12 Nov 2026 11:31:50 GMT"
+    },
+    "https://data.stfc.space/officer/3594355267.json": {
+      "etag": "\"bdab6279a0a496be28e65caa3e5739bb\"",
+      "lastModified": "Thu, 12 Nov 2026 11:31:51 GMT"
+    },
+    "https://data.stfc.space/officer/4190420561.json": {
+      "etag": "\"0e8b558396bd783f9874ad9c30c10e31\"",
+      "lastModified": "Thu, 12 Nov 2026 11:31:51 GMT"
+    },
+    "https://data.stfc.space/officer/summary.json": {
+      "etag": "\"d17f72983c20505b51ab2c719da14530\"",
+      "lastModified": "Thu, 12 Nov 2026 11:31:52 GMT"
+    },
+    "https://data.stfc.space/pvp_bands/summary.json": {
+      "etag": "\"d361c5d7176504ed312ce3f1ad04baef\"",
+      "lastModified": "Thu, 12 Nov 2026 11:31:52 GMT"
+    },
+    "https://data.stfc.space/research/summary.json": {
+      "etag": "\"b76e97a527d605e37849239c017864da\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/resource/summary.json": {
+      "etag": "\"7f17b69c1b6ec4b9fb6beaf6f08f86ca\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1027217748.json": {
+      "etag": "\"a3d9787e502026eebf5ad43ad4b26f6b\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1029262994.json": {
+      "etag": "\"e7de579fdbb966de2c83aa78d8917c09\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1087128295.json": {
+      "etag": "\"66c26db11b79c6b0d7d24e191c75350b\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1088834151.json": {
+      "etag": "\"9a05d12f1fa98a340cefb61400547709\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/108924704.json": {
+      "etag": "\"f362ec0b63571489f2819d51a1c7f356\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1109770210.json": {
+      "etag": "\"ce0d5c296465c1fab6ade5e2a401777d\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1150511104.json": {
+      "etag": "\"220602ff084202e9f0c5ca148d6c6b5c\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1220133742.json": {
+      "etag": "\"baaeb019df85de0f56926354676461fb\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1227320105.json": {
+      "etag": "\"71e4c7a9463eb3876e798aca9ba0ac9f\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1244824002.json": {
+      "etag": "\"753b57ed145503def8bbba822a909546\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1247530723.json": {
+      "etag": "\"5b8e2d2e3fedb64bf9d45dc6a4962032\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1273528452.json": {
+      "etag": "\"da21ae3af7f0cd657acb6b43a5ee54fa\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1279606467.json": {
+      "etag": "\"9c1e1de67a14ce1f9c5063ed5bbfe8ed\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1307832955.json": {
+      "etag": "\"a208f06ff3dbf2dd7e70bc33f61b41e4\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1328894295.json": {
+      "etag": "\"ecd1496c44bbd7cddf9fdfa391abf0c8\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1379978713.json": {
+      "etag": "\"b5f494966ee7524d7a6baf42f1fda2a5\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1428543762.json": {
+      "etag": "\"5504f90a000e6b0f7f558f2912c8eb26\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1439253182.json": {
+      "etag": "\"f29aba2b7920b12ded6fa43e9ca6cac4\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1463338054.json": {
+      "etag": "\"4cb4aa9464ba5b9bd0efd889ee50f2fd\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1465044910.json": {
+      "etag": "\"137f39ea76700f1130c664a5d9f34fe0\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1492898704.json": {
+      "etag": "\"c5ca88d9c1892c23d6f8d20dda678f8c\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1535317053.json": {
+      "etag": "\"38cfd161250b3ee85cfc87cd9b0539e6\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1577508895.json": {
+      "etag": "\"c872032c7faf54521181d7e247c9c6de\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1628890938.json": {
+      "etag": "\"0e3e7055c9f40eee1bf48bb5444f20e3\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1738424547.json": {
+      "etag": "\"01bd0301fafc05e61ae0a3ecd231923e\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1773930736.json": {
+      "etag": "\"9ca047216191d1d4703c35ab2e12176a\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1784814733.json": {
+      "etag": "\"fd3709e21434a41a84bcd044bfb00392\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1786116873.json": {
+      "etag": "\"352f47914e57cf7eb65c9bfcbfa01ab9\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1800726742.json": {
+      "etag": "\"40eecbbcf5421992ddb73267168eb947\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1823660918.json": {
+      "etag": "\"aa2dd9afba5b0e08eebc12eaa080cc02\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1839370465.json": {
+      "etag": "\"211b688544158fadc77c453ed4201ec2\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1842444641.json": {
+      "etag": "\"35e82b67b840a3b1f5ce91b980587482\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1851148569.json": {
+      "etag": "\"49dc1a6bc00e28bca74d1b51e4fe9de6\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1878809713.json": {
+      "etag": "\"efd8ff304f17c5a36ec7ffd8c5b9fa6c\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1911723988.json": {
+      "etag": "\"a974f0d439bba9d577439b0068d7e4b3\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1960089851.json": {
+      "etag": "\"36ba04a3a7b13fc71f34fccd1b094203\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/1982797639.json": {
+      "etag": "\"ca3565db61d8588236c44ddd0b7dac6f\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2004925834.json": {
+      "etag": "\"1df9a2b28a3c75195ecee692768eca2a\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2016654425.json": {
+      "etag": "\"9ba3d4b213d704d07db6fba7bceeba23\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2057434885.json": {
+      "etag": "\"efce1233ab76a34cb9f8d517c879f4a0\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2066570441.json": {
+      "etag": "\"01fbc970b57c32bd14bdd05e4c514ec0\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2084947256.json": {
+      "etag": "\"3b315fac340aabe8b70c6dab77c75a0a\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2165876444.json": {
+      "etag": "\"a00c2257281c5df3c4c15b39f8ea89e7\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2195955652.json": {
+      "etag": "\"5def1e6754316396a9eaaa2400f36653\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2251018025.json": {
+      "etag": "\"9dd67e445de5674ca938f0ed6b5da651\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2254702328.json": {
+      "etag": "\"8d05e3209f81239ee0fcf9004d3b478d\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2289346504.json": {
+      "etag": "\"9d6ba24436b826b2bde77cac206f68ca\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2291615234.json": {
+      "etag": "\"43b77fc0881b66fe51006a5af5bd59d9\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2441576367.json": {
+      "etag": "\"625022dcc2c9da5c334889d08db9d36f\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2468986074.json": {
+      "etag": "\"d5c538370c2b3592ff74d99f1f301151\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2474117534.json": {
+      "etag": "\"0241f3dffff7312899a03669fe1ee6ce\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2483093372.json": {
+      "etag": "\"10d742d8da77ce922f9d57248ac80ac4\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2529591723.json": {
+      "etag": "\"848a302ef14b3272c39153d8500c9471\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2623051508.json": {
+      "etag": "\"f2b1716df3b1eea6667be19aa5c0f4ac\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2704762692.json": {
+      "etag": "\"7fb06fb4d575e8a043e9b2d3bae3b525\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2758694626.json": {
+      "etag": "\"8d3917108f4e5771be7ac0dd3a0508fd\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2797581949.json": {
+      "etag": "\"1406615cf7937094ff170144bd286fad\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2802730028.json": {
+      "etag": "\"898ab7a2d288a331cdf2e86473f0831b\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2836931919.json": {
+      "etag": "\"0f2a7da7a5236428586ef428c34aa82c\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2869476908.json": {
+      "etag": "\"ff1f68d56109fead049bf82dadf344fc\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2918054910.json": {
+      "etag": "\"85f30ad6af6aabf0ab50f8b201cbfe36\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2919480363.json": {
+      "etag": "\"b2f3ab7c95cefd1473e5056e88eae373\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/293385368.json": {
+      "etag": "\"f901edb778e62f7280b651af5d492dc7\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/2968519195.json": {
+      "etag": "\"15f7602a38f27957f7915ae41710d964\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/3005922948.json": {
+      "etag": "\"8449d23b021bb4204d3d3879ada3c819\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/3006451338.json": {
+      "etag": "\"75470f3ea016c83d43e70481f236c2dc\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/3014221215.json": {
+      "etag": "\"d744f49d52a2851039268e619284930a\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/3033866568.json": {
+      "etag": "\"41c79bacdd20b2f9ca832215ca2f49b0\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/3046584086.json": {
+      "etag": "\"bf1f082edf4b05895673888f1a9b7aea\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/3056258007.json": {
+      "etag": "\"bd04af29795688dd411afd2781b39ea3\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:21 GMT"
+    },
+    "https://data.stfc.space/ship/3057038289.json": {
+      "etag": "\"ec339dfe895c0edbe6d902a4ac0d4621\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3091911492.json": {
+      "etag": "\"31ac24e5cb37f9b1911ed9b0e68581d6\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/311330874.json": {
+      "etag": "\"26e867778a58717dcacf6c8685c2dd9f\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3261907549.json": {
+      "etag": "\"05a320449eac71da93429d1077592ff8\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3376611577.json": {
+      "etag": "\"409363c03df4e350af903e2fe6d0c18f\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3426564736.json": {
+      "etag": "\"7501995310f66b2d6d591e19cd224745\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3432906971.json": {
+      "etag": "\"cadda2898fb254c037504bb213a5ecdc\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3459465041.json": {
+      "etag": "\"2001a55ee04e75c8b2fa3b2297919317\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/34867572.json": {
+      "etag": "\"5d33d92ccc405b094d9feb70f8b50fc8\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3541570803.json": {
+      "etag": "\"dbdd336e10f38f6b369721efd678a278\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/354762123.json": {
+      "etag": "\"f710b2fc951ca625595a3af65f23bad4\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3554487827.json": {
+      "etag": "\"d46efb7521cb0395849168c98acc857c\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3602514688.json": {
+      "etag": "\"4f570b2779fa04cfec38ed5943d59287\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/363599628.json": {
+      "etag": "\"33b900875fb66bbee75404fed0de9e75\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3665388873.json": {
+      "etag": "\"17fbf06ae0871092143aa633993ef5d7\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3682502332.json": {
+      "etag": "\"41ed5d605f3f422ae362580db8919793\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3694387091.json": {
+      "etag": "\"e38580b42fda8ff5af612b338c9b4766\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3759537032.json": {
+      "etag": "\"b664b0514ffa640c0d6506df618d2e52\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3803001941.json": {
+      "etag": "\"862d84548e19b3938173d44d1e20cc03\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/393740394.json": {
+      "etag": "\"8d5a2c8133c24e34ac817ad8d7dd82f0\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/394860549.json": {
+      "etag": "\"ef16b7c4f302f26add7a7e6448b3c98d\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/3990933991.json": {
+      "etag": "\"8d5270a398c86279f411103e35fe84ed\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/407462527.json": {
+      "etag": "\"9b38c7a4c1a2b2857efcea176b0366a4\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/4132047263.json": {
+      "etag": "\"0a7e8776c2d244b6697031e9257efb0a\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/4203458856.json": {
+      "etag": "\"6f8f23f673df9a835893546cddcf01b6\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/442815157.json": {
+      "etag": "\"3e40b51083b830d4f38bbc129eb194c1\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/448699234.json": {
+      "etag": "\"513b857616a3e1a60d639fbdc7db92aa\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/47269853.json": {
+      "etag": "\"3f2eeced01e4437e74421543f66916b9\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/49906243.json": {
+      "etag": "\"421e25b09a65bff07b8febbeed926eeb\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/529128151.json": {
+      "etag": "\"5764f4c99f750fe0ce01020f576d7549\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/546190599.json": {
+      "etag": "\"aa87938d668221157b1ec56d37b410f1\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/593579233.json": {
+      "etag": "\"62b12bb82d986add0fdcadf50344856a\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/644714972.json": {
+      "etag": "\"35c18683572e478bcb316745ef2fa202\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/673187302.json": {
+      "etag": "\"e13aa61a8a0d6953af7c81c5db0e72fa\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/697653604.json": {
+      "etag": "\"ff2ae6c93b2e9180f924f2be8c3f52f2\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/701705952.json": {
+      "etag": "\"fa2b5e24c5d305b18d6fd927bf05378b\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/711428193.json": {
+      "etag": "\"477347f7ef3e34c81b77a1d386c22503\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/732090900.json": {
+      "etag": "\"795187f96cf7b0730048b6b580b995bd\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/754460943.json": {
+      "etag": "\"c93cc49ca9cc7517e02d5d16540cf5a9\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/780323863.json": {
+      "etag": "\"1a9164e5c3f7a49b1c49b3d1f3a2ca18\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/782228494.json": {
+      "etag": "\"7fad640c8db33c2077eef4635f75ecfa\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/87414807.json": {
+      "etag": "\"a5a0facad5126100525888950e10d2ee\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/910099595.json": {
+      "etag": "\"8c99806734ee8d151762715a6e88a365\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/957303751.json": {
+      "etag": "\"156f11362d59c9b4b29dd2abcfa85bf8\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/957865248.json": {
+      "etag": "\"f5f820c3538cf82f645d7320534a0e23\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/987222969.json": {
+      "etag": "\"20be12af18e56df8d88946d6efce3c38\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/ship/summary.json": {
+      "etag": "\"a01865dbbaec919e0e60558d1504fbc0\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:22 GMT"
+    },
+    "https://data.stfc.space/system/summary.json": {
+      "etag": "\"66fda3abe4e4a4b98caf9411d21c9516-3\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:52 GMT"
+    },
+    "https://data.stfc.space/translations/en/blueprints.json": {
+      "etag": "\"7ed3925fa46fadc8d036e3cf0472889d\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:52 GMT"
+    },
+    "https://data.stfc.space/translations/en/consumables.json": {
+      "etag": "\"d3993eee4ece6d62e6164f891a3124b8\"",
+      "lastModified": "Thu, 12 Nov 2026 11:32:52 GMT"
+    },
+    "https://data.stfc.space/translations/en/event_titles.json": {
+      "etag": "\"4712f38f3d746c229d82d3972c33348a-2\"",
+      "lastModified": "Thu, 12 Nov 2026 11:51:24 GMT"
+    },
+    "https://data.stfc.space/translations/en/factions.json": {
+      "etag": "\"1b1f945dbfccd5337de26509ce4005d9\"",
+      "lastModified": "Thu, 12 Nov 2026 11:51:24 GMT"
+    },
+    "https://data.stfc.space/translations/en/forbidden_tech.json": {
+      "etag": "\"accb65680bb352c272b4c3bd4afaacd3\"",
+      "lastModified": "Thu, 12 Nov 2026 11:51:25 GMT"
+    },
+    "https://data.stfc.space/translations/en/hud.json": {
+      "etag": "\"7c3eea515bb463ca477a0f66fe179369\"",
+      "lastModified": "Thu, 12 Nov 2026 11:51:25 GMT"
+    },
+    "https://data.stfc.space/translations/en/loyalty.json": {
+      "etag": "\"926c410156fbc7bd9b70f9a27a9b948a\"",
+      "lastModified": "Thu, 12 Nov 2026 11:51:25 GMT"
+    },
+    "https://data.stfc.space/translations/en/materials.json": {
+      "etag": "\"4b15b09fb96c45874026d3b80ab0ac9c\"",
+      "lastModified": "Thu, 12 Nov 2026 11:51:25 GMT"
+    },
+    "https://data.stfc.space/translations/en/mission_titles.json": {
+      "etag": "\"1b6fea2dd28f956baeeccf05fed137d5\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/navigation.json": {
+      "etag": "\"9e2612fe9fba9b0fc23eaf0a3e10a1c5\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/officer_buffs.json": {
+      "etag": "\"6b7f66ac2d151a9546d0538c392af130\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/officer_flavor_text.json": {
+      "etag": "\"ee2d6b9b79b4ce69680d2924cea3b1e4\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/officer_names.json": {
+      "etag": "\"d637da11102072b1018a41ffd80c88f9\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/officers.json": {
+      "etag": "\"9e4265ad707bee4b08108b167ffa36c7\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/player_avatars.json": {
+      "etag": "\"a3fb186b5874854b2f9975d2776556a9\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/research.json": {
+      "etag": "\"b590436d243cf2c3a7c2b9a9a6ee507f\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/ship_buffs.json": {
+      "etag": "\"865566d6bdeb0f2dbb334c2f2fdb59d2\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/ship_components.json": {
+      "etag": "\"cb8dbe6861c3f0037a944e71690b8c93\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/ships.json": {
+      "etag": "\"021045eb91a5717c264d6565fcbc7437\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:12 GMT"
+    },
+    "https://data.stfc.space/translations/en/starbase_modules.json": {
+      "etag": "\"9d6125d15c591f03285e74e559b67f05\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:13 GMT"
+    },
+    "https://data.stfc.space/translations/en/systems.json": {
+      "etag": "\"0f8c495df2fc267760a1eeb223b48f3d\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:13 GMT"
+    },
+    "https://data.stfc.space/translations/en/traits.json": {
+      "etag": "\"9a8b849275c0fb7bc411bedb4dee5587\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:13 GMT"
+    },
+    "https://data.stfc.space/wave_defense/summary.json": {
+      "etag": "\"d9a9ab5b9f549e3de0913dc0949b4cf4\"",
+      "lastModified": "Thu, 12 Nov 2026 11:52:13 GMT"
+    }
+  }
+}

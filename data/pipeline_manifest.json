@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "combined_sha256": "cc3f6953ad386e629bcd2c5fffa6077d4c3c63ffd55d0a05c1a53597d467c577",
+  "combined_sha256": "06e220dfaa7414ecd522cde46ab8b9236af6523db43805654a9cc94333ea8c89",
   "upstream": {
     "details_forbidden_tech": {
       "path": "data/upstream/data-stfc-space/forbidden_tech",
       "present": true,
-      "file_count": 71,
-      "sha256": "3cc190028f9ee6d90246eed2dfc35dcf83a0d325fd01e93693235613ab7c506f"
+      "file_count": 74,
+      "sha256": "d4012ccf528f22dc59e33b8a0ff75c7dbe60881c874b286a584a88303797a3c1"
     },
     "details_hostiles": {
       "path": "data/upstream/data-stfc-space/hostiles",
@@ -17,8 +17,8 @@
     "details_officers": {
       "path": "data/upstream/data-stfc-space/officers",
       "present": true,
-      "file_count": 290,
-      "sha256": "75d94dfb03b1f5e0c5a1326b9d4d490a824154c68e15c5a27f47b89196a679d2"
+      "file_count": 297,
+      "sha256": "ee0865b19d16699af49ccf7e225445d5f086339ef4385602dafbe8e1e0e36900"
     },
     "details_research": {
       "path": "data/upstream/data-stfc-space/research",
@@ -30,7 +30,7 @@
       "path": "data/upstream/data-stfc-space/ships",
       "present": true,
       "file_count": 116,
-      "sha256": "871eea28689d231e674acdd6c196a4508b51037cb7a533237572b47408deb983"
+      "sha256": "6fcc7293eb260b5b911392f3354f9a63e0581c15a124e1b317f2937517138b59"
     },
     "summary_building": {
       "path": "data/upstream/data-stfc-space/summary-building.json",
@@ -116,13 +116,13 @@
       "path": "data/buildings",
       "present": true,
       "file_count": 118,
-      "sha256": "cfbdd5fe6b980e9f6e52df9dcd20e1e2af07dbd9c2a010afa22f498e2350e3ed",
-      "data_version": "stfcspace-2026-11-17"
+      "sha256": "b54055b507a0b85c31c601131497d95f0489aab2d354ba9af909a49b453f8f82",
+      "data_version": "stfcspace-2026-11-23"
     },
     "forbidden_chaos_tech": {
       "path": "data/forbidden_chaos_tech.json",
       "present": true,
-      "sha256": "33280e98f4396f58c2d39ad0ad7736c6578cc669fd075ba4439f550fd914be59",
+      "sha256": "2f84b050bc12f87b80ba375e85fd693030b293b17a7b59c891cdf6d4ca12b828",
       "records": 71
     },
     "hostile_ability_catalog": {
@@ -135,8 +135,8 @@
       "path": "data/hostiles",
       "present": true,
       "file_count": 6446,
-      "sha256": "db167baffda40f8a78b2baa6301b232d906f24dced2670fa4c98c7ab8f102d89",
-      "data_version": "stfcspace-hostiles-2026-11-17+native-vger-gorn-l62-2026-11-10"
+      "sha256": "83a8a36f5ccd077157efeb0e82550690bf95cd304ac6eccfde791b806890fefd",
+      "data_version": "stfcspace-hostiles-2026-11-23+native-vger-gorn-l62-2026-11-10"
     },
     "hull_id_registry": {
       "path": "data/hull_id_registry.json",
@@ -154,7 +154,7 @@
     "research_catalog": {
       "path": "data/research_catalog.json",
       "present": true,
-      "sha256": "1335452a01dea34581e12e2012ab8570e095cdd838f35142bcfb2c855945cd14",
+      "sha256": "0ebd37bb9bacdf9023f1ddc004321acc1b12d95c7303beeb0cd457ff4fa5f375",
       "records": 243
     },
     "ship_ability_catalog": {
@@ -174,8 +174,8 @@
       "path": "data/ships_extended",
       "present": true,
       "file_count": 117,
-      "sha256": "1108454bf8308068a258c8a91d839e0836f86b55cd302b1e6476326d10e87e7e",
-      "data_version": "stfcspace-ships-2026-11-17"
+      "sha256": "c467cf5fd7e69e0096991b84e247af50b25caa155580e2df84a1701f081b657d",
+      "data_version": "stfcspace-ships-2026-11-23"
     },
     "support_buffs": {
       "path": "data/support_buffs.json",
@@ -186,7 +186,7 @@
     "syndicate_reputation": {
       "path": "data/syndicate_reputation.json",
       "present": true,
-      "sha256": "d88136551cd0fdbf8dfb24ed616fe87c406326426cd51484883ab80c8cbcfad7",
+      "sha256": "a989617e5a7fcb7744dbbb3a74aabd77eb4e833a0a4a8c2771243f1c3526a251",
       "records": 2
     }
   }
