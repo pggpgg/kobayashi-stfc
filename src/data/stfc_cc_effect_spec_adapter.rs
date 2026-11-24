@@ -343,9 +343,12 @@ fn map_condition_token(
                 ship_type: "armada".into(),
             }),
         }),
-        "TargetNotASB" | "SelfAttacking" | "TargetNotPlayerStation" => {
-            Ok(AbilityConditionSpec::LiteralBool { value: true })
-        }
+        "TargetNotASB" | "SelfAttacking" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
+        "TargetNotPlayerStation" => Ok(AbilityConditionSpec::Not {
+            inner: Box::new(AbilityConditionSpec::EngagementIncludes {
+                enemy_type: "pvp_station".into(),
+            }),
+        }),
         "SelfDefending" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
         "SelfAtSoloArmada" => Ok(AbilityConditionSpec::EngagementIncludes {
             enemy_type: "solo_armadas".into(),
@@ -395,15 +398,50 @@ fn map_condition_token(
                 },
             ],
         }),
-        "EnemySentinel"
-        | "CombatGameContext"
-        | "SelfAtStation"
-        | "SelfAtAssault2"
-        | "TargetIsInvadingEntity" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
-        "TargetIsArmadaOrInvadingEntity" => Ok(AbilityConditionSpec::DefenderShipTypeIs {
-            ship_type: "armada".into(),
+        "EnemyNonArmadaHostileOrOutpost" => Ok(AbilityConditionSpec::And {
+            all: vec![
+                AbilityConditionSpec::DefenderIsNpcHostile,
+                AbilityConditionSpec::Or {
+                    any: vec![
+                        AbilityConditionSpec::Not {
+                            inner: Box::new(AbilityConditionSpec::DefenderShipTypeIs {
+                                ship_type: "armada".into(),
+                            }),
+                        },
+                        AbilityConditionSpec::EngagementIncludes {
+                            enemy_type: "outpost_armadas".into(),
+                        },
+                    ],
+                },
+            ],
         }),
-        "TargetNotInvadingEntity" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
+        "EnemySentinel" => Ok(AbilityConditionSpec::EngagementIncludes {
+            enemy_type: "pvp_station".into(),
+        }),
+        "SelfAtAssault2" => Ok(AbilityConditionSpec::EngagementIncludes {
+            enemy_type: "assaults".into(),
+        }),
+        "TargetIsInvadingEntity" => Ok(AbilityConditionSpec::EngagementIncludes {
+            enemy_type: "invading_entities".into(),
+        }),
+        "CombatGameContext" | "SelfAtStation" => {
+            Ok(AbilityConditionSpec::LiteralBool { value: false })
+        }
+        "TargetIsArmadaOrInvadingEntity" => Ok(AbilityConditionSpec::Or {
+            any: vec![
+                AbilityConditionSpec::DefenderShipTypeIs {
+                    ship_type: "armada".into(),
+                },
+                AbilityConditionSpec::EngagementIncludes {
+                    enemy_type: "invading_entities".into(),
+                },
+            ],
+        }),
+        "TargetNotInvadingEntity" => Ok(AbilityConditionSpec::Not {
+            inner: Box::new(AbilityConditionSpec::EngagementIncludes {
+                enemy_type: "invading_entities".into(),
+            }),
+        }),
         "ModuleKinetic" => Ok(AbilityConditionSpec::AttackerWeaponScope {
             scope: "kinetic".into(),
         }),

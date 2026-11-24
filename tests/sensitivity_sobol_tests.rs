@@ -27,6 +27,8 @@ fn known_scenario(n_samples: Option<u32>, metric: OutcomeMetric) -> SobolRequest
         metric: Some(metric),
         deltas: None,
         include_pairwise: None,
+        enemy_type: None,
+        wave_defense: None,
     }
 }
 

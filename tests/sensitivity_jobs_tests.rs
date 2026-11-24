@@ -34,6 +34,8 @@ fn small_sobol_request(include_pairwise: bool) -> SobolRequest {
         metric: Some(OutcomeMetric::HullRemaining),
         deltas: None,
         include_pairwise: Some(include_pairwise),
+        enemy_type: None,
+        wave_defense: None,
     }
 }
 

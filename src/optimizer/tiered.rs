@@ -29,8 +29,8 @@ use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::chain::ChainSimulationSummary;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::{
-    build_shared_scenario_data_from_registry, DefenderOpponent, PlayerDefenderOfficerCrewOverride,
-    SharedScenarioData,
+    build_shared_scenario_data_from_registry_with_context, DefenderOpponent,
+    PlayerDefenderOfficerCrewOverride, ScenarioEngagementOverride, SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
     crew_candidate_ordered_hash, run_monte_carlo_scout_phase_with_shared_top_k,
@@ -507,6 +507,7 @@ pub fn run_tiered_with_registry_with_progress<F>(
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
     pvp: Option<super::monte_carlo::scenario::PvpScenarioParams>,
+    engagement_override: ScenarioEngagementOverride,
     // When set, matching crews skip scout and/or confirm Monte Carlo using stored aggregates.
     preconfirmed: Option<&HashMap<u64, SimulationResult>>,
     scout_adaptive: bool,
@@ -545,7 +546,7 @@ where
     }
 
     // Build scenario once per phase; avoids reloading officers/profile for every batch.
-    let shared = build_shared_scenario_data_from_registry(
+    let shared = build_shared_scenario_data_from_registry_with_context(
         registry,
         ship,
         hostile,
@@ -556,6 +557,7 @@ where
         defender_opponent,
         player_defender_officer_crew,
         pvp,
+        engagement_override,
     );
 
     let scout_cap = scout_sims.max(1);

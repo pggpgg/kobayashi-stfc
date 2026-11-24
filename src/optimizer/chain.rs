@@ -1,9 +1,10 @@
 //! Sequential chain-grind trials: attacker HHP carries over, SHP full each link (see DESIGN.md).
 
 use crate::combat::engine::{
-    build_combat_setup, simulate_combat_from_setup_with_scratch, CombatTrialScratch,
+    build_combat_setup_with_officer_stat, simulate_combat_from_setup_with_scratch,
+    CombatTrialScratch,
 };
-use crate::combat::{OpponentFactionTag, SimulationConfig, TraceMode};
+use crate::combat::{SimulationConfig, TraceMode};
 use serde::{Deserialize, Serialize};
 
 use crate::optimizer::loot::ChainLootSummary;
@@ -115,11 +116,7 @@ pub(crate) fn run_chain_trial(
     let mut first_link_r1_clean_win = false;
     let mut last_def_frac = 1.0_f64;
 
-    let defender_faction = shared
-        .hostile_rec
-        .as_ref()
-        .map(|h| h.opponent_faction_tag())
-        .unwrap_or(OpponentFactionTag::Unknown);
+    let defender_faction = shared.defender_faction_for_combat();
     let defender_ship_type = shared.defender_ship_type_for_combat();
     let attacker_ship_type = shared.attacker_ship_type_for_combat();
 
@@ -148,7 +145,7 @@ pub(crate) fn run_chain_trial(
             emit_state_snapshots: false,
         };
 
-        let setup = build_combat_setup(
+        let setup = build_combat_setup_with_officer_stat(
             &input.attacker,
             &input.defender,
             &combat_config,
@@ -159,6 +156,7 @@ pub(crate) fn run_chain_trial(
             shared.defender_opponent.defender_is_npc_hostile(),
             shared.defender_opponent.defender_is_player_ship(),
             &input.defender_crew,
+            input.officer_stat_round.clone(),
         );
         let mut trial_scratch = CombatTrialScratch::for_setup(&setup);
         let result =
@@ -249,7 +247,7 @@ mod tests {
     use super::*;
     use crate::combat::{
         Ability, AbilityClass, AbilityCondition, AbilityEffect, Combatant, CrewConfiguration,
-        CrewSeat, CrewSeatContext, ShipType, TimingWindow,
+        CrewSeat, CrewSeatContext, OpponentFactionTag, ShipType, TimingWindow,
     };
     use crate::optimizer::monte_carlo::DefenderOpponent;
 
@@ -293,6 +291,9 @@ mod tests {
             dual_gate_research_hull_hp: 0.0,
             dual_gate_research_shield_hp: 0.0,
             engagement_enemy_types: Default::default(),
+            combat_context: crate::data::officer_eligibility::resolve_combat_context(
+                None, false, false, None, None,
+            ),
             defender_level: None,
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,

@@ -148,7 +148,16 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   Weaponry, Thorn in My Side, Not Worthy, Test of Power), Wave Defense / FKR /
 ///   Outpost canonical gates, and conditional FT routing for Silicon-based Parasites
 ///   and `[PRO] Infusion Modulator`.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 33;
+/// * 33 → 34 (2026-11): End-to-end combat context wiring — `enemy_type` override
+///   and additive `wave_defense` propagate into `SharedScenarioData`, `SimulationConfig`,
+///   and `OfficerStatConditionContext` (fixing multi-word `EnemyType` keys like
+///   `solo_armadas` and PvP defender faction); fixed `resolve_enemy_type` dead branches
+///   for Q-Trials, Outposts, and Mission Bosses; fixed `weapon_damage_vs_armada_hostile`
+///   and `weapon_damage_vs_outpost` profile additive weapon pool application; mapped
+///   `EnemySentinel`, `TargetNotPlayerStation`, `SelfAtAssault2`, `TargetIsInvadingEntity`,
+///   `TargetNotInvadingEntity`, `TargetIsArmadaOrInvadingEntity`, and Caleb Mir's
+///   `EnemyNonArmadaHostileOrOutpost` / `EnemyOutpostOrRetaliator` gates.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 34;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -227,6 +236,7 @@ pub struct ReuseScenarioInputs<'a> {
     pub ship_level: Option<u32>,
     pub below_decks_slots: u32,
     pub enemy_type: Option<&'a str>,
+    pub wave_defense: bool,
     pub defender_opponent: &'a str,
     pub support_buffs: Option<&'a [String]>,
     pub defender_support_buffs: Option<&'a [String]>,
@@ -813,6 +823,59 @@ fn canary_fight_summaries() -> Vec<String> {
     summaries.push(format!(
         "ad_polaron_weapon_mitigation:ahull={:.6};ashield={:.6};",
         pol_res.attacker_hull_remaining, pol_res.attacker_shield_remaining
+    ));
+
+    // Additive engagement tags (e.g. Wave Defense `[RedMovingSpace, Waves]`): both a
+    // Wave-gated ability and a non-Armada hostile ability fire together on the same fight.
+    let mut wave_att = canary_combatant("canary_ae_attacker");
+    wave_att.attack = 420.0;
+    wave_att.hull_health = 10_000.0;
+    let mut wave_def = canary_combatant("canary_ae_defender");
+    wave_def.attack = 150.0;
+    wave_def.hull_health = 10_000.0;
+    let mut wave_seat = canary_seat(
+        CrewSeat::Bridge,
+        AbilityClass::BridgeAbility,
+        TimingWindow::CombatBegin,
+        AbilityEffect::AttackMultiplier(0.40),
+    );
+    wave_seat.ability.condition = Some(AbilityCondition::EngagementIncludes(
+        crate::combat::EnemyType::Waves,
+    ));
+    let mut hostile_seat = canary_seat(
+        CrewSeat::Captain,
+        AbilityClass::CaptainManeuver,
+        TimingWindow::CombatBegin,
+        AbilityEffect::AttackMultiplier(0.25),
+    );
+    hostile_seat.ability.condition = Some(AbilityCondition::And(vec![
+        AbilityCondition::DefenderIsNpcHostile,
+        AbilityCondition::Not(Box::new(AbilityCondition::DefenderShipTypeIs(
+            crate::combat::ShipType::Armada,
+        ))),
+    ]));
+    let mut wave_cfg = canary_config(2, 97);
+    wave_cfg.engagement_enemy_types = crate::combat::EnemyTypes(vec![
+        crate::combat::EnemyType::RedMovingSpace,
+        crate::combat::EnemyType::Waves,
+    ]);
+    let wave_res = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &wave_att,
+        &wave_def,
+        &wave_cfg,
+        &CrewConfiguration {
+            seats: vec![hostile_seat, wave_seat],
+        },
+        crate::combat::OpponentFactionTag::Unknown,
+        crate::combat::ShipType::Explorer,
+        crate::combat::ShipType::Battleship,
+        true,
+        false,
+        &CrewConfiguration::default(),
+    );
+    summaries.push(format!(
+        "ae_engagement_wave_defense:dmg={:.6};dhull={:.6};rounds={};",
+        wave_res.total_damage, wave_res.defender_hull_remaining, wave_res.rounds_simulated
     ));
     summaries
 }
@@ -2282,15 +2345,50 @@ fn building_catalog_fingerprint_for_paths(buildings_dir: &Path, translations_pat
 /// Component overrides from the player's synced ships are covered by the `profile` segment
 /// (`ships.imported.json`), so the catalog record is resolved here without them.
 pub fn scenario_fingerprint(registry: &DataRegistry, inputs: &ReuseScenarioInputs<'_>) -> u64 {
+    let pvp = inputs.defender_ship.is_some_and(|s| !s.trim().is_empty());
+    let defender_opponent = if pvp || inputs.defender_opponent.eq_ignore_ascii_case("player") {
+        crate::optimizer::monte_carlo::DefenderOpponent::Player
+    } else {
+        crate::optimizer::monte_carlo::DefenderOpponent::Hostile
+    };
+    let hostile_rec = if pvp {
+        None
+    } else {
+        registry.resolve_hostile(inputs.hostile)
+    };
+    let explicit_enemy_type = inputs
+        .enemy_type
+        .and_then(crate::data::officer_eligibility::enemy_type_from_str);
+    let resolved_ctx = crate::data::officer_eligibility::resolve_combat_context(
+        explicit_enemy_type,
+        inputs.wave_defense,
+        pvp || defender_opponent.defender_is_player_ship(),
+        hostile_rec.as_ref(),
+        None,
+    );
+    let engagement_keys = resolved_ctx.canonical_engagement_keys().join(",");
+    let canonical_opponent = if resolved_ctx.opponent_kind.is_player() {
+        "player"
+    } else {
+        "hostile"
+    };
+    let raw_unknown_enemy_type = inputs
+        .enemy_type
+        .map(str::trim)
+        .filter(|s| !s.is_empty() && !s.eq_ignore_ascii_case("auto"))
+        .filter(|_| explicit_enemy_type.is_none())
+        .unwrap_or("");
+
     let mut canonical = format!(
-        "ship={};hostile={};tier={};level={};bd_slots={};enemy_type={};defender_opponent={};",
+        "ship={};hostile={};tier={};level={};bd_slots={};engagement={};raw_enemy_type={};defender_opponent={};",
         inputs.ship,
         inputs.hostile,
         inputs.ship_tier.unwrap_or(0),
         inputs.ship_level.unwrap_or(0),
         inputs.below_decks_slots,
-        inputs.enemy_type.unwrap_or(""),
-        inputs.defender_opponent,
+        engagement_keys,
+        raw_unknown_enemy_type,
+        canonical_opponent,
     );
 
     push_ship_record_digest(
@@ -2302,10 +2400,7 @@ pub fn scenario_fingerprint(registry: &DataRegistry, inputs: &ReuseScenarioInput
         inputs.ship_level,
     );
 
-    match registry
-        .resolve_hostile(inputs.hostile)
-        .and_then(|r| serde_json::to_string(&r).ok())
-    {
+    match hostile_rec.and_then(|r| serde_json::to_string(&r).ok()) {
         Some(json) => {
             canonical.push_str(&format!("hostile_record={:016x};", stable_text_hash(&json)))
         }
@@ -2660,7 +2755,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 37, "expected thirty-seven canary fights");
+        assert_eq!(summaries.len(), 38, "expected thirty-eight canary fights");
         assert!(summaries
             .iter()
             .any(|s| s.starts_with("ab_crit_mitigation_rating:ahull=9000.000000;")));

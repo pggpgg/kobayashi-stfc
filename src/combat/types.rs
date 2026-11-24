@@ -256,6 +256,29 @@ impl OpponentFactionTag {
             _ => None,
         }
     }
+
+    /// Canonical `snake_case` slug matching [`Self::from_data_slug`], or `None` for `Unknown`.
+    pub const fn as_data_slug(self) -> Option<&'static str> {
+        match self {
+            Self::Unknown => None,
+            Self::Federation => Some("federation"),
+            Self::Klingon => Some("klingon"),
+            Self::Romulan => Some("romulan"),
+            Self::Borg => Some("borg"),
+            Self::Cardassian => Some("cardassian"),
+            Self::Augment => Some("augment"),
+            Self::Dominion => Some("dominion"),
+            Self::MirrorUniverse => Some("mirror_universe"),
+            Self::Assimilated => Some("assimilated"),
+            Self::ExBorg => Some("ex_borg"),
+            Self::Swarm => Some("swarm"),
+            Self::Actian => Some("actian"),
+            Self::GornHuntingPack => Some("gorn_hunting_pack"),
+            Self::Xindi => Some("xindi"),
+            Self::Breen => Some("breen"),
+            Self::VenariRal => Some("venari_ral"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -350,9 +373,56 @@ impl Default for SimulationConfig {
     }
 }
 
+/// Canonical `snake_case` key for [`EnemyType`] (matching serde serialization and
+/// `data/officers/eligibility_matrix.json` keys).
+pub const fn enemy_type_to_key(et: EnemyType) -> &'static str {
+    match et {
+        EnemyType::PvpSpace => "pvp_space",
+        EnemyType::PvpStation => "pvp_station",
+        EnemyType::RedMovingSpace => "red_moving_space",
+        EnemyType::Waves => "waves",
+        EnemyType::MissionBosses => "mission_bosses",
+        EnemyType::QTrial => "q_trial",
+        EnemyType::GroupArmadas => "group_armadas",
+        EnemyType::SoloArmadas => "solo_armadas",
+        EnemyType::InvadingEntities => "invading_entities",
+        EnemyType::Assaults => "assaults",
+        EnemyType::OutpostArmadas => "outpost_armadas",
+        EnemyType::OutpostRetaliationAttackers => "outpost_retaliation_attackers",
+    }
+}
+
+/// High-level opponent category derived from target selection and explicit engagement mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum OpponentKind {
+    /// NPC hostile target (system red, armada, outpost, boss, wave, etc.).
+    #[default]
+    NpcHostile,
+    /// Opposing player ship in open space (PvP).
+    PlayerShip,
+    /// Opposing player starbase / defense platform (station PvP).
+    PlayerStation,
+}
+
+impl OpponentKind {
+    pub const fn is_npc_hostile(self) -> bool {
+        matches!(self, Self::NpcHostile)
+    }
+
+    /// True for any player-owned defender (`PlayerShip` or `PlayerStation`; canonical `EnemyPlayer`).
+    pub const fn is_player(self) -> bool {
+        matches!(self, Self::PlayerShip | Self::PlayerStation)
+    }
+
+    pub const fn is_player_station(self) -> bool {
+        matches!(self, Self::PlayerStation)
+    }
+}
+
 /// Parse `snake_case` slug from LCARS `engagement_includes` / JSON (same strings as [`EnemyType`] serde).
 pub fn enemy_type_from_engagement_slug(s: &str) -> Option<EnemyType> {
-    let slug = s.trim().replace('-', "_");
+    let slug = s.trim().to_ascii_lowercase().replace('-', "_");
     serde_json::from_value(serde_json::Value::String(slug)).ok()
 }
 
@@ -722,6 +792,16 @@ impl ShipType {
             "survey" => Some(Self::Survey),
             "armada" => Some(Self::Armada),
             _ => None,
+        }
+    }
+
+    pub const fn as_data_slug(self) -> &'static str {
+        match self {
+            Self::Battleship => "battleship",
+            Self::Explorer => "explorer",
+            Self::Interceptor => "interceptor",
+            Self::Survey => "survey",
+            Self::Armada => "armada",
         }
     }
 

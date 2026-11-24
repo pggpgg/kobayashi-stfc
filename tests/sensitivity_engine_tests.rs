@@ -27,6 +27,8 @@ fn known_scenario(num_sims: u32, metric: OutcomeMetric) -> SensitivityRequest {
         rounds: Some(5),
         metric: Some(metric),
         deltas: None,
+        enemy_type: None,
+        wave_defense: None,
     }
 }
 

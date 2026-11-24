@@ -1067,6 +1067,10 @@ export interface paths {
                     chain_kills_target?: number;
                     /** @description Optional optimizer strategy (`portfolio`, `tiered`, `exhaustive`, `genetic`, `linear_eval`, `random_stratified`) so multi-fidelity lanes estimate racing and confirmation trials accurately. Omit for the legacy exhaustive upper-bound estimate. */
                     strategy?: "exhaustive" | "genetic" | "tiered" | "linear_eval" | "random_stratified" | "portfolio";
+                    /** @description Optional combat engagement override (snake_case `EnemyType`, e.g. `solo_armadas`, `waves`). `"auto"` or omitted infers from the target. */
+                    enemy_type?: string;
+                    /** @description When `true`, enables additive Wave Defense context (`waves`). */
+                    wave_defense?: boolean;
                     /** @description Profile id (alternative to X-Profile-Id) */
                     profile?: components["parameters"]["QueryProfile"];
                 };
@@ -2727,8 +2731,10 @@ export interface components {
             defender_ship_level?: number;
             /** @description Opponent profile id when `defender_ship` is set. */
             defender_profile_id?: string;
-            /** @description Combat scenario for officer eligibility (snake_case EnemyType, e.g. `mission_bosses`, `solo_armadas`, `pvp_space`). Inferred from the target when unset. */
+            /** @description Combat scenario override (snake_case EnemyType, e.g. `mission_bosses`, `solo_armadas`, `pvp_space`). `"auto"` or unset infers from the target; unknown non-empty values return HTTP 400. */
             enemy_type?: string;
+            /** @description When true, enables additive Wave Defense context (`waves`) alongside the resolved target engagement type. */
+            wave_defense?: boolean;
         };
         SimulateStats: {
             win_rate: number;
@@ -2786,6 +2792,10 @@ export interface components {
             deltas?: {
                 [key: string]: number;
             };
+            /** @description Optional engagement type override (snake_case `EnemyType`; `"auto"` or unset infers). */
+            enemy_type?: string;
+            /** @description When true, enables additive Wave Defense context (`waves`). */
+            wave_defense?: boolean;
         };
         SensitivityRow: {
             stat: string;
@@ -2840,6 +2850,10 @@ export interface components {
             deltas?: {
                 [key: string]: number;
             };
+            /** @description Optional engagement type override (snake_case `EnemyType`; `"auto"` or unset infers). */
+            enemy_type?: string;
+            /** @description When true, enables additive Wave Defense context (`waves`). */
+            wave_defense?: boolean;
         };
         MorrisSensitivityRow: {
             stat: string;
@@ -2910,6 +2924,10 @@ export interface components {
              *     on top of the `N × (k + 2)` baseline (≈ 8.6× at default `N = 512`, `k = 18`).
              */
             include_pairwise?: boolean;
+            /** @description Optional engagement type override (snake_case `EnemyType`; `"auto"` or unset infers). */
+            enemy_type?: string;
+            /** @description When true, enables additive Wave Defense context (`waves`). */
+            wave_defense?: boolean;
         };
         SobolSensitivityPairRow: {
             stat_a: string;
@@ -2994,6 +3012,8 @@ export interface components {
             defender_ship_tier?: number;
             defender_ship_level?: number;
             defender_profile_id?: string;
+            enemy_type?: string;
+            wave_defense?: boolean;
         };
         CompareCrewsResponse: {
             status: string;
@@ -3030,6 +3050,7 @@ export interface components {
             defender_ship_level?: number;
             defender_profile_id?: string;
             enemy_type?: string;
+            wave_defense?: boolean;
         };
         CounterfactualMetrics: {
             score: number;
@@ -3119,6 +3140,7 @@ export interface components {
             fixed_officers?: string[];
             excluded_officers?: string[];
             enemy_type?: string;
+            wave_defense?: boolean;
         };
         FleetAllocateRequest: {
             slots: components["schemas"]["FleetSlotRequestDto"][];
@@ -3397,6 +3419,11 @@ export interface components {
             tiered_top_k?: number | null;
             /** @description Optional crews prepended before generated candidates (deduped); e.g. UI warm-start persistence. */
             warm_start_crews?: components["schemas"]["WarmStartCrewDto"][] | null;
+            /**
+             * @description When `true`, enables additive Wave Defense context (`waves`) alongside the resolved target type so Wave Defense abilities fire without disabling base hostile/armada abilities.
+             * @default null
+             */
+            wave_defense?: boolean | null;
         };
         ReplaySeedCrew: {
             captain?: components["schemas"]["NullableString"];
@@ -3405,7 +3432,7 @@ export interface components {
         };
         ReplaySeedRequest: {
             ship: string;
-            hostile: string;
+            hostile?: string;
             ship_tier?: number;
             ship_level?: number;
             /** Format: int64 */
@@ -3415,7 +3442,16 @@ export interface components {
             max_trace_events?: number;
             crew: components["schemas"]["ReplaySeedCrew"];
             support_buffs?: string[];
+            defender_support_buffs?: string[];
+            defender_alliance_debuffs?: string[];
             defender_opponent?: string;
+            defender_crew?: components["schemas"]["DefenderOfficerCrewDto"];
+            defender_ship?: string;
+            defender_ship_tier?: number;
+            defender_ship_level?: number;
+            defender_profile_id?: string;
+            enemy_type?: string;
+            wave_defense?: boolean;
         };
         SyncIngressBatch: {
             [key: string]: unknown;

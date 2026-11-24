@@ -364,6 +364,7 @@ fn distinct_unresolvable_ids_do_not_share_a_scenario_fingerprint() {
         ship_level: None,
         below_decks_slots: 3,
         enemy_type: None,
+        wave_defense: false,
         defender_opponent: "hostile",
         support_buffs: None,
         defender_support_buffs: None,

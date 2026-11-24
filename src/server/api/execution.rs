@@ -17,6 +17,9 @@ use crate::data::heuristics::{
 };
 use crate::data::import::{load_imported_roster, roster_import_fallback_warning_message};
 use crate::data::officer::normalize_officer_lookup_key;
+use crate::data::officer_eligibility::{
+    parse_optional_enemy_type, resolve_combat_context, ResolvedCombatContext,
+};
 use crate::data::optimize_fingerprint;
 use crate::data::optimize_history;
 use crate::data::optimize_observations::{
@@ -28,14 +31,15 @@ use crate::mechanics::crew_fidelity::{CrewFidelityEvaluator, CrewFidelitySummary
 use crate::optimizer::chain::ChainGrindParams;
 use crate::optimizer::constraints::{filter_candidates, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
-    build_officer_pools_from_registry, resolve_below_decks_slots_for_ship,
-    search_space_reduction_report, CandidateStrategy, CrewCandidate, BRIDGE_SLOTS,
+    build_officer_pools_from_registry_for_tags, resolve_below_decks_slots_for_ship,
+    search_space_reduction_report_for_tags, CandidateStrategy, CrewCandidate, BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_with_shared,
     scenario::{
-        build_shared_scenario_data_from_registry, DefenderOpponent,
-        PlayerDefenderOfficerCrewOverride, PvpScenarioParams, SharedScenarioData,
+        build_shared_scenario_data_from_registry_with_context, DefenderOpponent,
+        PlayerDefenderOfficerCrewOverride, PvpScenarioParams, ScenarioEngagementOverride,
+        SharedScenarioData,
     },
     SimulationResult,
 };
@@ -45,7 +49,8 @@ use crate::optimizer::ranking::{apply_novelty_mmr_if_configured, rank_results, R
 use crate::optimizer::refinement::{LocalRefinementParams, RefinementProvenance};
 use crate::optimizer::tiered::TieredScoutBudgetStats;
 use crate::optimizer::{
-    count_effective_optimize_candidates, enforce_candidate_optimization_eligibility_with_registry,
+    count_effective_optimize_candidates,
+    enforce_candidate_optimization_eligibility_for_tags_with_registry,
     optimize_scenario_with_progress_with_registry, OptimizationScenario, OptimizeCandidateFunnel,
     OptimizeProgressTick, OptimizeRunOutcome, OptimizerStrategy,
 };
@@ -132,16 +137,16 @@ fn curated_proven_warm_start_crew(
     registry: &DataRegistry,
     profile_id: Option<&str>,
     below_decks_slots: usize,
-    enemy_type: crate::combat::EnemyType,
+    engagement_enemy_types: &[crate::combat::EnemyType],
     constraints: Option<&CrewSearchConstraints>,
 ) -> Option<CrewCandidate> {
     if below_decks_slots == 0 {
         return None;
     }
-    let pools = build_officer_pools_from_registry(
+    let pools = build_officer_pools_from_registry_for_tags(
         registry,
         crate::data::heuristics::BelowDecksPoolMode::Relaxed,
-        Some(enemy_type),
+        Some(engagement_enemy_types),
         profile_id,
         below_decks_slots,
         constraints,
@@ -192,28 +197,42 @@ fn merge_fast_discovery_warm_start(
     (out, cap_hit)
 }
 
-/// Resolve the combat scenario for eligibility filtering from a request: explicit `enemy_type`
-/// wins; else PvP → PvpSpace; else infer from the (cached) hostile record; else RedMovingSpace.
-/// The hostile is only resolved when inference is actually needed.
-fn resolve_request_enemy_type(
+/// Resolve the canonical combat context and engagement override for a request: explicit
+/// `enemy_type` + additive `wave_defense` + PvP/hostile catalog inference.
+fn resolve_request_combat_context(
     registry: &DataRegistry,
     request: &OptimizeRequest,
-) -> crate::combat::EnemyType {
-    let explicit = request.enemy_type.as_deref();
+) -> (ResolvedCombatContext, ScenarioEngagementOverride) {
+    let explicit = parse_optional_enemy_type(request.enemy_type.as_deref())
+        .ok()
+        .flatten();
+    let wave_defense = request.wave_defense.unwrap_or(false);
     let pvp = request
         .defender_ship
         .as_deref()
         .is_some_and(|ship| !ship.trim().is_empty());
-    let infer_from_hostile = !pvp
-        && explicit
-            .and_then(crate::data::officer_eligibility::enemy_type_from_str)
-            .is_none();
-    let hostile = if infer_from_hostile {
-        registry.resolve_hostile(request.hostile.trim())
+    let defender_opponent = if pvp {
+        DefenderOpponent::Player
     } else {
-        None
+        request.defender_opponent
     };
-    crate::data::officer_eligibility::resolve_enemy_type(explicit, pvp, hostile.as_ref())
+    let hostile = if pvp {
+        None
+    } else {
+        registry.resolve_hostile(request.hostile.trim())
+    };
+    let resolved = resolve_combat_context(
+        explicit,
+        wave_defense,
+        pvp || defender_opponent.defender_is_player_ship(),
+        hostile.as_ref(),
+        None,
+    );
+    let engagement_override = ScenarioEngagementOverride {
+        enemy_type: explicit,
+        wave_defense,
+    };
+    (resolved, engagement_override)
 }
 
 /// Resolve effective optimizer strategy; `strategy_auto` is true only when the client omitted `strategy`
@@ -222,6 +241,7 @@ fn resolve_request_enemy_type(
 fn resolve_effective_optimize_strategy(
     registry: &DataRegistry,
     request: &OptimizeRequest,
+    combat_context: &ResolvedCombatContext,
     below_decks_slots: usize,
     heuristics_only: bool,
     seed: u64,
@@ -254,11 +274,9 @@ fn resolve_effective_optimize_strategy(
     let strat = CandidateStrategy {
         max_candidates: request.max_candidates.map(|n| n as usize),
         below_decks_pool_mode: below_decks_pool_mode_resolved(request),
-        pvp_mode: request
-            .defender_ship
-            .as_deref()
-            .is_some_and(|ship| !ship.trim().is_empty()),
-        enemy_type: resolve_request_enemy_type(registry, request),
+        pvp_mode: combat_context.opponent_kind.is_player(),
+        enemy_type: combat_context.primary_enemy_type,
+        engagement_enemy_types: Some(combat_context.engagement_enemy_types.0.clone()),
         below_decks_slots,
         constraints: crew_constraints.cloned(),
         roster_profile_id: profile_id.filter(|s| !s.is_empty()).map(String::from),
@@ -957,6 +975,7 @@ fn sort_heuristic_parsed_crews_below_decks_by_officer_power(
 pub struct HeuristicCandidateContext<'a> {
     pub pool_mode: crate::data::heuristics::BelowDecksPoolMode,
     pub enemy_type: crate::combat::EnemyType,
+    pub engagement_enemy_types: &'a [crate::combat::EnemyType],
     pub constraints: Option<&'a CrewSearchConstraints>,
 }
 
@@ -970,10 +989,16 @@ pub fn load_heuristics_candidates(
     context: HeuristicCandidateContext<'_>,
 ) -> Vec<CrewCandidate> {
     let canonical_names: Vec<String> = registry.officers().iter().map(|o| o.name.clone()).collect();
-    let filler_pool = build_officer_pools_from_registry(
+    let fallback_tag = [context.enemy_type];
+    let effective_tags = if context.engagement_enemy_types.is_empty() {
+        &fallback_tag[..]
+    } else {
+        context.engagement_enemy_types
+    };
+    let filler_pool = build_officer_pools_from_registry_for_tags(
         registry,
         context.pool_mode,
-        Some(context.enemy_type),
+        Some(effective_tags),
         profile_id,
         below_decks_slots,
         context.constraints,
@@ -1371,7 +1396,8 @@ fn persist_optimizer_outcome(
 struct PreparedOptimizeRun {
     below_decks_slots: usize,
     crew_constraints: Option<CrewSearchConstraints>,
-    enemy_type: crate::combat::EnemyType,
+    combat_context: ResolvedCombatContext,
+    engagement_override: ScenarioEngagementOverride,
     cache_key_normalized: Option<String>,
     reuse_fingerprint_encoded: String,
     reuse_data_segment: String,
@@ -1424,11 +1450,28 @@ fn prepare_optimize_run(
         request.below_decks_slots,
     );
     let crew_constraints = build_crew_search_constraints(request);
-    // Resolve the combat scenario for eligibility filtering (explicit `enemy_type`, else inferred).
-    let enemy_type = resolve_request_enemy_type(registry, request);
+    // Resolve PvP params + canonical combat context first so eligibility, fingerprints,
+    // warnings, and simulation all see the exact same reconciled opponent and engagement tags.
+    let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
+        request.defender_ship.as_deref(),
+        request.defender_ship_tier,
+        request.defender_ship_level,
+        request.defender_profile_id.as_deref(),
+    );
+    let (combat_context, engagement_override) = resolve_request_combat_context(registry, request);
+    let effective_defender_opponent = if combat_context.opponent_kind.is_player() {
+        DefenderOpponent::Player
+    } else {
+        DefenderOpponent::Hostile
+    };
+    let engagement_tags = combat_context.engagement_enemy_types.0.as_slice();
     let pool_mode = below_decks_pool_mode_resolved(request);
-    let search_space_report =
-        search_space_reduction_report(registry, enemy_type, pool_mode, below_decks_slots);
+    let search_space_report = search_space_reduction_report_for_tags(
+        registry,
+        engagement_tags,
+        pool_mode,
+        below_decks_slots,
+    );
     let raw_stage = search_space_report.raw();
     let raw_role_pool = OptimizerRolePoolTelemetry::new(
         raw_stage.captains,
@@ -1450,10 +1493,10 @@ fn prepare_optimize_run(
         eligible_stage.bridge,
         eligible_stage.below_decks,
     );
-    let roster_role_pool = build_officer_pools_from_registry(
+    let roster_role_pool = build_officer_pools_from_registry_for_tags(
         registry,
         pool_mode,
-        Some(enemy_type),
+        Some(engagement_tags),
         profile_id,
         below_decks_slots,
         None,
@@ -1465,10 +1508,10 @@ fn prepare_optimize_run(
             pools.below_decks.len(),
         )
     });
-    let final_role_pool = build_officer_pools_from_registry(
+    let final_role_pool = build_officer_pools_from_registry_for_tags(
         registry,
         pool_mode,
-        Some(enemy_type),
+        Some(engagement_tags),
         profile_id,
         below_decks_slots,
         crew_constraints.as_ref(),
@@ -1500,7 +1543,8 @@ fn prepare_optimize_run(
             ship_level: request.ship_level,
             below_decks_slots: below_decks_slots as u32,
             enemy_type: request.enemy_type.as_deref(),
-            defender_opponent: if request.defender_opponent.defender_is_player_ship() {
+            wave_defense: engagement_override.wave_defense,
+            defender_opponent: if effective_defender_opponent.defender_is_player_ship() {
                 "player"
             } else {
                 "hostile"
@@ -1535,7 +1579,7 @@ fn prepare_optimize_run(
         request.support_buffs.as_deref(),
     ) {
         (Some(cat), Some(sb))
-            if !sb.is_empty() && !request.defender_opponent.defender_is_player_ship() =>
+            if !sb.is_empty() && !effective_defender_opponent.defender_is_player_ship() =>
         {
             support_buffs::inactive_defender_static_support_buff_labels(cat, sb, false)
         }
@@ -1553,20 +1597,22 @@ fn prepare_optimize_run(
             profile_id,
             HeuristicCandidateContext {
                 pool_mode,
-                enemy_type,
+                enemy_type: combat_context.primary_enemy_type,
+                engagement_enemy_types: engagement_tags,
                 constraints: crew_constraints.as_ref(),
             },
         )
     } else {
         Vec::new()
     };
-    let (h_candidates_legal, h_legality) = enforce_candidate_optimization_eligibility_with_registry(
-        registry,
-        profile_id,
-        below_decks_slots,
-        enemy_type,
-        h_candidates,
-    );
+    let (h_candidates_legal, h_legality) =
+        enforce_candidate_optimization_eligibility_for_tags_with_registry(
+            registry,
+            profile_id,
+            below_decks_slots,
+            engagement_tags,
+            h_candidates,
+        );
     h_candidates = h_candidates_legal;
     if let Some(ref c) = crew_constraints {
         h_candidates = filter_candidates(h_candidates, c);
@@ -1585,20 +1631,21 @@ fn prepare_optimize_run(
         registry,
         profile_id,
         below_decks_slots,
-        enemy_type,
+        engagement_tags,
         crew_constraints.as_ref(),
     );
     let curated_warm_start_hash = curated_warm_start.as_ref().map(crew_candidate_stable_hash);
     if let Some(crew) = curated_warm_start {
         dto_warm.insert(0, crew);
     }
-    let (dto_warm, warm_legality) = enforce_candidate_optimization_eligibility_with_registry(
-        registry,
-        profile_id,
-        below_decks_slots,
-        enemy_type,
-        dto_warm,
-    );
+    let (dto_warm, warm_legality) =
+        enforce_candidate_optimization_eligibility_for_tags_with_registry(
+            registry,
+            profile_id,
+            below_decks_slots,
+            engagement_tags,
+            dto_warm,
+        );
     let fast_discovery_requested =
         request.fast_discovery == Some(true) && heuristics_seeds_nonempty && !heuristics_only;
     let fast_discovery_no_resolved_crews = fast_discovery_requested && h_candidates.is_empty();
@@ -1636,11 +1683,11 @@ fn prepare_optimize_run(
     };
     let prior_refs_in = prior_reference_crews_raw.len();
     let (prior_reference_crews, prior_legality) =
-        enforce_candidate_optimization_eligibility_with_registry(
+        enforce_candidate_optimization_eligibility_for_tags_with_registry(
             registry,
             profile_id,
             below_decks_slots,
-            enemy_type,
+            engagement_tags,
             prior_reference_crews_raw,
         );
     let dropped_illegal_prior_refs = prior_legality.dropped_wrong_shape
@@ -1734,6 +1781,7 @@ fn prepare_optimize_run(
     let (strategy, strategy_auto) = resolve_effective_optimize_strategy(
         registry,
         request,
+        &combat_context,
         below_decks_slots,
         heuristics_only,
         seed,
@@ -1795,12 +1843,6 @@ fn prepare_optimize_run(
         *sink_random = strategy == OptimizerStrategy::RandomStratified;
     }
 
-    let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
-        request.defender_ship.as_deref(),
-        request.defender_ship_tier,
-        request.defender_ship_level,
-        request.defender_profile_id.as_deref(),
-    );
     let scenario_hostile: String = pvp
         .as_ref()
         .map(|p| p.defender_ship.clone())
@@ -1810,7 +1852,7 @@ fn prepare_optimize_run(
         request.defender_support_buffs.as_deref(),
         request.defender_alliance_debuffs.as_deref(),
     );
-    let shared_scenario = build_shared_scenario_data_from_registry(
+    let shared_scenario = build_shared_scenario_data_from_registry_with_context(
         registry,
         &request.ship,
         scenario_hostile.as_str(),
@@ -1818,13 +1860,10 @@ fn prepare_optimize_run(
         request.ship_level,
         profile_id,
         support_buff_request,
-        if pvp.is_some() {
-            DefenderOpponent::Player
-        } else {
-            request.defender_opponent
-        },
+        effective_defender_opponent,
         player_defender_officer_crew.clone(),
         pvp.clone(),
+        engagement_override,
     );
     let using_placeholder_combatants = shared_scenario.using_placeholder_combatants;
     let dropped_illegal_warm_start = warm_legality.dropped_wrong_shape
@@ -1836,7 +1875,8 @@ fn prepare_optimize_run(
     Ok(PreparedOptimizeRun {
         below_decks_slots,
         crew_constraints,
-        enemy_type,
+        combat_context,
+        engagement_override,
         cache_key_normalized,
         reuse_fingerprint_encoded,
         reuse_data_segment,
@@ -1903,7 +1943,8 @@ fn gather_optimize_simulation_results(
     let PreparedOptimizeRun {
         below_decks_slots,
         crew_constraints,
-        enemy_type,
+        combat_context,
+        engagement_override,
         cache_key_normalized,
         reuse_fingerprint_encoded,
         reuse_data_segment,
@@ -2073,14 +2114,16 @@ fn gather_optimize_simulation_results(
             defender_support_buffs: request.defender_support_buffs.clone(),
             defender_alliance_debuffs: request.defender_alliance_debuffs.clone(),
             chain_grind: chain_grind.clone(),
-            defender_opponent: if pvp.is_some() {
+            defender_opponent: if combat_context.opponent_kind.is_player() {
                 DefenderOpponent::Player
             } else {
-                request.defender_opponent
+                DefenderOpponent::Hostile
             },
             player_defender_officer_crew: player_defender_officer_crew.clone(),
             pvp: pvp.clone(),
-            enemy_type,
+            enemy_type: combat_context.primary_enemy_type,
+            engagement_override,
+            engagement_enemy_types: Some(combat_context.engagement_enemy_types.clone()),
             warm_start: scenario_warm_start,
             prior_reference_crews,
             optimize_cache_key: cache_key_normalized.clone(),
@@ -3360,7 +3403,7 @@ mod curated_warm_start_tests {
             &registry,
             Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             3,
-            crate::combat::EnemyType::RedMovingSpace,
+            &[crate::combat::EnemyType::RedMovingSpace],
             None,
         )
         .expect("curated crew forms for a 3-slot ship over the full catalog");
@@ -3389,7 +3432,7 @@ mod curated_warm_start_tests {
             &registry,
             Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
             0,
-            crate::combat::EnemyType::RedMovingSpace,
+            &[crate::combat::EnemyType::RedMovingSpace],
             None,
         )
         .is_none());
@@ -3416,6 +3459,7 @@ mod heuristic_seed_request_tests {
             HeuristicCandidateContext {
                 pool_mode: crate::data::heuristics::BelowDecksPoolMode::Relaxed,
                 enemy_type: crate::combat::EnemyType::RedMovingSpace,
+                engagement_enemy_types: &[crate::combat::EnemyType::RedMovingSpace],
                 constraints: None,
             },
         );
@@ -3449,6 +3493,7 @@ mod heuristic_seed_request_tests {
             HeuristicCandidateContext {
                 pool_mode: crate::data::heuristics::BelowDecksPoolMode::Relaxed,
                 enemy_type: crate::combat::EnemyType::RedMovingSpace,
+                engagement_enemy_types: &[crate::combat::EnemyType::RedMovingSpace],
                 constraints: None,
             },
         );
@@ -3462,6 +3507,7 @@ mod heuristic_seed_request_tests {
             HeuristicCandidateContext {
                 pool_mode: crate::data::heuristics::BelowDecksPoolMode::Relaxed,
                 enemy_type: crate::combat::EnemyType::RedMovingSpace,
+                engagement_enemy_types: &[crate::combat::EnemyType::RedMovingSpace],
                 constraints: None,
             },
         );

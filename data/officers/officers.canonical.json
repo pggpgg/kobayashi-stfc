@@ -2192,8 +2192,7 @@
             1.0
           ],
           "conditions": [
-            "EnemyHostile",
-            "TargetNotArmada"
+            "EnemyNonArmadaHostileOrOutpost"
           ],
           "description": "Programmable Matter Prodigy: restores X Shield Health against Outposts and non-Armada hostiles on round start.",
           "modifier": "ShieldHPRepair",
@@ -2220,7 +2219,7 @@
             1.0
           ],
           "conditions": [
-            "SelfAtStation"
+            "EnemyOutpostOrRetaliator"
           ],
           "description": "Top Marks: increases Weapon Damage by X against Outposts and Retaliation hostiles on combat start.",
           "modifier": "AllDamage",

@@ -31,12 +31,13 @@ use crate::optimizer::beam::{
 use crate::optimizer::chain::{ChainGrindParams, ChainSimulationSummary};
 use crate::optimizer::constraints::normalize_officer_name;
 use crate::optimizer::crew_generator::{
-    build_officer_pools_from_registry, CrewCandidate, OfficerPools, BRIDGE_SLOTS,
+    build_officer_pools_from_registry_for_tags, CrewCandidate, OfficerPools, BRIDGE_SLOTS,
 };
 use crate::optimizer::enforce_candidate_legality_with_registry;
 use crate::optimizer::monte_carlo::scenario::{
-    build_shared_scenario_data_from_registry, DefenderOpponent, PlayerDefenderOfficerCrewOverride,
-    PvpScenarioParams, SharedScenarioData,
+    build_shared_scenario_data_from_registry_with_context, DefenderOpponent,
+    PlayerDefenderOfficerCrewOverride, PvpScenarioParams, ScenarioEngagementOverride,
+    SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, evaluate_candidates_crn_with_trial_scores, SimulationResult,
@@ -161,6 +162,7 @@ pub struct CounterfactualScenario<'a> {
     pub player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
     pub pvp: Option<PvpScenarioParams>,
     pub enemy_type: EnemyType,
+    pub engagement_override: ScenarioEngagementOverride,
     pub num_sims: usize,
     pub seed: u64,
     pub unavailable_officers: Vec<String>,
@@ -576,7 +578,19 @@ pub fn analyze_crew_counterfactual_with_registry(
     scenario: &CounterfactualScenario<'_>,
     baseline_crew: &CrewCandidate,
 ) -> CounterfactualOutcome {
-    let shared: SharedScenarioData = build_shared_scenario_data_from_registry(
+    let effective_override = if scenario.engagement_override.enemy_type.is_some()
+        || scenario.engagement_override.wave_defense
+    {
+        scenario.engagement_override
+    } else if scenario.enemy_type != EnemyType::RedMovingSpace {
+        ScenarioEngagementOverride {
+            enemy_type: Some(scenario.enemy_type),
+            wave_defense: false,
+        }
+    } else {
+        ScenarioEngagementOverride::default()
+    };
+    let shared: SharedScenarioData = build_shared_scenario_data_from_registry_with_context(
         registry,
         scenario.ship,
         scenario.hostile,
@@ -587,12 +601,13 @@ pub fn analyze_crew_counterfactual_with_registry(
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
+        effective_override,
     );
     let fidelity_eval = CrewFidelityEvaluator::from_registry(registry);
-    let pools = build_officer_pools_from_registry(
+    let pools = build_officer_pools_from_registry_for_tags(
         registry,
         scenario.below_decks_pool_mode,
-        Some(scenario.enemy_type),
+        Some(&shared.engagement_enemy_types.0),
         scenario.profile_id,
         scenario.below_decks_slots,
         None,
@@ -1197,6 +1212,7 @@ mod tests {
             player_defender_officer_crew: None,
             pvp: None,
             enemy_type: EnemyType::RedMovingSpace,
+            engagement_override: ScenarioEngagementOverride::default(),
             num_sims: 120,
             seed: 42,
             unavailable_officers: vec!["Cadet Uhura".into(), "Badgey".into()],

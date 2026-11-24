@@ -98,6 +98,7 @@ pub struct ReplaySeedCrew {
 #[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
 pub struct ReplaySeedRequest {
     pub ship: String,
+    #[serde(default)]
     pub hostile: String,
     pub ship_tier: Option<u32>,
     pub ship_level: Option<u32>,
@@ -110,8 +111,31 @@ pub struct ReplaySeedRequest {
     pub crew: ReplaySeedCrew,
     #[serde(default)]
     pub support_buffs: Option<Vec<String>>,
+    /// PvP: defender alliance support buff ids (see `data/support_buffs.json`).
+    #[serde(default)]
+    pub defender_support_buffs: Option<Vec<String>>,
+    /// PvP: alliance debuffs applied to the attacker (see `data/support_buffs.json`).
+    #[serde(default)]
+    pub defender_alliance_debuffs: Option<Vec<String>>,
     #[serde(default)]
     pub defender_opponent: DefenderOpponent,
+    /// Optional LCARS crew for the defending side.
+    #[serde(default)]
+    pub defender_crew: Option<DefenderOfficerCrewDto>,
+    /// PvP: defender player ship (mutually exclusive with `hostile`). Requires `defender_profile_id`.
+    #[serde(default)]
+    pub defender_ship: Option<String>,
+    pub defender_ship_tier: Option<u32>,
+    pub defender_ship_level: Option<u32>,
+    #[serde(default)]
+    pub defender_profile_id: Option<String>,
+    /// Optional explicit engagement type override (snake_case [`crate::combat::EnemyType`];
+    /// `"auto"` or unset uses catalog inference).
+    #[serde(default)]
+    pub enemy_type: Option<String>,
+    /// When `true`, enables additive Wave Defense context alongside the resolved target type.
+    #[serde(default)]
+    pub wave_defense: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
@@ -239,11 +263,16 @@ pub struct OptimizeRequest {
     pub defender_ship_level: Option<u32>,
     #[serde(default)]
     pub defender_profile_id: Option<String>,
-    /// Combat scenario for officer eligibility filtering (e.g. `"mission_bosses"`, `"solo_armadas"`,
-    /// `"pvp_space"`). Snake_case [`crate::combat::EnemyType`]. When unset/invalid, the server infers
-    /// it from the target (PvP, group armada, outpost) defaulting to `"red_moving_space"`.
+    /// Combat engagement override (e.g. `"mission_bosses"`, `"solo_armadas"`, `"pvp_space"`).
+    /// Snake_case [`crate::combat::EnemyType`]; `"auto"` or unset infers from the target
+    /// (PvP, Q's Trial, outpost, group armada, mission boss, else `"red_moving_space"`).
+    /// Unrecognized non-empty strings fail validation with HTTP 400.
     #[serde(default)]
     pub enemy_type: Option<String>,
+    /// When `true`, enables additive Wave Defense context (`waves`) alongside the resolved target
+    /// type so Wave Defense abilities fire without disabling base hostile/armada abilities.
+    #[serde(default)]
+    pub wave_defense: Option<bool>,
 }
 
 /// Resolve the effective [`BelowDecksPoolMode`] for a request. Unrecognized or unset
@@ -398,6 +427,15 @@ pub fn validate_request(
                 messages: invalid_names,
             });
         }
+    }
+
+    if let Err(msg) =
+        crate::data::officer_eligibility::parse_optional_enemy_type(request.enemy_type.as_deref())
+    {
+        errors.push(ValidationIssue {
+            field: "enemy_type",
+            messages: vec![msg],
+        });
     }
 
     if request.ship.trim().is_empty() {
@@ -975,11 +1013,15 @@ pub struct OptimizeEstimateQuery {
     /// `linear_eval`, `random_stratified`) so multi-fidelity lanes report accurate trial costs.
     /// Absent or unrecognized values preserve the legacy exhaustive upper-bound estimate.
     pub strategy: Option<OptimizerStrategy>,
+    /// Optional explicit engagement type override (snake_case `EnemyType`; `"auto"` or unset infers).
+    pub enemy_type: Option<String>,
+    /// When `true`, enables additive Wave Defense engagement context (`waves`).
+    pub wave_defense: bool,
 }
 
 /// Parses the query string for optimize estimate: ship, hostile, sims, optional max_candidates,
 /// optional `below_decks_pool_mode`, ship_tier, ship_level, below_decks_slots, chain_kills_target,
-/// strategy.
+/// strategy, enemy_type, wave_defense.
 pub fn parse_optimize_estimate_query(
     query: &str,
 ) -> Result<OptimizeEstimateQuery, OptimizePayloadError> {
@@ -993,6 +1035,8 @@ pub fn parse_optimize_estimate_query(
     let mut below_decks_slots: Option<u32> = None;
     let mut chain_kills_target: Option<u32> = None;
     let mut strategy: Option<OptimizerStrategy> = None;
+    let mut enemy_type: Option<String> = None;
+    let mut wave_defense = false;
     for pair in query.split('&') {
         if let Some((key, value)) = pair.split_once('=') {
             let key = key.trim();
@@ -1032,9 +1076,29 @@ pub fn parse_optimize_estimate_query(
                         strategy = Some(parse_strategy(Some(&owned)));
                     }
                 }
+                "enemy_type" => {
+                    if !value.is_empty() {
+                        enemy_type = Some(value.to_string());
+                    }
+                }
+                "wave_defense" => {
+                    wave_defense = value.eq_ignore_ascii_case("true") || value == "1";
+                }
                 _ => {}
             }
         }
+    }
+    if let Err(msg) =
+        crate::data::officer_eligibility::parse_optional_enemy_type(enemy_type.as_deref())
+    {
+        return Err(OptimizePayloadError::Validation(ValidationErrorResponse {
+            status: "error",
+            message: "Validation failed",
+            errors: vec![ValidationIssue {
+                field: "enemy_type",
+                messages: vec![msg],
+            }],
+        }));
     }
     let mode = below_decks_pool_mode
         .as_deref()
@@ -1051,6 +1115,8 @@ pub fn parse_optimize_estimate_query(
         below_decks_slots,
         chain_kills_target,
         strategy,
+        enemy_type,
+        wave_defense,
     })
 }
 

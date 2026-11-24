@@ -15,7 +15,9 @@ use crate::data::heuristics::{
 use crate::data::import::load_imported_roster_ids_unlocked_only;
 use crate::data::loader::ship_tiers_levels_and_crew_slots;
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
-use crate::data::officer_eligibility::is_eligible_for_optimization;
+use crate::data::officer_eligibility::{
+    is_eligible_for_optimization_for_tags, EligibilityScenario,
+};
 use crate::data::profile_index::{profile_path, resolve_profile_id_for_api, ROSTER_IMPORTED};
 use crate::data::ship::CrewSlotUnlock;
 use crate::lcars::LcarsOfficer;
@@ -249,6 +251,27 @@ pub fn build_officer_pools_from_registry(
     below_decks_slots: usize,
     constraints: Option<&CrewSearchConstraints>,
 ) -> Option<OfficerPools> {
+    build_officer_pools_from_registry_for_tags(
+        registry,
+        below_decks_pool_mode,
+        enemy_type.as_ref().map(std::slice::from_ref),
+        profile_id,
+        below_decks_slots,
+        constraints,
+    )
+}
+
+/// Multi-tag variant of [`build_officer_pools_from_registry`]: an officer is eligible if its seat
+/// ability works for ANY active tag in `enemy_types` (e.g. `[GroupArmadas, Waves]` retains both
+/// armada and wave-defense officers). `None` skips scenario eligibility filtering.
+pub fn build_officer_pools_from_registry_for_tags(
+    registry: &DataRegistry,
+    below_decks_pool_mode: BelowDecksPoolMode,
+    enemy_types: Option<&[EnemyType]>,
+    profile_id: Option<&str>,
+    below_decks_slots: usize,
+    constraints: Option<&CrewSearchConstraints>,
+) -> Option<OfficerPools> {
     let officers: Vec<Officer> = registry
         .officers()
         .iter()
@@ -271,18 +294,17 @@ pub fn build_officer_pools_from_registry(
         return None;
     }
 
-    // Scenario eligibility: prune officers whose seat ability does-not-work vs `enemy_type`, across
-    // all seats. `None` skips filtering. Coverage gaps fall back to the legacy heuristic inside
-    // `is_eligible_for_optimization`. Pruning here (not just post-generation) shrinks the search
-    // space and prevents small candidate batches from being emptied by the post-filter.
+    // Scenario eligibility: prune officers whose seat ability does-not-work across every active
+    // tag in `enemy_types`. `None` skips filtering. Coverage gaps fall back to the legacy
+    // heuristic inside `is_eligible_for_optimization_for_tags`.
     let eligibility_matrix = registry.eligibility_matrix().map(|m| m.as_ref());
-    let pvp_mode = matches!(
-        enemy_type,
-        Some(EnemyType::PvpSpace | EnemyType::PvpStation)
-    );
+    let pvp_mode = enemy_types.is_some_and(|tags| {
+        tags.iter()
+            .any(|e| matches!(e, EnemyType::PvpSpace | EnemyType::PvpStation))
+    });
     let scenario_eligible = |officer: &Officer, slot: &str| -> bool {
-        enemy_type.is_none_or(|enemy| {
-            is_eligible_for_optimization(officer, slot, enemy, eligibility_matrix, pvp_mode)
+        enemy_types.is_none_or(|tags| {
+            is_eligible_for_optimization_for_tags(officer, slot, tags, eligibility_matrix, pvp_mode)
         })
     };
 
@@ -822,6 +844,9 @@ pub struct CandidateStrategy {
     /// Resolved combat scenario for all-seats eligibility pool pruning. Defaults to
     /// [`EnemyType::RedMovingSpace`] (generic hostiles).
     pub enemy_type: EnemyType,
+    /// Optional full engagement tag set (e.g. `[RedMovingSpace, Waves]` for Wave Defense).
+    /// When `None`, falls back to `[enemy_type]`.
+    pub engagement_enemy_types: Option<Vec<EnemyType>>,
     /// Number of below-decks slots per generated crew (2–5).
     pub below_decks_slots: usize,
     /// When set, officer pools are narrowed before enumeration (exclude, seat eligibility).
@@ -846,6 +871,7 @@ impl Default for CandidateStrategy {
             below_decks_pool_mode: BelowDecksPoolMode::default(),
             pvp_mode: false,
             enemy_type: EnemyType::RedMovingSpace,
+            engagement_enemy_types: None,
             below_decks_slots: DEFAULT_BELOW_DECKS_SLOTS,
             constraints: None,
             roster_profile_id: None,
@@ -861,7 +887,7 @@ struct OfficerPoolCacheKey {
     /// Encoded `BelowDecksPoolMode::as_api_str` so the key remains hashable.
     below_decks_pool_mode: &'static str,
     pvp_mode: bool,
-    enemy_type: EnemyType,
+    engagement_enemy_types: Vec<EnemyType>,
     below_decks_slots: usize,
     roster_profile_id: String,
     constraints_fingerprint: u64,
@@ -951,10 +977,18 @@ impl CrewGenerator {
         registry: Option<&DataRegistry>,
         profile_id: Option<&str>,
     ) -> Option<OfficerPools> {
+        let mut effective_tags = self
+            .strategy
+            .engagement_enemy_types
+            .clone()
+            .filter(|tags| !tags.is_empty())
+            .unwrap_or_else(|| vec![self.strategy.enemy_type]);
+        effective_tags.sort_by_key(|t| crate::combat::enemy_type_to_key(*t));
+        effective_tags.dedup();
         let cache_key = OfficerPoolCacheKey {
             below_decks_pool_mode: self.strategy.below_decks_pool_mode.as_api_str(),
             pvp_mode: self.strategy.pvp_mode,
-            enemy_type: self.strategy.enemy_type,
+            engagement_enemy_types: effective_tags.clone(),
             below_decks_slots: self.strategy.below_decks_slots,
             roster_profile_id: self.strategy.roster_profile_id.clone().unwrap_or_default(),
             constraints_fingerprint: constraints_fingerprint(self.strategy.constraints.as_ref()),
@@ -971,10 +1005,10 @@ impl CrewGenerator {
 
         // Slow path: build pools outside the lock (avoids holding lock across disk I/O).
         let result = if from_registry {
-            build_officer_pools_from_registry(
+            build_officer_pools_from_registry_for_tags(
                 registry?,
                 self.strategy.below_decks_pool_mode,
-                Some(self.strategy.enemy_type),
+                Some(&effective_tags),
                 profile_id,
                 self.strategy.below_decks_slots,
                 self.strategy.constraints.as_ref(),
@@ -1272,13 +1306,32 @@ pub fn search_space_reduction_report(
     mode: BelowDecksPoolMode,
     below_decks_slots: usize,
 ) -> SearchSpaceReport {
+    search_space_reduction_report_for_tags(registry, &[enemy], mode, below_decks_slots)
+}
+
+/// Multi-tag variant of [`search_space_reduction_report`] for additive modes (e.g. `[GroupArmadas, Waves]`).
+pub fn search_space_reduction_report_for_tags(
+    registry: &DataRegistry,
+    enemies: &[EnemyType],
+    mode: BelowDecksPoolMode,
+    below_decks_slots: usize,
+) -> SearchSpaceReport {
+    let fallback = [EnemyType::RedMovingSpace];
+    let tags = if enemies.is_empty() {
+        &fallback[..]
+    } else {
+        enemies
+    };
+    let primary = tags[0];
     let officers: Vec<&Officer> = registry
         .officers()
         .iter()
         .filter(|o| !o.name.trim().is_empty())
         .collect();
 
-    let pvp_mode = matches!(enemy, EnemyType::PvpSpace | EnemyType::PvpStation);
+    let pvp_mode = tags
+        .iter()
+        .any(|e| matches!(e, EnemyType::PvpSpace | EnemyType::PvpStation));
     let matrix = registry.eligibility_matrix().map(|m| m.as_ref());
 
     let raw_captain = |o: &Officer| officer_has_captain_ability(o);
@@ -1321,9 +1374,10 @@ pub fn search_space_reduction_report(
     );
 
     // Stage 3 — + functional eligibility (matrix verdict + below-decks heuristic fallback). This is
-    // the production pool. `is_eligible_for_optimization` also re-applies the ban check.
-    let eligible =
-        |o: &Officer, slot: &str| is_eligible_for_optimization(o, slot, enemy, matrix, pvp_mode);
+    // the production pool. `is_eligible_for_optimization_for_tags` also re-applies the ban check.
+    let eligible = |o: &Officer, slot: &str| {
+        is_eligible_for_optimization_for_tags(o, slot, tags, matrix, pvp_mode)
+    };
     let eligibility = stage(
         "+ eligibility (matrix + heuristic)",
         &|o| raw_captain(o) && eligible(o, "captain"),
@@ -1332,7 +1386,7 @@ pub fn search_space_reduction_report(
     );
 
     SearchSpaceReport {
-        enemy_type: crate::data::officer_eligibility::EligibilityScenario::from_enemy_type(enemy)
+        enemy_type: EligibilityScenario::from_enemy_type(primary)
             .as_key()
             .to_string(),
         below_decks_slots,

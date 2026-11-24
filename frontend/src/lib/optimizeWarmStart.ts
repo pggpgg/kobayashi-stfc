@@ -5,7 +5,7 @@
 
 import type { CrewRecommendation, WarmStartCrewBody } from "./api";
 
-const SCHEMA = 6;
+const SCHEMA = 7;
 
 export type BelowDecksPoolMode = "strict" | "scored" | "relaxed";
 const PREFIX = "kobayashi_opt_warm_v";
@@ -42,6 +42,10 @@ export function buildOptimizeWarmStartKey(args: {
   fastDiscovery?: boolean;
   /** Learned pair prior toggle affects analytical prefilter ranking. */
   enableLearnedPairPrior?: boolean;
+  /** Explicit combat engagement override (e.g. `"solo_armadas"`, `"waves"`; empty = Auto). */
+  enemyType?: string;
+  /** Additive Wave Defense toggle (distinct from base hostile type). */
+  waveDefense?: boolean;
 }): string {
   const mc =
     args.maxCandidates === null || args.maxCandidates <= 0
@@ -64,6 +68,8 @@ export function buildOptimizeWarmStartKey(args: {
       : "";
   const fd = args.fastDiscovery === true ? "1" : "0";
   const lpp = args.enableLearnedPairPrior === false ? "0" : "1";
+  const et = (args.enemyType ?? "").trim();
+  const wd = args.waveDefense === true ? "1" : "0";
   return stableKey([
     String(SCHEMA),
     args.profileId ?? "",
@@ -80,6 +86,8 @@ export function buildOptimizeWarmStartKey(args: {
     bdSlots,
     fd,
     lpp,
+    et,
+    wd,
   ]);
 }
 

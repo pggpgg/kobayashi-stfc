@@ -21,7 +21,7 @@ use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::BelowDecksPoolMode;
 use crate::optimizer::constraints::{normalize_officer_name, CrewSearchConstraints};
 use crate::optimizer::crew_generator::{
-    build_officer_pools_from_registry, CrewCandidate, BRIDGE_SLOTS,
+    build_officer_pools_from_registry_for_tags, CrewCandidate, BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::crew_candidate_stable_hash;
 
@@ -173,13 +173,22 @@ pub fn sample_stratified_random_crews(
     registry: &DataRegistry,
     params: &StratifiedSampleParams<'_>,
 ) -> Vec<CrewCandidate> {
+    sample_stratified_random_crews_for_tags(registry, params, &[params.enemy_type])
+}
+
+/// Multi-tag variant of [`sample_stratified_random_crews`] for additive modes (e.g. `[GroupArmadas, Waves]`).
+pub fn sample_stratified_random_crews_for_tags(
+    registry: &DataRegistry,
+    params: &StratifiedSampleParams<'_>,
+    enemy_types: &[EnemyType],
+) -> Vec<CrewCandidate> {
     if params.count == 0 {
         return Vec::new();
     }
-    let Some(pools) = build_officer_pools_from_registry(
+    let Some(pools) = build_officer_pools_from_registry_for_tags(
         registry,
         params.below_decks_pool_mode,
-        Some(params.enemy_type),
+        Some(enemy_types),
         params.profile_id,
         params.below_decks_slots,
         params.constraints,
@@ -308,10 +317,10 @@ mod tests {
     fn sampled_crews_are_legal_and_distinct() {
         let registry = registry();
         let p = params(32, 42);
-        let pools = build_officer_pools_from_registry(
+        let pools = build_officer_pools_from_registry_for_tags(
             &registry,
             p.below_decks_pool_mode,
-            Some(p.enemy_type),
+            Some(&[p.enemy_type]),
             p.profile_id,
             p.below_decks_slots,
             p.constraints,

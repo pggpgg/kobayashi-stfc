@@ -8,7 +8,7 @@ use crate::data::data_registry::DataRegistry;
 use crate::optimizer::analytical::expected_damage;
 use crate::optimizer::crew_generator::{CrewCandidate, CrewGenerator};
 use crate::optimizer::monte_carlo::scenario::{
-    build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
+    build_shared_scenario_data_from_registry_with_context, scenario_to_combat_input_from_shared,
 };
 use crate::optimizer::ranking::{rank_results_by_expected_damage, RankedCrewResult};
 use crate::optimizer::{
@@ -41,7 +41,7 @@ where
     );
     let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
     let candidates = apply_crew_constraints(candidates, scenario);
-    let shared = build_shared_scenario_data_from_registry(
+    let shared = build_shared_scenario_data_from_registry_with_context(
         registry,
         scenario.ship,
         scenario.hostile,
@@ -52,6 +52,7 @@ where
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
+        scenario.effective_engagement_override(),
     );
 
     let total = candidates.len();
@@ -174,6 +175,9 @@ mod tests {
             player_defender_officer_crew: None,
             pvp: None,
             enemy_type: crate::combat::EnemyType::RedMovingSpace,
+            engagement_override: crate::optimizer::monte_carlo::ScenarioEngagementOverride::default(
+            ),
+            engagement_enemy_types: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,

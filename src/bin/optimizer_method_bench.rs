@@ -551,6 +551,9 @@ fn scenario<'a>(
         player_defender_officer_crew: None,
         pvp: None,
         enemy_type: case.enemy_type,
+        engagement_override: kobayashi::optimizer::monte_carlo::ScenarioEngagementOverride::default(
+        ),
+        engagement_enemy_types: None,
         warm_start,
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,

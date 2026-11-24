@@ -658,6 +658,7 @@ export default memo(function SimResults({
           below_decks_slots: compareWorkspace.belowDecksSlots,
           proc_sample_trials: 60,
           support_buffs: compareWorkspace.supportBuffs,
+          enemy_type: compareWorkspace.enemyType,
         },
         compareWorkspace.profileId,
       );

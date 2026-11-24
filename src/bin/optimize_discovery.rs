@@ -264,6 +264,9 @@ fn main() {
         player_defender_officer_crew: None,
         pvp: None,
         enemy_type: kobayashi::combat::EnemyType::RedMovingSpace,
+        engagement_override: kobayashi::optimizer::monte_carlo::ScenarioEngagementOverride::default(
+        ),
+        engagement_enemy_types: None,
         warm_start,
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,

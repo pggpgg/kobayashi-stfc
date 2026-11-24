@@ -538,6 +538,18 @@ paths:
           schema:
             type: string
             enum: [exhaustive, genetic, tiered, linear_eval, random_stratified, portfolio]
+        - name: enemy_type
+          in: query
+          description: >
+            Optional combat engagement override (snake_case `EnemyType`, e.g. `solo_armadas`,
+            `waves`). `"auto"` or omitted infers from the target.
+          schema:
+            type: string
+        - name: wave_defense
+          in: query
+          description: When `true`, enables additive Wave Defense context (`waves`).
+          schema:
+            type: boolean
         - $ref: "#/components/parameters/QueryProfile"
         - $ref: "#/components/parameters/HeaderProfileId"
       responses:
@@ -1895,8 +1907,14 @@ components:
         enemy_type:
           type: string
           description: >-
-            Combat scenario for officer eligibility (snake_case EnemyType, e.g.
-            `mission_bosses`, `solo_armadas`, `pvp_space`). Inferred from the target when unset.
+            Combat scenario override (snake_case EnemyType, e.g. `mission_bosses`,
+            `solo_armadas`, `pvp_space`). `"auto"` or unset infers from the target; unknown
+            non-empty values return HTTP 400.
+        wave_defense:
+          type: boolean
+          description: >-
+            When true, enables additive Wave Defense context (`waves`) alongside the resolved
+            target engagement type.
 
     SimulateStats:
       type: object
@@ -2018,6 +2036,12 @@ components:
           description: |
             Per-stat δ overrides. Keys are stat names (snake_case). A value of `0.0`
             skips that stat from the report. Missing keys use the default δ catalog.
+        enemy_type:
+          type: string
+          description: Optional engagement type override (snake_case `EnemyType`; `"auto"` or unset infers).
+        wave_defense:
+          type: boolean
+          description: When true, enables additive Wave Defense context (`waves`).
 
     SensitivityRow:
       type: object
@@ -2127,6 +2151,12 @@ components:
           description: |
             Per-stat δ overrides. Keys are stat names (snake_case). A value of `0.0`
             drops the stat from the trajectory entirely. Missing keys use defaults.
+        enemy_type:
+          type: string
+          description: Optional engagement type override (snake_case `EnemyType`; `"auto"` or unset infers).
+        wave_defense:
+          type: boolean
+          description: When true, enables additive Wave Defense context (`waves`).
 
     MorrisSensitivityRow:
       type: object
@@ -2280,6 +2310,12 @@ components:
             When true, also compute second-order Sobol indices `S_ij` for every distinct
             pair of stats. Off by default — the extra cost is `N × k(k−1)/2` engine calls
             on top of the `N × (k + 2)` baseline (≈ 8.6× at default `N = 512`, `k = 18`).
+        enemy_type:
+          type: string
+          description: Optional engagement type override (snake_case `EnemyType`; `"auto"` or unset infers).
+        wave_defense:
+          type: boolean
+          description: When true, enables additive Wave Defense context (`waves`).
 
     SobolSensitivityPairRow:
       type: object
@@ -2461,6 +2497,10 @@ components:
           type: integer
         defender_profile_id:
           type: string
+        enemy_type:
+          type: string
+        wave_defense:
+          type: boolean
 
     CompareCrewsResponse:
       type: object
@@ -2548,6 +2588,8 @@ components:
           type: string
         enemy_type:
           type: string
+        wave_defense:
+          type: boolean
 
     CounterfactualMetrics:
       type: object
@@ -2810,6 +2852,8 @@ components:
             type: string
         enemy_type:
           type: string
+        wave_defense:
+          type: boolean
 
     FleetAllocateRequest:
       type: object
@@ -3470,6 +3514,14 @@ components:
           type:
             - array
             - "null"
+        wave_defense:
+          default: null
+          description: >-
+            When `true`, enables additive Wave Defense context (`waves`) alongside the resolved target
+            type so Wave Defense abilities fire without disabling base hostile/armada abilities.
+          type:
+            - boolean
+            - "null"
       required:
         - hostile
         - ship
@@ -3491,7 +3543,7 @@ components:
 
     ReplaySeedRequest:
       type: object
-      required: [ship, hostile, sim_index, crew]
+      required: [ship, sim_index, crew]
       properties:
         ship:
           type: string
@@ -3515,8 +3567,30 @@ components:
           type: array
           items:
             type: string
+        defender_support_buffs:
+          type: array
+          items:
+            type: string
+        defender_alliance_debuffs:
+          type: array
+          items:
+            type: string
         defender_opponent:
           type: string
+        defender_crew:
+          $ref: "#/components/schemas/DefenderOfficerCrewDto"
+        defender_ship:
+          type: string
+        defender_ship_tier:
+          type: integer
+        defender_ship_level:
+          type: integer
+        defender_profile_id:
+          type: string
+        enemy_type:
+          type: string
+        wave_defense:
+          type: boolean
 
     SyncIngressBatch:
       type: array
@@ -3559,7 +3633,9 @@ components:
             - integer
             - "null"
         secondary:
-          description: "`min_hull_damage` (default), `max_expected_loot` (farming drops + cargo), or legacy `max_loot_per_hull_proxy`."
+          description: >-
+            `min_hull_damage` (default), `max_expected_loot` (farming drops + cargo), or legacy
+            `max_loot_per_hull_proxy`.
           type:
             - string
             - "null"

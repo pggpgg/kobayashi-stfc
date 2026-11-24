@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "combined_sha256": "95ca5b1b7e361bef2ef7fc52ca175e85d7af48349a249be918fbfc12f0371c67",
+  "combined_sha256": "5d086e3b5e75d3566e0b6ffc2c5dc494a8ade91382577f78287c4f84d8b7ff9e",
   "upstream": {
     "details_forbidden_tech": {
       "path": "data/upstream/data-stfc-space/forbidden_tech",
@@ -147,7 +147,7 @@
     "officers_canonical": {
       "path": "data/officers/officers.canonical.json",
       "present": true,
-      "sha256": "ecc1bea9ecb93b4ff371ac4ff95c900398ea98fc97936ab12d09570e6678014f",
+      "sha256": "5e579230958c0be9eb3644c664779ad2737774b54827090fd752eb546b0e74a5",
       "records": 297,
       "data_version": "m86-04763f1697f5+vger-ilia"
     },

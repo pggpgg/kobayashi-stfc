@@ -29,6 +29,7 @@ use crate::data::import::{
     load_imported_roster_ids_unlocked_only, roster_import_fallback_warning_message,
 };
 
+use crate::data::officer_eligibility::{parse_optional_enemy_type, resolve_combat_context};
 use crate::data::profile::{validate_player_profile_payload, PlayerProfile};
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index, profile_path,
@@ -42,11 +43,12 @@ use crate::optimizer::crew_generator::{
 };
 use crate::optimizer::enforce_candidate_legality_with_registry;
 use crate::optimizer::monte_carlo::scenario::{
-    DefenderOpponent, PlayerDefenderOfficerCrewOverride,
+    DefenderOpponent, PlayerDefenderOfficerCrewOverride, ScenarioEngagementOverride,
 };
 use crate::optimizer::monte_carlo::{
-    compare_crews_monte_carlo_with_registry, replay_optimize_iteration_with_registry,
-    run_monte_carlo_with_registry, SimulationResult,
+    compare_crews_monte_carlo_with_registry_and_context,
+    replay_optimize_iteration_with_registry_and_context, run_monte_carlo_with_registry_and_context,
+    SimulationResult,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -436,10 +438,14 @@ pub struct SimulateRequest {
     /// Opponent profile id when `defender_ship` is set (not the attacker profile header).
     #[serde(default)]
     pub defender_profile_id: Option<String>,
-    /// Combat scenario for officer eligibility interpretability (e.g. `"mission_bosses"`). Snake_case
-    /// [`crate::combat::EnemyType`]. When unset/invalid, inferred from the target.
+    /// Combat scenario override (e.g. `"mission_bosses"`, `"solo_armadas"`). Snake_case
+    /// [`crate::combat::EnemyType`]; `"auto"` or unset infers from the target. Unknown
+    /// non-empty strings are rejected with HTTP 400.
     #[serde(default)]
     pub enemy_type: Option<String>,
+    /// When `true`, enables additive Wave Defense context (`waves`) alongside the resolved target.
+    #[serde(default)]
+    pub wave_defense: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
@@ -589,7 +595,7 @@ fn hostile_modeling_warnings(registry: &DataRegistry, hostile: &str, is_npc: boo
         .collect()
 }
 
-/// Resolve one crew member's eligibility for `slot` against `enemy`; when the verdict is
+/// Resolve one crew member's eligibility for `slot` against `enemies`; when the verdict is
 /// `conditional` or `does_not_work`, append a structured note and a human-readable warning.
 /// A `works` verdict (or an officer/ability absent from the matrix) produces nothing.
 fn collect_eligibility_note(
@@ -597,7 +603,7 @@ fn collect_eligibility_note(
     officer_index: &std::collections::HashMap<String, crate::data::officer::Officer>,
     display_name: &str,
     slot: &str,
-    enemy: crate::combat::EnemyType,
+    enemies: &[crate::combat::EnemyType],
     notes: &mut Vec<EligibilityNote>,
     warnings: &mut Vec<String>,
 ) {
@@ -609,9 +615,9 @@ fn collect_eligibility_note(
     let Some(officer) = officer_index.get(&key) else {
         return;
     };
-    let Some((verdict, reason)) =
-        crate::data::officer_eligibility::seat_best_verdict(matrix, officer, slot, enemy)
-    else {
+    let Some((verdict, reason)) = crate::data::officer_eligibility::seat_best_verdict_for_tags(
+        matrix, officer, slot, enemies,
+    ) else {
         return;
     };
     if verdict == EligibilityVerdict::Works {
@@ -627,7 +633,11 @@ fn collect_eligibility_note(
         "officer" => "bridge",
         _ => "below decks",
     };
-    let scenario_label = enemy_type_label(enemy);
+    let scenario_label = enemies
+        .iter()
+        .map(|e| enemy_type_label(*e))
+        .collect::<Vec<_>>()
+        .join(" + ");
     let message = match (verdict, reason.as_deref()) {
         (EligibilityVerdict::DoesNotWork, Some(r)) => {
             format!("{display_name} ({seat_label}) may not work vs {scenario_label}: {r}")
@@ -698,6 +708,10 @@ pub struct CompareCrewsRequest {
     pub defender_ship_level: Option<u32>,
     #[serde(default)]
     pub defender_profile_id: Option<String>,
+    #[serde(default)]
+    pub enemy_type: Option<String>,
+    #[serde(default)]
+    pub wave_defense: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
@@ -769,6 +783,8 @@ pub struct CrewCounterfactualRequest {
     pub defender_profile_id: Option<String>,
     #[serde(default)]
     pub enemy_type: Option<String>,
+    #[serde(default)]
+    pub wave_defense: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
@@ -828,6 +844,8 @@ pub struct FleetSlotRequestDto {
     pub excluded_officers: Option<Vec<String>>,
     #[serde(default)]
     pub enemy_type: Option<String>,
+    #[serde(default)]
+    pub wave_defense: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
@@ -1089,6 +1107,9 @@ pub fn simulate_payload(
             scenario_resolution::issues_to_message(errors),
         ));
     }
+    let explicit_enemy_type =
+        parse_optional_enemy_type(req.enemy_type.as_deref()).map_err(SimulateError::Validation)?;
+    let wave_defense = req.wave_defense.unwrap_or(false);
     let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
         req.defender_ship.as_deref(),
         req.defender_ship_tier,
@@ -1101,10 +1122,31 @@ pub fn simulate_payload(
         .unwrap_or_else(|| req.hostile.trim().to_string());
     // Captured before `pvp` is moved into the simulation; reused by eligibility interpretability.
     let is_pvp = pvp.is_some();
-    let defender_opponent = if pvp.is_some() {
+    let defender_opponent = if is_pvp {
         DefenderOpponent::Player
     } else {
         req.defender_opponent
+    };
+    let hostile_for_scenario = if is_pvp {
+        None
+    } else {
+        registry.resolve_hostile(scenario_hostile.trim())
+    };
+    let resolved_ctx = resolve_combat_context(
+        explicit_enemy_type,
+        wave_defense,
+        is_pvp || defender_opponent.defender_is_player_ship(),
+        hostile_for_scenario.as_ref(),
+        None,
+    );
+    let effective_defender_opponent = if resolved_ctx.opponent_kind.is_player() {
+        DefenderOpponent::Player
+    } else {
+        DefenderOpponent::Hostile
+    };
+    let engagement_override = ScenarioEngagementOverride {
+        enemy_type: explicit_enemy_type,
+        wave_defense,
     };
     let num_sims = req.num_sims.unwrap_or(5000).clamp(1, 100_000);
     let seed = req.seed.unwrap_or(0);
@@ -1188,7 +1230,7 @@ pub fn simulate_payload(
         req.defender_support_buffs.as_deref(),
         req.defender_alliance_debuffs.as_deref(),
     );
-    let (results, using_placeholder_combatants) = run_monte_carlo_with_registry(
+    let (results, using_placeholder_combatants) = run_monte_carlo_with_registry_and_context(
         registry,
         &req.ship,
         scenario_hostile.as_str(),
@@ -1200,9 +1242,10 @@ pub fn simulate_payload(
         profile_id,
         support_buff_request,
         chain_grind,
-        defender_opponent,
+        effective_defender_opponent,
         player_defender_officer_crew,
         pvp,
+        engagement_override,
     );
     let result = results.into_iter().next().unwrap_or(SimulationResult {
         unsupported_crew_health_effects: None,
@@ -1238,23 +1281,17 @@ pub fn simulate_payload(
     let ci = binomial_95_ci(wins, num_sims);
 
     let mut warnings = Vec::new();
+    let is_npc_hostile = resolved_ctx.opponent_kind.is_npc_hostile();
     warnings.extend(hostile_modeling_warnings(
         registry,
         &scenario_hostile,
-        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
+        is_npc_hostile,
     ));
-    if let Some(warning) = sphere_obliterator_warning(
-        &req.ship,
-        &scenario_hostile,
-        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
-    ) {
+    if let Some(warning) = sphere_obliterator_warning(&req.ship, &scenario_hostile, is_npc_hostile)
+    {
         warnings.push(warning);
     }
-    if let Some(warning) = sphere_omicron_warning(
-        &req.ship,
-        &scenario_hostile,
-        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
-    ) {
+    if let Some(warning) = sphere_omicron_warning(&req.ship, &scenario_hostile, is_npc_hostile) {
         warnings.push(warning);
     }
     if let Some(message) =
@@ -1308,7 +1345,7 @@ pub fn simulate_payload(
             let inactive = support_buffs::inactive_defender_static_support_buff_labels(
                 cat,
                 sb,
-                req.defender_opponent.defender_is_player_ship(),
+                resolved_ctx.opponent_kind.is_player(),
             );
             if !inactive.is_empty() {
                 warnings.push(format!(
@@ -1356,23 +1393,14 @@ pub fn simulate_payload(
     // ability does-not-work / is-conditional vs the resolved scenario, per the eligibility matrix.
     let mut eligibility_notes: Vec<EligibilityNote> = Vec::new();
     if let Some(matrix) = registry.eligibility_matrix() {
-        let hostile_for_scenario = if is_pvp {
-            None
-        } else {
-            registry.resolve_hostile(scenario_hostile.trim())
-        };
-        let enemy = crate::data::officer_eligibility::resolve_enemy_type(
-            req.enemy_type.as_deref(),
-            is_pvp,
-            hostile_for_scenario.as_ref(),
-        );
+        let enemies = resolved_ctx.engagement_enemy_types.0.as_slice();
         let officer_index = registry.officer_index();
         collect_eligibility_note(
             matrix,
             officer_index,
             &result.candidate.captain,
             "captain",
-            enemy,
+            enemies,
             &mut eligibility_notes,
             &mut warnings,
         );
@@ -1382,7 +1410,7 @@ pub fn simulate_payload(
                 officer_index,
                 name,
                 "officer",
-                enemy,
+                enemies,
                 &mut eligibility_notes,
                 &mut warnings,
             );
@@ -1393,7 +1421,7 @@ pub fn simulate_payload(
                 officer_index,
                 name,
                 "below_decks",
-                enemy,
+                enemies,
                 &mut eligibility_notes,
                 &mut warnings,
             );
@@ -1450,6 +1478,9 @@ pub fn compare_crews_payload(
             scenario_resolution::issues_to_message(errors),
         ));
     }
+    let explicit_enemy_type = parse_optional_enemy_type(req.enemy_type.as_deref())
+        .map_err(CompareCrewsError::Validation)?;
+    let wave_defense = req.wave_defense.unwrap_or(false);
     let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
         req.defender_ship.as_deref(),
         req.defender_ship_tier,
@@ -1460,10 +1491,32 @@ pub fn compare_crews_payload(
         .as_ref()
         .map(|p| p.defender_ship.clone())
         .unwrap_or_else(|| req.hostile.trim().to_string());
-    let defender_opponent = if pvp.is_some() {
+    let is_pvp = pvp.is_some();
+    let defender_opponent = if is_pvp {
         DefenderOpponent::Player
     } else {
         req.defender_opponent
+    };
+    let hostile_for_scenario = if is_pvp {
+        None
+    } else {
+        registry.resolve_hostile(scenario_hostile.trim())
+    };
+    let resolved_ctx = resolve_combat_context(
+        explicit_enemy_type,
+        wave_defense,
+        is_pvp || defender_opponent.defender_is_player_ship(),
+        hostile_for_scenario.as_ref(),
+        None,
+    );
+    let effective_defender_opponent = if resolved_ctx.opponent_kind.is_player() {
+        DefenderOpponent::Player
+    } else {
+        DefenderOpponent::Hostile
+    };
+    let engagement_override = ScenarioEngagementOverride {
+        enemy_type: explicit_enemy_type,
+        wave_defense,
     };
     let crew_count = req.crews.len();
     if !(2..=5).contains(&crew_count) {
@@ -1525,7 +1578,7 @@ pub fn compare_crews_payload(
         req.defender_support_buffs.as_deref(),
         req.defender_alliance_debuffs.as_deref(),
     );
-    let outcome = compare_crews_monte_carlo_with_registry(
+    let outcome = compare_crews_monte_carlo_with_registry_and_context(
         registry,
         &req.ship,
         scenario_hostile.as_str(),
@@ -1537,28 +1590,23 @@ pub fn compare_crews_payload(
         profile_id,
         proc_sample,
         support_buff_request,
-        defender_opponent,
+        effective_defender_opponent,
         pvp,
+        engagement_override,
     );
 
     let mut warnings = Vec::new();
+    let is_npc_hostile = resolved_ctx.opponent_kind.is_npc_hostile();
     warnings.extend(hostile_modeling_warnings(
         registry,
         &scenario_hostile,
-        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
+        is_npc_hostile,
     ));
-    if let Some(warning) = sphere_obliterator_warning(
-        &req.ship,
-        &scenario_hostile,
-        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
-    ) {
+    if let Some(warning) = sphere_obliterator_warning(&req.ship, &scenario_hostile, is_npc_hostile)
+    {
         warnings.push(warning);
     }
-    if let Some(warning) = sphere_omicron_warning(
-        &req.ship,
-        &scenario_hostile,
-        req.defender_opponent.defender_is_npc_hostile() && req.defender_ship.is_none(),
-    ) {
+    if let Some(warning) = sphere_omicron_warning(&req.ship, &scenario_hostile, is_npc_hostile) {
         warnings.push(warning);
     }
     if let Some(message) =
@@ -1607,7 +1655,7 @@ pub fn compare_crews_payload(
             let inactive = support_buffs::inactive_defender_static_support_buff_labels(
                 cat,
                 sb,
-                req.defender_opponent.defender_is_player_ship(),
+                resolved_ctx.opponent_kind.is_player(),
             );
             if !inactive.is_empty() {
                 warnings.push(format!(
@@ -1675,6 +1723,9 @@ pub fn crew_counterfactual_payload(
         ));
     }
 
+    let explicit_enemy_type = parse_optional_enemy_type(req.enemy_type.as_deref())
+        .map_err(CrewCounterfactualError::Validation)?;
+    let wave_defense = req.wave_defense.unwrap_or(false);
     let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
         req.defender_ship.as_deref(),
         req.defender_ship_tier,
@@ -1685,10 +1736,32 @@ pub fn crew_counterfactual_payload(
         .as_ref()
         .map(|p| p.defender_ship.clone())
         .unwrap_or_else(|| req.hostile.trim().to_string());
-    let defender_opponent = if pvp.is_some() {
+    let is_pvp = pvp.is_some();
+    let defender_opponent = if is_pvp {
         DefenderOpponent::Player
     } else {
         req.defender_opponent
+    };
+    let hostile_for_scenario = if is_pvp {
+        None
+    } else {
+        registry.resolve_hostile(scenario_hostile.trim())
+    };
+    let resolved_ctx = resolve_combat_context(
+        explicit_enemy_type,
+        wave_defense,
+        is_pvp || defender_opponent.defender_is_player_ship(),
+        hostile_for_scenario.as_ref(),
+        None,
+    );
+    let effective_defender_opponent = if resolved_ctx.opponent_kind.is_player() {
+        DefenderOpponent::Player
+    } else {
+        DefenderOpponent::Hostile
+    };
+    let engagement_override = ScenarioEngagementOverride {
+        enemy_type: explicit_enemy_type,
+        wave_defense,
     };
 
     if let Some(n) = req.below_decks_slots {
@@ -1726,7 +1799,7 @@ pub fn crew_counterfactual_payload(
     )
     .map_err(CrewCounterfactualError::Validation)?;
 
-    let player_defender_officer_crew = if defender_opponent.defender_is_player_ship() {
+    let player_defender_officer_crew = if effective_defender_opponent.defender_is_player_ship() {
         let def_bd = pvp
             .as_ref()
             .map(|p| {
@@ -1756,7 +1829,7 @@ pub fn crew_counterfactual_payload(
 
     let chain_grind = match req.chain_grind.as_ref() {
         Some(cg) => {
-            if cg.enabled && (pvp.is_some() || defender_opponent.defender_is_player_ship()) {
+            if cg.enabled && effective_defender_opponent.defender_is_player_ship() {
                 return Err(CrewCounterfactualError::Validation(
                     "chain_grind is only supported for PvE hostile matchups".to_string(),
                 ));
@@ -1765,17 +1838,6 @@ pub fn crew_counterfactual_payload(
         }
         None => None,
     };
-
-    let hostile_rec = if pvp.is_some() {
-        None
-    } else {
-        registry.resolve_hostile(&scenario_hostile)
-    };
-    let enemy_type = crate::data::officer_eligibility::resolve_enemy_type(
-        req.enemy_type.as_deref(),
-        pvp.is_some() || defender_opponent.defender_is_player_ship(),
-        hostile_rec.as_ref(),
-    );
 
     let unavailable_officers = crate::optimizer::counterfactual::canonical_unavailable_names(
         req.unavailable_officers.as_deref().unwrap_or(&[]),
@@ -1801,10 +1863,11 @@ pub fn crew_counterfactual_payload(
         profile_id,
         support_buffs,
         chain_grind,
-        defender_opponent,
+        defender_opponent: effective_defender_opponent,
         player_defender_officer_crew,
         pvp,
-        enemy_type,
+        enemy_type: resolved_ctx.primary_enemy_type,
+        engagement_override,
         num_sims,
         seed,
         unavailable_officers,
@@ -1922,12 +1985,21 @@ pub fn fleet_allocate_payload(
             })?,
             None => None,
         };
+        let explicit_enemy_type = parse_optional_enemy_type(s.enemy_type.as_deref())
+            .map_err(|msg| FleetAllocateError::Validation(format!("slot {}: {msg}", idx + 1)))?;
+        let wave_defense = s.wave_defense.unwrap_or(false);
         let hostile_rec = registry.resolve_hostile(&s.hostile);
-        let enemy_type = crate::data::officer_eligibility::resolve_enemy_type(
-            s.enemy_type.as_deref(),
+        let resolved_ctx = resolve_combat_context(
+            explicit_enemy_type,
+            wave_defense,
             false,
             hostile_rec.as_ref(),
+            None,
         );
+        let engagement_override = ScenarioEngagementOverride {
+            enemy_type: explicit_enemy_type,
+            wave_defense,
+        };
         let label = s
             .label
             .as_deref()
@@ -1954,7 +2026,8 @@ pub fn fleet_allocate_payload(
                 s.excluded_officers.as_deref().unwrap_or(&[]),
                 &officers,
             ),
-            enemy_type,
+            enemy_type: resolved_ctx.primary_enemy_type,
+            engagement_override,
         });
     }
 
@@ -2050,6 +2123,7 @@ pub fn sensitivity_payload(
             "hostile must not be empty".into(),
         ));
     }
+    parse_optional_enemy_type(req.enemy_type.as_deref()).map_err(SensitivityError::Validation)?;
     crate::server::sensitivity_jobs::validate_sensitivity_scenario_ids(
         registry,
         &req.ship,
@@ -2124,6 +2198,7 @@ pub fn sensitivity_morris_payload(
             "hostile must not be empty".into(),
         ));
     }
+    parse_optional_enemy_type(req.enemy_type.as_deref()).map_err(SensitivityError::Validation)?;
     crate::server::sensitivity_jobs::validate_sensitivity_scenario_ids(
         registry,
         &req.ship,
@@ -2208,6 +2283,7 @@ pub fn sensitivity_sobol_payload(
             "hostile must not be empty".into(),
         ));
     }
+    parse_optional_enemy_type(req.enemy_type.as_deref()).map_err(SensitivityError::Validation)?;
     crate::server::sensitivity_jobs::validate_sensitivity_scenario_ids(
         registry,
         &req.ship,
@@ -2297,25 +2373,72 @@ pub fn replay_optimize_seed_payload(
             "ship must not be empty".to_string(),
         ));
     }
-    if req.hostile.trim().is_empty() {
-        return Err(ReplaySeedError::Validation(
-            "hostile must not be empty".to_string(),
-        ));
-    }
-    // Replay is PvE-only, so the target is always the hostile.
+    let explicit_enemy_type = parse_optional_enemy_type(req.enemy_type.as_deref())
+        .map_err(ReplaySeedError::Validation)?;
+    let wave_defense = req.wave_defense.unwrap_or(false);
+    let target = match validate_scenario_target(&ScenarioTargetFields {
+        hostile: Some(req.hostile.clone()),
+        defender_ship: req.defender_ship.clone(),
+        defender_ship_tier: req.defender_ship_tier,
+        defender_ship_level: req.defender_ship_level,
+        defender_profile_id: req.defender_profile_id.clone(),
+    }) {
+        Ok(target) => target,
+        Err(errors) => {
+            return Err(ReplaySeedError::Validation(
+                scenario_resolution::issues_to_message(errors),
+            ))
+        }
+    };
     if let Err(errors) = scenario_resolution::validate_scenario_resolves(
         registry,
         &req.ship,
         req.ship_tier,
         req.ship_level,
-        &pvp::ScenarioTarget::Pve {
-            hostile: req.hostile.clone(),
-        },
+        &target,
     ) {
         return Err(ReplaySeedError::Validation(
             scenario_resolution::issues_to_message(errors),
         ));
     }
+
+    let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
+        req.defender_ship.as_deref(),
+        req.defender_ship_tier,
+        req.defender_ship_level,
+        req.defender_profile_id.as_deref(),
+    );
+    let scenario_hostile: String = pvp
+        .as_ref()
+        .map(|p| p.defender_ship.clone())
+        .unwrap_or_else(|| req.hostile.trim().to_string());
+    let is_pvp = pvp.is_some();
+    let defender_opponent = if is_pvp {
+        DefenderOpponent::Player
+    } else {
+        req.defender_opponent
+    };
+    let hostile_for_scenario = if is_pvp {
+        None
+    } else {
+        registry.resolve_hostile(scenario_hostile.trim())
+    };
+    let resolved_ctx = resolve_combat_context(
+        explicit_enemy_type,
+        wave_defense,
+        is_pvp || defender_opponent.defender_is_player_ship(),
+        hostile_for_scenario.as_ref(),
+        None,
+    );
+    let effective_defender_opponent = if resolved_ctx.opponent_kind.is_player() {
+        DefenderOpponent::Player
+    } else {
+        DefenderOpponent::Hostile
+    };
+    let engagement_override = ScenarioEngagementOverride {
+        enemy_type: explicit_enemy_type,
+        wave_defense,
+    };
 
     let officers: Vec<(String, String)> = registry
         .officers()
@@ -2345,16 +2468,40 @@ pub fn replay_optimize_seed_payload(
         ));
     };
 
+    let defender_below_decks_slots = pvp
+        .as_ref()
+        .map(|defender| {
+            resolve_below_decks_slots_for_ship(
+                &defender.defender_ship,
+                req.defender_ship_tier,
+                req.defender_ship_level,
+                None,
+            )
+        })
+        .unwrap_or(below_decks_slots);
+    let player_defender_officer_crew = resolve_player_defender_officer_crew_for_optimize(
+        registry,
+        profile_id,
+        defender_below_decks_slots,
+        req.defender_crew.as_ref(),
+    )
+    .map_err(ReplaySeedError::Validation)?;
+    let support_buff_request = support_buffs::SupportBuffScenarioRequest::from_api_options(
+        req.support_buffs.as_deref(),
+        req.defender_support_buffs.as_deref(),
+        req.defender_alliance_debuffs.as_deref(),
+    );
+
     let scenario_seed = req.seed.unwrap_or(0);
     let max_trace = req
         .max_trace_events
         .unwrap_or(DEFAULT_REPLAY_MAX_TRACE_EVENTS)
         .clamp(1, MAX_REPLAY_MAX_TRACE_EVENTS_CAP) as usize;
 
-    let replay = replay_optimize_iteration_with_registry(
+    let replay = replay_optimize_iteration_with_registry_and_context(
         registry,
         req.ship.trim(),
-        req.hostile.trim(),
+        scenario_hostile.as_str(),
         req.ship_tier,
         req.ship_level,
         &candidate,
@@ -2362,28 +2509,25 @@ pub fn replay_optimize_seed_payload(
         req.sim_index,
         profile_id,
         max_trace,
-        req.support_buffs.as_deref(),
-        req.defender_opponent,
+        support_buff_request,
+        effective_defender_opponent,
+        player_defender_officer_crew,
+        pvp,
+        engagement_override,
     );
 
     let mut warnings = Vec::new();
+    let is_npc_hostile = resolved_ctx.opponent_kind.is_npc_hostile();
     warnings.extend(hostile_modeling_warnings(
         registry,
-        &req.hostile,
-        req.defender_opponent.defender_is_npc_hostile(),
+        &scenario_hostile,
+        is_npc_hostile,
     ));
-    if let Some(warning) = sphere_obliterator_warning(
-        &req.ship,
-        &req.hostile,
-        req.defender_opponent.defender_is_npc_hostile(),
-    ) {
+    if let Some(warning) = sphere_obliterator_warning(&req.ship, &scenario_hostile, is_npc_hostile)
+    {
         warnings.push(warning);
     }
-    if let Some(warning) = sphere_omicron_warning(
-        &req.ship,
-        &req.hostile,
-        req.defender_opponent.defender_is_npc_hostile(),
-    ) {
+    if let Some(warning) = sphere_omicron_warning(&req.ship, &scenario_hostile, is_npc_hostile) {
         warnings.push(warning);
     }
     if let Some(message) =
@@ -2425,7 +2569,7 @@ pub fn replay_optimize_seed_payload(
             let inactive = support_buffs::inactive_defender_static_support_buff_labels(
                 cat,
                 sb,
-                req.defender_opponent.defender_is_player_ship(),
+                resolved_ctx.opponent_kind.is_player(),
             );
             if !inactive.is_empty() {
                 warnings.push(format!(
@@ -2440,7 +2584,7 @@ pub fn replay_optimize_seed_payload(
         "status": "ok",
         "scenario": {
             "ship": req.ship.trim(),
-            "hostile": req.hostile.trim(),
+            "hostile": scenario_hostile.as_str(),
             "ship_tier": req.ship_tier,
             "ship_level": req.ship_level,
             "scenario_seed": scenario_seed,
@@ -3315,6 +3459,8 @@ pub fn optimize_estimate_payload(
         below_decks_slots: bd_explicit,
         chain_kills_target,
         strategy,
+        enemy_type,
+        wave_defense,
     } = requests::parse_optimize_estimate_query(query)?;
     let sims = sims.clamp(1, MAX_SIMS);
     if ship.trim().is_empty() || hostile.trim().is_empty() {
@@ -3339,9 +3485,23 @@ pub fn optimize_estimate_payload(
             }],
         }));
     }
+    let explicit_enemy_type = parse_optional_enemy_type(enemy_type.as_deref())
+        .ok()
+        .flatten();
+    let hostile_rec = registry.resolve_hostile(hostile.trim());
+    let resolved_ctx = resolve_combat_context(
+        explicit_enemy_type,
+        wave_defense,
+        false,
+        hostile_rec.as_ref(),
+        None,
+    );
     let generator = CrewGenerator::with_strategy(CandidateStrategy {
         max_candidates: max_candidates.map(|cap| cap as usize),
         below_decks_pool_mode,
+        pvp_mode: resolved_ctx.opponent_kind.is_player(),
+        enemy_type: resolved_ctx.primary_enemy_type,
+        engagement_enemy_types: Some(resolved_ctx.engagement_enemy_types.0),
         below_decks_slots,
         ..CandidateStrategy::default()
     });

@@ -21,7 +21,7 @@ use std::sync::Arc;
 use crate::combat::condition::{fold_static_condition, FoldedCondition};
 use crate::combat::{
     AbilityClass, AbilityCondition, AbilityEffect, CombatContext, CrewSeat, EnemyType,
-    OpponentFactionTag, TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::BelowDecksPoolMode;
@@ -31,7 +31,7 @@ use crate::optimizer::constraints::{
     filter_candidates, normalize_officer_name, CrewSearchConstraints,
 };
 use crate::optimizer::crew_generator::{
-    build_officer_pools_from_registry, CrewCandidate, OfficerPools, BRIDGE_SLOTS,
+    build_officer_pools_from_registry_for_tags, CrewCandidate, OfficerPools, BRIDGE_SLOTS,
 };
 use crate::optimizer::monte_carlo::crew_candidate_stable_hash;
 use crate::optimizer::monte_carlo::scenario::SharedScenarioData;
@@ -88,11 +88,7 @@ struct RoleProfile {
 }
 
 fn static_context_from_shared(shared: &SharedScenarioData) -> CombatContext {
-    let defender_faction = shared
-        .hostile_rec
-        .as_ref()
-        .map(|h| h.opponent_faction_tag())
-        .unwrap_or(OpponentFactionTag::Unknown);
+    let defender_faction = shared.defender_faction_for_combat();
     let defender_hull_faction_id = shared
         .hostile_rec
         .as_ref()
@@ -670,10 +666,14 @@ pub(crate) fn propose_diversity_beam_crews_with_seats(
     if params.target_count == 0 {
         return (Vec::new(), RankedOfficerSeats::default());
     }
-    let Some(pools) = build_officer_pools_from_registry(
+    let mut tags = shared.engagement_enemy_types.0.clone();
+    if !tags.contains(&params.enemy_type) {
+        tags.push(params.enemy_type);
+    }
+    let Some(pools) = build_officer_pools_from_registry_for_tags(
         registry,
         params.below_decks_pool_mode,
-        Some(params.enemy_type),
+        Some(tags.as_slice()),
         params.profile_id,
         params.below_decks_slots,
         params.constraints,
