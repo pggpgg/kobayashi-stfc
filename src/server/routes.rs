@@ -1774,6 +1774,62 @@ mod optimize_estimate_admission_tests {
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         assert_eq!(state.cpu_jobs.available_permits(), 1);
     }
+
+    #[tokio::test]
+    async fn counterfactual_and_fleet_respect_saturated_cpu_admission() {
+        for response in [
+            super::handle_crew_counterfactual(
+                State(state_with_capacity(0)),
+                test_profile_headers(),
+                Query(HashMap::new()),
+                "{}".to_string(),
+            )
+            .await
+            .into_response(),
+            super::handle_fleet_allocate(
+                State(state_with_capacity(0)),
+                test_profile_headers(),
+                Query(HashMap::new()),
+                "{}".to_string(),
+            )
+            .await
+            .into_response(),
+        ] {
+            assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+            assert_eq!(response.headers()[header::RETRY_AFTER], "1");
+            let bytes = axum::body::to_bytes(response.into_body(), 4096)
+                .await
+                .unwrap();
+            let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+            assert_eq!(body["code"], "cpu_busy");
+        }
+    }
+
+    #[tokio::test]
+    async fn counterfactual_and_fleet_release_cpu_permit_on_validation_error() {
+        let state = state_with_capacity(1);
+        let cf_resp = super::handle_crew_counterfactual(
+            State(state.clone()),
+            test_profile_headers(),
+            Query(HashMap::new()),
+            "{}".to_string(),
+        )
+        .await
+        .into_response();
+        assert_eq!(cf_resp.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(state.cpu_jobs.available_permits(), 1);
+
+        let fleet_resp = super::handle_fleet_allocate(
+            State(state.clone()),
+            test_profile_headers(),
+            Query(HashMap::new()),
+            r#"{"slots":[]}"#.to_string(),
+        )
+        .await
+        .into_response();
+        assert_eq!(fleet_resp.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(state.cpu_jobs.available_permits(), 1);
+    }
 }
 
 #[cfg(test)]

@@ -42,6 +42,9 @@ struct AbilityCatalogEntry {
     /// NPC-hostile gate ("against hostiles", inert in PvP): see [`ShipAbility::condition_defender_is_npc_hostile`].
     #[serde(default)]
     condition_defender_is_npc_hostile: bool,
+    /// Player-ship gate ("versus players", inert in PvE): see [`ShipAbility::condition_defender_is_player_ship`].
+    #[serde(default)]
+    condition_defender_is_player_ship: bool,
     #[serde(default)]
     condition_opponent_hostile_tags: Option<Vec<String>>,
     #[serde(default)]
@@ -458,6 +461,7 @@ fn raw_to_extended(
                     .condition_opponent_ship_class_not
                     .clone(),
                 condition_defender_is_npc_hostile: entry.condition_defender_is_npc_hostile,
+                condition_defender_is_player_ship: entry.condition_defender_is_player_ship,
                 condition_opponent_hostile_tags: entry.condition_opponent_hostile_tags.clone(),
                 round_cap: entry.round_cap,
                 level_scaled_values,

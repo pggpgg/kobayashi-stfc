@@ -20,17 +20,23 @@ fn test_registry() -> &'static Arc<DataRegistry> {
     REGISTRY.get_or_init(|| DataRegistry::load().expect("data registry"))
 }
 
-async fn post_json(path: &str, body: Value) -> (StatusCode, Value) {
+async fn post_json_ex(
+    path: &str,
+    body: Value,
+    peer: SocketAddr,
+    extra_headers: &[(&str, &str)],
+) -> (StatusCode, Value) {
     let app = build_router(Arc::clone(test_registry()));
-    let mut req = Request::builder()
+    let mut builder = Request::builder()
         .method(Method::POST)
         .uri(path)
         .header("content-type", "application/json")
-        .header("x-profile-id", DEMO_PROFILE_ID)
-        .body(Body::from(body.to_string()))
-        .unwrap();
-    req.extensions_mut()
-        .insert(ConnectInfo(SocketAddr::from(([127, 0, 0, 1], 45123))));
+        .header("x-profile-id", DEMO_PROFILE_ID);
+    for (k, v) in extra_headers {
+        builder = builder.header(*k, *v);
+    }
+    let mut req = builder.body(Body::from(body.to_string())).unwrap();
+    req.extensions_mut().insert(ConnectInfo(peer));
 
     let resp = app.oneshot(req).await.unwrap();
     let status = resp.status();
@@ -41,6 +47,33 @@ async fn post_json(path: &str, body: Value) -> (StatusCode, Value) {
     (status, parsed)
 }
 
+async fn post_json(path: &str, body: Value) -> (StatusCode, Value) {
+    post_json_ex(path, body, SocketAddr::from(([127, 0, 0, 1], 45123)), &[]).await
+}
+
+struct EnvGuard {
+    key: &'static str,
+    previous: Option<std::ffi::OsString>,
+}
+
+impl EnvGuard {
+    fn set(key: &'static str, value: &str) -> Self {
+        let previous = std::env::var_os(key);
+        std::env::set_var(key, value);
+        Self { key, previous }
+    }
+}
+
+impl Drop for EnvGuard {
+    fn drop(&mut self) {
+        match &self.previous {
+            Some(prev) => std::env::set_var(self.key, prev),
+            None => std::env::remove_var(self.key),
+        }
+    }
+}
+
+#[serial_test::serial]
 #[tokio::test]
 async fn crew_counterfactual_endpoint_returns_ablations_and_legal_substitutes() {
     let payload = json!({
@@ -88,6 +121,7 @@ async fn crew_counterfactual_endpoint_returns_ablations_and_legal_substitutes() 
     }
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn crew_counterfactual_rejects_unknown_ship() {
     let payload = json!({
@@ -103,6 +137,7 @@ async fn crew_counterfactual_rejects_unknown_ship() {
     assert_eq!(status, StatusCode::BAD_REQUEST, "response: {body}");
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn fleet_allocate_endpoint_solves_disjoint_two_dock_fleet() {
     let payload = json!({
@@ -164,6 +199,7 @@ async fn fleet_allocate_endpoint_solves_disjoint_two_dock_fleet() {
     assert!(body["fleet_efficiency_pct"].as_f64().unwrap() > 0.0);
 }
 
+#[serial_test::serial]
 #[tokio::test]
 async fn fleet_allocate_rejects_fewer_than_two_slots() {
     let payload = json!({
@@ -175,5 +211,165 @@ async fn fleet_allocate_rejects_fewer_than_two_slots() {
         ]
     });
     let (status, body) = post_json("/api/fleet/allocate", payload).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST, "response: {body}");
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn crew_counterfactual_enforces_api_key_for_non_loopback() {
+    let _key = EnvGuard::set("KOBAYASHI_API_KEY", "track-g-secret");
+    let _trust = EnvGuard::set("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");
+    let lan: SocketAddr = "192.168.1.44:5555".parse().expect("lan addr");
+    let payload = json!({
+        "ship": "uss_saladin",
+        "hostile": "1140710508",
+        "below_decks_slots": 2,
+        "num_sims": 40,
+        "seed": 17,
+        "unavailable_officers": [],
+        "max_substitutes_per_slot": 2,
+        "max_substitute_crews": 2,
+        "crew": {
+            "captain": "Cadet Uhura",
+            "bridge": ["Badgey", "Nesmith"],
+            "below_deck": ["Odo", "Harry Kim"]
+        }
+    });
+
+    let (unauth_status, _) =
+        post_json_ex("/api/crew/counterfactual", payload.clone(), lan, &[]).await;
+    assert_eq!(unauth_status, StatusCode::UNAUTHORIZED);
+
+    let (wrong_status, _) = post_json_ex(
+        "/api/crew/counterfactual",
+        payload.clone(),
+        lan,
+        &[("authorization", "Bearer wrong-key")],
+    )
+    .await;
+    assert_eq!(wrong_status, StatusCode::UNAUTHORIZED);
+
+    let (ok_status, body) = post_json_ex(
+        "/api/crew/counterfactual",
+        payload,
+        lan,
+        &[("authorization", "Bearer track-g-secret")],
+    )
+    .await;
+    assert_eq!(ok_status, StatusCode::OK, "response: {body}");
+    assert_eq!(body["status"], "ok");
+    assert!(
+        !body["substitutes"].as_array().unwrap().is_empty(),
+        "with no unavailable officers, counterfactual should still return 1-slot alternatives"
+    );
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn fleet_allocate_enforces_api_key_for_non_loopback() {
+    let _key = EnvGuard::set("KOBAYASHI_API_KEY", "track-g-secret");
+    let _trust = EnvGuard::set("KOBAYASHI_API_KEY_TRUST_LOOPBACK", "false");
+    let lan: SocketAddr = "192.168.1.45:5555".parse().expect("lan addr");
+    let payload = json!({
+        "objective": "total_score",
+        "sims_per_crew": 40,
+        "candidates_per_slot": 20,
+        "seed": 23,
+        "slots": [
+            {
+                "label": "Dock 1",
+                "ship": "uss_saladin",
+                "hostile": "1140710508",
+                "below_decks_slots": 2
+            },
+            {
+                "label": "Dock 2",
+                "ship": "enterprise_nx_01",
+                "hostile": "1120713907",
+                "below_decks_slots": 2
+            }
+        ]
+    });
+
+    let (unauth_status, _) = post_json_ex("/api/fleet/allocate", payload.clone(), lan, &[]).await;
+    assert_eq!(unauth_status, StatusCode::UNAUTHORIZED);
+
+    let (ok_status, body) = post_json_ex(
+        "/api/fleet/allocate",
+        payload,
+        lan,
+        &[("x-api-key", "track-g-secret")],
+    )
+    .await;
+    assert_eq!(ok_status, StatusCode::OK, "response: {body}");
+    assert_eq!(body["conflict_free"], true);
+}
+
+#[serial_test::serial]
+#[tokio::test]
+async fn track_b_endpoints_validate_edge_cases() {
+    // 1. Counterfactual rejects chain_grind on PvP matchups.
+    let (status, body) = post_json(
+        "/api/crew/counterfactual",
+        json!({
+            "ship": "uss_saladin",
+            "defender_ship": "enterprise_nx_01",
+            "chain_grind": { "enabled": true, "kills_target": 3 },
+            "crew": {
+                "captain": "Cadet Uhura",
+                "bridge": ["Badgey", "Nesmith"],
+                "below_deck": ["Odo", "Harry Kim"]
+            }
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST, "response: {body}");
+
+    // 2. Counterfactual supports PvE chain_grind mode cleanly.
+    let (status, body) = post_json(
+        "/api/crew/counterfactual",
+        json!({
+            "ship": "uss_saladin",
+            "hostile": "1140710508",
+            "below_decks_slots": 2,
+            "num_sims": 40,
+            "seed": 19,
+            "max_substitutes_per_slot": 2,
+            "max_substitute_crews": 2,
+            "chain_grind": { "enabled": true, "kills_target": 3, "secondary": "min_hull_damage" },
+            "crew": {
+                "captain": "Cadet Uhura",
+                "bridge": ["Badgey", "Nesmith"],
+                "below_deck": ["Odo", "Harry Kim"]
+            }
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "response: {body}");
+    assert_eq!(body["status"], "ok");
+
+    // 3. Fleet allocator rejects > 5 docks and non-positive priority_weight.
+    let six_slots: Vec<Value> = (0..6)
+        .map(|i| {
+            json!({
+                "label": format!("Dock {}", i + 1),
+                "ship": "uss_saladin",
+                "hostile": "1140710508"
+            })
+        })
+        .collect();
+    let (status, body) = post_json("/api/fleet/allocate", json!({ "slots": six_slots })).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST, "response: {body}");
+
+    let (status, body) = post_json(
+        "/api/fleet/allocate",
+        json!({
+            "slots": [
+                { "ship": "uss_saladin", "hostile": "1140710508", "priority_weight": -1.0 },
+                { "ship": "enterprise_nx_01", "hostile": "1120713907", "priority_weight": 1.0 }
+            ]
+        }),
+    )
+    .await;
     assert_eq!(status, StatusCode::BAD_REQUEST, "response: {body}");
 }

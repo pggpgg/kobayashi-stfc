@@ -1956,6 +1956,7 @@
       "condition_defender_hull_breach": false,
       "condition_opponent_faction": null,
       "condition_opponent_ship_class": null,
+      "condition_defender_is_player_ship": true,
       "condition_opponent_hostile_tags": null,
       "round_cap": null,
       "level_scaled_values": [
@@ -2047,6 +2048,8 @@
       "condition_defender_hull_breach": false,
       "condition_opponent_faction": null,
       "condition_opponent_ship_class": null,
+      "condition_opponent_ship_class_not": "armada",
+      "condition_defender_is_npc_hostile": true,
       "condition_opponent_hostile_tags": null,
       "round_cap": null,
       "level_scaled_values": [
