@@ -1831,6 +1831,21 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             };
             MappedEffect::StatModify("apex_barrier".into(), op_str.into(), val)
         }
+        "CriticalMitigation" | "CritMitigationRating" => {
+            MappedEffect::StatModify("crit_mitigation_rating".into(), "add".into(), val)
+        }
+        "InfusionCapacitors" => {
+            MappedEffect::StatModify("infusion_capacitors".into(), "add".into(), val)
+        }
+        "InfusionCapacitorSpike" => {
+            MappedEffect::StatModify("infusion_capacitor_spike".into(), "add".into(), val)
+        }
+        "PolaronMitigation" => {
+            MappedEffect::StatModify("polaron_mitigation".into(), "add".into(), val)
+        }
+        "PolaronMitigationMultiplier" => {
+            MappedEffect::StatModify("polaron_mitigation_multiplier".into(), "add".into(), val)
+        }
         "ShieldMitigation"
             if matches!(
                 a.trigger.as_deref(),
@@ -1923,8 +1938,12 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         | "TechnologicalDistinctivenessLoot" // Jirali (bridge): cutting-beam loot.
         | "CuttingBeamCharge" // Jirali (captain): extra Borg Cube cutting-beam charge.
         | "RepairSpeedCascade" // Jirali (below): ship repair-speed cascade.
-        | "OutpostMedalsAndPlunderLoot" => {
-            // Genesis Lythe (below): outpost retaliation medals / plunder loot.
+        | "OutpostMedalsAndPlunderLoot"
+        // Update 96 batch (Ra'Ul Reaver / Planetfall): sigma raid proportions & Polaron Ion loot.
+        | "SigmaDilithiumRaidProportion" // Rose Harper (bridge): Ra'Ul Reaver sigma-dilithium raid proportion.
+        | "SigmaTritaniumRaidProportion" // Toryn (bridge): Ra'Ul Reaver sigma-tritanium raid proportion.
+        | "PolaronIonsLoot" => {
+            // Planetfall Uhura (below): Polaron Ions loot from Polaron-equipped FKR Hostiles.
             MappedEffect::Tag(format!("{}:non_combat", modifier.to_lowercase()))
         }
         _ => MappedEffect::Tag(format!("{}:unmapped", modifier.to_lowercase())),

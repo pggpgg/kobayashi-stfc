@@ -527,10 +527,11 @@ fn weapon_stats_from_component_data(
         .get("proc_multiplier")
         .and_then(json_f64)
         .filter(|v| v.is_finite() && *v > 0.0);
-    // Upstream weapon_type: 1 = Energy, 2 = Kinetic. Anything else stays Unknown (lenient match).
+    // Upstream weapon_type: 1 = Energy, 2 = Kinetic, 6 = Polaron. Anything else stays Unknown (lenient match).
     let weapon_type = match obj.get("weapon_type").and_then(json_f64).map(|v| v as i64) {
         Some(1) => WeaponType::Energy,
         Some(2) => WeaponType::Kinetic,
+        Some(6) => WeaponType::Polaron,
         _ => WeaponType::Unknown,
     };
 

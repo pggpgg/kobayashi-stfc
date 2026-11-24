@@ -531,6 +531,50 @@ pub enum AbilityEffect {
         duration_rounds: u32,
         requires: DefenderOnHitGate,
     },
+    /// Flat Critical Mitigation rating (e.g. Toryn below-decks "Andorian Resolve").
+    /// Active ratings sum additively before the diminishing-returns curve
+    /// `reduction = R / (R + 50_000)` (every 500 Critical Mitigation increases critical damage
+    /// you can take by 1%). Bypassed by [`crate::combat::WeaponType::Polaron`].
+    CritMitigationRating(f64),
+    /// Flat Infusion Capacitors (Planetfall officers, `[PRO] Infusion Modulator`).
+    /// Effective capacitors = `flat * (1 + spike)`. Every 1,000 capacitors converts 1% of
+    /// pre-mitigation standard weapon damage into Infusion Damage ∄, bypassing Standard Mitigation
+    /// and Shields (direct to hull after Apex Barrier).
+    InfusionCapacitors(f64),
+    /// Additive percentage increase to total Infusion Capacitors from other sources
+    /// (e.g. Planetfall Scotty bridge "Infusion Capacitor Amplification": 1.0 = +100% spike).
+    InfusionCapacitorSpike(f64),
+    /// Flat Polaron Mitigation ∃ (e.g. Planetfall Ortegas bridge "Exploit Target").
+    /// Effective Polaron Mitigation = `flat * (1 + multiplier)`. Every 500 Polaron Mitigation
+    /// increases the damage you can take from Polaron Weapons ∃ by 1% (`1 / (1 + PM / 50_000)`).
+    PolaronMitigation(f64),
+    /// Additive percentage boost to existing Polaron Mitigation ∃ from other sources
+    /// (e.g. Planetfall Kirk captain "Defensive Focus": 0.2 = +20%).
+    PolaronMitigationMultiplier(f64),
+    /// Hostile **Inertial Diverters** (`Experimental Defense Array` / `Polaron Arsenal`):
+    /// negates all Standard Damage dealt to this hostile while still allowing both Infusion Damage ∄
+    /// and Isolytic Damage to damage it. Resolved out of band at combat setup.
+    HostileNegatesStandardDamage,
+    /// Hostile **Shield Sweep** (`Experimental Defense Array` / `Polaron Arsenal`):
+    /// restores 100% of base shield HP whenever the defender's shield is depleted.
+    /// Resolved out of band in the outbound damage loop.
+    HostileShieldRestoreOnDeplete,
+    /// Hostile **Polaron Weaponry** conditional damage modifiers on Polaron (`weapon_type == 6`)
+    /// counter-fire:
+    /// - `same_faction_bonus` (*Known Weakness*, +0.25): applies when attacked by a ship of the
+    ///   hostile's own faction (Fed vs Fed, Klg vs Klg, Rom vs Rom).
+    /// - `non_counter_bonus` (*On Lookout*, +0.50): applies when not attacked by its combat
+    ///   triangle counter (`Battleship -> Explorer`, `Explorer -> Interceptor`, `Interceptor -> Battleship`).
+    HostilePolaronDamageBonus {
+        same_faction_bonus: f64,
+        non_counter_bonus: f64,
+    },
+    /// Hostile **Thorn in My Side** (`Experimental Defense Array`): instantly destroys any player
+    /// ship with a forbidden officer on board (Yuki, or Yuki/Tal). Resolved out of band at setup.
+    HostileLethalIfAttackerOfficer {
+        forbid_yuki: bool,
+        forbid_tal: bool,
+    },
 }
 
 /// Which counter-fire channel a [`AbilityEffect::DefenderOnHitStack`] feeds.
@@ -783,8 +827,14 @@ impl WeaponTypeScope {
     pub fn matches(self, weapon_type: crate::combat::WeaponType) -> bool {
         match self {
             Self::All => true,
-            Self::KineticOnly => weapon_type != crate::combat::WeaponType::Energy,
-            Self::EnergyOnly => weapon_type != crate::combat::WeaponType::Kinetic,
+            Self::KineticOnly => matches!(
+                weapon_type,
+                crate::combat::WeaponType::Kinetic | crate::combat::WeaponType::Unknown
+            ),
+            Self::EnergyOnly => matches!(
+                weapon_type,
+                crate::combat::WeaponType::Energy | crate::combat::WeaponType::Unknown
+            ),
         }
     }
 
@@ -897,6 +947,9 @@ pub fn apply_duplicate_officer_policy(crew: &CrewConfiguration) -> CrewConfigura
 
 /// LCARS officer id for Tal (`officers.lcars.yaml`); keep in sync with officer data.
 pub const TAL_OFFICER_LCARS_ID: &str = "tal-c3e4eb";
+
+/// LCARS officer id for Yuki (`officers.canonical.json`); keep in sync with officer data.
+pub const YUKI_OFFICER_LCARS_ID: &str = "yuki-1ab97a";
 
 /// True if Tal is assigned in a Captain or Bridge seat (canonical gate for `SelfOfficerTalNotOnBridge`).
 pub fn attacker_crew_tal_assigned_captain_or_bridge(crew: &CrewConfiguration) -> bool {
@@ -1660,6 +1713,11 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         AbilityEffect::IsolyticCascadeDamageBonus(v) => *v = scale(*v),
         AbilityEffect::ApexShredBonus(v) => *v = scale(*v),
         AbilityEffect::ApexBarrierBonus(v) => *v = scale(*v),
+        AbilityEffect::CritMitigationRating(v) => *v = scale(*v),
+        AbilityEffect::InfusionCapacitors(v) => *v = scale(*v),
+        AbilityEffect::InfusionCapacitorSpike(v) => *v = scale(*v),
+        AbilityEffect::PolaronMitigation(v) => *v = scale(*v),
+        AbilityEffect::PolaronMitigationMultiplier(v) => *v = scale(*v),
         AbilityEffect::ShieldRegen(v) => *v = scale(*v),
         AbilityEffect::ShieldRegenMaxFraction(f) => *f = cap_one(*f),
         AbilityEffect::HullRegen(v) => *v = scale(*v),
@@ -1747,6 +1805,10 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::IncomingShotDeflection(_)
         | AbilityEffect::RandomDefenderState { .. }
         | AbilityEffect::HostileIsolyticVulnerability
+        | AbilityEffect::HostileNegatesStandardDamage
+        | AbilityEffect::HostileShieldRestoreOnDeplete
+        | AbilityEffect::HostilePolaronDamageBonus { .. }
+        | AbilityEffect::HostileLethalIfAttackerOfficer { .. }
         | AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
         | AbilityEffect::HostileLethalCombatBegin { .. }
         | AbilityEffect::HostileSelfMorale { .. }
@@ -1806,6 +1868,11 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
             AbilityEffect::CritDamageMultiplier(c) => {
                 *c = (1.0 + (*c - 1.0) * multiplier).max(crate::combat::EPSILON)
             }
+            AbilityEffect::CritMitigationRating(v)
+            | AbilityEffect::InfusionCapacitors(v)
+            | AbilityEffect::InfusionCapacitorSpike(v)
+            | AbilityEffect::PolaronMitigation(v)
+            | AbilityEffect::PolaronMitigationMultiplier(v) => *v *= multiplier,
             _ => {}
         }
     }
@@ -1818,13 +1885,35 @@ pub struct ActiveHostileCritReduction {
     pub additive_points: f64,
     /// Multiplicative fraction applied on counter-fire crits (Crozier-style, `[0, 0.95]` sum).
     pub multiplicative_fraction: f64,
+    /// Sum of active flat Critical Mitigation rating seats (Toryn-style). Converted via
+    /// `R / (R + 50_000)` clamped to `[0, 0.95]` and applied after conventional CDR; bypassed by
+    /// Polaron weapons.
+    pub crit_mitigation_rating: f64,
+}
+
+impl ActiveHostileCritReduction {
+    /// Diminishing-returns true critical damage mitigation from stacked flat Critical Mitigation
+    /// rating: every 500 rating increases critical damage you can take by 1%
+    /// (`reduction = R / (R + 50_000)`, clamped to `[0, 0.95]`).
+    #[inline]
+    pub fn crit_mitigation_reduction(self) -> f64 {
+        let r = self.crit_mitigation_rating.max(0.0);
+        if r <= 0.0 || !r.is_finite() {
+            0.0
+        } else {
+            (r / (r + 50_000.0)).clamp(0.0, 0.95)
+        }
+    }
 }
 
 /// Effective hostile crit damage reduction for `round_index` (1-based).
 ///
-/// Seats on **defender crew** (Xindi) contribute [`ActiveHostileCritReduction::additive_points`]
-/// on the player's outbound crit path. Seats on **attacker crew** (Crozier, forbidden tech)
-/// contribute [`ActiveHostileCritReduction::multiplicative_fraction`] on hostile counter-fire.
+/// Seats on **defender crew** (Xindi, PvP defender with Toryn) contribute
+/// [`ActiveHostileCritReduction::additive_points`] and/or
+/// [`ActiveHostileCritReduction::crit_mitigation_rating`] on the player's outbound crit path.
+/// Seats on **attacker crew** (Crozier, forbidden tech, Toryn) contribute
+/// [`ActiveHostileCritReduction::multiplicative_fraction`] and/or
+/// [`ActiveHostileCritReduction::crit_mitigation_rating`] on hostile/PvP counter-fire.
 pub fn hostile_crit_damage_reduction_active_at_round(
     crew: &CrewConfiguration,
     ctx: &CombatContext,
@@ -1832,7 +1921,22 @@ pub fn hostile_crit_damage_reduction_active_at_round(
 ) -> ActiveHostileCritReduction {
     let mut additive_points = 0.0_f64;
     let mut multiplicative_fraction = 0.0_f64;
+    let mut crit_mitigation_rating = 0.0_f64;
     for s in &crew.seats {
+        if let AbilityEffect::CritMitigationRating(rating) = s.ability.effect {
+            if !rating.is_finite() || rating <= 0.0 {
+                continue;
+            }
+            if s.ability
+                .condition
+                .as_ref()
+                .is_some_and(|c| !c.evaluate(ctx))
+            {
+                continue;
+            }
+            crit_mitigation_rating += rating;
+            continue;
+        }
         if let AbilityEffect::HostileCritDamageReduction {
             reduction: r,
             duration_rounds: d,
@@ -1874,6 +1978,7 @@ pub fn hostile_crit_damage_reduction_active_at_round(
     ActiveHostileCritReduction {
         additive_points,
         multiplicative_fraction: multiplicative_fraction.clamp(0.0, 0.95),
+        crit_mitigation_rating,
     }
 }
 
@@ -1975,6 +2080,102 @@ pub fn hostile_isolytic_vulnerability_active(crew: &CrewConfiguration) -> bool {
             AbilityEffect::HostileIsolyticVulnerability
         )
     })
+}
+
+/// True when the hostile defender crew carries **Inertial Diverters** (Standard Damage is negated,
+/// while Infusion Damage ∄ and Isolytic Damage still apply).
+pub fn hostile_negates_standard_damage_active(crew: &CrewConfiguration) -> bool {
+    crew.seats.iter().any(|s| {
+        matches!(
+            s.ability.effect,
+            AbilityEffect::HostileNegatesStandardDamage
+        )
+    })
+}
+
+/// True when the hostile defender crew carries **Shield Sweep** (restores 100% of base shield HP
+/// whenever the defender's shields are depleted).
+pub fn hostile_shield_restore_on_deplete_active(crew: &CrewConfiguration) -> bool {
+    crew.seats.iter().any(|s| {
+        matches!(
+            s.ability.effect,
+            AbilityEffect::HostileShieldRestoreOnDeplete
+        )
+    })
+}
+
+/// True when the hostile defender crew carries **Thorn in My Side** and a forbidden officer
+/// (Yuki, or Yuki/Tal) is assigned anywhere on the attacking ship (captain, bridge, or below-decks).
+pub fn hostile_lethal_attacker_officer_instant_loss(
+    defender_crew: &CrewConfiguration,
+    attacker_crew: &CrewConfiguration,
+    attacker_roster_officer_ids: &[String],
+) -> bool {
+    let has_officer = |id: &str| {
+        attacker_roster_officer_ids
+            .iter()
+            .any(|o| o.eq_ignore_ascii_case(id))
+            || attacker_crew.seats.iter().any(|s| {
+                s.officer_id
+                    .as_deref()
+                    .is_some_and(|o| o.eq_ignore_ascii_case(id))
+            })
+    };
+    for s in &defender_crew.seats {
+        if let AbilityEffect::HostileLethalIfAttackerOfficer {
+            forbid_yuki,
+            forbid_tal,
+        } = s.ability.effect
+        {
+            if (forbid_yuki && has_officer(YUKI_OFFICER_LCARS_ID))
+                || (forbid_tal && has_officer(TAL_OFFICER_LCARS_ID))
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Additive weapon-damage bonus fraction for a hostile's **Polaron Weapons ∃** from
+/// [`AbilityEffect::HostilePolaronDamageBonus`]:
+/// - *Known Weakness*: `+same_faction_bonus` when attacker hull design faction equals the
+///   hostile's faction (Federation/Klingon/Romulan).
+/// - *On Lookout*: `+non_counter_bonus` when attacker hull class does NOT counter the hostile's
+///   hull class (`Battleship -> Explorer`, `Explorer -> Interceptor`, `Interceptor -> Battleship`).
+pub fn hostile_polaron_damage_bonus_active(
+    defender_crew: &CrewConfiguration,
+    attacker_owner_faction: OpponentFactionTag,
+    defender_faction: OpponentFactionTag,
+    attacker_ship_type: ShipType,
+    defender_ship_type: ShipType,
+) -> f64 {
+    let same_faction = matches!(
+        defender_faction,
+        OpponentFactionTag::Federation | OpponentFactionTag::Klingon | OpponentFactionTag::Romulan
+    ) && attacker_owner_faction == defender_faction;
+    let is_counter_ship = matches!(
+        (attacker_ship_type, defender_ship_type),
+        (ShipType::Battleship, ShipType::Explorer)
+            | (ShipType::Explorer, ShipType::Interceptor)
+            | (ShipType::Interceptor, ShipType::Battleship)
+    );
+    let mut bonus = 0.0_f64;
+    for s in &defender_crew.seats {
+        if let AbilityEffect::HostilePolaronDamageBonus {
+            same_faction_bonus,
+            non_counter_bonus,
+        } = s.ability.effect
+        {
+            if same_faction && same_faction_bonus.is_finite() {
+                bonus += same_faction_bonus.max(0.0);
+            }
+            if !is_counter_ship && non_counter_bonus.is_finite() {
+                bonus += non_counter_bonus.max(0.0);
+            }
+        }
+    }
+    bonus
 }
 
 /// True when a faction-gated lethal-strike seat forbids this attacker hull from engaging.

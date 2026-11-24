@@ -20565,6 +20565,521 @@
         "workbook": "manual_curation"
       },
       "source_officer_id": "984296764"
+    },
+    {
+      "id": "trelane-96b872",
+      "name": "Trelane",
+      "faction": "Unknown",
+      "group": "STRANGE NEW WORLDS",
+      "rarity": "epic",
+      "slot": "unknown",
+      "source_officer_id": "4190420561",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "abilities": [
+        {
+          "ability_id": "2519611513",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0
+          ],
+          "conditions": [
+            "SelfAtWaveDefenseChallenge"
+          ],
+          "description": "General of Gothos: increases your ship's base Shield Mitigation by X on combat start during Wave Defense (no synergy bonus).",
+          "modifier": "ShieldMitigation",
+          "operation": "Add",
+          "slot": "captain",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            0.1
+          ]
+        },
+        {
+          "ability_id": "2824241643",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfAtWaveDefenseChallenge",
+            "SelfOfficerTalNotOnBridge"
+          ],
+          "description": "Child's Play: increases your ship's base Apex Barrier by X during Wave Defense (disabled when Tal is on the bridge).",
+          "modifier": "ApexBarrier",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            5000.0,
+            12000.0,
+            22000.0,
+            35000.0,
+            50000.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rose-harper-3b4b1d",
+      "name": "Rose Harper",
+      "faction": "Unknown",
+      "group": "VILLAINS",
+      "rarity": "epic",
+      "slot": "unknown",
+      "source_officer_id": "1384069720",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "abilities": [
+        {
+          "ability_id": "2661072867",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [],
+          "description": "Dilithium Reaver: increases the proportion of Sigma-Dilithium raided by the Ra'Ul Reaver by X. (Out of combat.)",
+          "modifier": "SigmaDilithiumRaidProportion",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            1500.0,
+            3500.0,
+            6500.0,
+            11000.0,
+            17000.0
+          ]
+        },
+        {
+          "ability_id": "315575281",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfFkrOrVengeance",
+            "EnemyPlayer"
+          ],
+          "description": "The Apparition: increases your Isolytic Defense by X on FKR ships or the U.S.S. Vengeance against players.",
+          "modifier": "IsolyticDefense",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            4.0,
+            5.5,
+            7.0,
+            8.5,
+            10.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "toryn-818f4f",
+      "name": "Toryn",
+      "faction": "Unknown",
+      "group": "MIRROR UNIVERSE",
+      "rarity": "epic",
+      "slot": "unknown",
+      "source_officer_id": "1578897011",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "abilities": [
+        {
+          "ability_id": "753216972",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [],
+          "description": "Tritanium Reaver: increases the proportion of Sigma-Tritanium raided by the Ra'Ul Reaver by X. (Out of combat.)",
+          "modifier": "SigmaTritaniumRaidProportion",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            2000.0,
+            4000.0,
+            7000.0,
+            12000.0,
+            20000.0
+          ]
+        },
+        {
+          "ability_id": "3300230876",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "EnemyPlayer"
+          ],
+          "description": "Andorian Resolve: increases Critical Mitigation against players by X (every 500 Critical Mitigation increases critical damage you can take by 1%).",
+          "modifier": "CriticalMitigation",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            2500.0,
+            7500.0,
+            15000.0,
+            25000.0,
+            50000.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planetfall-kirk-0def07",
+      "name": "Planetfall Kirk",
+      "faction": "Federation",
+      "group": "PLANETFALL",
+      "rarity": "epic",
+      "slot": "unknown",
+      "source_officer_id": "1843096541",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "abilities": [
+        {
+          "ability_id": "3939693770",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0
+          ],
+          "conditions": [
+            "SelfFkrOrVengeance",
+            "EnemyHostile",
+            "EnemyFkr"
+          ],
+          "description": "Defensive Focus: increases existing Polaron Mitigation from other sources by X on FKR ships or the U.S.S. Vengeance against FKR Hostiles (base 20%; upstream synergy +10%/+40% awaits native build synergy binding).",
+          "modifier": "PolaronMitigationMultiplier",
+          "operation": "Add",
+          "slot": "captain",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            0.2
+          ]
+        },
+        {
+          "ability_id": "2127464306",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfFkrOrVengeance",
+            "EnemyHostile",
+            "EnemyFkr"
+          ],
+          "description": "Destructive Capacity: increases your Infusion Capacitors by X on FKR ships or the U.S.S. Vengeance against FKR Hostiles.",
+          "modifier": "InfusionCapacitors",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            2000.0,
+            20000.0,
+            50000.0,
+            90000.0,
+            150000.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planetfall-ortegas-408465",
+      "name": "Planetfall Ortegas",
+      "faction": "Federation",
+      "group": "PLANETFALL",
+      "rarity": "epic",
+      "slot": "unknown",
+      "source_officer_id": "337016775",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "abilities": [
+        {
+          "ability_id": "2833599979",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfFkrOrVengeance",
+            "EnemyHostile",
+            "EnemyFkr"
+          ],
+          "description": "Exploit Target: increases your Polaron Mitigation by X on FKR ships or the U.S.S. Vengeance against FKR Hostiles.",
+          "modifier": "PolaronMitigation",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            5000.0,
+            15000.0,
+            100000.0,
+            250000.0,
+            500000.0
+          ]
+        },
+        {
+          "ability_id": "1324216369",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfFkrOrVengeance",
+            "EnemyArmada",
+            "EnemyFkr"
+          ],
+          "description": "Infusion Leverage: increases your Infusion Capacitors by X on FKR ships or the U.S.S. Vengeance against FKR Armadas.",
+          "modifier": "InfusionCapacitors",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            2500.0,
+            5000.0,
+            10000.0,
+            15000.0,
+            25000.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planetfall-scotty-5a60c7",
+      "name": "Planetfall Scotty",
+      "faction": "Federation",
+      "group": "PLANETFALL",
+      "rarity": "epic",
+      "slot": "unknown",
+      "source_officer_id": "2817471102",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "abilities": [
+        {
+          "ability_id": "127919672",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfFkrOrVengeance",
+            "EnemyHostile",
+            "EnemyFkr"
+          ],
+          "description": "Infusion Capacitor Amplification: increases your Infusion Capacitor Spike by X on FKR ships or the U.S.S. Vengeance against FKR Hostiles.",
+          "modifier": "InfusionCapacitorSpike",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            0.1,
+            0.15,
+            0.3,
+            0.5,
+            1.0
+          ]
+        },
+        {
+          "ability_id": "2812228248",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfFkrOrVengeance",
+            "EnemyOutpostOrRetaliator"
+          ],
+          "description": "Infusion Optimization: increases your Infusion Capacitors by X on FKR ships or the U.S.S. Vengeance against Solo Outposts and Retaliation Attackers.",
+          "modifier": "InfusionCapacitors",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            2500.0,
+            5000.0,
+            10000.0,
+            15000.0,
+            25000.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planetfall-uhura-f1ba9e",
+      "name": "Planetfall Uhura",
+      "faction": "Federation",
+      "group": "PLANETFALL",
+      "rarity": "rare",
+      "slot": "unknown",
+      "source_officer_id": "3594355267",
+      "scaling": {
+        "rank_chance_model": "ability.chance_by_rank",
+        "rank_value_model": "ability.value_by_rank",
+        "tier_model": "unknown"
+      },
+      "source": {
+        "sheet": "RawOfficers",
+        "workbook": "manual_curation"
+      },
+      "abilities": [
+        {
+          "ability_id": "1843833845",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfFkrOrVengeance",
+            "EnemyHostile",
+            "EnemyFkr"
+          ],
+          "description": "Copious Capacitors: increases your Infusion Capacitors by X on FKR ships or the U.S.S. Vengeance against FKR Hostiles.",
+          "modifier": "InfusionCapacitors",
+          "operation": "Add",
+          "slot": "officer",
+          "target": "SelfShip",
+          "trigger": "CombatStart",
+          "value_by_rank": [
+            750.0,
+            1000.0,
+            1250.0,
+            1500.0,
+            2000.0
+          ]
+        },
+        {
+          "ability_id": "4089845522",
+          "attributes": "",
+          "chance_by_rank": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "conditions": [
+            "SelfFkrOrVengeance",
+            "EnemyHostile",
+            "EnemyFkr"
+          ],
+          "description": "Now We're Talking!: increases Polaron Ions gained from Polaron-equipped FKR Hostiles by X. (Out of combat.)",
+          "modifier": "PolaronIonsLoot",
+          "operation": "Add",
+          "slot": "below_decks",
+          "target": "SelfShip",
+          "trigger": "ShipLaunched",
+          "value_by_rank": [
+            1.0,
+            1.75,
+            2.5,
+            3.5,
+            5.0
+          ]
+        }
+      ]
     }
   ],
   "schema_version": 1,

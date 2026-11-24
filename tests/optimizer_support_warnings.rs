@@ -28,8 +28,10 @@ fn optimizer_warnings_identify_the_final_rank_after_novelty_ordering() {
     let request = serde_json::json!({
         "ship":"uss_saladin", "hostile":"1127817100", "sims":10, "seed":11,
         "max_candidates":2, "strategy":"tiered", "tiered_scout_sims":5,
-        "tiered_top_k":2, "below_decks_slots":0, "novelty_lambda":0.5,
-        "novelty_diverse_top":2, "novelty_pool":2,
+        // Retain all 4 scout candidates (2 generated + 2 warm-start) through confirmation
+        // and novelty re-ordering so catalog additions cannot evict the flagged warm-start crew.
+        "tiered_top_k":4, "below_decks_slots":0, "novelty_lambda":0.5,
+        "novelty_diverse_top":4, "novelty_pool":4,
         "warm_start_crews":[
             {"captain":"Spock", "bridge":["Kirk","Phlox"], "below_decks":[]},
             {"captain":"Beverly Crusher", "bridge":["TMP Hikaru Sulu","Shev"], "below_decks":[]}

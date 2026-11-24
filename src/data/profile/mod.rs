@@ -45,17 +45,18 @@ mod forbidden_tech_special;
 pub use forbidden_tech_special::{
     borg_alcove_hull_hp_bonus_fraction, borg_operating_table_forbidden_tech_seats,
     forbidden_tech_bonus_combat_route, forbidden_tech_derived_attack_phase_seats,
-    quantum_slipstream_forbidden_tech_round_start_seats,
+    infusion_modulator_forbidden_tech_seats, quantum_slipstream_forbidden_tech_round_start_seats,
     ship_class_gated_torpedo_family_attacker_ship_type,
     ship_class_gated_torpedo_family_derived_seats,
     ship_class_gated_torpedo_family_hostile_accuracy_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship,
-    temporal_conduit_chaos_tech_seats, ForbiddenTechBonusCombatRoute,
-    BORG_ALCOVE_FORBIDDEN_TECH_FID, BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID,
-    CONTROL_SEEKER_PROBES_FORBIDDEN_TECH_FID, DUAL_PHOTON_WARHEADS_FORBIDDEN_TECH_FID,
+    silicon_based_parasites_chaos_tech_seats, temporal_conduit_chaos_tech_seats,
+    ForbiddenTechBonusCombatRoute, BORG_ALCOVE_FORBIDDEN_TECH_FID,
+    BORG_OPERATING_TABLE_FORBIDDEN_TECH_FID, CONTROL_SEEKER_PROBES_FORBIDDEN_TECH_FID,
+    DUAL_PHOTON_WARHEADS_FORBIDDEN_TECH_FID, INFUSION_MODULATOR_FORBIDDEN_TECH_FID,
     QUANTUM_SLIPSTREAM_FORBIDDEN_TECH_FID, S31_TORPEDO_PODS_FORBIDDEN_TECH_FID,
-    USS_VOYAGER_SHIP_ID,
+    SILICON_BASED_PARASITES_CHAOS_TECH_FID, USS_VENGEANCE_SHIP_ID, USS_VOYAGER_SHIP_ID,
 };
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

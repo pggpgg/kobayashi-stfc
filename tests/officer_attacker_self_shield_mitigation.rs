@@ -11,8 +11,8 @@
 //! [`AbilityEffect::AttackerShieldMitigationBonus`], a separate channel that the engine
 //! consumes in `effective_incoming_shield_mitigation` (the counter-fire path).
 //!
-//! 5 officers in the bundled YAML use this pattern as of writing: SNW Pike, Harry Mudd,
-//! Kathryn Janeway, One of Eleven, WOK Carol.
+//! 6 officers in the bundled catalog use this pattern as of writing: SNW Pike, Harry Mudd,
+//! Kathryn Janeway, One of Eleven, WOK Carol, Trelane.
 
 use kobayashi::combat::abilities::AbilityEffect;
 use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
@@ -162,6 +162,7 @@ fn all_target_self_shield_mitigation_officers_route_to_attacker_bonus() {
     let expected_checked = HashSet::from([
         "one-of-eleven-ee0ee9".to_string(),
         "snw-pike-c94ac4".to_string(),
+        "trelane-96b872".to_string(),
     ]);
     assert_eq!(
         checked, expected_checked,

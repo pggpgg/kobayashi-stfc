@@ -172,28 +172,86 @@ fn isolytic_simulator_dampeners_bundle() {
 }
 
 #[test]
-fn polaron_prototypes_only_resolve_the_documented_isolytic_defense() {
+fn polaron_prototypes_resolve_documented_defense_and_polaron_weaponry() {
     for (hostile_id, weaponry_id) in [
         ("5765927", "323291059"), // Federation
         ("980858", "49117123"),   // Klingon
         ("1178966", "817894448"), // Romulan
     ] {
         let crew = crew_for(hostile_id);
-        assert!(
-            crew.seats
-                .iter()
-                .all(|seat| seat.ability.name != weaponry_id),
-            "Polaron Weaponry {weaponry_id} must not emit a simulated stat bonus"
+        let weaponry_seats: Vec<_> = crew
+            .seats
+            .iter()
+            .filter(|seat| seat.ability.name == weaponry_id)
+            .collect();
+        assert_eq!(
+            weaponry_seats.len(),
+            1,
+            "Polaron Weaponry {weaponry_id} must emit its HostilePolaronDamageBonus seat"
         );
-        assert_eq!(crew.seats.len(), 1, "unexpected effects for {hostile_id}");
-        let defense = &crew.seats[0].ability;
-        assert_eq!(defense.name, "2920844674");
         assert!(matches!(
-            defense.effect,
+            weaponry_seats[0].ability.effect,
+            AbilityEffect::HostilePolaronDamageBonus {
+                same_faction_bonus,
+                non_counter_bonus,
+            } if (same_faction_bonus - 0.25).abs() < 1e-9
+                && (non_counter_bonus - 0.5).abs() < 1e-9
+        ));
+        assert_eq!(
+            weaponry_seats[0].ability.timing,
+            kobayashi::combat::TimingWindow::CombatBegin
+        );
+
+        let defense_seats: Vec<_> = crew
+            .seats
+            .iter()
+            .filter(|seat| seat.ability.name == "2920844674")
+            .collect();
+        assert_eq!(
+            defense_seats.len(),
+            6,
+            "Experimental Defense Array on {hostile_id} must emit all 6 modeled seats"
+        );
+        let iso = defense_seats
+            .iter()
+            .find(|s| matches!(s.ability.effect, AbilityEffect::IsolyticDefenseBonus(_)))
+            .expect("missing +5000% Isolytic Dampeners seat");
+        assert!(matches!(
+            iso.ability.effect,
             AbilityEffect::IsolyticDefenseBonus(50.0)
         ));
-        assert_eq!(defense.timing, kobayashi::combat::TimingWindow::CombatBegin);
-        assert!(defense.condition.is_none());
+        assert_eq!(
+            iso.ability.timing,
+            kobayashi::combat::TimingWindow::CombatBegin
+        );
+        assert!(iso.ability.condition.is_none());
+        assert!(defense_seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileNegatesStandardDamage
+        )));
+        assert!(defense_seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileShieldRestoreOnDeplete
+        )));
+        assert!(defense_seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileLethalUnlessAttackerFaction { .. }
+        )));
+        assert!(defense_seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileLethalIfAttackerOfficer {
+                forbid_yuki: true,
+                forbid_tal: false,
+            }
+        )));
+        assert!(defense_seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HostileLethalEndOfRound {
+                round_interval: 8,
+                shots: 1,
+                ..
+            }
+        )));
     }
 }
 
@@ -231,9 +289,23 @@ fn polaron_dampeners_reduce_only_the_isolytic_damage_pool() {
             crew,
         )
     };
-    let crew = crew_for("980858");
+    let full_crew = crew_for("980858");
+    // Isolate the +5000% Isolytic Dampeners seat from Experimental Defense Array to verify
+    // it reduces only the isolytic damage pool without touching standard weapon damage.
+    let dampener_only = CrewConfiguration {
+        seats: full_crew
+            .seats
+            .iter()
+            .filter(|s| {
+                s.ability.name == "2920844674"
+                    && matches!(s.ability.effect, AbilityEffect::IsolyticDefenseBonus(_))
+            })
+            .cloned()
+            .collect(),
+    };
+    assert_eq!(dampener_only.seats.len(), 1);
     let control = run(&empty, &config, ShipType::Explorer);
-    let dampened = run(&crew, &config, ShipType::Explorer);
+    let dampened = run(&dampener_only, &config, ShipType::Explorer);
     assert_eq!(control.total_isolytic_damage, 5_100.0);
     assert_eq!(dampened.total_isolytic_damage, 100.0);
     assert_eq!(
@@ -245,7 +317,7 @@ fn polaron_dampeners_reduce_only_the_isolytic_damage_pool() {
         control.attacker_hull_remaining
     );
     let traced = run(
-        &crew,
+        &dampener_only,
         &SimulationConfig {
             trace_mode: TraceMode::Events,
             ..config.clone()
@@ -257,7 +329,7 @@ fn polaron_dampeners_reduce_only_the_isolytic_damage_pool() {
         traced.attacker_hull_remaining,
         dampened.attacker_hull_remaining
     );
-    let mut gated = crew;
+    let mut gated = dampener_only;
     gated.seats[0].ability.condition = Some(
         kobayashi::combat::AbilityCondition::AttackerShipTypeIs(ShipType::Battleship),
     );
@@ -269,6 +341,27 @@ fn polaron_dampeners_reduce_only_the_isolytic_damage_pool() {
         run(&gated, &config, ShipType::Battleship).total_isolytic_damage,
         100.0,
     );
+
+    // With the full Polaron Prototype kit against an eligible FKR attacker, Inertial Diverters
+    // negates standard damage while the dampened isolytic pool (100.0) still lands.
+    let fkr_config = SimulationConfig {
+        attacker_owner_faction: OpponentFactionTag::Federation,
+        ..config.clone()
+    };
+    let full_fkr = kobayashi::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &fkr_config,
+        &empty,
+        OpponentFactionTag::Klingon,
+        ShipType::Interceptor,
+        ShipType::Explorer,
+        true,
+        false,
+        &full_crew,
+    );
+    assert_eq!(full_fkr.total_isolytic_damage, 100.0);
+    assert_eq!(full_fkr.total_damage, 100.0);
 }
 
 /// Apex Defense bundle (2466223538 on hostile 1145300067): the `{0:#}` placeholder is a

@@ -176,3 +176,8 @@ Automated Personnel Unit,chaos,12,2363465154,weapon_damage,0.1265,add
 Automated Personnel Unit,chaos,12,2363465154,isolytic_damage,0.52,add
 Automated Personnel Unit,chaos,12,2363465154,apex_barrier,1750,add
 Vinculum,chaos,12,1923553327,hull_hp,0,add
+Translocator,chaos,12,1005637686,hull_hp,0,add
+Silicon-based Parasites,chaos,12,2509318364,weapon_damage,12,add
+[PRO] Infusion Modulator,forbidden,12,2933035524,infusion_capacitors,15000,add
+[PRO] Infusion Modulator,forbidden,12,2933035524,weapon_damage,70,add
+[PRO] Infusion Modulator,forbidden,12,2933035524,crit_damage,4,add

@@ -140,7 +140,15 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   non-crew-scaled raw `AllDefenses`/`AllPiercing` (self + enemy reduction), and
 ///   timed/cumulative/on-hit enemy `CritChance Sub` (symmetric PvP). New canaries
 ///   exercise the engine paths while the version invalidates catalog-resolved crews.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 32;
+/// * 32 → 33 (2026-11): Update 96 mechanics & onboarding — `WeaponType::Polaron`
+///   (upstream `weapon_type == 6` bypass of Standard Mitigation, Apex Barrier,
+///   Critical Mitigation, and Shields), Polaron Mitigation & multiplier, Infusion
+///   Capacitors & Spike (`∄` shield/mitigation bypass), stacked `CritMitigationRating`,
+///   Polaron Prototype hostile abilities (Inertial Diverters, Shield Sweep, Polaron
+///   Weaponry, Thorn in My Side, Not Worthy, Test of Power), Wave Defense / FKR /
+///   Outpost canonical gates, and conditional FT routing for Silicon-based Parasites
+///   and `[PRO] Infusion Modulator`.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 33;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -652,6 +660,160 @@ fn canary_fight_summaries() -> Vec<String> {
             result.total_damage, result.rounds_simulated, result.attacker_hull_remaining,
         ));
     }
+
+    // Update 96 canaries: Critical Mitigation rating, Infusion Capacitors + Spike vs Inertial
+    // Diverters, and Polaron Weapon bypass + Polaron Mitigation + Polaron Weaponry bonuses.
+    let mut cm_att = canary_combatant("canary_ab_attacker");
+    cm_att.attack = 100.0;
+    cm_att.hull_health = 10_000.0;
+    let mut cm_def = canary_combatant("canary_ab_defender");
+    cm_def.attack = 1_000.0;
+    cm_def.crit_chance = 1.0;
+    cm_def.crit_multiplier = 2.0;
+    cm_def.hull_health = 10_000.0;
+    let mut cm_seat = canary_seat(
+        CrewSeat::BelowDeck,
+        AbilityClass::BelowDeck,
+        TimingWindow::CombatBegin,
+        AbilityEffect::CritMitigationRating(50_000.0),
+    );
+    cm_seat.ability.condition = Some(AbilityCondition::DefenderIsPlayerShip);
+    let cm_res = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &cm_att,
+        &cm_def,
+        &canary_config(1, 79),
+        &CrewConfiguration {
+            seats: vec![cm_seat],
+        },
+        crate::combat::OpponentFactionTag::Unknown,
+        crate::combat::ShipType::Explorer,
+        crate::combat::ShipType::Battleship,
+        false,
+        true,
+        &CrewConfiguration::default(),
+    );
+    summaries.push(format!(
+        "ab_crit_mitigation_rating:ahull={:.6};",
+        cm_res.attacker_hull_remaining
+    ));
+
+    let mut inf_att = canary_combatant("canary_ac_attacker");
+    inf_att.attack = 1_000.0;
+    inf_att.hull_health = 10_000.0;
+    let mut inf_def = canary_combatant("canary_ac_defender");
+    inf_def.hull_health = 10_000.0;
+    inf_def.shield_health = 5_000.0;
+    inf_def.shield_mitigation = 1.0;
+    inf_def.mitigation = 0.7;
+    let inf_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::InfusionCapacitors(50_000.0),
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::InfusionCapacitorSpike(1.0),
+            ),
+        ],
+    };
+    let inf_def_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileNegatesStandardDamage,
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileShieldRestoreOnDeplete,
+            ),
+        ],
+    };
+    let inf_res = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &inf_att,
+        &inf_def,
+        &canary_config(1, 83),
+        &inf_crew,
+        crate::combat::OpponentFactionTag::Federation,
+        crate::combat::ShipType::Explorer,
+        crate::combat::ShipType::Battleship,
+        true,
+        false,
+        &inf_def_crew,
+    );
+    summaries.push(format!(
+        "ac_infusion_inertial_diverters:dhull={:.6};dshield={:.6};",
+        inf_res.defender_hull_remaining, inf_res.defender_shield_remaining
+    ));
+
+    let mut pol_att = canary_combatant("canary_ad_attacker");
+    pol_att.attack = 100.0;
+    pol_att.hull_health = 10_000.0;
+    pol_att.shield_health = 5_000.0;
+    pol_att.shield_mitigation = 0.8;
+    pol_att.mitigation = 0.7;
+    pol_att.apex_barrier = 100_000.0;
+    let mut pol_def = canary_combatant("canary_ad_defender");
+    pol_def.hull_health = 10_000.0;
+    pol_def.weapons = vec![crate::combat::WeaponStats {
+        attack: 1_000.0,
+        shots: Some(1),
+        weapon_type: crate::combat::WeaponType::Polaron,
+        ..Default::default()
+    }];
+    let pol_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::PolaronMitigation(50_000.0),
+            ),
+            canary_seat(
+                CrewSeat::Captain,
+                AbilityClass::CaptainManeuver,
+                TimingWindow::CombatBegin,
+                AbilityEffect::PolaronMitigationMultiplier(0.2),
+            ),
+        ],
+    };
+    let pol_def_crew = CrewConfiguration {
+        seats: vec![canary_seat(
+            CrewSeat::Ship,
+            AbilityClass::ShipAbility,
+            TimingWindow::CombatBegin,
+            AbilityEffect::HostilePolaronDamageBonus {
+                same_faction_bonus: 0.25,
+                non_counter_bonus: 0.50,
+            },
+        )],
+    };
+    let mut pol_cfg = canary_config(1, 89);
+    pol_cfg.attacker_owner_faction = crate::combat::OpponentFactionTag::Federation;
+    let pol_res = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &pol_att,
+        &pol_def,
+        &pol_cfg,
+        &pol_crew,
+        crate::combat::OpponentFactionTag::Federation,
+        crate::combat::ShipType::Explorer,
+        crate::combat::ShipType::Explorer,
+        true,
+        false,
+        &pol_def_crew,
+    );
+    summaries.push(format!(
+        "ad_polaron_weapon_mitigation:ahull={:.6};ashield={:.6};",
+        pol_res.attacker_hull_remaining, pol_res.attacker_shield_remaining
+    ));
     summaries
 }
 
@@ -2498,7 +2660,16 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 34, "expected thirty-four canary fights");
+        assert_eq!(summaries.len(), 37, "expected thirty-seven canary fights");
+        assert!(summaries
+            .iter()
+            .any(|s| s.starts_with("ab_crit_mitigation_rating:ahull=9000.000000;")));
+        assert!(summaries.iter().any(|s| s
+            .starts_with("ac_infusion_inertial_diverters:dhull=9000.000000;dshield=5000.000000;")));
+        assert!(summaries
+            .iter()
+            .any(|s| s.starts_with("ad_polaron_weapon_mitigation:")
+                && s.contains("ashield=5000.000000;")));
         let decay = summaries
             .iter()
             .find(|summary| summary.starts_with("y_hostile_hyperthermic_decay:"))

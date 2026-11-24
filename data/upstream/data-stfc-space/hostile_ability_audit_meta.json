@@ -112,7 +112,8 @@
       "sample_hostile_id": "1001270436",
       "sample_level": 68,
       "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_polaron_weaponry",
+      "overridden": true
     },
     "56799195": {
       "bucket": "hyperthermic_decay_combat",
@@ -643,7 +644,8 @@
       "sample_hostile_id": "1020392011",
       "sample_level": 75,
       "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_polaron_weaponry",
+      "overridden": true
     },
     "324656870": {
       "bucket": "armada_scope",
@@ -1806,7 +1808,8 @@
       "sample_hostile_id": "1001051223",
       "sample_level": 52,
       "text_snippet": "polaron weaponry\nthis standard hostile is equipped with experimental polaron weapons \u2203, which completely bypass standard mitigation, apex barrier, critical mitigation, and shields.\n\nknown weakness\nincreases this standard hostile's polaron w",
-      "effect_type": "combat_noop"
+      "effect_type": "hostile_polaron_weaponry",
+      "overridden": true
     },
     "825965675": {
       "bucket": "pierce_combat",
@@ -4959,7 +4962,8 @@
       "sample_hostile_id": "1086833165",
       "sample_level": 51,
       "text_snippet": "polaron arsenal\nthis armada target is equipped with all of the abilities of polaron prototype hostiles.\n\npolaron weaponry\nthis armada is equipped with experimental polaron weapons, which completely bypass standard mitigation, apex barrier, ",
-      "effect_type": "combat_noop"
+      "effect_type": "isolytic_defense",
+      "overridden": true
     },
     "2345379113": {
       "bucket": "post_combat_flavor",
@@ -6185,7 +6189,8 @@
       "sample_hostile_id": "1001051223",
       "sample_level": 52,
       "text_snippet": "experimental defense array\n\ninertial diverters\nthis standard hostile negates all standard damage dealt to it.\n\nshield sweep\nincreases this standard hostile's max shield drastically at the start of combat, increases base shield mitigation fl",
-      "effect_type": "isolytic_defense"
+      "effect_type": "isolytic_defense",
+      "overridden": true
     },
     "2922610677": {
       "bucket": "shield_regen_combat",

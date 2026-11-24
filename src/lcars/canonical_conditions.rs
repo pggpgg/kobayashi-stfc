@@ -148,11 +148,50 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
             c.enemy_type = Some("solo_armadas".to_string());
             return Some(c);
         }
+        // Wave Defense — matches [`crate::combat::EnemyType::Waves`] when scenario/hostile sets
+        // `engagement_enemy_types` (inert on default `RedMovingSpace` ship-vs-hostile path).
+        "SelfAtWaveDefenseChallenge" => {
+            let mut c = lcars_cond_base("engagement_includes");
+            c.enemy_type = Some("waves".to_string());
+            return Some(c);
+        }
+        // Attacker hull design is Federation, Klingon, Romulan, or the U.S.S. Vengeance.
+        "SelfFkrOrVengeance" => {
+            let mut fed = lcars_cond_base("attacker_owner_faction_is");
+            fed.faction = Some("federation".to_string());
+            let mut klg = lcars_cond_base("attacker_owner_faction_is");
+            klg.faction = Some("klingon".to_string());
+            let mut rom = lcars_cond_base("attacker_owner_faction_is");
+            rom.faction = Some("romulan".to_string());
+            return Some(lcars_or(vec![
+                fed,
+                klg,
+                rom,
+                lcars_attacker_ship_id_is("uss_vengeance"),
+            ]));
+        }
+        // Defending opponent belongs to Federation, Klingon, or Romulan faction.
+        "EnemyFkr" => {
+            let mut fed = lcars_cond_base("defender_faction_is");
+            fed.faction = Some("federation".to_string());
+            let mut klg = lcars_cond_base("defender_faction_is");
+            klg.faction = Some("klingon".to_string());
+            let mut rom = lcars_cond_base("defender_faction_is");
+            rom.faction = Some("romulan".to_string());
+            return Some(lcars_or(vec![fed, klg, rom]));
+        }
+        // Solo Outposts and Outpost Retaliation Attackers (inert on default red hostiles).
+        "EnemyOutpostOrRetaliator" => {
+            let mut outposts = lcars_cond_base("engagement_includes");
+            outposts.enemy_type = Some("outpost_armadas".to_string());
+            let mut retaliators = lcars_cond_base("engagement_includes");
+            retaliators.enemy_type = Some("outpost_retaliation_attackers".to_string());
+            return Some(lcars_or(vec![outposts, retaliators]));
+        }
         // Station / sentinel / overworld encounter tokens: not modeled on default ship-vs-hostile path.
         "EnemySentinel"
         | "CombatGameContext"
         | "SelfAtStation"
-        | "SelfAtWaveDefenseChallenge"
         | "SelfAtAssault2"
         | "TargetIsInvadingEntity" => {
             return Some(lcars_cond_base("literal_false"));
