@@ -354,6 +354,18 @@ pub struct HostileListItem {
     /// Primary specialty/farming resource dropped by this hostile (e.g. `"Tech Module"`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub primary_resource_name: Option<String>,
+    /// Auto-inferred base engagement mode (`snake_case` `EnemyType`, e.g. `"solo_armadas"`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub inferred_enemy_type: Option<String>,
+    /// True when the target is a Solo Outpost (`is_outpost: true`).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub is_outpost: bool,
+    /// Auto-inferred opponent faction slug (`snake_case` `OpponentFactionTag`) when known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub faction_tag: Option<String>,
+    /// Curated hostile sub-family tags (e.g. `conqueror_borg`, `gorn_hunter`, `breen_warship`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hostile_tags: Vec<String>,
 }
 
 pub fn hostiles_payload(registry: &DataRegistry) -> Result<String, serde_json::Error> {
@@ -378,6 +390,10 @@ pub fn hostiles_payload(registry: &DataRegistry) -> Result<String, serde_json::E
                         warp: meta.and_then(|m| (m.warp > 0).then_some(m.warp)),
                         has_loot: meta.map(|m| m.has_loot),
                         primary_resource_name: meta.and_then(|m| m.primary_resource_name.clone()),
+                        inferred_enemy_type: e.inferred_enemy_type.clone(),
+                        is_outpost: e.is_outpost,
+                        faction_tag: e.faction_tag.clone(),
+                        hostile_tags: e.hostile_tags.clone(),
                     }
                 })
                 .collect()
@@ -475,6 +491,83 @@ pub struct EligibilityNote {
     pub ability_id: Option<String>,
 }
 
+/// Resolved combat engagement context actually evaluated by the engine (auto-inferred target
+/// metadata combined with any explicit `enemy_type` override or additive `wave_defense` flag).
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
+pub struct ResolvedContextSummary {
+    /// Opponent category: `"npc_hostile"`, `"player_ship"`, or `"player_station"`.
+    pub opponent_kind: String,
+    /// Primary engagement mode (`snake_case` `EnemyType`, e.g. `"solo_armadas"`, `"waves"`).
+    pub primary_enemy_type: String,
+    /// Complete deduplicated list of active engagement tags (e.g. `["red_moving_space", "waves"]`).
+    pub engagement_enemy_types: Vec<String>,
+    /// True when additive Wave Defense mode (`waves`) is active.
+    pub wave_defense: bool,
+    /// Reconciled combat defender hull class (`"armada"`, `"battleship"`, `"explorer"`, `"interceptor"`, `"survey"`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub defender_ship_type: Option<String>,
+    /// Auto-inferred defender faction slug when known (e.g. `"borg"`, `"xindi"`, `"dominion"`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub defender_faction: Option<String>,
+    /// True when defender counts as an armada hostile (Group, Solo, or Outpost Armada).
+    pub defender_is_armada: bool,
+    /// True when defender counts as an Outpost.
+    pub defender_is_outpost: bool,
+    /// True when the caller supplied an explicit `enemy_type` override rather than using auto-inference.
+    pub is_override: bool,
+    /// Curated hostile sub-family tags active on the defender (when any).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hostile_tags: Vec<String>,
+}
+
+pub(crate) fn build_resolved_context_summary(
+    resolved: &crate::data::officer_eligibility::ResolvedCombatContext,
+    is_override: bool,
+    hostile: Option<&crate::data::hostile::HostileRecord>,
+    defender_ship: Option<&crate::data::ship::ShipRecord>,
+) -> ResolvedContextSummary {
+    let defender_ship_type = resolved
+        .combat_defender_ship_type
+        .or_else(|| defender_ship.map(crate::data::ship::ShipRecord::ship_type))
+        .map(|st| st.as_data_slug().to_string());
+    let defender_faction = if resolved.opponent_kind.is_npc_hostile() {
+        hostile
+            .and_then(|h| h.opponent_faction_tag().as_data_slug())
+            .map(str::to_string)
+    } else {
+        defender_ship
+            .and_then(|s| s.faction.as_deref())
+            .and_then(crate::combat::OpponentFactionTag::from_data_slug)
+            .and_then(crate::combat::OpponentFactionTag::as_data_slug)
+            .map(str::to_string)
+    };
+    let hostile_tags = if resolved.opponent_kind.is_npc_hostile() {
+        hostile
+            .map(crate::data::hostile::HostileRecord::effective_hostile_tags)
+            .unwrap_or_default()
+    } else {
+        Vec::new()
+    };
+    ResolvedContextSummary {
+        opponent_kind: resolved.opponent_kind.as_data_slug().to_string(),
+        primary_enemy_type: crate::combat::types::enemy_type_to_key(resolved.primary_enemy_type)
+            .to_string(),
+        engagement_enemy_types: resolved
+            .engagement_enemy_types
+            .0
+            .iter()
+            .map(|&et| crate::combat::types::enemy_type_to_key(et).to_string())
+            .collect(),
+        wave_defense: resolved.is_wave_defense(),
+        defender_ship_type,
+        defender_faction,
+        defender_is_armada: resolved.defender_is_armada_hostile,
+        defender_is_outpost: resolved.defender_is_outpost,
+        is_override,
+        hostile_tags,
+    }
+}
+
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SimulateResponse {
     pub status: &'static str,
@@ -491,6 +584,9 @@ pub struct SimulateResponse {
     /// (or the eligibility matrix is unavailable).
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub eligibility_notes: Vec<EligibilityNote>,
+    /// Resolved combat context (auto-inferred enemy traits + explicit overrides/Wave Defense).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolved_context: Option<ResolvedContextSummary>,
 }
 
 /// Accept either the canonical ship id or a display name resolved by the catalog.
@@ -722,6 +818,8 @@ pub struct CompareCrewsResponse {
     pub using_placeholder_combatants: bool,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolved_context: Option<ResolvedContextSummary>,
 }
 
 #[derive(Debug)]
@@ -803,6 +901,8 @@ pub struct CrewCounterfactualResponse {
     pub using_placeholder_combatants: bool,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolved_context: Option<ResolvedContextSummary>,
 }
 
 #[derive(Debug)]
@@ -1132,12 +1232,25 @@ pub fn simulate_payload(
     } else {
         registry.resolve_hostile(scenario_hostile.trim())
     };
+    let defender_ship_for_scenario = pvp.as_ref().and_then(|p| {
+        registry.resolve_ship_with_tier_level(
+            &p.defender_ship,
+            p.defender_ship_tier,
+            p.defender_ship_level,
+        )
+    });
     let resolved_ctx = resolve_combat_context(
         explicit_enemy_type,
         wave_defense,
         is_pvp || defender_opponent.defender_is_player_ship(),
         hostile_for_scenario.as_ref(),
-        None,
+        defender_ship_for_scenario.as_ref().map(|s| s.ship_type()),
+    );
+    let resolved_context_summary = build_resolved_context_summary(
+        &resolved_ctx,
+        explicit_enemy_type.is_some(),
+        hostile_for_scenario.as_ref(),
+        defender_ship_for_scenario.as_ref(),
     );
     let effective_defender_opponent = if resolved_ctx.opponent_kind.is_player() {
         DefenderOpponent::Player
@@ -1443,6 +1556,7 @@ pub fn simulate_payload(
         warnings,
         unresolved_officers,
         eligibility_notes,
+        resolved_context: Some(resolved_context_summary),
     };
     serde_json::to_string(&response).map_err(SimulateError::Parse)
 }
@@ -1502,12 +1616,25 @@ pub fn compare_crews_payload(
     } else {
         registry.resolve_hostile(scenario_hostile.trim())
     };
+    let defender_ship_for_scenario = pvp.as_ref().and_then(|p| {
+        registry.resolve_ship_with_tier_level(
+            &p.defender_ship,
+            p.defender_ship_tier,
+            p.defender_ship_level,
+        )
+    });
     let resolved_ctx = resolve_combat_context(
         explicit_enemy_type,
         wave_defense,
         is_pvp || defender_opponent.defender_is_player_ship(),
         hostile_for_scenario.as_ref(),
-        None,
+        defender_ship_for_scenario.as_ref().map(|s| s.ship_type()),
+    );
+    let resolved_context_summary = build_resolved_context_summary(
+        &resolved_ctx,
+        explicit_enemy_type.is_some(),
+        hostile_for_scenario.as_ref(),
+        defender_ship_for_scenario.as_ref(),
     );
     let effective_defender_opponent = if resolved_ctx.opponent_kind.is_player() {
         DefenderOpponent::Player
@@ -1684,6 +1811,7 @@ pub fn compare_crews_payload(
         crews: outcome.crews,
         using_placeholder_combatants: outcome.using_placeholder_combatants,
         warnings,
+        resolved_context: Some(resolved_context_summary),
     };
     serde_json::to_string(&response).map_err(CompareCrewsError::Parse)
 }
@@ -1747,12 +1875,25 @@ pub fn crew_counterfactual_payload(
     } else {
         registry.resolve_hostile(scenario_hostile.trim())
     };
+    let defender_ship_for_scenario = pvp.as_ref().and_then(|p| {
+        registry.resolve_ship_with_tier_level(
+            &p.defender_ship,
+            p.defender_ship_tier,
+            p.defender_ship_level,
+        )
+    });
     let resolved_ctx = resolve_combat_context(
         explicit_enemy_type,
         wave_defense,
         is_pvp || defender_opponent.defender_is_player_ship(),
         hostile_for_scenario.as_ref(),
-        None,
+        defender_ship_for_scenario.as_ref().map(|s| s.ship_type()),
+    );
+    let resolved_context_summary = build_resolved_context_summary(
+        &resolved_ctx,
+        explicit_enemy_type.is_some(),
+        hostile_for_scenario.as_ref(),
+        defender_ship_for_scenario.as_ref(),
     );
     let effective_defender_opponent = if resolved_ctx.opponent_kind.is_player() {
         DefenderOpponent::Player
@@ -1898,6 +2039,7 @@ pub fn crew_counterfactual_payload(
         variants_evaluated: outcome.variants_evaluated,
         using_placeholder_combatants: outcome.using_placeholder_combatants,
         warnings: outcome.warnings,
+        resolved_context: Some(resolved_context_summary),
     };
     serde_json::to_string(&response).map_err(CrewCounterfactualError::Parse)
 }
@@ -2423,12 +2565,25 @@ pub fn replay_optimize_seed_payload(
     } else {
         registry.resolve_hostile(scenario_hostile.trim())
     };
+    let defender_ship_for_scenario = pvp.as_ref().and_then(|p| {
+        registry.resolve_ship_with_tier_level(
+            &p.defender_ship,
+            p.defender_ship_tier,
+            p.defender_ship_level,
+        )
+    });
     let resolved_ctx = resolve_combat_context(
         explicit_enemy_type,
         wave_defense,
         is_pvp || defender_opponent.defender_is_player_ship(),
         hostile_for_scenario.as_ref(),
-        None,
+        defender_ship_for_scenario.as_ref().map(|s| s.ship_type()),
+    );
+    let resolved_context_summary = build_resolved_context_summary(
+        &resolved_ctx,
+        explicit_enemy_type.is_some(),
+        hostile_for_scenario.as_ref(),
+        defender_ship_for_scenario.as_ref(),
     );
     let effective_defender_opponent = if resolved_ctx.opponent_kind.is_player() {
         DefenderOpponent::Player
@@ -2592,6 +2747,7 @@ pub fn replay_optimize_seed_payload(
             "base_seed": replay.base_seed,
             "iteration_seed": replay.iteration_seed,
             "effective_defender_hull": replay.effective_defender_hull,
+            "resolved_context": resolved_context_summary,
         },
         "summary": {
             "attacker_won": replay.attacker_won,

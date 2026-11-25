@@ -1537,6 +1537,22 @@ components:
               primary_resource_name:
                 type: string
                 nullable: true
+              inferred_enemy_type:
+                type: string
+                nullable: true
+                description: Auto-inferred base combat engagement mode (snake_case EnemyType, e.g. solo_armadas).
+              is_outpost:
+                type: boolean
+                description: True when the target is a Solo Outpost (is_outpost true in upstream data).
+              faction_tag:
+                type: string
+                nullable: true
+                description: Auto-inferred opponent faction slug (snake_case OpponentFactionTag) when known.
+              hostile_tags:
+                type: array
+                description: Curated hostile sub-family tags active on this target.
+                items:
+                  type: string
             additionalProperties: true
 
     ShipTiersLevelsResponse:
@@ -1986,6 +2002,8 @@ components:
                 type: string
               ability_id:
                 type: string
+        resolved_context:
+          $ref: "#/components/schemas/ResolvedContextSummary"
 
     SensitivityRequest:
       type: object
@@ -2522,6 +2540,8 @@ components:
           type: array
           items:
             type: string
+        resolved_context:
+          $ref: "#/components/schemas/ResolvedContextSummary"
 
     CrewCounterfactualRequest:
       type: object
@@ -2817,6 +2837,8 @@ components:
           type: array
           items:
             type: string
+        resolved_context:
+          $ref: "#/components/schemas/ResolvedContextSummary"
 
     FleetSlotRequestDto:
       type: object
@@ -4267,6 +4289,9 @@ components:
         requested_strategy:
           description: Echo of the client `strategy` field when present.
           type: string
+        resolved_context:
+          description: Resolved combat context (auto-inferred enemy traits + explicit overrides/Wave Defense).
+          $ref: "#/components/schemas/ResolvedContextSummary"
         seed:
           format: uint64
           minimum: 0
@@ -4459,4 +4484,57 @@ components:
         - loot_multiplier
         - resource_id
         - resource_name
+      type: object
+
+    ResolvedContextSummary:
+      description: >-
+        Resolved combat engagement context actually evaluated by the engine (auto-inferred target
+        metadata combined with any explicit `enemy_type` override or additive `wave_defense` flag).
+      properties:
+        defender_faction:
+          description: Auto-inferred defender faction slug when known (e.g. `"borg"`, `"xindi"`, `"dominion"`).
+          type: string
+        defender_is_armada:
+          description: True when defender counts as an armada hostile (Group, Solo, or Outpost Armada).
+          type: boolean
+        defender_is_outpost:
+          description: True when defender counts as an Outpost.
+          type: boolean
+        defender_ship_type:
+          description: >-
+            Reconciled combat defender hull class (`"armada"`, `"battleship"`, `"explorer"`,
+            `"interceptor"`, `"survey"`).
+          type: string
+        engagement_enemy_types:
+          description: Complete deduplicated list of active engagement tags (e.g. `["red_moving_space", "waves"]`).
+          items:
+            type: string
+          type: array
+        hostile_tags:
+          description: Curated hostile sub-family tags active on the defender (when any).
+          items:
+            type: string
+          type: array
+        is_override:
+          description: >-
+            True when the caller supplied an explicit `enemy_type` override rather than using
+            auto-inference.
+          type: boolean
+        opponent_kind:
+          description: "Opponent category: `\"npc_hostile\"`, `\"player_ship\"`, or `\"player_station\"`."
+          type: string
+        primary_enemy_type:
+          description: Primary engagement mode (`snake_case` `EnemyType`, e.g. `"solo_armadas"`, `"waves"`).
+          type: string
+        wave_defense:
+          description: True when additive Wave Defense mode (`waves`) is active.
+          type: boolean
+      required:
+        - defender_is_armada
+        - defender_is_outpost
+        - engagement_enemy_types
+        - is_override
+        - opponent_kind
+        - primary_enemy_type
+        - wave_defense
       type: object

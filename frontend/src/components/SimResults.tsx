@@ -20,8 +20,16 @@ import {
   type ParetoTag,
   type RefinementDetail,
   type RefinementSlotChange,
+  type ResolvedContextSummary,
   type SimulateStats,
 } from "../lib/api";
+import {
+  enemyTypeIcon,
+  enemyTypeLabel,
+  factionTagLabel,
+  hostileTagLabel,
+  shipClassLabel,
+} from "../lib/enemyTypes";
 import {
   EMPTY_RECOMMENDATION_FILTERS,
   filterRecommendations,
@@ -333,6 +341,7 @@ export interface CompareWorkspaceParams {
   /** Parity with simulate/optimize workspace selection. */
   supportBuffs?: string[];
   enemyType?: string;
+  waveDefense?: boolean;
   belowDecksPoolMode?: string;
 }
 
@@ -358,6 +367,8 @@ interface ComparisonState {
 
 interface SimResultsProps {
   simResult: SimulateStats | null;
+  /** Resolved combat context returned by the server for the latest simulate/optimize run. */
+  resolvedContext?: ResolvedContextSummary | null;
   recommendations: CrewRecommendation[];
   /** Trust/fidelity notices returned by the simulation or optimizer API. */
   warnings?: string[];
@@ -381,6 +392,7 @@ interface SimResultsProps {
 
 export default memo(function SimResults({
   simResult,
+  resolvedContext = null,
   recommendations,
   warnings = [],
   unresolvedOfficers = [],
@@ -447,6 +459,8 @@ export default memo(function SimResults({
       compareWorkspace.belowDecksSlots,
       compareWorkspace.profileId,
       compareWorkspace.supportBuffs ?? [],
+      compareWorkspace.enemyType ?? "",
+      compareWorkspace.waveDefense === true,
     ],
   );
   const currentComparison =
@@ -658,7 +672,8 @@ export default memo(function SimResults({
           below_decks_slots: compareWorkspace.belowDecksSlots,
           proc_sample_trials: 60,
           support_buffs: compareWorkspace.supportBuffs,
-          enemy_type: compareWorkspace.enemyType,
+          enemy_type: compareWorkspace.enemyType || undefined,
+          wave_defense: compareWorkspace.waveDefense || undefined,
         },
         compareWorkspace.profileId,
       );
@@ -738,7 +753,8 @@ export default memo(function SimResults({
             max_substitutes_per_slot: 3,
             max_substitute_crews: 5,
             support_buffs: compareWorkspace.supportBuffs,
-            enemy_type: compareWorkspace.enemyType,
+            enemy_type: compareWorkspace.enemyType || undefined,
+            wave_defense: compareWorkspace.waveDefense || undefined,
           },
           compareWorkspace.profileId,
           controller.signal,
@@ -805,6 +821,78 @@ export default memo(function SimResults({
       }}
     >
       <h2 style={{ margin: "0 0 0.75rem", fontSize: "1rem" }}>SimResults</h2>
+
+      {resolvedContext && (hasSim || hasRecs) && (
+        <div
+          data-testid="resolved-context-summary"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 6,
+            marginBottom: "0.75rem",
+            fontSize: "0.76rem",
+            color: "var(--text-muted)",
+          }}
+        >
+          <span>Evaluated context:</span>
+          {resolvedContext.engagement_enemy_types.map((tag) => (
+            <span
+              key={tag}
+              style={{
+                padding: "1px 6px",
+                borderRadius: 999,
+                border: "1px solid var(--border)",
+                background: "rgba(138, 166, 179, 0.1)",
+                color: "var(--text)",
+              }}
+            >
+              {enemyTypeIcon(tag)} {enemyTypeLabel(tag)}
+            </span>
+          ))}
+          {resolvedContext.defender_ship_type && (
+            <span
+              style={{
+                padding: "1px 6px",
+                borderRadius: 999,
+                border: "1px solid var(--border)",
+              }}
+            >
+              {shipClassLabel(resolvedContext.defender_ship_type)}
+            </span>
+          )}
+          {factionTagLabel(resolvedContext.defender_faction) && (
+            <span
+              style={{
+                padding: "1px 6px",
+                borderRadius: 999,
+                border: "1px solid var(--border)",
+                background: "rgba(99, 179, 237, 0.12)",
+                color: "var(--text)",
+              }}
+            >
+              {factionTagLabel(resolvedContext.defender_faction)}
+            </span>
+          )}
+          {(resolvedContext.hostile_tags ?? []).map((tag) => (
+            <span
+              key={tag}
+              style={{
+                padding: "1px 6px",
+                borderRadius: 999,
+                border: "1px solid var(--border)",
+                background: "rgba(67, 181, 129, 0.12)",
+                color: "var(--text)",
+              }}
+            >
+              {hostileTagLabel(tag)}
+            </span>
+          ))}
+          {resolvedContext.is_override && (
+            <span style={{ fontStyle: "italic" }}>(manual mode override)</span>
+          )}
+        </div>
+      )}
 
       {hasResultWarnings && (
         <div

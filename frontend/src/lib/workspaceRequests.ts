@@ -18,6 +18,7 @@ export function buildWorkspaceSimulateParams(args: {
   shipLevel: number;
   supportBuffs?: readonly string[];
   enemyType?: string;
+  waveDefense?: boolean;
 }): {
   ship: string;
   hostile: string;
@@ -31,6 +32,7 @@ export function buildWorkspaceSimulateParams(args: {
   ship_level: number;
   support_buffs?: string[];
   enemy_type?: string;
+  wave_defense?: boolean;
 } | null {
   if (!args.crew.captain) return null;
   const support_buffs = normalizeSupportBuffSelection(args.supportBuffs).ids;
@@ -48,6 +50,7 @@ export function buildWorkspaceSimulateParams(args: {
     ship_level: args.shipLevel,
     ...(support_buffs.length > 0 ? { support_buffs } : {}),
     ...(args.enemyType ? { enemy_type: args.enemyType } : {}),
+    ...(args.waveDefense === true ? { wave_defense: true } : {}),
   };
 }
 
@@ -209,6 +212,8 @@ export function buildWorkspaceOptimizeStartBody(args: {
   enableLearnedPairPrior?: boolean;
   /** Combat scenario for officer eligibility filtering (snake_case EnemyType). */
   enemyType?: string;
+  /** Additive Wave Defense toggle (`waves` combined with base target context). */
+  waveDefense?: boolean;
 }) {
   const constraints = args.optimizeConstraints
     ? buildOptimizeConstraintsFromForm(args.optimizeConstraints)
@@ -230,6 +235,7 @@ export function buildWorkspaceOptimizeStartBody(args: {
     ship: args.shipId || "uss_saladin",
     hostile: args.scenarioId || "2918121098",
     ...(args.enemyType ? { enemy_type: args.enemyType } : {}),
+    ...(args.waveDefense === true ? { wave_defense: true } : {}),
     sims: args.simsPerCrew,
     max_candidates: args.maxCandidates ?? undefined,
     strategy: args.optimizerStrategy,

@@ -218,6 +218,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     rarity: None,
                     upstream_ship_type: None,
                     loca_id: None,
+                    inferred_enemy_type: Some(
+                        kobayashi::combat::types::enemy_type_to_key(rec.inferred_base_enemy_type())
+                            .to_string(),
+                    ),
+                    is_outpost: rec.is_outpost,
+                    faction_tag: rec
+                        .opponent_faction_tag()
+                        .as_data_slug()
+                        .map(str::to_string),
+                    hostile_tags: rec.effective_hostile_tags(),
                 });
                 let out_path = out_hostiles.join(format!("{}.json", rec.id));
                 fs::write(out_path, serde_json::to_string_pretty(&rec)?)?;

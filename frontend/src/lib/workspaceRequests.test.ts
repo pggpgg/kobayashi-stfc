@@ -89,6 +89,34 @@ describe("buildWorkspaceSimulateParams", () => {
       "titan_a_max_fortification",
     ]);
   });
+
+  it("serializes wave_defense alongside enemy_type when enabled", () => {
+    const crew = createEmptyCrew(50);
+    crew.captain = "Kirk";
+    const params = buildWorkspaceSimulateParams({
+      shipId: "Enterprise",
+      scenarioId: "1081891879",
+      crew,
+      simsPerCrew: 1000,
+      shipTier: 2,
+      shipLevel: 45,
+      enemyType: "solo_armadas",
+      waveDefense: true,
+    });
+    expect(params?.enemy_type).toBe("solo_armadas");
+    expect(params?.wave_defense).toBe(true);
+
+    const off = buildWorkspaceSimulateParams({
+      shipId: "Enterprise",
+      scenarioId: "1081891879",
+      crew,
+      simsPerCrew: 1000,
+      shipTier: 2,
+      shipLevel: 45,
+      waveDefense: false,
+    });
+    expect(off?.wave_defense).toBeUndefined();
+  });
 });
 
 describe("buildWorkspaceOptimizeStartBody", () => {

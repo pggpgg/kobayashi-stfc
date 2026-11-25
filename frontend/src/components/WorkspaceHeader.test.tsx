@@ -279,4 +279,73 @@ describe("WorkspaceHeader", () => {
       expect(label.getAttribute("title")).toBeNull();
     });
   });
+
+  describe("auto-inferred target context badges and Wave Defense toggle", () => {
+    it("displays inferred mode, hull class, faction, traits, and additive Wave Defense toggle", async () => {
+      vi.mocked(api.fetchHostiles).mockResolvedValue([
+        {
+          id: "1081891879",
+          hostile_name: "Jem'Hadar Flagship",
+          display_name: "Jem'Hadar Flagship",
+          level: 53,
+          ship_class: "survey",
+          inferred_enemy_type: "solo_armadas",
+          faction_tag: "dominion",
+          hostile_tags: [],
+        },
+      ]);
+      const onWaveChange = vi.fn();
+      const onInferredChange = vi.fn();
+      render(
+        <ProfileProvider>
+          <WorkspaceModeProvider>
+            <WorkspaceHeader
+              shipId="ship1"
+              scenarioId="1081891879"
+              onShipIdChange={vi.fn()}
+              onScenarioIdChange={vi.fn()}
+              enemyType=""
+              onEnemyTypeChange={vi.fn()}
+              waveDefense={true}
+              onWaveDefenseChange={onWaveChange}
+              onInferredEnemyTypeChange={onInferredChange}
+              shipTier={1}
+              onShipTierChange={vi.fn()}
+              shipLevel={50}
+              onShipLevelChange={vi.fn()}
+              onBelowDeckUnlockLevelsChange={vi.fn()}
+              crew={emptyCrew}
+              simsPerCrew={1000}
+              onSimsPerCrewChange={vi.fn()}
+              estimate={null}
+              lastOptimizeDurationMs={null}
+              onRunSim={vi.fn()}
+              onRunOptimize={vi.fn()}
+              onCancelOptimize={vi.fn()}
+              onSavePreset={vi.fn()}
+              loadingSim={false}
+              loadingOptimize={false}
+              optimizeProgress={null}
+              optimizeCrewsDone={null}
+              optimizeTotalCrews={null}
+              selectedSupportBuffs={[]}
+              onSelectedSupportBuffsChange={vi.fn()}
+            />
+          </WorkspaceModeProvider>
+        </ProfileProvider>,
+      );
+
+      const badges = await screen.findByTestId("target-context-badges");
+      expect(badges.textContent).toContain("Solo Armadas");
+      expect(badges.textContent).toContain("Waves");
+      expect(badges.textContent).toContain("Armada");
+      expect(badges.textContent).toContain("Dominion");
+      expect(onInferredChange).toHaveBeenCalledWith("solo_armadas");
+
+      const waveBtn = screen.getByRole("button", { name: "Wave Defense mode" });
+      expect(waveBtn.getAttribute("aria-pressed")).toBe("true");
+      waveBtn.click();
+      expect(onWaveChange).toHaveBeenCalledWith(false);
+    });
+  });
 });

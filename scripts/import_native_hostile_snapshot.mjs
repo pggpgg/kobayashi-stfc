@@ -167,7 +167,7 @@ export function mergeNativeHostileSupplement(snapshot,index,registry) {
   const hostile=normalizeNativeHostile(snapshot),next=structuredClone(index),reg=structuredClone(registry);
   const matching=next.hostiles.filter(h=>h.id===hostile.id);
   if(matching.length>1)throw Error("Duplicate hostile index identity");
-  const entry={id:hostile.id,hostile_name:hostile.hostile_name,level:hostile.level,ship_class:hostile.ship_class,rarity:hostile.rarity,upstream_ship_type:0,loca_id:hostile.loca_id,source:"native-static-supplement"};
+  const entry={id:hostile.id,hostile_name:hostile.hostile_name,level:hostile.level,ship_class:hostile.ship_class,rarity:hostile.rarity,upstream_ship_type:0,loca_id:hostile.loca_id,inferred_enemy_type:"red_moving_space",faction_tag:"borg",hostile_tags:hostile.hostile_tags,source:"native-static-supplement"};
   if(matching.length)next.hostiles[next.hostiles.findIndex(h=>h.id===hostile.id)]=entry;else next.hostiles.push(entry);
   const suffix=`+${REVISION}`;
   if(!next.data_version.endsWith(suffix))next.data_version+=suffix;

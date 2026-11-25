@@ -12,6 +12,7 @@ import type {
   OfficerEligibilityResponse,
   OfficerListItem,
 } from "../lib/api";
+import { resolveEffectiveScenarioTags } from "../lib/enemyTypes";
 import type { CrewState, PinsState } from "../lib/types";
 import { EligibilityBadge } from "./EligibilityBadge";
 
@@ -25,8 +26,12 @@ interface CrewBuilderProps {
   onCrewChange: (crew: CrewState) => void;
   onPinsChange: (pins: PinsState) => void;
   officerOptions?: OfficerListItem[];
-  /** Selected combat scenario (""=Auto → defaults badges to generic hostiles). */
+  /** Selected combat scenario override (""=Auto → uses inferredEnemyType or generic hostiles). */
   enemyType?: string;
+  /** Auto-inferred base enemy_type for the selected target (e.g. "solo_armadas"). */
+  inferredEnemyType?: string | null;
+  /** Additive Wave Defense mode toggle (evaluates eligibility across [base, "waves"]). */
+  waveDefense?: boolean;
   /** Officer eligibility matrix for per-slot badges; null until loaded. */
   eligibility?: OfficerEligibilityResponse | null;
 }
@@ -56,14 +61,20 @@ export default memo(function CrewBuilder({
   onPinsChange,
   officerOptions = [],
   enemyType = "",
+  inferredEnemyType = null,
+  waveDefense = false,
   eligibility = null,
 }: CrewBuilderProps) {
   const belowN = belowDecksSlots;
   const [showGuidedBelowDecks, setShowGuidedBelowDecks] = useState(false);
 
-  // Live eligibility badges: best verdict across a seat's ability ids for the current scenario.
-  // "" (Auto) falls back to generic hostiles so badges still render before a scenario is chosen.
-  const scenarioKey = enemyType || "red_moving_space";
+  // Live eligibility badges: best verdict across a seat's ability ids and ALL active engagement
+  // tags (e.g. ["solo_armadas", "waves"] in Wave Defense), matching backend any-tag-eligible rules.
+  const scenarioKeys = useMemo(
+    () =>
+      resolveEffectiveScenarioTags(inferredEnemyType, enemyType, waveDefense),
+    [inferredEnemyType, enemyType, waveDefense],
+  );
   const seatVerdict = useCallback(
     (
       officerId: string | null | undefined,
@@ -81,13 +92,17 @@ export default memo(function CrewBuilder({
       const rank = { works: 2, conditional: 1, does_not_work: 0 } as const;
       let best: { verdict: EligibilityVerdict; reason?: string } | null = null;
       for (const id of ids) {
-        const sv = eligibility.matrix[id]?.scenarios?.[scenarioKey];
-        if (!sv) continue;
-        if (!best || rank[sv.verdict] > rank[best.verdict]) best = sv;
+        const scenarios = eligibility.matrix[id]?.scenarios;
+        if (!scenarios) continue;
+        for (const scenarioKey of scenarioKeys) {
+          const sv = scenarios[scenarioKey];
+          if (!sv) continue;
+          if (!best || rank[sv.verdict] > rank[best.verdict]) best = sv;
+        }
       }
       return best;
     },
-    [eligibility, scenarioKey],
+    [eligibility, scenarioKeys],
   );
   const renderBadge = useCallback(
     (

@@ -73,4 +73,103 @@ describe("CrewBuilder", () => {
 
     expect(screen.getAllByRole("combobox")).toHaveLength(5);
   });
+
+  it("evaluates eligibility badges across inferred enemy type and additive Wave Defense", () => {
+    const eligibility: api.OfficerEligibilityResponse = {
+      scenarios: ["solo_armadas", "red_moving_space", "waves"],
+      officer_abilities: {
+        trelane: { captain: "ab_waves", officer: [] },
+        dezoc: { captain: "ab_solo", officer: [] },
+      },
+      matrix: {
+        ab_waves: {
+          ability_id: "ab_waves",
+          slot: "captain",
+          scenarios: {
+            solo_armadas: {
+              verdict: "does_not_work",
+              reason: "Wave Defense only",
+            },
+            waves: { verdict: "works" },
+          },
+        },
+        ab_solo: {
+          ability_id: "ab_solo",
+          slot: "captain",
+          scenarios: {
+            solo_armadas: { verdict: "works" },
+            red_moving_space: {
+              verdict: "does_not_work",
+              reason: "Solo Armadas only",
+            },
+            waves: { verdict: "does_not_work", reason: "Solo Armadas only" },
+          },
+        },
+      },
+    };
+
+    // Without Wave Defense on a Solo Armada: Dezoc works (no warning), Trelane warns.
+    const { rerender } = render(
+      <ProfileProvider>
+        <WorkspaceModeProvider>
+          <CrewBuilder
+            belowDecksSlots={1}
+            crew={{
+              captain: "trelane",
+              bridge: ["dezoc", null],
+              belowDeck: [null],
+            }}
+            pins={{
+              captain: false,
+              bridge: [false, false],
+              belowDeck: [false],
+            }}
+            onCrewChange={vi.fn()}
+            onPinsChange={vi.fn()}
+            officerOptions={[
+              { id: "trelane", name: "Trelane" },
+              { id: "dezoc", name: "Dezoc" },
+            ]}
+            enemyType=""
+            inferredEnemyType="solo_armadas"
+            waveDefense={false}
+            eligibility={eligibility}
+          />
+        </WorkspaceModeProvider>
+      </ProfileProvider>,
+    );
+    expect(screen.getByText("✕ may not work")).toBeTruthy();
+
+    // Enabling additive Wave Defense lets BOTH Trelane (waves) and Dezoc (solo_armadas) work.
+    rerender(
+      <ProfileProvider>
+        <WorkspaceModeProvider>
+          <CrewBuilder
+            belowDecksSlots={1}
+            crew={{
+              captain: "trelane",
+              bridge: ["dezoc", null],
+              belowDeck: [null],
+            }}
+            pins={{
+              captain: false,
+              bridge: [false, false],
+              belowDeck: [false],
+            }}
+            onCrewChange={vi.fn()}
+            onPinsChange={vi.fn()}
+            officerOptions={[
+              { id: "trelane", name: "Trelane" },
+              { id: "dezoc", name: "Dezoc" },
+            ]}
+            enemyType=""
+            inferredEnemyType="solo_armadas"
+            waveDefense={true}
+            eligibility={eligibility}
+          />
+        </WorkspaceModeProvider>
+      </ProfileProvider>,
+    );
+    expect(screen.queryByText("✕ may not work")).toBeNull();
+  });
 });

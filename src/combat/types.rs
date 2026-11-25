@@ -418,6 +418,15 @@ impl OpponentKind {
     pub const fn is_player_station(self) -> bool {
         matches!(self, Self::PlayerStation)
     }
+
+    /// Canonical `snake_case` wire slug matching serde serialization.
+    pub const fn as_data_slug(self) -> &'static str {
+        match self {
+            Self::NpcHostile => "npc_hostile",
+            Self::PlayerShip => "player_ship",
+            Self::PlayerStation => "player_station",
+        }
+    }
 }
 
 /// Parse `snake_case` slug from LCARS `engagement_includes` / JSON (same strings as [`EnemyType`] serde).
