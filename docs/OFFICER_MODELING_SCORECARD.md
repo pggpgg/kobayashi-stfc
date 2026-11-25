@@ -66,6 +66,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | leslie-975ce0 | Leslie | 1 | 0/0/1 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | — | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | michael-burnham-6c711c | Michael Burnham | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | origins-stamets-b0decf | Origins Stamets | 1 | 0/0/1 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | — | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
+| paul-stamets-4aa6ab | Paul Stamets | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | Bridge CombatStart enemy ArmorPiercing reduction vs players while defending (862911683) is quarantined as unsupported with diagnostics rather than inverted into friendly damage-through shield_pierce. |
 | six-of-eleven-20cbe8 | Six Of Eleven | 2 | 0/0/1 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | 0 | 0 | 0 | 0 | F | 100 | none | — |
 | snw-t-pring-16cf8d | SNW T'Pring | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
 | the-doctor-327fc3 | The Doctor | 1 | 0/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 0 | — | 0 | 0 | 0 | 0 | F | 100 | economy_only | — |
@@ -84,9 +85,11 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | emp-georgiou-1564b5 | Emp. Georgiou | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | georgiou-d2bdef | Georgiou | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | harry-mudd-374d5f | Harry Mudd | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Cap ShieldMitigation 2R vs hostiles ≤70; bridge on_combat_start shots bonus same gate. |
+| honorguard-worf-8ac58c | Honorguard Worf | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Captain crew-Attack-scaled ArmorPiercing on crit vs players (2884241557) is quarantined as unsupported with diagnostics rather than mapped to damage-through shield_pierce. |
 | joachim-03587e | Joachim | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | khan-3f1d1e | Khan | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | linkasa-01a1b3 | Linkasa | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
+| m-ral-986e7a | M'Ral | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Captain launch ArmorPiercing (508362235) is quarantined as unsupported with diagnostics pending single-axis base Armor Piercing pool support rather than mapped to damage-through shield_pierce. |
 | moreau-23ddb4 | Moreau | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 1 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | origins-burnham-e854d6 | Origins Burnham | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
 | origins-saru-753b24 | Origins Saru | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | — |
@@ -97,6 +100,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | tos-mccoy-fff2e0 | TOS McCoy | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Captain crew-stat-scaled defenses are unsupported and diagnosed; bridge crew stats retain the ship-type gate. |
 | wesley-crusher-834fce | Wesley Crusher | 2 | 0/0/1 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | — | 50 | 43 | 0 | 43 | F | 100 | none | Captain crew-Attack-scaled damage remains unsupported and diagnosed; bridge SelfOfficer stat pool is represented. |
 | ahvix-f90184 | Ahvix | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
+| azetbur-7eff22 | Azetbur | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Captain kinetic-hit Hull Breach gate remains unmodeled; bridge per-hit ArmorPiercing (3301945997) is quarantined as unsupported with diagnostics rather than mapped to damage-through shield_pierce. |
 | beverly-crusher-74b2d7 | Beverly Crusher | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
 | bones-ddc8a9 | Bones | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | Cap OffAbilityEffect at combat start vs hostiles ≤70; bridge on_hit armor same gate. Inactive in default optimize vs high-level hostiles. |
 | changeling-kira-666ebe | Changeling Kira | 2 | 1/0/0 | 0/0/1 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | — | 50 | 57 | 0 | 57 | D | 100 | none | — |
@@ -127,7 +131,6 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | ambassador-spock-e7945f | Ambassador Spock | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | No captain (Chain of Command). Bridge isolytic_defense at combat start is OGN-faction-gated. BD My Mine to Your Mine is node-defense-only (SelfMining → literal_false): inert in all sim paths. |
 | andy-billups-c27ba7 | Andy Billups | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | arkady-94c81b | Arkady | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| azetbur-7eff22 | Azetbur | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | ba-el-91d122 | Ba'el | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | badgey-13df33 | Badgey | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | beckett-mariner-d93865 | Beckett Mariner | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | Get It Together! adds 5–30% to every crewed officer's Attack pool before ship breakpoints. The below-deck ability separately increases weapon damage. |
@@ -167,7 +170,7 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | ent-e-picard-556227 | Ent-E Picard | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | ent-e-riker-516b8d | Ent-E Riker | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | ezri-dax-bb0892 | Ezri Dax | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| fcm-data-3b9e4d | FCM Data | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
+| fcm-data-3b9e4d | FCM Data | 1 | 1/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | — | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Captain Plexurus of Borg (1610205778) is in its verified captain seat (+ShotsPerAttack for 2 rounds vs Group Armadas); bridge Through Space and Time (ArmadaLoot) is economy → :non_combat. |
 | female-spock-c21a12 | Female Spock | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Captain Enterprising Mind is Isogenite loot (economy → :non_combat; upstream rank 4-5 values unpublished, stored as 0). Bridge isolytic_damage at combat start is OGN-faction-gated: active only vs Origin Sector hostiles/armadas. |
 | french-marshal-q-1f0a28 | French Marshal Q | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | garak-771862 | Garak | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -180,7 +183,6 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | harrison-56cc6c | Harrison | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Captain: Explorer hostile gate modeled in LCARS; level-70 unlock gated via defender_level_at_most condition; bridge Sabotage uses ShieldMitigationBypassFraction on defender mitigation for round 1 only (duration→RoundRange). |
 | harry-kim-a79fdf | Harry Kim | 1 | 0/0/0 | 0/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | 100 | 100 | 100 | 0 | 100 | A | 100 | economy_only | Native English identity binds source 497650232 to Harry Kim: below-decks Ashes to Ashes applies Burning (Tal-not-on-bridge gate); Voyager active-ability cost efficiency is non-combat. The prior catalog swapped this officer with Neelix. |
 | hendorff-549c65 | Hendorff | 1 | 1/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | — | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
-| honorguard-worf-8ac58c | Honorguard Worf | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | hugh-9fc348 | Hugh | 1 | 0/0/0 | 0/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | — | 100 | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | icheb-fb3bd7 | Icheb | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | ikatika-4fa1ba | Ikat’Ika | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -211,7 +213,6 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | lorca-d32ec8 | Lorca | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | lursa-57a544 | Lursa | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Cloaking cooldown on ship active ability — not modeled in combat sim (:non_combat). |
 | m-benga-53446d | M'Benga | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
-| m-ral-986e7a | M'Ral | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mara-bd3ca6 | Mara | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | Cap weapon_damage at combat start; bridge enemy ShipDodge on_round_end. |
 | mara-dalen-6827 | Mara Dalen | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | mariachi-q-c8cf6e | Mariachi Q | 2 | 0/0/0 | 1/0/0 | 1/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | 100 | 100 | 100 | 0 | 100 | A | 100 | none | — |
@@ -243,7 +244,6 @@ Rows with at least one combat-intent effect appear first, sorted by **`combat_au
 | one-of-eleven-ee0ee9 | One Of Eleven | 1 | 1/0/0 | 0/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | — | — | 100 | 100 | 0 | 100 | A | 50 | mixed | — |
 | otto-cb0fb6 | Otto | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | pan-13e04e | Pan | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
-| paul-stamets-4aa6ab | Paul Stamets | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |
 | phlox-72c07b | Phlox | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | Bridge reduces enemy critical chance at combat start for eight rounds, excluding armadas and stations (symmetric on attacker and PvP defender crews). Below-deck Cutting Beam ability cost is non-combat. |
 | pic-admiral-picard-5f2936 | PIC Admiral Picard | 2 | 1/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | 100 | 100 | — | 100 | 100 | 0 | 100 | A | 100 | none | — |
 | pic-beverly-crusher-26f56a | PIC Beverly Crusher | 1 | 0/0/0 | 1/0/0 | 0/0/0 | 0 | 0 | 0 | 0 | 0 | — | 100 | — | 100 | 100 | 0 | 100 | A | 100 | economy_only | — |

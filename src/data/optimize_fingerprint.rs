@@ -166,7 +166,12 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   `SelfDefending`/`SelfAttacking`/`SelfAtStation`), symmetric PvP defender perspective in
 ///   `engine.rs` & defender `OfficerStatConditionContext`, `defender_profile_id` roster isolation,
 ///   and unlocking `SelfDefending`-gated opponent weapon damage reduction (Carol, K'Bisch, TOS Chekov).
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 36;
+/// * 36 → 37 (2026-11): QA #413 quick wins — Holodeck `473361651` routes to NPC-hostile-only base
+///   piercing stats (`armor_piercing`, `shield_piercing`, `accuracy`) instead of unconditional
+///   damage-through `pierce`; FCM Data `1610205778` moves to its verified captain seat; unsupported
+///   single-axis `ArmorPiercing` abilities (Azetbur, Honorguard Worf, M'Ral, Paul Stamets) stay
+///   quarantined with diagnostics instead of falling through to damage-through `shield_pierce`.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 37;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
