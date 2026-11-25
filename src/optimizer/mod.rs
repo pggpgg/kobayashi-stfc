@@ -34,27 +34,28 @@ use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use tracing::info;
 
-use crate::combat::EnemyType;
+use crate::combat::{EnemyType, EnemyTypes};
 use crate::data::data_registry::DataRegistry;
 use crate::data::heuristics::BelowDecksPoolMode;
 use crate::data::officer::{load_canonical_officers, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::officer_eligibility::{
-    is_eligible_for_optimization, load_eligibility_matrix, EligibilityMatrix,
+    is_eligible_for_optimization_for_tags, load_eligibility_matrix, EligibilityMatrix,
     DEFAULT_ELIGIBILITY_MATRIX_PATH,
 };
 use crate::optimizer::constraints::{
     filter_candidates, normalize_officer_name, CrewSearchConstraints,
 };
 use crate::optimizer::crew_generator::{
-    build_officer_pools_from_registry, CandidateStrategy, CrewCandidate, CrewGenerator,
+    build_officer_pools_from_registry_for_tags, CandidateStrategy, CrewCandidate, CrewGenerator,
     BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
 };
 use crate::optimizer::exhaustive_adaptive::run_exhaustive_scout_then_full_mc;
 use crate::optimizer::genetic::{run_genetic_optimizer_ranked, GeneticConfig};
 use crate::optimizer::matchup_priors::analytical_prefilter_rank_score;
 use crate::optimizer::monte_carlo::scenario::{
-    build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
-    scenario_to_combat_input_from_shared, DefenderOpponent, PlayerDefenderOfficerCrewOverride,
+    build_shared_scenario_data_from_registry_with_context,
+    build_shared_scenario_data_standalone_with_context, scenario_to_combat_input_from_shared,
+    DefenderOpponent, PlayerDefenderOfficerCrewOverride, ScenarioEngagementOverride,
     SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
@@ -145,9 +146,12 @@ pub(crate) fn apply_crew_constraints(
             .iter()
             .map(|officer| (normalize_officer_name(&officer.name), officer))
             .collect();
-        let pvp_mode = scenario.pvp.is_some();
-        let enemy = scenario.enemy_type;
-        // Eligibility matrix (per-ability scenario verdicts). Absent → `is_eligible_for_optimization`
+        let tags = scenario.eligibility_enemy_types();
+        let pvp_mode = scenario.pvp.is_some()
+            || tags
+                .iter()
+                .any(|e| matches!(e, EnemyType::PvpSpace | EnemyType::PvpStation));
+        // Eligibility matrix (per-ability scenario verdicts). Absent → `is_eligible_for_optimization_for_tags`
         // falls back to the legacy below-decks heuristic, preserving prior behavior. Loaded once
         // per call, mirroring the canonical-officer load above.
         let matrix = load_optimization_eligibility_matrix();
@@ -156,7 +160,9 @@ pub(crate) fn apply_crew_constraints(
             officer_by_name
                 .get(&normalize_officer_name(name))
                 .is_none_or(|officer| {
-                    is_eligible_for_optimization(officer, slot, enemy, matrix_ref, pvp_mode)
+                    is_eligible_for_optimization_for_tags(
+                        officer, slot, &tags, matrix_ref, pvp_mode,
+                    )
                 })
         };
         candidates.retain(|candidate| {
@@ -212,7 +218,24 @@ pub fn enforce_candidate_optimization_eligibility_with_registry(
         registry,
         profile_id,
         below_decks_slots,
-        Some(enemy_type),
+        Some(&[enemy_type]),
+        candidates,
+    )
+}
+
+/// Multi-tag variant of [`enforce_candidate_optimization_eligibility_with_registry`].
+pub fn enforce_candidate_optimization_eligibility_for_tags_with_registry(
+    registry: &DataRegistry,
+    profile_id: Option<&str>,
+    below_decks_slots: usize,
+    enemy_types: &[EnemyType],
+    candidates: Vec<CrewCandidate>,
+) -> (Vec<CrewCandidate>, CandidateLegalitySummary) {
+    enforce_candidate_legality_inner(
+        registry,
+        profile_id,
+        below_decks_slots,
+        Some(enemy_types),
         candidates,
     )
 }
@@ -221,16 +244,16 @@ fn enforce_candidate_legality_inner(
     registry: &DataRegistry,
     profile_id: Option<&str>,
     below_decks_slots: usize,
-    enemy_type: Option<EnemyType>,
+    enemy_types: Option<&[EnemyType]>,
     candidates: Vec<CrewCandidate>,
 ) -> (Vec<CrewCandidate>, CandidateLegalitySummary) {
     let mut summary = CandidateLegalitySummary::default();
-    // The pool builder prunes ineligible officers across all seats for `enemy_type` (when set), so
+    // The pool builder prunes ineligible officers across all seats for `enemy_types` (when set), so
     // the seat-membership check below also enforces scenario eligibility. `None` = legality only.
-    let Some(pools) = build_officer_pools_from_registry(
+    let Some(pools) = build_officer_pools_from_registry_for_tags(
         registry,
         BelowDecksPoolMode::Relaxed,
-        enemy_type,
+        enemy_types,
         profile_id,
         below_decks_slots,
         None,
@@ -685,6 +708,13 @@ pub struct OptimizationScenario<'a> {
     /// Resolved combat scenario (explicit `enemy_type` request field, else inferred from the
     /// target). Drives the eligibility-matrix hard filter in [`apply_crew_constraints`].
     pub enemy_type: crate::combat::EnemyType,
+    /// Optional explicit engagement override (`enemy_type`, `wave_defense`) passed through to
+    /// [`crate::data::officer_eligibility::resolve_combat_context`] when building simulation data.
+    pub engagement_override: ScenarioEngagementOverride,
+    /// Optional full multi-tag engagement list (e.g. `[GroupArmadas, Waves]`) used for
+    /// any-tag-eligible filtering in [`apply_crew_constraints`]. When `None`, falls back to
+    /// `&[self.enemy_type]`.
+    pub engagement_enemy_types: Option<EnemyTypes>,
     /// Optional crews prepended before generated candidates (deduped by stable hash); e.g. warm-start from UI.
     pub warm_start: Vec<CrewCandidate>,
     /// Crews used only for matchup priors in analytical ranking (not prepended to the candidate list).
@@ -755,6 +785,8 @@ impl Default for OptimizationScenario<'_> {
             player_defender_officer_crew: None,
             pvp: None,
             enemy_type: crate::combat::EnemyType::RedMovingSpace,
+            engagement_override: ScenarioEngagementOverride::default(),
+            engagement_enemy_types: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -764,6 +796,38 @@ impl Default for OptimizationScenario<'_> {
             local_refinement: None,
             portfolio_racing_trial_budget: None,
         }
+    }
+}
+
+impl OptimizationScenario<'_> {
+    /// Effective [`ScenarioEngagementOverride`] for simulation setup: preserves explicit
+    /// `engagement_override` (including `wave_defense` and explicit `Some(RedMovingSpace)`),
+    /// and promotes non-default `enemy_type` when `engagement_override` was left unset.
+    pub fn effective_engagement_override(&self) -> ScenarioEngagementOverride {
+        if self.engagement_override.enemy_type.is_some() || self.engagement_override.wave_defense {
+            self.engagement_override
+        } else if self.enemy_type != EnemyType::RedMovingSpace {
+            ScenarioEngagementOverride {
+                enemy_type: Some(self.enemy_type),
+                wave_defense: false,
+            }
+        } else {
+            ScenarioEngagementOverride::default()
+        }
+    }
+
+    /// Active engagement tags used for any-tag-eligible officer pool filtering.
+    pub fn eligibility_enemy_types(&self) -> Vec<EnemyType> {
+        if let Some(ref tags) = self.engagement_enemy_types {
+            if !tags.0.is_empty() {
+                return tags.0.clone();
+            }
+        }
+        let mut tags = vec![self.enemy_type];
+        if self.engagement_override.wave_defense && !tags.contains(&EnemyType::Waves) {
+            tags.push(EnemyType::Waves);
+        }
+        tags
     }
 }
 
@@ -876,6 +940,7 @@ fn candidate_strategy_from_scenario(scenario: &OptimizationScenario<'_>) -> Cand
         below_decks_pool_mode: scenario.below_decks_pool_mode,
         pvp_mode: scenario.pvp.is_some(),
         enemy_type: scenario.enemy_type,
+        engagement_enemy_types: Some(scenario.eligibility_enemy_types()),
         below_decks_slots: scenario.below_decks_slots,
         constraints: scenario.constraints.clone(),
         roster_profile_id: scenario.profile_id.map(String::from),
@@ -1089,7 +1154,7 @@ fn optimize_scenario_tiered_with_registry(
     );
     let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
     let candidates = apply_crew_constraints(candidates, scenario);
-    let shared_tiered = build_shared_scenario_data_from_registry(
+    let shared_tiered = build_shared_scenario_data_from_registry_with_context(
         registry,
         scenario.ship,
         scenario.hostile,
@@ -1100,6 +1165,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
+        scenario.effective_engagement_override(),
     );
     let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
@@ -1149,6 +1215,7 @@ fn optimize_scenario_tiered_with_registry(
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
+        scenario.effective_engagement_override(),
         pre_ref,
         !scenario.tiered_scout_uniform,
         scenario.tiered_confirm_budget_cap_mult,
@@ -1200,7 +1267,7 @@ fn optimize_scenario_exhaustive_with_registry(
     );
     let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
     let candidates = apply_crew_constraints(candidates, scenario);
-    let shared_ex = build_shared_scenario_data_from_registry(
+    let shared_ex = build_shared_scenario_data_from_registry_with_context(
         registry,
         scenario.ship,
         scenario.hostile,
@@ -1211,6 +1278,7 @@ fn optimize_scenario_exhaustive_with_registry(
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
+        scenario.effective_engagement_override(),
     );
     let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
@@ -1303,12 +1371,13 @@ fn optimize_scenario_exhaustive(scenario: &OptimizationScenario<'_>) -> Vec<Rank
     let candidates = generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
     let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
     let candidates = apply_crew_constraints(candidates, scenario);
-    let shared = build_shared_scenario_data_standalone(
+    let shared = build_shared_scenario_data_standalone_with_context(
         scenario.ship,
         scenario.hostile,
         scenario_support_buff_request(scenario),
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
+        scenario.effective_engagement_override(),
     );
     let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
     let (candidates, _) = analytical_prefilter_unless_chain(
@@ -1376,6 +1445,7 @@ where
             roster_profile_id: scenario.profile_id.map(String::from),
             ship_tier: scenario.ship_tier,
             ship_level: scenario.ship_level,
+            engagement_override: scenario.effective_engagement_override(),
             ..GeneticConfig::default()
         }
     } else {
@@ -1392,6 +1462,7 @@ where
         cfg.roster_profile_id = scenario.profile_id.map(String::from);
         cfg.ship_tier = scenario.ship_tier;
         cfg.ship_level = scenario.ship_level;
+        cfg.engagement_override = scenario.effective_engagement_override();
         cfg
     };
     run_genetic_optimizer_ranked(
@@ -1435,12 +1506,13 @@ where
                 generator.generate_candidates(scenario.ship, scenario.hostile, scenario.seed);
             let candidates = prepend_warm_start_dedupe(&scenario.warm_start, candidates);
             let candidates = apply_crew_constraints(candidates, scenario);
-            let shared = build_shared_scenario_data_standalone(
+            let shared = build_shared_scenario_data_standalone_with_context(
                 scenario.ship,
                 scenario.hostile,
                 scenario_support_buff_request(scenario),
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
+                scenario.effective_engagement_override(),
             );
             let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, _) = analytical_prefilter_unless_chain(
@@ -1567,17 +1639,18 @@ fn run_local_refinement_pass(
     if ranked.is_empty() {
         return LocalRefinementPassReport::default();
     }
-    let Some(pools) = build_officer_pools_from_registry(
+    let elig_tags = scenario.eligibility_enemy_types();
+    let Some(pools) = build_officer_pools_from_registry_for_tags(
         registry,
         scenario.below_decks_pool_mode,
-        Some(scenario.enemy_type),
+        Some(elig_tags.as_slice()),
         scenario.profile_id,
         scenario.below_decks_slots,
         scenario.constraints.as_ref(),
     ) else {
         return LocalRefinementPassReport::default();
     };
-    let shared = build_shared_scenario_data_from_registry(
+    let shared = build_shared_scenario_data_from_registry_with_context(
         registry,
         scenario.ship,
         scenario.hostile,
@@ -1588,6 +1661,7 @@ fn run_local_refinement_pass(
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
+        scenario.effective_engagement_override(),
     );
     // The climb starts from the leading seed_crews, but every already-ranked crew is
     // excluded from its neighborhood so a lower finalist is never confirmed twice.
@@ -1698,7 +1772,7 @@ where
             let after_warm_start_dedupe = candidates.len();
             let candidates = apply_crew_constraints(candidates, scenario);
             let after_constraints = candidates.len();
-            let shared = build_shared_scenario_data_from_registry(
+            let shared = build_shared_scenario_data_from_registry_with_context(
                 registry,
                 scenario.ship,
                 scenario.hostile,
@@ -1709,6 +1783,7 @@ where
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
                 scenario.pvp.clone(),
+                scenario.effective_engagement_override(),
             );
             let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
@@ -1820,6 +1895,7 @@ where
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
                 scenario.pvp.clone(),
+                scenario.effective_engagement_override(),
                 pre_ref,
                 scout_adaptive,
                 scenario.tiered_confirm_budget_cap_mult,
@@ -1888,7 +1964,7 @@ where
             let after_warm_start_dedupe = candidates.len();
             let candidates = apply_crew_constraints(candidates, scenario);
             let after_constraints = candidates.len();
-            let shared_ex = build_shared_scenario_data_from_registry(
+            let shared_ex = build_shared_scenario_data_from_registry_with_context(
                 registry,
                 scenario.ship,
                 scenario.hostile,
@@ -1899,6 +1975,7 @@ where
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
                 scenario.pvp.clone(),
+                scenario.effective_engagement_override(),
             );
             let keep = resolved_analytical_prefilter_keep(scenario, candidates.len());
             let (candidates, analytical_prefilter) = analytical_prefilter_unless_chain(
@@ -2265,6 +2342,7 @@ where
                 scenario.defender_opponent,
                 scenario.player_defender_officer_crew.clone(),
                 scenario.pvp.clone(),
+                scenario.effective_engagement_override(),
                 // No optimize-history preconfirm reuse: the control lane stays
                 // independent of previously confirmed crews.
                 None,
@@ -2384,6 +2462,8 @@ pub fn optimize_crew(
         player_defender_officer_crew: None,
         pvp: None,
         enemy_type: crate::combat::EnemyType::RedMovingSpace,
+        engagement_override: ScenarioEngagementOverride::default(),
+        engagement_enemy_types: None,
         warm_start: Vec::new(),
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
@@ -2417,6 +2497,7 @@ mod tests {
         build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
         DefenderOpponent,
     };
+    use crate::optimizer::monte_carlo::ScenarioEngagementOverride;
     use crate::optimizer::monte_carlo::{
         run_monte_carlo_confirm_topk_with_shared,
         run_monte_carlo_parallel_deduped_chunked_with_shared, run_monte_carlo_with_shared,
@@ -2980,6 +3061,8 @@ mod tests {
             player_defender_officer_crew: None,
             pvp: None,
             enemy_type: crate::combat::EnemyType::RedMovingSpace,
+            engagement_override: ScenarioEngagementOverride::default(),
+            engagement_enemy_types: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -3141,6 +3224,8 @@ mod tests {
             player_defender_officer_crew: None,
             pvp: None,
             enemy_type: crate::combat::EnemyType::RedMovingSpace,
+            engagement_override: ScenarioEngagementOverride::default(),
+            engagement_enemy_types: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -3221,6 +3306,8 @@ mod tests {
             player_defender_officer_crew: None,
             pvp: None,
             enemy_type: crate::combat::EnemyType::RedMovingSpace,
+            engagement_override: ScenarioEngagementOverride::default(),
+            engagement_enemy_types: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,
@@ -3295,6 +3382,8 @@ mod tests {
             player_defender_officer_crew: None,
             pvp: None,
             enemy_type: crate::combat::EnemyType::RedMovingSpace,
+            engagement_override: ScenarioEngagementOverride::default(),
+            engagement_enemy_types: None,
             warm_start: Vec::new(),
             prior_reference_crews: Vec::new(),
             optimize_cache_key: None,

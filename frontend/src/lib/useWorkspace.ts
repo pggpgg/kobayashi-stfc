@@ -263,6 +263,7 @@ export function useWorkspace() {
       belowDecksSlots: belowDeckSlotCount(shipLevel, belowDeckUnlockLevels),
       fastDiscovery,
       enableLearnedPairPrior,
+      enemyType,
     });
 
   // Preset saving state
@@ -495,6 +496,7 @@ export function useWorkspace() {
           // without this a 10-kill chain reads as costing what a single fight does.
           chain_kills_target: chainGrindEnabled ? chainKillsTarget : undefined,
           strategy: optimizerStrategy,
+          enemy_type: enemyType || undefined,
         },
         activeProfileId,
       )
@@ -525,6 +527,7 @@ export function useWorkspace() {
     chainGrindEnabled,
     chainKillsTarget,
     optimizerStrategy,
+    enemyType,
   ]);
 
   // Fetch available heuristic seeds

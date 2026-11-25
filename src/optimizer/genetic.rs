@@ -21,8 +21,9 @@ use crate::optimizer::crew_generator::{
     OfficerPools, BRIDGE_SLOTS, DEFAULT_BELOW_DECKS_SLOTS,
 };
 use crate::optimizer::monte_carlo::scenario::{
-    build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
-    DefenderOpponent, SharedScenarioData,
+    build_shared_scenario_data_from_registry_with_context,
+    build_shared_scenario_data_standalone_with_context, DefenderOpponent,
+    ScenarioEngagementOverride, SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
     crew_candidate_ordered_hash, crew_candidate_stable_hash,
@@ -69,7 +70,7 @@ fn build_shared_for_genetic(
     );
 
     let from_registry = |registry: &DataRegistry| {
-        build_shared_scenario_data_from_registry(
+        build_shared_scenario_data_from_registry_with_context(
             registry,
             ship,
             hostile,
@@ -80,6 +81,7 @@ fn build_shared_for_genetic(
             config.defender_opponent,
             None,
             None,
+            config.engagement_override,
         )
     };
 
@@ -88,12 +90,13 @@ fn build_shared_for_genetic(
     }
     match DataRegistry::load() {
         Ok(loaded) => from_registry(&loaded),
-        Err(_) => build_shared_scenario_data_standalone(
+        Err(_) => build_shared_scenario_data_standalone_with_context(
             ship,
             hostile,
             support_request,
             config.defender_opponent,
             None,
+            config.engagement_override,
         ),
     }
 }
@@ -212,6 +215,8 @@ pub struct GeneticConfig {
     pub ship_tier: Option<u32>,
     /// Attacker ship level (1-based). Paired with `ship_tier` to apply per-level scaling.
     pub ship_level: Option<u32>,
+    /// Optional explicit engagement override (`enemy_type`, `wave_defense`).
+    pub engagement_override: ScenarioEngagementOverride,
 }
 
 impl Default for GeneticConfig {
@@ -242,6 +247,7 @@ impl Default for GeneticConfig {
             offspring_reduced_budget_mul: None,
             ship_tier: None,
             ship_level: None,
+            engagement_override: ScenarioEngagementOverride::default(),
         }
     }
 }

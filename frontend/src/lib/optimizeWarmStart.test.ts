@@ -90,4 +90,25 @@ describe("buildOptimizeWarmStartKey", () => {
     });
     expect(three).not.toBe(four);
   });
+
+  it("changes when enemyType or waveDefense changes", () => {
+    const autoKey = buildOptimizeWarmStartKey({
+      ...baseArgs,
+      enemyType: "",
+      waveDefense: false,
+    });
+    const soloKey = buildOptimizeWarmStartKey({
+      ...baseArgs,
+      enemyType: "solo_armadas",
+      waveDefense: false,
+    });
+    const waveKey = buildOptimizeWarmStartKey({
+      ...baseArgs,
+      enemyType: "",
+      waveDefense: true,
+    });
+    expect(autoKey).not.toBe(soloKey);
+    expect(autoKey).not.toBe(waveKey);
+    expect(soloKey).not.toBe(waveKey);
+  });
 });

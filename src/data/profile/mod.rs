@@ -2628,24 +2628,52 @@ pub fn apply_profile_to_attacker(
 /// Add verified native officer launch HP fractions to the same MULT pool as
 /// profile research/building fractions and the officer Health breakpoint bonus.
 pub fn apply_profile_to_attacker_with_health_pool(
-    mut attacker: Combatant,
+    attacker: Combatant,
     profile: &PlayerProfile,
     owner_faction_slug: Option<&str>,
     officer_stat_runtime: OfficerStatRuntimeBonus,
     static_health: StaticHealthPoolBonus,
 ) -> Combatant {
+    apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
+        attacker,
+        profile,
+        owner_faction_slug,
+        officer_stat_runtime,
+        static_health,
+        0.0,
+    )
+}
+
+/// Like [`apply_profile_to_attacker_with_health_pool`] with an additional scenario-gated
+/// additive weapon-damage fraction (e.g. `weapon_damage_vs_armada_hostile` from Armada Control
+/// Center or `weapon_damage_vs_outpost` when fighting an Outpost).
+pub fn apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
+    mut attacker: Combatant,
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    officer_stat_runtime: OfficerStatRuntimeBonus,
+    static_health: StaticHealthPoolBonus,
+    extra_weapon_damage_fraction: f64,
+) -> Combatant {
+    let extra_wd = if extra_weapon_damage_fraction.is_finite() && extra_weapon_damage_fraction > 0.0
+    {
+        extra_weapon_damage_fraction
+    } else {
+        0.0
+    };
     let osr = officer_stat_runtime;
     let osr_is_zero = osr == OfficerStatRuntimeBonus::default();
     if profile.bonuses.is_empty()
         && profile.research_owner_faction_bonuses.is_empty()
         && osr_is_zero
         && static_health == StaticHealthPoolBonus::default()
+        && extra_wd == 0.0
     {
         return attacker;
     }
     let bonus_lookup = ProfileBonusLookup::new(profile, owner_faction_slug);
     let gb = |k: &str| bonus_lookup.get(k);
-    let weapon = 1.0 + gb("weapon_damage");
+    let weapon = 1.0 + gb("weapon_damage") + extra_wd;
     // Officer Health contributes to the same native MULT pool as HP research,
     // buildings and technology, rather than multiplying the completed pool again.
     let hull_hp = 1.0 + gb("hull_hp") + osr.health_bonus + static_health.hull_fraction;

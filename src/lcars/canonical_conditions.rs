@@ -136,8 +136,20 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
             return Some(lcars_cond_base("attacker_officer_tal_not_on_bridge"));
         }
         // Kobayashi ship-vs-hostile scenario literals (see `docs/CANONICAL_CONDITIONS.md`).
-        "TargetNotASB" | "SelfAttacking" | "TargetNotPlayerStation" => {
+        "TargetNotASB" | "SelfAttacking" => {
             return Some(lcars_cond_base("literal_true"));
+        }
+        // Excludes player stations (`pvp_station` engagement tag); true in ship PvP and all PvE.
+        "TargetNotPlayerStation" => {
+            let mut st = lcars_cond_base("engagement_includes");
+            st.enemy_type = Some("pvp_station".to_string());
+            return Some(lcars_not(st));
+        }
+        // Station / defense-platform raid abilities: active only when `pvp_station` is active.
+        "EnemySentinel" => {
+            let mut st = lcars_cond_base("engagement_includes");
+            st.enemy_type = Some("pvp_station".to_string());
+            return Some(st);
         }
         // Default ship-vs-hostile / PvP attack path assumes the player is not defending.
         // Omit from LCARS `and` (do not emit literal_false — that arm never evaluates true).
@@ -188,19 +200,64 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
             retaliators.enemy_type = Some("outpost_retaliation_attackers".to_string());
             return Some(lcars_or(vec![outposts, retaliators]));
         }
-        // Station / sentinel / overworld encounter tokens: not modeled on default ship-vs-hostile path.
-        "EnemySentinel"
-        | "CombatGameContext"
-        | "SelfAtStation"
-        | "SelfAtAssault2"
-        | "TargetIsInvadingEntity" => {
+        // Non-Armada NPC hostiles OR Solo Outposts (Caleb Mir bridge: works on red hostiles,
+        // Wave Defense, Outpost Retaliators, and Outpost Armadas whose combat ship_type is Armada).
+        "EnemyNonArmadaHostileOrOutpost" => {
+            let mut outposts = lcars_cond_base("engagement_includes");
+            outposts.enemy_type = Some("outpost_armadas".to_string());
+            return Some(LcarsCondition {
+                weapon_scope: Default::default(),
+                condition_type: "and".to_string(),
+                stat: None,
+                threshold_pct: None,
+                min: None,
+                max: None,
+                faction: None,
+                group: None,
+                min_members: None,
+                tag: None,
+                ship_type: None,
+                faction_id: None,
+                ship_id: None,
+                enemy_type: None,
+                battle_types: None,
+                conditions: Some(vec![
+                    lcars_cond_base("defender_is_npc_hostile"),
+                    lcars_or(vec![
+                        lcars_not(lcars_defender_ship_type_is("armada")),
+                        outposts,
+                    ]),
+                ]),
+            });
+        }
+        // Station defense / overworld context tokens: deferred to PR 3 PvP role/location wiring.
+        "CombatGameContext" | "SelfAtStation" => {
             return Some(lcars_cond_base("literal_false"));
         }
-        // Invading half is not a distinct signal yet; armada fights gate on defender hull class Armada.
-        "TargetIsArmadaOrInvadingEntity" => {
-            return Some(lcars_defender_ship_type_is("armada"));
+        // Alliance Assault engagements (`EnemyType::Assaults`).
+        "SelfAtAssault2" => {
+            let mut c = lcars_cond_base("engagement_includes");
+            c.enemy_type = Some("assaults".to_string());
+            return Some(c);
         }
-        "TargetNotInvadingEntity" => return Some(lcars_cond_base("literal_true")),
+        // Invading Entities (`EnemyType::InvadingEntities`).
+        "TargetIsInvadingEntity" => {
+            let mut c = lcars_cond_base("engagement_includes");
+            c.enemy_type = Some("invading_entities".to_string());
+            return Some(c);
+        }
+        // Armadas OR Invading Entities (`ShipType::Armada` OR `EnemyType::InvadingEntities`).
+        "TargetIsArmadaOrInvadingEntity" => {
+            let mut inv = lcars_cond_base("engagement_includes");
+            inv.enemy_type = Some("invading_entities".to_string());
+            return Some(lcars_or(vec![lcars_defender_ship_type_is("armada"), inv]));
+        }
+        // True unless the engagement includes Invading Entities.
+        "TargetNotInvadingEntity" => {
+            let mut inv = lcars_cond_base("engagement_includes");
+            inv.enemy_type = Some("invading_entities".to_string());
+            return Some(lcars_not(inv));
+        }
         // Canonical opponent category: NPC hostile (ship-vs-hostile optimizer default).
         "EnemyHostile" => return Some(lcars_cond_base("defender_is_npc_hostile")),
         // Canonical opponent category: player ship (PvP-shaped API toggle).
@@ -589,13 +646,28 @@ mod tests {
             ("SelfAttacking", AbilityCondition::LiteralBool(true)),
             (
                 "TargetNotPlayerStation",
-                AbilityCondition::LiteralBool(true),
+                AbilityCondition::Not(Box::new(AbilityCondition::EngagementIncludes(
+                    EnemyType::PvpStation,
+                ))),
             ),
-            ("EnemySentinel", AbilityCondition::LiteralBool(false)),
+            (
+                "EnemySentinel",
+                AbilityCondition::EngagementIncludes(EnemyType::PvpStation),
+            ),
             ("CombatGameContext", AbilityCondition::LiteralBool(false)),
             (
+                "SelfAtAssault2",
+                AbilityCondition::EngagementIncludes(EnemyType::Assaults),
+            ),
+            (
+                "TargetIsInvadingEntity",
+                AbilityCondition::EngagementIncludes(EnemyType::InvadingEntities),
+            ),
+            (
                 "TargetNotInvadingEntity",
-                AbilityCondition::LiteralBool(true),
+                AbilityCondition::Not(Box::new(AbilityCondition::EngagementIncludes(
+                    EnemyType::InvadingEntities,
+                ))),
             ),
         ] {
             let lc = map_canonical_condition_token(tok).expect(tok);
@@ -622,13 +694,37 @@ mod tests {
     }
 
     #[test]
-    fn target_is_armada_or_invading_entity_maps_to_defender_armada_class() {
+    fn target_is_armada_or_invading_entity_maps_to_or_armada_or_invading() {
         let lc = map_canonical_condition_token("TargetIsArmadaOrInvadingEntity").expect("maps");
-        assert_eq!(lc.condition_type, "defender_ship_type_is");
-        assert_eq!(lc.ship_type.as_deref(), Some("armada"));
+        assert_eq!(lc.condition_type, "or");
         let spec = lcars_condition_to_spec(&lc).unwrap();
         let ac = compile_condition(&spec).unwrap();
-        assert_eq!(ac, AbilityCondition::DefenderShipTypeIs(ShipType::Armada));
+        assert_eq!(
+            ac,
+            AbilityCondition::Or(vec![
+                AbilityCondition::DefenderShipTypeIs(ShipType::Armada),
+                AbilityCondition::EngagementIncludes(EnemyType::InvadingEntities),
+            ])
+        );
+    }
+
+    #[test]
+    fn enemy_non_armada_hostile_or_outpost_maps_cleanly() {
+        let lc = map_canonical_condition_token("EnemyNonArmadaHostileOrOutpost").expect("maps");
+        let spec = lcars_condition_to_spec(&lc).unwrap();
+        let ac = compile_condition(&spec).unwrap();
+        assert_eq!(
+            ac,
+            AbilityCondition::And(vec![
+                AbilityCondition::DefenderIsNpcHostile,
+                AbilityCondition::Or(vec![
+                    AbilityCondition::Not(Box::new(AbilityCondition::DefenderShipTypeIs(
+                        ShipType::Armada
+                    ))),
+                    AbilityCondition::EngagementIncludes(EnemyType::OutpostArmadas),
+                ]),
+            ])
+        );
     }
 
     #[test]

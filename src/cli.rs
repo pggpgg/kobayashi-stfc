@@ -445,6 +445,8 @@ fn handle_sensitivity(args: &[String]) -> i32 {
         rounds: None,
         metric: Some(metric),
         deltas: None,
+        enemy_type: None,
+        wave_defense: None,
     };
 
     let registry = match DataRegistry::load() {
@@ -558,6 +560,8 @@ fn handle_morris_sensitivity(args: &[String]) -> i32 {
         rounds: None,
         metric: Some(metric),
         deltas: None,
+        enemy_type: None,
+        wave_defense: None,
     };
 
     let registry = match DataRegistry::load() {
@@ -671,6 +675,8 @@ fn handle_sobol_sensitivity(args: &[String]) -> i32 {
         metric: Some(metric),
         deltas: None,
         include_pairwise: Some(include_pairwise),
+        enemy_type: None,
+        wave_defense: None,
     };
 
     let registry = match DataRegistry::load() {

@@ -111,6 +111,9 @@ fn scenario(row: &BenchRow, scheduler: ScoutScheduler) -> OptimizationScenario<'
         player_defender_officer_crew: None,
         pvp: None,
         enemy_type: kobayashi::combat::EnemyType::RedMovingSpace,
+        engagement_override: kobayashi::optimizer::monte_carlo::ScenarioEngagementOverride::default(
+        ),
+        engagement_enemy_types: None,
         warm_start: Vec::new(),
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,

@@ -22,9 +22,9 @@ use std::hash::{Hash, Hasher};
 use std::sync::{Arc, Mutex};
 
 use super::scenario::{
-    build_shared_scenario_data_from_registry, build_shared_scenario_data_standalone,
+    build_shared_scenario_data_from_registry_with_context, build_shared_scenario_data_standalone,
     scenario_to_combat_input_from_shared, stable_scenario_seed_panel, DefenderOpponent,
-    PlayerDefenderOfficerCrewOverride, SharedScenarioData,
+    PlayerDefenderOfficerCrewOverride, ScenarioEngagementOverride, SharedScenarioData,
 };
 
 #[derive(Debug, Clone)]
@@ -778,11 +778,7 @@ fn run_candidate_monte_carlo(
     };
 
     // Precompute values that don't change per trial
-    let defender_faction = shared
-        .hostile_rec
-        .as_ref()
-        .map(|h| h.opponent_faction_tag())
-        .unwrap_or(OpponentFactionTag::Unknown);
+    let defender_faction = shared.defender_faction_for_combat();
     let defender_ship_type = shared.defender_ship_type_for_combat();
     let attacker_ship_type = shared.attacker_ship_type_for_combat();
     let defender_is_npc = shared.defender_opponent.defender_is_npc_hostile();
@@ -1725,7 +1721,44 @@ pub fn run_monte_carlo_parallel_with_registry(
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
     pvp: Option<super::scenario::PvpScenarioParams>,
 ) -> (Vec<SimulationResult>, bool) {
-    let shared = build_shared_scenario_data_from_registry(
+    run_monte_carlo_parallel_with_registry_and_context(
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        candidates,
+        iterations,
+        seed,
+        profile_id,
+        support_buffs,
+        chain_grind,
+        defender_opponent,
+        player_defender_officer_crew,
+        pvp,
+        ScenarioEngagementOverride::default(),
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn run_monte_carlo_parallel_with_registry_and_context(
+    registry: &DataRegistry,
+    ship: &str,
+    hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+    profile_id: Option<&str>,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
+    chain_grind: Option<ChainGrindParams>,
+    defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    pvp: Option<super::scenario::PvpScenarioParams>,
+    engagement_override: ScenarioEngagementOverride,
+) -> (Vec<SimulationResult>, bool) {
+    let shared = build_shared_scenario_data_from_registry_with_context(
         registry,
         ship,
         hostile,
@@ -1736,6 +1769,7 @@ pub fn run_monte_carlo_parallel_with_registry(
         defender_opponent,
         player_defender_officer_crew,
         pvp,
+        engagement_override,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -1763,7 +1797,46 @@ pub fn run_monte_carlo_with_registry(
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
     pvp: Option<super::scenario::PvpScenarioParams>,
 ) -> (Vec<SimulationResult>, bool) {
-    let shared = build_shared_scenario_data_from_registry(
+    run_monte_carlo_with_registry_and_context(
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        candidates,
+        iterations,
+        seed,
+        profile_id,
+        support_buffs,
+        chain_grind,
+        defender_opponent,
+        player_defender_officer_crew,
+        pvp,
+        super::scenario::ScenarioEngagementOverride::default(),
+    )
+}
+
+/// Like [`run_monte_carlo_with_registry`] with explicit combat engagement context (`enemy_type`
+/// override and/or additive `wave_defense`).
+#[allow(clippy::too_many_arguments)]
+pub fn run_monte_carlo_with_registry_and_context(
+    registry: &DataRegistry,
+    ship: &str,
+    hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    seed: u64,
+    profile_id: Option<&str>,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
+    chain_grind: Option<ChainGrindParams>,
+    defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    pvp: Option<super::scenario::PvpScenarioParams>,
+    engagement_override: super::scenario::ScenarioEngagementOverride,
+) -> (Vec<SimulationResult>, bool) {
+    let shared = build_shared_scenario_data_from_registry_with_context(
         registry,
         ship,
         hostile,
@@ -1774,6 +1847,7 @@ pub fn run_monte_carlo_with_registry(
         defender_opponent,
         player_defender_officer_crew,
         pvp,
+        engagement_override,
     );
     let placeholder = shared.using_placeholder_combatants;
     (
@@ -1865,28 +1939,64 @@ pub fn replay_optimize_iteration_with_registry(
     support_buffs: Option<&[String]>,
     defender_opponent: DefenderOpponent,
 ) -> MonteCarloSeedReplay {
-    let shared = build_shared_scenario_data_from_registry(
+    replay_optimize_iteration_with_registry_and_context(
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        candidate,
+        scenario_seed,
+        sim_index,
+        profile_id,
+        max_trace_events,
+        support_buffs::SupportBuffScenarioRequest::attacker_only(support_buffs),
+        defender_opponent,
+        None,
+        None,
+        ScenarioEngagementOverride::default(),
+    )
+}
+
+/// Like [`replay_optimize_iteration_with_registry`], accepting full engagement overrides,
+/// optional defender crew, and PvP ship/profile parameters so replayed seeds match ranked trials.
+#[allow(clippy::too_many_arguments)]
+pub fn replay_optimize_iteration_with_registry_and_context(
+    registry: &DataRegistry,
+    ship: &str,
+    hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    candidate: &CrewCandidate,
+    scenario_seed: u64,
+    sim_index: u64,
+    profile_id: Option<&str>,
+    max_trace_events: usize,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
+    defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    pvp: Option<super::scenario::PvpScenarioParams>,
+    engagement_override: ScenarioEngagementOverride,
+) -> MonteCarloSeedReplay {
+    let shared = build_shared_scenario_data_from_registry_with_context(
         registry,
         ship,
         hostile,
         ship_tier,
         ship_level,
         profile_id,
-        support_buffs::SupportBuffScenarioRequest::attacker_only(support_buffs),
+        support_buffs,
         defender_opponent,
-        None,
-        None,
+        player_defender_officer_crew,
+        pvp,
+        engagement_override,
     );
     let input = scenario_to_combat_input_from_shared(&shared, candidate, scenario_seed);
     let external_buffs = external_buffs_trace_payload(&shared);
     let iteration_seed = input.base_seed.wrapping_add(sim_index);
     let effective_defender_hull = input.defender.hull_health;
 
-    let defender_faction = shared
-        .hostile_rec
-        .as_ref()
-        .map(|h| h.opponent_faction_tag())
-        .unwrap_or(OpponentFactionTag::Unknown);
+    let defender_faction = shared.defender_faction_for_combat();
     let defender_ship_type = shared.defender_ship_type_for_combat();
     let attacker_ship_type = shared.attacker_ship_type_for_combat();
 
@@ -2407,6 +2517,7 @@ pub(crate) fn run_monte_carlo_with_shared_variable_iterations(
 
 #[cfg(test)]
 mod tests {
+    use super::super::scenario::build_shared_scenario_data_from_registry;
     use super::*;
 
     #[test]

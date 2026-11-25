@@ -28,11 +28,12 @@ use serde::{Deserialize, Serialize};
 use crate::combat::perturb::StatKey;
 use crate::combat::rng::Rng;
 use crate::data::data_registry::DataRegistry;
+use crate::data::officer_eligibility::parse_optional_enemy_type;
 use crate::data::support_buffs;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::{
-    build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
-    DefenderOpponent,
+    build_shared_scenario_data_from_registry_with_context, scenario_to_combat_input_from_shared,
+    DefenderOpponent, ScenarioEngagementOverride,
 };
 use crate::optimizer::sensitivity::{run_one_sim_with_perturbations, OutcomeMetric};
 use crate::server::sensitivity_jobs::SensitivityJobProgress;
@@ -84,6 +85,13 @@ pub struct MorrisRequest {
     /// override is `0.0` are dropped from the perturbation set (no trajectory step for them).
     #[serde(default)]
     pub deltas: Option<HashMap<String, f64>>,
+    /// Optional explicit engagement type override (snake_case [`crate::combat::EnemyType`];
+    /// `"auto"` or unset uses catalog inference).
+    #[serde(default)]
+    pub enemy_type: Option<String>,
+    /// When `true`, enables additive Wave Defense context alongside the resolved hostile type.
+    #[serde(default)]
+    pub wave_defense: Option<bool>,
 }
 
 /// One stat's aggregated elementary-effect statistics across the `r` trajectories.
@@ -147,7 +155,13 @@ pub fn run_morris_with_progress(
     let base_seed = request.seed.unwrap_or(0);
     let metric = request.metric.unwrap_or_default();
 
-    let shared = build_shared_scenario_data_from_registry(
+    let explicit_enemy_type = parse_optional_enemy_type(request.enemy_type.as_deref())?;
+    let engagement_override = ScenarioEngagementOverride {
+        enemy_type: explicit_enemy_type,
+        wave_defense: request.wave_defense.unwrap_or(false),
+    };
+
+    let shared = build_shared_scenario_data_from_registry_with_context(
         registry,
         &request.ship,
         &request.hostile,
@@ -158,6 +172,7 @@ pub fn run_morris_with_progress(
         DefenderOpponent::default(),
         None,
         None,
+        engagement_override,
     );
 
     let candidate = CrewCandidate {

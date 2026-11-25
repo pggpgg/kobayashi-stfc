@@ -103,27 +103,36 @@ pub fn validate_sensitivity_job_request_ids(
     request: &SensitivityJobRequest,
 ) -> Result<(), String> {
     match request {
-        SensitivityJobRequest::Oat(req) => validate_sensitivity_scenario_ids(
-            registry,
-            &req.ship,
-            req.ship_tier,
-            req.ship_level,
-            &req.hostile,
-        ),
-        SensitivityJobRequest::Morris(req) => validate_sensitivity_scenario_ids(
-            registry,
-            &req.ship,
-            req.ship_tier,
-            req.ship_level,
-            &req.hostile,
-        ),
-        SensitivityJobRequest::Sobol(req) => validate_sensitivity_scenario_ids(
-            registry,
-            &req.ship,
-            req.ship_tier,
-            req.ship_level,
-            &req.hostile,
-        ),
+        SensitivityJobRequest::Oat(req) => {
+            crate::data::officer_eligibility::parse_optional_enemy_type(req.enemy_type.as_deref())?;
+            validate_sensitivity_scenario_ids(
+                registry,
+                &req.ship,
+                req.ship_tier,
+                req.ship_level,
+                &req.hostile,
+            )
+        }
+        SensitivityJobRequest::Morris(req) => {
+            crate::data::officer_eligibility::parse_optional_enemy_type(req.enemy_type.as_deref())?;
+            validate_sensitivity_scenario_ids(
+                registry,
+                &req.ship,
+                req.ship_tier,
+                req.ship_level,
+                &req.hostile,
+            )
+        }
+        SensitivityJobRequest::Sobol(req) => {
+            crate::data::officer_eligibility::parse_optional_enemy_type(req.enemy_type.as_deref())?;
+            validate_sensitivity_scenario_ids(
+                registry,
+                &req.ship,
+                req.ship_tier,
+                req.ship_level,
+                &req.hostile,
+            )
+        }
     }
 }
 

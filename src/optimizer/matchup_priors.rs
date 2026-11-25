@@ -43,11 +43,7 @@ fn eval_static_gate(
             }
         }
         AbilityCondition::DefenderFactionIs(expected) => {
-            let actual = shared
-                .hostile_rec
-                .as_ref()
-                .map(|h| h.opponent_faction_tag())
-                .unwrap_or(OpponentFactionTag::Unknown);
+            let actual = shared.defender_faction_for_combat();
             if actual == OpponentFactionTag::Unknown {
                 StaticGate::Unknown
             } else if *expected == actual {
@@ -441,7 +437,14 @@ mod tests {
     use crate::data::hostile::HostileRecord;
 
     fn minimal_shared_with_hostile(h: HostileRecord) -> SharedScenarioData {
-        let engagement_enemy_types = h.engagement_enemy_types_for_combat();
+        let combat_context = crate::data::officer_eligibility::resolve_combat_context(
+            None,
+            false,
+            false,
+            Some(&h),
+            None,
+        );
+        let engagement_enemy_types = combat_context.engagement_enemy_types.clone();
         SharedScenarioData {
             ship: "test_ship".to_string(),
             hostile: "test_hostile".to_string(),
@@ -481,6 +484,7 @@ mod tests {
             dual_gate_research_hull_hp: 0.0,
             dual_gate_research_shield_hp: 0.0,
             engagement_enemy_types,
+            combat_context,
             defender_level: None,
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,

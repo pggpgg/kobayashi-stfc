@@ -7,15 +7,15 @@ use rayon::prelude::*;
 use super::simulation::{surviving_hull_fraction, unsupported_crew_health_effects};
 use crate::combat::engine::simulate_combat_from_setup_reusing_attacker;
 use crate::combat::{
-    build_combat_setup_with_officer_stat, OpponentFactionTag, SimulationConfig,
-    SimulationResult as CombatSimResult, TraceMode,
+    build_combat_setup_with_officer_stat, SimulationConfig, SimulationResult as CombatSimResult,
+    TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::data::support_buffs;
 use crate::optimizer::crew_generator::CrewCandidate;
 use crate::optimizer::monte_carlo::scenario::{
-    build_shared_scenario_data_from_registry, scenario_to_combat_input_from_shared,
-    CombatSimulationInput, DefenderOpponent, SharedScenarioData,
+    build_shared_scenario_data_from_registry_with_context, scenario_to_combat_input_from_shared,
+    CombatSimulationInput, DefenderOpponent, ScenarioEngagementOverride, SharedScenarioData,
 };
 
 use serde::Serialize;
@@ -83,11 +83,7 @@ fn simulate_trial(
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
     };
-    let defender_faction = shared
-        .hostile_rec
-        .as_ref()
-        .map(|h| h.opponent_faction_tag())
-        .unwrap_or(OpponentFactionTag::Unknown);
+    let defender_faction = shared.defender_faction_for_combat();
     let defender_ship_type = shared.defender_ship_type_for_combat();
     let attacker_ship_type = shared.attacker_ship_type_for_combat();
     combat_config.seed = iteration_seed;
@@ -229,7 +225,42 @@ pub fn compare_crews_monte_carlo_with_registry(
     defender_opponent: DefenderOpponent,
     pvp: Option<super::scenario::PvpScenarioParams>,
 ) -> CompareCrewsOutcome {
-    let shared = build_shared_scenario_data_from_registry(
+    compare_crews_monte_carlo_with_registry_and_context(
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        candidates,
+        iterations,
+        base_seed,
+        profile_id,
+        proc_sample_trials,
+        support_buffs,
+        defender_opponent,
+        pvp,
+        ScenarioEngagementOverride::default(),
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn compare_crews_monte_carlo_with_registry_and_context(
+    registry: &DataRegistry,
+    ship: &str,
+    hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    candidates: &[CrewCandidate],
+    iterations: usize,
+    base_seed: u64,
+    profile_id: Option<&str>,
+    proc_sample_trials: u32,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
+    defender_opponent: DefenderOpponent,
+    pvp: Option<super::scenario::PvpScenarioParams>,
+    engagement_override: ScenarioEngagementOverride,
+) -> CompareCrewsOutcome {
+    let shared = build_shared_scenario_data_from_registry_with_context(
         registry,
         ship,
         hostile,
@@ -240,6 +271,7 @@ pub fn compare_crews_monte_carlo_with_registry(
         defender_opponent,
         None,
         pvp,
+        engagement_override,
     );
     let placeholder = shared.using_placeholder_combatants;
     let distributions: Vec<(CompareCrewDistribution, bool)> = candidates

@@ -32,7 +32,7 @@ use crate::optimizer::constraints::{
 };
 use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS};
 use crate::optimizer::monte_carlo::scenario::{
-    build_shared_scenario_data_from_registry, SharedScenarioData,
+    build_shared_scenario_data_from_registry_with_context, SharedScenarioData,
 };
 use crate::optimizer::monte_carlo::{
     crew_candidate_stable_hash, run_monte_carlo_with_shared,
@@ -43,9 +43,7 @@ use crate::optimizer::qd_archive::{
     QualityDiversityArchive,
 };
 use crate::optimizer::racing::{run_hyperband_racing_with_shared, RacingConfig};
-use crate::optimizer::random_stratified::{
-    sample_stratified_random_crews, StratifiedSampleParams, METHOD_RANDOM_STRATIFIED,
-};
+use crate::optimizer::random_stratified::{StratifiedSampleParams, METHOD_RANDOM_STRATIFIED};
 use crate::optimizer::ranking::{rank_results, RankedCrewResult};
 use crate::optimizer::tiered::{
     apply_confirm_sims_budget_cap, confirm_ranking_uncertainty_width,
@@ -338,7 +336,7 @@ where
     F: FnMut(OptimizeProgressTick) -> bool,
     G: FnMut() -> bool,
 {
-    let shared: SharedScenarioData = build_shared_scenario_data_from_registry(
+    let shared: SharedScenarioData = build_shared_scenario_data_from_registry_with_context(
         registry,
         scenario.ship,
         scenario.hostile,
@@ -349,6 +347,7 @@ where
         scenario.defender_opponent,
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
+        scenario.effective_engagement_override(),
     );
 
     let target_total = scenario
@@ -407,7 +406,7 @@ where
     let effective_random_target = target_total
         .saturating_sub(initial_candidates.len())
         .max(random_target);
-    let random_crews = sample_stratified_random_crews(
+    let random_crews = crate::optimizer::random_stratified::sample_stratified_random_crews_for_tags(
         registry,
         &StratifiedSampleParams {
             count: effective_random_target,
@@ -419,6 +418,7 @@ where
             constraints: scenario.constraints.as_ref(),
             exclude_hashes: Some(&seen_hashes),
         },
+        &shared.engagement_enemy_types.0,
     );
     let random_crews = apply_crew_constraints(random_crews, scenario);
     let mut random_exploration_hashes: HashSet<u64> = HashSet::with_capacity(random_crews.len());

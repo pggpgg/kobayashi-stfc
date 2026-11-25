@@ -10,19 +10,22 @@ pub(crate) mod scenario;
 mod simulation;
 
 pub use compare_crews::{
-    compare_crews_monte_carlo_with_registry, CompareCrewDistribution, CompareCrewsOutcome,
+    compare_crews_monte_carlo_with_registry, compare_crews_monte_carlo_with_registry_and_context,
+    CompareCrewDistribution, CompareCrewsOutcome,
 };
 pub use crew_resolution::crew_from_officer_names;
 pub use scenario::{
     mitigation_and_pierce_for_player_vs_player, pvp_scenario_params_from_api_fields,
     unresolved_officers_for_candidate, DefenderOpponent, PvpScenarioParams,
+    ScenarioEngagementOverride,
 };
 pub use simulation::{
     crew_candidate_ordered_hash, crew_candidate_stable_hash,
-    replay_optimize_iteration_with_registry, run_monte_carlo, run_monte_carlo_parallel,
-    run_monte_carlo_parallel_deduped, run_monte_carlo_parallel_deduped_chunked,
-    run_monte_carlo_parallel_with_registry, run_monte_carlo_with_registry, MonteCarloSeedReplay,
-    SimulationResult,
+    replay_optimize_iteration_with_registry, replay_optimize_iteration_with_registry_and_context,
+    run_monte_carlo, run_monte_carlo_parallel, run_monte_carlo_parallel_deduped,
+    run_monte_carlo_parallel_deduped_chunked, run_monte_carlo_parallel_with_registry,
+    run_monte_carlo_parallel_with_registry_and_context, run_monte_carlo_with_registry,
+    run_monte_carlo_with_registry_and_context, MonteCarloSeedReplay, SimulationResult,
 };
 pub(crate) use simulation::{
     evaluate_candidates_crn_with_trial_scores, full_mc_early_stop_enabled,

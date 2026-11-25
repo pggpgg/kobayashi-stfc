@@ -29,6 +29,7 @@ use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile::{
     apply_profile_piercing_to_attacker_stats, apply_profile_to_attacker_with_health_pool,
+    apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus,
     apply_static_buffs_to_combatant, borg_alcove_hull_hp_bonus_fraction,
     borg_operating_table_forbidden_tech_seats, forbidden_tech_derived_attack_phase_seats,
     forbidden_tech_level_tier_scaling_enabled_from_env, infusion_modulator_forbidden_tech_seats,
@@ -68,6 +69,15 @@ use super::crew_resolution::{
     hash_identifier, index_officers_by_name, normalize_lookup_key,
     roster_officer_ids_from_candidate, split_name_and_tier,
 };
+
+/// Optional user-provided engagement overrides layered on top of target inference.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ScenarioEngagementOverride {
+    /// Explicit [`crate::combat::EnemyType`] override (`None` = infer from target).
+    pub enemy_type: Option<crate::combat::EnemyType>,
+    /// Additive Wave Defense toggle (composes `[base_pve_type, EnemyType::Waves]`).
+    pub wave_defense: bool,
+}
 
 /// Who the defending combatant represents for canonical opponent-category conditions (`EnemyHostile` / `EnemyPlayer`).
 #[derive(
@@ -998,6 +1008,9 @@ pub(crate) struct SharedScenarioData {
     pub dual_gate_research_shield_hp: f64,
     /// STFC engagement tags for [`crate::combat::SimulationConfig::engagement_enemy_types`] (armada solo/group, …).
     pub engagement_enemy_types: EnemyTypes,
+    /// Unified resolved combat context (opponent kind, engagement tags, reconciled combat
+    /// defender ship_type, outpost/armada target flags).
+    pub combat_context: crate::data::officer_eligibility::ResolvedCombatContext,
     /// Optional hostile level for canonical `TargetMaxLevel`.
     pub defender_level: Option<u32>,
     /// Incoming (counter-fire) shield mitigation from canonical research (e.g. KSG early-round SM).
@@ -1083,8 +1096,12 @@ fn apply_dual_gate_hull_shield_research(attacker: &mut Combatant, shared: &Share
 }
 
 impl SharedScenarioData {
-    /// Hostile hull class for ability conditions and mitigation (defaults when no hostile record).
+    /// Reconciled defender hull class for ability conditions and mitigation (Armada when the
+    /// resolved engagement is Group/Solo/Outpost Armada; triangle/survey hull class otherwise).
     pub(crate) fn defender_ship_type_for_combat(&self) -> ShipType {
+        if let Some(st) = self.combat_context.combat_defender_ship_type {
+            return st;
+        }
         if let Some(ref ds) = self.defender_ship_rec {
             return ds.ship_type();
         }
@@ -1092,6 +1109,15 @@ impl SharedScenarioData {
             .as_ref()
             .map(|h| h.ship_type_for_combat())
             .unwrap_or(ShipType::Battleship)
+    }
+
+    /// Resolved defender faction for combat conditions (hostile faction, falling back to defending
+    /// player ship faction in PvP).
+    pub(crate) fn defender_faction_for_combat(&self) -> OpponentFactionTag {
+        defender_faction_tag_for_scenario(
+            self.hostile_rec.as_ref(),
+            self.defender_ship_rec.as_ref(),
+        )
     }
 
     pub(crate) fn is_pvp(&self) -> bool {
@@ -1360,7 +1386,12 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         };
 
         let cond_ctx = build_officer_stat_condition_context(shared, ship_rec);
-        let mut attacker = apply_profile_to_attacker_with_health_pool(
+        let extra_target_weapon_damage = profile_target_weapon_damage_bonus_fraction(
+            &shared.profile,
+            defender_is_outpost_for_scenario(shared),
+            defender_is_armada_hostile_for_scenario(shared),
+        );
+        let mut attacker = apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
             Combatant {
                 id: shared.ship.clone(),
                 attack: ship_rec.attack,
@@ -1433,6 +1464,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 },
             ),
             static_health,
+            extra_target_weapon_damage,
         );
         if let Some(params) = attacker.hostile_mitigation_params.as_mut() {
             params.round_native_defense_stats = shared.native_defense_rounding;
@@ -1568,7 +1600,12 @@ pub(crate) fn scenario_to_combat_input_from_shared(
     let defender_hull = 260.0 + ((hostile_hash >> 16) % 280) as f64;
     let defender_mitigation = computed_defender_mitigation(&shared.ship, &shared.hostile);
 
-    let mut attacker = apply_profile_to_attacker_with_health_pool(
+    let extra_target_weapon_damage = profile_target_weapon_damage_bonus_fraction(
+        &shared.profile,
+        defender_is_outpost_for_scenario(shared),
+        defender_is_armada_hostile_for_scenario(shared),
+    );
+    let mut attacker = apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
         Combatant {
             id: shared.ship.clone(),
             attack: 95.0 + (ship_hash % 70) as f64,
@@ -1599,6 +1636,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         // Placeholder combatant path: no real ship_rec, so no officer-stat runtime.
         crate::data::profile::OfficerStatRuntimeBonus::default(),
         static_health,
+        extra_target_weapon_damage,
     );
     if let Some(params) = attacker.hostile_mitigation_params.as_mut() {
         params.round_native_defense_stats = shared.native_defense_rounding;
@@ -1728,6 +1766,38 @@ fn weapon_damage_profile_additive_pool_from_env(profile: &PlayerProfile) -> Opti
     Some(if p.is_finite() { p.max(0.0) } else { 0.0 })
 }
 
+/// Additional scenario-gated weapon-damage fraction from building keys
+/// (`weapon_damage_vs_outpost`, `weapon_damage_vs_armada_hostile`) that are kept separate from
+/// unconditional `weapon_damage` in [`PlayerProfile::bonuses`].
+fn profile_target_weapon_damage_bonus_fraction(
+    profile: &PlayerProfile,
+    defender_is_outpost: bool,
+    defender_is_armada_hostile: bool,
+) -> f64 {
+    let mut extra = 0.0;
+    if defender_is_outpost {
+        let outpost = profile
+            .bonuses
+            .get("weapon_damage_vs_outpost")
+            .copied()
+            .unwrap_or(0.0);
+        if outpost.is_finite() && outpost > 0.0 {
+            extra += outpost;
+        }
+    }
+    if defender_is_armada_hostile {
+        let armada = profile
+            .bonuses
+            .get("weapon_damage_vs_armada_hostile")
+            .copied()
+            .unwrap_or(0.0);
+        if armada.is_finite() && armada > 0.0 {
+            extra += armada;
+        }
+    }
+    extra
+}
+
 fn profile_weapon_damage_fraction_for_combat(
     profile: &PlayerProfile,
     defender_is_outpost: bool,
@@ -1739,38 +1809,19 @@ fn profile_weapon_damage_fraction_for_combat(
     } else {
         p = p.max(0.0);
     }
-    if defender_is_outpost {
-        let outpost = profile
-            .bonuses
-            .get("weapon_damage_vs_outpost")
-            .copied()
-            .unwrap_or(0.0);
-        if outpost.is_finite() && outpost > 0.0 {
-            p += outpost;
-        }
-    }
-    if defender_is_armada_hostile {
-        let armada = profile
-            .bonuses
-            .get("weapon_damage_vs_armada_hostile")
-            .copied()
-            .unwrap_or(0.0);
-        if armada.is_finite() && armada > 0.0 {
-            p += armada;
-        }
-    }
-    p
+    p + profile_target_weapon_damage_bonus_fraction(
+        profile,
+        defender_is_outpost,
+        defender_is_armada_hostile,
+    )
 }
 
 fn defender_is_outpost_for_scenario(shared: &SharedScenarioData) -> bool {
-    shared.hostile_rec.as_ref().is_some_and(|h| h.is_outpost)
+    shared.combat_context.defender_is_outpost
 }
 
 fn defender_is_armada_hostile_for_scenario(shared: &SharedScenarioData) -> bool {
-    shared
-        .hostile_rec
-        .as_ref()
-        .is_some_and(|h| h.is_group_armada_target())
+    shared.combat_context.defender_is_armada_hostile
 }
 
 fn scale_defender_stats_for_hostile_abilities(
@@ -2121,22 +2172,16 @@ fn build_officer_stat_condition_context(
     shared: &SharedScenarioData,
     ship_rec: &ShipRecord,
 ) -> crate::data::profile::OfficerStatConditionContext {
-    let defender_ship_type = shared
-        .defender_ship_rec
-        .as_ref()
-        .map(|s| s.ship_class.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .or_else(|| {
-            shared
-                .hostile_rec
-                .as_ref()
-                .map(|h| h.ship_class.trim().to_string())
-                .filter(|s| !s.is_empty())
-        });
-    // HostileRecord carries no faction slug — only the numeric id on the embedded
-    // HostileFactionRef. defender_faction_slug stays None (no condition in production data
-    // exercises it today); defender_hull_faction_id_is reads the numeric id.
-    let defender_faction_slug: Option<String> = None;
+    let defender_ship_type = Some(
+        shared
+            .defender_ship_type_for_combat()
+            .as_data_slug()
+            .to_string(),
+    );
+    let defender_faction_slug = shared
+        .defender_faction_for_combat()
+        .as_data_slug()
+        .map(str::to_string);
     let defender_faction_id = shared
         .hostile_rec
         .as_ref()
@@ -2146,7 +2191,7 @@ fn build_officer_stat_condition_context(
         .engagement_enemy_types
         .0
         .iter()
-        .map(|t| format!("{:?}", t).to_lowercase())
+        .map(|t| crate::combat::types::enemy_type_to_key(*t).to_string())
         .collect();
     crate::data::profile::OfficerStatConditionContext {
         attacker_ship_class: Some(ship_rec.ship_class.trim().to_string()).filter(|s| !s.is_empty()),
@@ -2334,7 +2379,43 @@ pub(crate) fn scenario_to_combat_input(
         );
         let defender_hull = hostile_rec.hull_health;
         let rounds = 100u32.min(10u32.saturating_add(hostile_rec.level));
-        let mut attacker = apply_profile_to_attacker_with_health_pool(
+        let combat_ctx = crate::data::officer_eligibility::resolve_combat_context(
+            None,
+            false,
+            false,
+            Some(&hostile_rec),
+            None,
+        );
+        let engagement_enemy_types = combat_ctx.engagement_enemy_types.clone();
+        let defender_ship_type_slug = combat_ctx
+            .combat_defender_ship_type
+            .unwrap_or_else(|| hostile_rec.ship_type_for_combat())
+            .as_data_slug()
+            .to_string();
+        let cond_ctx = crate::data::profile::OfficerStatConditionContext {
+            attacker_ship_class: Some(ship_rec.ship_class.trim().to_string())
+                .filter(|s| !s.is_empty()),
+            attacker_ship_id: Some(ship_rec.id.trim().to_string()).filter(|s| !s.is_empty()),
+            attacker_owner_faction: ship_rec.faction.clone(),
+            defender_is_player_ship: false,
+            defender_ship_type: Some(defender_ship_type_slug),
+            defender_faction_id: hostile_rec.faction.as_ref().map(|f| f.id),
+            defender_faction_slug: hostile_rec
+                .opponent_faction_tag()
+                .as_data_slug()
+                .map(str::to_string),
+            engagement_types: engagement_enemy_types
+                .0
+                .iter()
+                .map(|t| crate::combat::types::enemy_type_to_key(*t).to_string())
+                .collect(),
+        };
+        let extra_target_weapon_damage = profile_target_weapon_damage_bonus_fraction(
+            profile,
+            combat_ctx.defender_is_outpost,
+            combat_ctx.defender_is_armada_hostile,
+        );
+        let mut attacker = apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
             Combatant {
                 id: ship.to_string(),
                 attack: ship_rec.attack,
@@ -2370,36 +2451,20 @@ pub(crate) fn scenario_to_combat_input(
             },
             profile,
             ship_rec.faction.as_deref(),
-            {
-                // scenario_to_combat_input variant: defender info is the hostile_rec (PvE only).
-                let defender_ship_type =
-                    Some(hostile_rec.ship_class.trim().to_string()).filter(|s| !s.is_empty());
-                let cond_ctx = crate::data::profile::OfficerStatConditionContext {
-                    attacker_ship_class: Some(ship_rec.ship_class.trim().to_string())
-                        .filter(|s| !s.is_empty()),
-                    attacker_ship_id: Some(ship_rec.id.trim().to_string())
-                        .filter(|s| !s.is_empty()),
-                    attacker_owner_faction: ship_rec.faction.clone(),
-                    defender_is_player_ship: false,
-                    defender_ship_type,
-                    defender_faction_id: hostile_rec.faction.as_ref().map(|f| f.id),
-                    defender_faction_slug: None,
-                    engagement_types: Vec::new(),
-                };
-                crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
-                    officer_stat_totals,
-                    bridge_officer_stat_totals,
-                    &officer_stat_rows,
-                    &ship_rec,
-                    profile,
-                    ship_rec.faction.as_deref(),
-                    &static_buffs,
-                    &pending_officer_stat_contributions,
-                    &cond_ctx,
-                    &[],
-                )
-            },
+            crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
+                officer_stat_totals,
+                bridge_officer_stat_totals,
+                &officer_stat_rows,
+                &ship_rec,
+                profile,
+                ship_rec.faction.as_deref(),
+                &static_buffs,
+                &pending_officer_stat_contributions,
+                &cond_ctx,
+                &[],
+            ),
             static_health,
+            extra_target_weapon_damage,
         );
         if !static_buffs.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
@@ -2415,26 +2480,9 @@ pub(crate) fn scenario_to_combat_input(
             weapon_damage_profile_additive_pool_from_env(profile);
         let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(
             profile,
-            hostile_rec.is_outpost,
-            hostile_rec.is_group_armada_target(),
+            combat_ctx.defender_is_outpost,
+            combat_ctx.defender_is_armada_hostile,
         );
-        let engagement_enemy_types = hostile_rec.engagement_enemy_types_for_combat();
-        let cond_ctx = crate::data::profile::OfficerStatConditionContext {
-            attacker_ship_class: Some(ship_rec.ship_class.trim().to_string())
-                .filter(|s| !s.is_empty()),
-            attacker_ship_id: Some(ship_rec.id.trim().to_string()).filter(|s| !s.is_empty()),
-            attacker_owner_faction: ship_rec.faction.clone(),
-            defender_is_player_ship: false,
-            defender_ship_type: Some(hostile_rec.ship_class.trim().to_string())
-                .filter(|s| !s.is_empty()),
-            defender_faction_id: hostile_rec.faction.as_ref().map(|f| f.id),
-            defender_faction_slug: None,
-            engagement_types: engagement_enemy_types
-                .0
-                .iter()
-                .map(|t| format!("{:?}", t).to_lowercase())
-                .collect(),
-        };
         let officer_stat_round =
             crate::data::officer_stat_round::OfficerStatRoundContext::try_from_ship_and_buffs_with_officers(
                 &ship_rec,
@@ -2698,6 +2746,24 @@ pub(crate) fn build_shared_scenario_data_standalone(
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
 ) -> SharedScenarioData {
+    build_shared_scenario_data_standalone_with_context(
+        ship,
+        hostile,
+        support_buffs,
+        defender_opponent,
+        player_defender_officer_crew,
+        ScenarioEngagementOverride::default(),
+    )
+}
+
+pub(crate) fn build_shared_scenario_data_standalone_with_context(
+    ship: &str,
+    hostile: &str,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
+    defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    engagement_override: ScenarioEngagementOverride,
+) -> SharedScenarioData {
     let pid = profile_index::resolve_profile_id_for_api(None);
     build_shared_scenario_data_standalone_for_profile(
         ship,
@@ -2706,6 +2772,7 @@ pub(crate) fn build_shared_scenario_data_standalone(
         support_buffs,
         defender_opponent,
         player_defender_officer_crew,
+        engagement_override,
     )
 }
 
@@ -2716,6 +2783,7 @@ fn build_shared_scenario_data_standalone_for_profile(
     support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
     defender_opponent: DefenderOpponent,
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    engagement_override: ScenarioEngagementOverride,
 ) -> SharedScenarioData {
     let officer_index = load_canonical_officers(DEFAULT_CANONICAL_OFFICERS_PATH)
         .ok()
@@ -2799,12 +2867,22 @@ fn build_shared_scenario_data_standalone_for_profile(
 
     let ship_rec = resolve_ship(ship);
     let hostile_rec = resolve_hostile(hostile);
+    let combat_context = crate::data::officer_eligibility::resolve_combat_context(
+        engagement_override.enemy_type,
+        engagement_override.wave_defense,
+        defender_opponent.defender_is_player_ship(),
+        hostile_rec.as_ref(),
+        None,
+    );
+    let defender_opponent = if combat_context.opponent_kind.is_player() {
+        DefenderOpponent::Player
+    } else {
+        DefenderOpponent::Hostile
+    };
     let (building_opponent, building_opponent_ship_type) = match defender_opponent {
         DefenderOpponent::Hostile => (
             BuildingDefenderOpponent::NpcHostile,
-            hostile_rec
-                .as_ref()
-                .map(HostileRecord::ship_type_for_combat),
+            combat_context.combat_defender_ship_type,
         ),
         DefenderOpponent::Player => (BuildingDefenderOpponent::PlayerShip, None),
     };
@@ -2933,7 +3011,8 @@ fn build_shared_scenario_data_standalone_for_profile(
         &mut profile,
         pid,
         ship_rec.as_ref(),
-        is_non_armada_npc(defender_opponent, hostile_rec.as_ref()),
+        defender_opponent == DefenderOpponent::Hostile
+            && !combat_context.defender_is_armada_hostile,
     );
     let class_gated_tp_hull = forbidden_catalog.as_ref().and_then(|cat| {
         if effective_fids.is_empty() {
@@ -2991,10 +3070,13 @@ fn build_shared_scenario_data_standalone_for_profile(
             &profile,
             ship_r.faction.as_deref(),
         );
+        let defender_combat_ship_type = combat_context
+            .combat_defender_ship_type
+            .unwrap_or_else(|| hostile_r.ship_type_for_combat());
         let defender_mitigation = mitigation_for_hostile(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type_for_combat(),
+            defender_combat_ship_type,
             hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
             hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
             hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
@@ -3002,7 +3084,7 @@ fn build_shared_scenario_data_standalone_for_profile(
         let pierce = pierce_damage_through_bonus(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type_for_combat(),
+            defender_combat_ship_type,
         );
         let defender = defender_combatant_from_hostile_record(
             hostile,
@@ -3026,10 +3108,7 @@ fn build_shared_scenario_data_standalone_for_profile(
 
     let using_placeholder_combatants = cached_defender.is_none();
 
-    let engagement_enemy_types = hostile_rec
-        .as_ref()
-        .map(|h| h.engagement_enemy_types_for_combat())
-        .unwrap_or_default();
+    let engagement_enemy_types = combat_context.engagement_enemy_types.clone();
     let defender_level = hostile_rec.as_ref().map(|h| h.level);
 
     let attacker_owner_faction = attacker_owner_faction_from_ship(ship_rec.as_ref());
@@ -3110,6 +3189,7 @@ fn build_shared_scenario_data_standalone_for_profile(
         dual_gate_research_hull_hp,
         dual_gate_research_shield_hp,
         engagement_enemy_types,
+        combat_context,
         defender_level,
         incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds,
@@ -3163,6 +3243,7 @@ fn merge_native_research_bonuses(
 
 /// Resolve the immutable opponent domain before compiling combat-start pools.
 /// Missing hostile records never establish the non-Armada condition.
+#[cfg(test)]
 fn is_non_armada_npc(opponent: DefenderOpponent, hostile: Option<&HostileRecord>) -> bool {
     opponent.defender_is_npc_hostile()
         && hostile.is_some_and(|h| h.ship_type_for_combat() != ShipType::Armada)
@@ -3450,11 +3531,37 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
     pvp: Option<PvpScenarioParams>,
 ) -> SharedScenarioData {
-    let defender_opponent = if pvp.is_some() {
-        DefenderOpponent::Player
-    } else {
-        defender_opponent
-    };
+    build_shared_scenario_data_from_registry_with_context(
+        registry,
+        ship,
+        hostile,
+        ship_tier,
+        ship_level,
+        profile_id,
+        support_buffs,
+        defender_opponent,
+        player_defender_officer_crew,
+        pvp,
+        ScenarioEngagementOverride::default(),
+    )
+}
+
+/// Like [`build_shared_scenario_data_from_registry`], applying optional user engagement overrides
+/// (`enemy_type`, `wave_defense`) through [`crate::data::officer_eligibility::resolve_combat_context`].
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn build_shared_scenario_data_from_registry_with_context(
+    registry: &crate::data::data_registry::DataRegistry,
+    ship: &str,
+    hostile: &str,
+    ship_tier: Option<u32>,
+    ship_level: Option<u32>,
+    profile_id: Option<&str>,
+    support_buffs: support_buffs::SupportBuffScenarioRequest<'_>,
+    defender_opponent: DefenderOpponent,
+    player_defender_officer_crew: Option<PlayerDefenderOfficerCrewOverride>,
+    pvp: Option<PvpScenarioParams>,
+    engagement_override: ScenarioEngagementOverride,
+) -> SharedScenarioData {
     let officer_index = registry.officer_index().clone();
 
     let pid = profile_index::resolve_profile_id_for_api(profile_id);
@@ -3470,6 +3577,59 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     let ft_path = profile_path(&pid, FORBIDDEN_TECH_IMPORTED)
         .to_string_lossy()
         .to_string();
+
+    let imported_ships = import::load_imported_ships(&ships_path).unwrap_or_default();
+    let ship_rec = registry.resolve_ship_with_tier_level_and_imported_components(
+        ship,
+        ship_tier,
+        ship_level,
+        &imported_ships,
+    );
+    let hostile_rec = if pvp.is_some() {
+        None
+    } else {
+        registry.resolve_hostile(hostile)
+    };
+    let (
+        defender_ship_rec,
+        mut defender_profile,
+        defender_incoming_shield_mitigation_bonus,
+        defender_incoming_shield_mitigation_bonus_rounds,
+    ) = if let Some(ref pvp_cfg) = pvp {
+        let defender_ships_path = profile_path(&pvp_cfg.defender_profile_id, SHIPS_IMPORTED)
+            .to_string_lossy()
+            .to_string();
+        let defender_imported_ships =
+            import::load_imported_ships(&defender_ships_path).unwrap_or_default();
+        let def_rec = registry.resolve_ship_with_tier_level_and_imported_components(
+            &pvp_cfg.defender_ship,
+            pvp_cfg.defender_ship_tier,
+            pvp_cfg.defender_ship_level,
+            &defender_imported_ships,
+        );
+        let (def_prof, ism, ismr) = load_defender_profile_for_pvp(
+            registry,
+            &pvp_cfg.defender_profile_id,
+            &pvp_cfg.defender_ship,
+            def_rec.as_ref().and_then(|s| s.grade),
+        );
+        (def_rec, Some(def_prof), ism, ismr)
+    } else {
+        (None, None, 0.0, 0)
+    };
+
+    let combat_context = crate::data::officer_eligibility::resolve_combat_context(
+        engagement_override.enemy_type,
+        engagement_override.wave_defense,
+        pvp.is_some() || defender_opponent.defender_is_player_ship(),
+        hostile_rec.as_ref(),
+        defender_ship_rec.as_ref().map(|s| s.ship_type()),
+    );
+    let defender_opponent = if combat_context.opponent_kind.is_player() {
+        DefenderOpponent::Player
+    } else {
+        DefenderOpponent::Hostile
+    };
 
     // Merge order invariants (profile bonus layer):
     // 1) forbidden/chaos tech (by fid) — may be scaled by tier/level (opt-in)
@@ -3546,16 +3706,14 @@ pub(crate) fn build_shared_scenario_data_from_registry(
     let (building_opponent, building_opponent_ship_type) = match defender_opponent {
         DefenderOpponent::Hostile => (
             BuildingDefenderOpponent::NpcHostile,
-            registry
-                .resolve_hostile(hostile)
-                .map(|hostile| hostile.ship_type_for_combat()),
+            combat_context.combat_defender_ship_type,
         ),
         DefenderOpponent::Player => (BuildingDefenderOpponent::PlayerShip, None),
     };
     merge_scenario_building_bonuses(
         &mut profile,
         &pid,
-        resolve_ship(ship).as_ref(),
+        ship_rec.as_ref(),
         building_opponent,
         building_opponent_ship_type,
     );
@@ -3644,13 +3802,6 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         .map(|entries| resolve_options_from_roster(&entries))
         .unwrap_or_default();
 
-    let imported_ships = import::load_imported_ships(&ships_path).unwrap_or_default();
-    let ship_rec = registry.resolve_ship_with_tier_level_and_imported_components(
-        ship,
-        ship_tier,
-        ship_level,
-        &imported_ships,
-    );
     if let Some(cat) = registry.research_catalog() {
         merge_ship_setup_research_bonuses_into_profile(
             &mut profile,
@@ -3671,44 +3822,13 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         registry.research_catalog(),
         Some(&exclude_canonical_rids),
     );
-    let hostile_rec = if pvp.is_some() {
-        None
-    } else {
-        registry.resolve_hostile(hostile)
-    };
     merge_native_consumable_bonuses(
         &mut profile,
         &pid,
         ship_rec.as_ref(),
-        is_non_armada_npc(defender_opponent, hostile_rec.as_ref()),
+        defender_opponent == DefenderOpponent::Hostile
+            && !combat_context.defender_is_armada_hostile,
     );
-    let (
-        defender_ship_rec,
-        mut defender_profile,
-        defender_incoming_shield_mitigation_bonus,
-        defender_incoming_shield_mitigation_bonus_rounds,
-    ) = if let Some(ref pvp_cfg) = pvp {
-        let defender_ships_path = profile_path(&pvp_cfg.defender_profile_id, SHIPS_IMPORTED)
-            .to_string_lossy()
-            .to_string();
-        let defender_imported_ships =
-            import::load_imported_ships(&defender_ships_path).unwrap_or_default();
-        let def_rec = registry.resolve_ship_with_tier_level_and_imported_components(
-            &pvp_cfg.defender_ship,
-            pvp_cfg.defender_ship_tier,
-            pvp_cfg.defender_ship_level,
-            &defender_imported_ships,
-        );
-        let (def_prof, ism, ismr) = load_defender_profile_for_pvp(
-            registry,
-            &pvp_cfg.defender_profile_id,
-            &pvp_cfg.defender_ship,
-            def_rec.as_ref().and_then(|s| s.grade),
-        );
-        (def_rec, Some(def_prof), ism, ismr)
-    } else {
-        (None, None, 0.0, 0)
-    };
 
     let mut pvp_sidecar = support_buffs::SupportBuffPvpSidecarResolution::default();
     if pvp.is_some() {
@@ -3834,10 +3954,13 @@ pub(crate) fn build_shared_scenario_data_from_registry(
             &profile,
             ship_r.faction.as_deref(),
         );
+        let defender_combat_ship_type = combat_context
+            .combat_defender_ship_type
+            .unwrap_or_else(|| hostile_r.ship_type_for_combat());
         let defender_mitigation = mitigation_for_hostile(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type_for_combat(),
+            defender_combat_ship_type,
             hostile_r.mystery_mitigation_factor.unwrap_or(0.0),
             hostile_r.mitigation_floor.unwrap_or(MITIGATION_FLOOR),
             hostile_r.mitigation_ceiling.unwrap_or(MITIGATION_CEILING),
@@ -3845,7 +3968,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         let pierce = pierce_damage_through_bonus(
             hostile_r.to_defender_stats(),
             attacker_stats,
-            hostile_r.ship_type_for_combat(),
+            defender_combat_ship_type,
         );
         let defender = defender_combatant_from_hostile_record(
             hostile,
@@ -3869,14 +3992,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
 
     let using_placeholder_combatants = cached_defender.is_none();
 
-    let engagement_enemy_types = if pvp.is_some() {
-        EnemyTypes::default()
-    } else {
-        hostile_rec
-            .as_ref()
-            .map(|h| h.engagement_enemy_types_for_combat())
-            .unwrap_or_default()
-    };
+    let engagement_enemy_types = combat_context.engagement_enemy_types.clone();
     let defender_level = if let Some(ref pvp_cfg) = pvp {
         pvp_cfg.defender_ship_level
     } else {
@@ -3965,6 +4081,7 @@ pub(crate) fn build_shared_scenario_data_from_registry(
         dual_gate_research_hull_hp,
         dual_gate_research_shield_hp,
         engagement_enemy_types,
+        combat_context,
         defender_level,
         incoming_shield_mitigation_bonus,
         incoming_shield_mitigation_bonus_rounds,
@@ -5333,6 +5450,9 @@ mod tests {
             dual_gate_research_hull_hp: 0.0,
             dual_gate_research_shield_hp: 0.0,
             engagement_enemy_types: EnemyTypes::default(),
+            combat_context: crate::data::officer_eligibility::resolve_combat_context(
+                None, false, false, None, None,
+            ),
             defender_level: None,
             incoming_shield_mitigation_bonus: 0.0,
             incoming_shield_mitigation_bonus_rounds: 0,
@@ -5574,6 +5694,7 @@ mod tests {
                 support_buffs::SupportBuffScenarioRequest::default(),
                 DefenderOpponent::Hostile,
                 None,
+                ScenarioEngagementOverride::default(),
             );
             let registered = build_shared_scenario_data_from_registry(
                 registry.as_ref(),
@@ -5681,6 +5802,7 @@ mod tests {
             support_buffs::SupportBuffScenarioRequest::default(),
             DefenderOpponent::Hostile,
             None,
+            ScenarioEngagementOverride::default(),
         );
         assert_eq!(standalone.profile.bonuses, shared.profile.bonuses);
         let crew = CrewCandidate {

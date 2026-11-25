@@ -35,6 +35,7 @@ use crate::optimizer::crew_generator::{
 };
 use crate::optimizer::monte_carlo::scenario::{
     DefenderOpponent, PlayerDefenderOfficerCrewOverride, PvpScenarioParams,
+    ScenarioEngagementOverride,
 };
 use crate::optimizer::ranking::RankedCrewResult;
 use crate::optimizer::{
@@ -77,6 +78,7 @@ pub struct FleetSlotSpec {
     pub fixed_officers: Vec<String>,
     pub excluded_officers: Vec<String>,
     pub enemy_type: EnemyType,
+    pub engagement_override: ScenarioEngagementOverride,
 }
 
 /// Top-level parameters for a multi-ship fleet allocation run.
@@ -668,6 +670,8 @@ fn run_dock_portfolio_discovery(
         player_defender_officer_crew: None::<PlayerDefenderOfficerCrewOverride>,
         pvp: None::<PvpScenarioParams>,
         enemy_type: slot.enemy_type,
+        engagement_override: slot.engagement_override,
+        engagement_enemy_types: None,
         warm_start: Vec::new(),
         prior_reference_crews: Vec::new(),
         optimize_cache_key: None,
@@ -1066,6 +1070,7 @@ mod tests {
                     fixed_officers: Vec::new(),
                     excluded_officers: Vec::new(),
                     enemy_type: EnemyType::RedMovingSpace,
+                    engagement_override: ScenarioEngagementOverride::default(),
                 },
                 FleetSlotSpec {
                     label: "Dock 2 · NX-01".into(),
@@ -1080,6 +1085,7 @@ mod tests {
                     fixed_officers: Vec::new(),
                     excluded_officers: Vec::new(),
                     enemy_type: EnemyType::RedMovingSpace,
+                    engagement_override: ScenarioEngagementOverride::default(),
                 },
             ],
             objective: FleetObjective::TotalScore,

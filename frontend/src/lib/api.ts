@@ -540,6 +540,7 @@ export async function simulate(
     ship_level?: number | null;
     support_buffs?: string[];
     enemy_type?: string;
+    wave_defense?: boolean;
   },
   profileId?: string | null,
 ): Promise<SimulateResponse> {
@@ -561,6 +562,9 @@ export async function simulate(
   }
   if (params.enemy_type) {
     body.enemy_type = params.enemy_type;
+  }
+  if (params.wave_defense) {
+    body.wave_defense = true;
   }
   const res = await fetchWithCpuBusyRetries(`${API_BASE}/api/simulate`, {
     method: "POST",
@@ -628,6 +632,8 @@ export async function compareCrewsDistributions(
     proc_sample_trials?: number;
     /** Same ids as simulate/optimize (`data/support_buffs.json`). */
     support_buffs?: string[];
+    enemy_type?: string;
+    wave_defense?: boolean;
   },
   profileId?: string | null,
 ): Promise<CompareCrewsResponse> {
@@ -650,6 +656,12 @@ export async function compareCrewsDistributions(
   }
   if (params.support_buffs && params.support_buffs.length > 0) {
     body.support_buffs = params.support_buffs;
+  }
+  if (params.enemy_type) {
+    body.enemy_type = params.enemy_type;
+  }
+  if (params.wave_defense) {
+    body.wave_defense = true;
   }
   const res = await fetchWithCpuBusyRetries(`${API_BASE}/api/compare/crews`, {
     method: "POST",
@@ -730,6 +742,10 @@ export async function getOptimizeEstimate(
     chain_kills_target?: number | null;
     /** Optimizer strategy so multi-fidelity lanes report accurate racing + confirmation costs. */
     strategy?: OptimizerStrategyType | null;
+    /** Optional engagement type override for officer eligibility pool sizing. */
+    enemy_type?: string | null;
+    /** Additive Wave Defense toggle for officer eligibility pool sizing. */
+    wave_defense?: boolean;
   },
   profileId?: string | null,
 ): Promise<OptimizeEstimate> {
@@ -763,6 +779,12 @@ export async function getOptimizeEstimate(
   if (params.strategy) {
     search.set("strategy", params.strategy);
   }
+  if (params.enemy_type) {
+    search.set("enemy_type", params.enemy_type);
+  }
+  if (params.wave_defense) {
+    search.set("wave_defense", "true");
+  }
   if (profileId) search.set("profile", profileId);
   const url = `${API_BASE}/api/optimize/estimate?${search.toString()}`;
   const res = await fetch(url);
@@ -782,6 +804,9 @@ function optimizerRequestBody(
   };
   if (params.enemy_type) {
     body.enemy_type = params.enemy_type;
+  }
+  if (params.wave_defense) {
+    body.wave_defense = true;
   }
   if (params.max_candidates != null && params.max_candidates > 0) {
     body.max_candidates = params.max_candidates;

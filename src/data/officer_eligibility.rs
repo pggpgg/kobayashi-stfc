@@ -22,7 +22,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::combat::types::EnemyType;
+use crate::combat::types::{EnemyType, EnemyTypes, OpponentKind, ShipType};
 use crate::data::hostile::HostileRecord;
 use crate::data::officer::Officer;
 
@@ -257,7 +257,26 @@ pub fn seat_best_verdict(
     slot: &str,
     enemy: EnemyType,
 ) -> Option<(EligibilityVerdict, Option<String>)> {
-    let scenario = EligibilityScenario::from_enemy_type(enemy);
+    seat_best_verdict_for_tags(matrix, officer, slot, &[enemy])
+}
+
+/// Best (most functional) verdict across all of `officer`'s abilities in `slot` across ANY
+/// active engagement tag in `enemies` (`Works` > `Conditional` > `DoesNotWork`).
+///
+/// Used for additive engagements such as `[RedMovingSpace, Waves]` or `[GroupArmadas, Waves]`
+/// so neither wave-only officers nor armada/hostile officers are pruned by single-tag lookup.
+pub fn seat_best_verdict_for_tags(
+    matrix: &EligibilityMatrix,
+    officer: &Officer,
+    slot: &str,
+    enemies: &[EnemyType],
+) -> Option<(EligibilityVerdict, Option<String>)> {
+    let fallback = [EnemyType::RedMovingSpace];
+    let tags = if enemies.is_empty() {
+        &fallback[..]
+    } else {
+        enemies
+    };
     let mut best: Option<(EligibilityVerdict, Option<String>)> = None;
     for ability in officer
         .abilities
@@ -267,15 +286,18 @@ pub fn seat_best_verdict(
         let Some(id) = ability.ability_id.as_deref() else {
             continue;
         };
-        let Some(sv) = matrix.scenario_verdict(id, scenario) else {
-            continue;
-        };
-        let better = match &best {
-            None => true,
-            Some((bv, _)) => sv.verdict.rank() > bv.rank(),
-        };
-        if better {
-            best = Some((sv.verdict, sv.reason.clone()));
+        for &enemy in tags {
+            let scenario = EligibilityScenario::from_enemy_type(enemy);
+            let Some(sv) = matrix.scenario_verdict(id, scenario) else {
+                continue;
+            };
+            let better = match &best {
+                None => true,
+                Some((bv, _)) => sv.verdict.rank() > bv.rank(),
+            };
+            if better {
+                best = Some((sv.verdict, sv.reason.clone()));
+            }
         }
     }
     best
@@ -294,6 +316,17 @@ pub fn is_eligible_for_optimization(
     matrix: Option<&EligibilityMatrix>,
     pvp_mode: bool,
 ) -> bool {
+    is_eligible_for_optimization_for_tags(officer, slot, &[enemy], matrix, pvp_mode)
+}
+
+/// Multi-tag variant of [`is_eligible_for_optimization`] with any-tag-eligible semantics.
+pub fn is_eligible_for_optimization_for_tags(
+    officer: &Officer,
+    slot: &str,
+    enemies: &[EnemyType],
+    matrix: Option<&EligibilityMatrix>,
+    pvp_mode: bool,
+) -> bool {
     // Always-on curation opt-out (overrides the functional matrix below), per seat and mode:
     // an officer banned for this (seat, mode) is never simulated there, even if its ability
     // technically `works`. This is distinct from the matrix's "does it function?" question and
@@ -302,7 +335,7 @@ pub fn is_eligible_for_optimization(
         return false;
     }
     if let Some(matrix) = matrix {
-        if let Some((verdict, _)) = seat_best_verdict(matrix, officer, slot, enemy) {
+        if let Some((verdict, _)) = seat_best_verdict_for_tags(matrix, officer, slot, enemies) {
             return verdict != EligibilityVerdict::DoesNotWork;
         }
     }
@@ -317,7 +350,7 @@ pub fn is_eligible_for_optimization(
 /// Parse an explicit `enemy_type` request string (snake_case, matching [`EnemyType`]'s
 /// serialization) into one of the 12 combat scenarios. Returns `None` for unknown values.
 pub fn enemy_type_from_str(s: &str) -> Option<EnemyType> {
-    match s.trim().to_ascii_lowercase().as_str() {
+    match s.trim().to_ascii_lowercase().replace('-', "_").as_str() {
         "pvp_space" => Some(EnemyType::PvpSpace),
         "pvp_station" => Some(EnemyType::PvpStation),
         "red_moving_space" => Some(EnemyType::RedMovingSpace),
@@ -334,30 +367,247 @@ pub fn enemy_type_from_str(s: &str) -> Option<EnemyType> {
     }
 }
 
+/// Validate an optional API `enemy_type` parameter at the request boundary.
+///
+/// `None`, empty/whitespace, and `"auto"` (case-insensitive) mean "infer from target" (`Ok(None)`).
+/// Known snake_case [`EnemyType`] slugs return `Ok(Some(et))`. Any other non-empty string returns
+/// `Err(...)` so client typos fail fast with HTTP 400 instead of silently defaulting to hostiles.
+pub fn parse_optional_enemy_type(raw: Option<&str>) -> Result<Option<EnemyType>, String> {
+    let Some(s) = raw else {
+        return Ok(None);
+    };
+    let trimmed = s.trim();
+    if trimmed.is_empty() || trimmed.eq_ignore_ascii_case("auto") {
+        return Ok(None);
+    }
+    enemy_type_from_str(trimmed).map(Some).ok_or_else(|| {
+        format!(
+            "unknown enemy_type {trimmed:?}; expected one of auto, pvp_space, pvp_station, \
+             red_moving_space, waves, mission_bosses, q_trial, solo_armadas, group_armadas, \
+             assaults, invading_entities, outpost_armadas, outpost_retaliation_attackers"
+        )
+    })
+}
+
+/// Upstream Q-Continuum faction id (`loca_id: 72000`; Q's Trial encounters).
+pub const Q_CONTINUUM_FACTION_ID: i64 = 4_145_760_809;
+
+/// Infer the intrinsic base [`EnemyType`] of an NPC hostile from its catalog fields.
+///
+/// Precedence prevents dead branches where `upstream_ship_type == 1` overlaps with Q's Trials
+/// (46/97 Q-Continuum rows) and Outposts (all 55 `is_outpost: true` rows):
+/// 1. Curated `hostile.engagement_enemy_types` primary tag (when populated)
+/// 2. Q-Continuum faction (`4145760809`) → [`EnemyType::QTrial`]
+/// 3. `hostile.is_outpost` → [`EnemyType::OutpostArmadas`]
+/// 4. `hostile.is_group_armada_target()` (`upstream_ship_type == 1`) → [`EnemyType::GroupArmadas`]
+/// 5. `upstream_ship_type` in `{3, 6}` (Separatist mission bosses) → [`EnemyType::MissionBosses`]
+/// 6. Default → [`EnemyType::RedMovingSpace`]
+pub fn infer_base_hostile_enemy_type(hostile: Option<&HostileRecord>) -> EnemyType {
+    let Some(h) = hostile else {
+        return EnemyType::RedMovingSpace;
+    };
+    if let Some(et) = h
+        .engagement_enemy_types
+        .as_ref()
+        .and_then(|tags| tags.0.first().copied())
+    {
+        return et;
+    }
+    if h.faction
+        .as_ref()
+        .is_some_and(|f| f.id == Q_CONTINUUM_FACTION_ID)
+    {
+        return EnemyType::QTrial;
+    }
+    if h.is_outpost {
+        return EnemyType::OutpostArmadas;
+    }
+    if h.is_group_armada_target() {
+        return EnemyType::GroupArmadas;
+    }
+    if matches!(h.upstream_ship_type, 3 | 6) {
+        return EnemyType::MissionBosses;
+    }
+    EnemyType::RedMovingSpace
+}
+
+/// Single source of truth for resolved combat engagement context, shared identically by the
+/// combat engine (`SimulationConfig`), officer eligibility pool pruning, building/consumable
+/// gates, and optimizer cache fingerprinting.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResolvedCombatContext {
+    /// High-level opponent category (`NpcHostile`, `PlayerShip`, or `PlayerStation`).
+    pub opponent_kind: OpponentKind,
+    /// Primary engagement tag for display/reporting (`Waves` when wave defense is explicitly active).
+    pub primary_enemy_type: EnemyType,
+    /// Complete deduplicated set of active engagement tags (e.g. `[RedMovingSpace, Waves]` or
+    /// `[GroupArmadas, Waves]` in Wave Defense).
+    pub engagement_enemy_types: EnemyTypes,
+    /// Reconciled combat [`ShipType`] for the defender:
+    /// - `{GroupArmadas, SoloArmadas, OutpostArmadas}` → `Some(ShipType::Armada)`
+    /// - Other PvE modes (`RedMovingSpace`, `QTrial`, `MissionBosses`, `OutpostRetaliationAttackers`,
+    ///   `InvadingEntities`, `Assaults`) → hull-derived triangle/survey class (`h.ship_type()`)
+    /// - PvP → defending ship's hull class (when provided).
+    pub combat_defender_ship_type: Option<ShipType>,
+    /// True when the defender counts as an Outpost (for Outpost weapon damage bonuses).
+    pub defender_is_outpost: bool,
+    /// True when the defender counts as an Armada hostile (Group, Solo, or Outpost Armada — for
+    /// Armada Control Center and non-armada hostile exclusions).
+    pub defender_is_armada_hostile: bool,
+}
+
+impl ResolvedCombatContext {
+    /// Canonical sorted `snake_case` engagement keys for deterministic cache fingerprinting.
+    pub fn canonical_engagement_keys(&self) -> Vec<&'static str> {
+        let mut keys: Vec<&'static str> = self
+            .engagement_enemy_types
+            .0
+            .iter()
+            .map(|&et| crate::combat::types::enemy_type_to_key(et))
+            .collect();
+        keys.sort_unstable();
+        keys.dedup();
+        keys
+    }
+
+    pub fn is_wave_defense(&self) -> bool {
+        self.engagement_enemy_types.contains(EnemyType::Waves)
+    }
+}
+
+/// Resolve the unified [`ResolvedCombatContext`] from target metadata and optional user overrides.
+///
+/// - **Wave Defense is additive:** Setting `wave_defense = true` OR `explicit_enemy_type = Some(Waves)`
+///   composes `[base_pve_type, EnemyType::Waves]` (e.g. `[RedMovingSpace, Waves]` on normal hostiles
+///   or `[GroupArmadas, Waves]` on armada wave targets) so `EnemyHostile`, `TargetNotArmada`,
+///   faction/hull-class gates, and `SelfAtWaveDefenseChallenge` all fire together.
+/// - **Override reconciliation:** Overriding to `{GroupArmadas, SoloArmadas, OutpostArmadas}` sets
+///   `combat_defender_ship_type = Some(ShipType::Armada)` so `TargetIsArmada` fires and
+///   `TargetNotArmada` does not; overriding to a non-armada PvE mode restores the hostile's hull
+///   triangle/survey class (`h.ship_type()`).
+pub fn resolve_combat_context(
+    explicit_enemy_type: Option<EnemyType>,
+    wave_defense: bool,
+    is_pvp_target: bool,
+    hostile: Option<&HostileRecord>,
+    defender_ship_class: Option<ShipType>,
+) -> ResolvedCombatContext {
+    match explicit_enemy_type {
+        Some(EnemyType::PvpStation) => {
+            return ResolvedCombatContext {
+                opponent_kind: OpponentKind::PlayerStation,
+                primary_enemy_type: EnemyType::PvpStation,
+                engagement_enemy_types: EnemyTypes::single(EnemyType::PvpStation),
+                combat_defender_ship_type: defender_ship_class
+                    .or_else(|| hostile.map(HostileRecord::ship_type)),
+                defender_is_outpost: false,
+                defender_is_armada_hostile: false,
+            };
+        }
+        Some(EnemyType::PvpSpace) => {
+            return ResolvedCombatContext {
+                opponent_kind: OpponentKind::PlayerShip,
+                primary_enemy_type: EnemyType::PvpSpace,
+                engagement_enemy_types: EnemyTypes::single(EnemyType::PvpSpace),
+                combat_defender_ship_type: defender_ship_class
+                    .or_else(|| hostile.map(HostileRecord::ship_type)),
+                defender_is_outpost: false,
+                defender_is_armada_hostile: false,
+            };
+        }
+        None if is_pvp_target => {
+            return ResolvedCombatContext {
+                opponent_kind: OpponentKind::PlayerShip,
+                primary_enemy_type: EnemyType::PvpSpace,
+                engagement_enemy_types: EnemyTypes::single(EnemyType::PvpSpace),
+                combat_defender_ship_type: defender_ship_class
+                    .or_else(|| hostile.map(HostileRecord::ship_type)),
+                defender_is_outpost: false,
+                defender_is_armada_hostile: false,
+            };
+        }
+        _ => {}
+    }
+
+    let inferred_base = infer_base_hostile_enemy_type(hostile);
+    let (base, waves_active) = match explicit_enemy_type {
+        Some(EnemyType::Waves) => (
+            if inferred_base == EnemyType::Waves {
+                EnemyType::RedMovingSpace
+            } else {
+                inferred_base
+            },
+            true,
+        ),
+        Some(other) => (other, wave_defense),
+        None => {
+            let inferred_waves = hostile
+                .and_then(|h| h.engagement_enemy_types.as_ref())
+                .is_some_and(|tags| tags.contains(EnemyType::Waves));
+            let clean_base = if inferred_base == EnemyType::Waves {
+                EnemyType::RedMovingSpace
+            } else {
+                inferred_base
+            };
+            (clean_base, wave_defense || inferred_waves)
+        }
+    };
+
+    let mut tags = vec![base];
+    if explicit_enemy_type.is_none() {
+        if let Some(curated) = hostile.and_then(|h| h.engagement_enemy_types.as_ref()) {
+            for &tag in &curated.0 {
+                if !tags.contains(&tag) {
+                    tags.push(tag);
+                }
+            }
+        }
+    }
+    if waves_active && !tags.contains(&EnemyType::Waves) {
+        tags.push(EnemyType::Waves);
+    }
+
+    let is_armada_mode = matches!(
+        base,
+        EnemyType::GroupArmadas | EnemyType::SoloArmadas | EnemyType::OutpostArmadas
+    );
+    let defender_is_outpost = base == EnemyType::OutpostArmadas
+        || (explicit_enemy_type.is_none() && hostile.is_some_and(|h| h.is_outpost));
+    let defender_is_armada_hostile = is_armada_mode;
+    let combat_defender_ship_type = if is_armada_mode {
+        Some(ShipType::Armada)
+    } else if let Some(h) = hostile {
+        Some(h.ship_type())
+    } else {
+        defender_ship_class
+    };
+
+    let primary_enemy_type =
+        if waves_active && matches!(explicit_enemy_type, None | Some(EnemyType::Waves)) {
+            EnemyType::Waves
+        } else {
+            base
+        };
+
+    ResolvedCombatContext {
+        opponent_kind: OpponentKind::NpcHostile,
+        primary_enemy_type,
+        engagement_enemy_types: EnemyTypes::new(tags),
+        combat_defender_ship_type,
+        defender_is_outpost,
+        defender_is_armada_hostile,
+    }
+}
+
 /// Resolve the combat scenario for an optimize/simulate run. An explicit, parseable
-/// `enemy_type` always wins; otherwise infer from the target: PvP → [`EnemyType::PvpSpace`];
-/// a group-armada hostile → [`EnemyType::GroupArmadas`]; an outpost hostile →
-/// [`EnemyType::OutpostArmadas`]; anything else → [`EnemyType::RedMovingSpace`].
+/// `enemy_type` always wins; otherwise infer from the target via [`resolve_combat_context`].
 pub fn resolve_enemy_type(
     explicit: Option<&str>,
     is_pvp: bool,
     hostile: Option<&HostileRecord>,
 ) -> EnemyType {
-    if let Some(et) = explicit.and_then(enemy_type_from_str) {
-        return et;
-    }
-    if is_pvp {
-        return EnemyType::PvpSpace;
-    }
-    if let Some(h) = hostile {
-        if h.is_group_armada_target() {
-            return EnemyType::GroupArmadas;
-        }
-        if h.is_outpost {
-            return EnemyType::OutpostArmadas;
-        }
-    }
-    EnemyType::RedMovingSpace
+    let parsed = explicit.and_then(enemy_type_from_str);
+    resolve_combat_context(parsed, false, is_pvp, hostile, None).primary_enemy_type
 }
 
 #[cfg(test)]

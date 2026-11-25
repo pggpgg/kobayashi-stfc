@@ -803,6 +803,8 @@ fn sensitivity_command(args: &[String]) -> Result<(), String> {
         rounds: None,
         metric: Some(metric),
         deltas: None,
+        enemy_type: None,
+        wave_defense: None,
     };
 
     let registry = DataRegistry::load().map_err(|e| format!("DataRegistry::load: {e}"))?;
@@ -892,6 +894,8 @@ fn morris_sensitivity_command(args: &[String]) -> Result<(), String> {
         rounds: None,
         metric: Some(metric),
         deltas: None,
+        enemy_type: None,
+        wave_defense: None,
     };
 
     let registry = DataRegistry::load().map_err(|e| format!("DataRegistry::load: {e}"))?;
@@ -982,6 +986,8 @@ fn sobol_sensitivity_command(args: &[String]) -> Result<(), String> {
         metric: Some(metric),
         deltas: None,
         include_pairwise: Some(include_pairwise),
+        enemy_type: None,
+        wave_defense: None,
     };
 
     let registry = DataRegistry::load().map_err(|e| format!("DataRegistry::load: {e}"))?;
