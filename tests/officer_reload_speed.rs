@@ -709,3 +709,94 @@ fn kuron_recharge_boosts_all_weapons_on_untyped_ship() {
         );
     }
 }
+
+#[test]
+fn fcm_data_shots_fires_in_captain_seat_vs_group_armadas_not_bridge_or_solo() {
+    use kobayashi::combat::{EnemyType, EnemyTypes};
+
+    let captain_crew = resolve_crew("fcm-data-3b9e4d", &[], 1);
+    assert!(
+        captain_crew.seats.iter().any(|s| {
+            s.seat == CrewSeat::Captain
+                && matches!(
+                    s.ability.effect,
+                    AbilityEffect::ShotsBonus {
+                        chance,
+                        bonus_pct,
+                        ..
+                    } if (chance - 1.0).abs() < 1e-9 && (bonus_pct - 0.4).abs() < 1e-9
+                )
+        }),
+        "FCM Data in captain seat must emit ShotsBonus (+40% base): {:?}",
+        captain_crew
+            .seats
+            .iter()
+            .map(|s| (s.seat, s.ability.name.clone(), s.ability.effect))
+            .collect::<Vec<_>>()
+    );
+
+    let bridge_crew = resolve_crew("uhura-ea117c", &["fcm-data-3b9e4d".to_string()], 1);
+    assert!(
+        bridge_crew
+            .seats
+            .iter()
+            .all(|s| !matches!(s.ability.effect, AbilityEffect::ShotsBonus { .. })),
+        "FCM Data in bridge seat must NOT emit captain ShotsBonus: {:?}",
+        bridge_crew
+            .seats
+            .iter()
+            .map(|s| (s.seat, s.ability.name.clone(), s.ability.effect))
+            .collect::<Vec<_>>()
+    );
+
+    let run_armada = |crew: &CrewConfiguration, enemy_type: EnemyType| {
+        let mut attacker = breaking_attacker(0.0);
+        attacker.weapons = vec![WeaponStats {
+            attack: 1_000.0,
+            shots: Some(5),
+            ..Default::default()
+        }];
+        let mut defender = shielded_defender();
+        defender.shield_health = 0.0;
+        defender.mitigation = 0.0;
+        let config = SimulationConfig {
+            rounds: 2,
+            seed: 42,
+            trace_mode: TraceMode::Events,
+            defender_level: Some(50),
+            engagement_enemy_types: EnemyTypes(vec![enemy_type]),
+            ..Default::default()
+        };
+        let setup = build_combat_setup(
+            &attacker,
+            &defender,
+            &config,
+            crew,
+            kobayashi::combat::OpponentFactionTag::Unknown,
+            ShipType::Armada,
+            ShipType::Battleship,
+            true,
+            false,
+            &CrewConfiguration::default(),
+        );
+        simulate_combat_from_setup(&setup, config.seed).total_damage
+    };
+
+    let base_group = run_armada(&CrewConfiguration::default(), EnemyType::GroupArmadas);
+    let fcm_group = run_armada(&captain_crew, EnemyType::GroupArmadas);
+    let fcm_solo = run_armada(&captain_crew, EnemyType::SoloArmadas);
+    let fcm_bridge_group = run_armada(&bridge_crew, EnemyType::GroupArmadas);
+
+    assert!(
+        fcm_group > base_group,
+        "FCM Data captain must increase shots damage vs Group Armadas (fcm={fcm_group}, base={base_group})"
+    );
+    assert_eq!(
+        fcm_solo, base_group,
+        "FCM Data captain must stay inert vs Solo Armadas (solo={fcm_solo}, base={base_group})"
+    );
+    assert_eq!(
+        fcm_bridge_group, base_group,
+        "FCM Data on bridge must not grant captain ShotsBonus vs Group Armadas"
+    );
+}

@@ -4835,7 +4835,7 @@
           "description": "Increases Shots by X for 2 rounds on round start against Group Armadas.",
           "modifier": "ShotsPerAttack",
           "operation": "MultiplyAdd",
-          "slot": "officer",
+          "slot": "captain",
           "target": "SelfShip",
           "trigger": "RoundStart",
           "value_by_rank": [

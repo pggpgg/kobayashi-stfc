@@ -765,7 +765,7 @@ fn effect_condition_from_canonical(
     {
         let duration = num_rounds_from_attributes(a.attributes.as_deref());
         // Keep the existing launch window for rows without a declared duration,
-        // Miles O'Brien's "For 3 rounds" wording, and FCM Data's unverified seat mapping.
+        // Miles O'Brien's "For 3 rounds" wording, and FCM Data's "for 2 rounds" captain maneuver.
         if duration.is_none()
             || matches!(a.ability_id.as_deref(), Some("3396349483" | "1610205778"))
         {
@@ -1540,6 +1540,13 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             .as_deref()
             .and_then(officer_stat_from_canonical_attributes)
             == Some(OfficerStat::Health);
+    let supported_charvanek_armor_piercing = modifier == "ArmorPiercing"
+        && a.ability_id.as_deref() == Some("2825675256")
+        && op.eq_ignore_ascii_case("MultiplyBaseAdd")
+        && a.attributes
+            .as_deref()
+            .and_then(officer_stat_from_canonical_attributes)
+            == Some(OfficerStat::Health);
     let supported_enemy_piercing_reduction = modifier == "AllPiercing"
         && op.eq_ignore_ascii_case("MultiplySub")
         && a.target.as_deref() == Some("EnemyShip")
@@ -1632,6 +1639,7 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         && !supported_launch_officer_stat)
         || unsupported_critical_shot_modifier
         || unsupported_enemy_crit_damage
+        || (modifier == "ArmorPiercing" && !supported_charvanek_armor_piercing)
         || (modifier == "AllPiercing"
             && !supported_enemy_piercing_reduction
             && !supported_self_all_piercing)
@@ -1829,11 +1837,7 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
                 MappedEffect::StatModify("armor".into(), "add".into(), val)
             }
         }
-        "ArmorPiercing" if a.ability_id.as_deref() == Some("2825675256")
-            && op.eq_ignore_ascii_case("MultiplyBaseAdd")
-            && a.attributes.as_deref().and_then(officer_stat_from_canonical_attributes)
-                == Some(OfficerStat::Health) =>
-        {
+        "ArmorPiercing" if supported_charvanek_armor_piercing => {
             // Charvanek's bridge ability scales raw Armor Piercing by total
             // crew Health, resolved after profile and setup conditions.
             MappedEffect::StatModify("base_armor_piercing_per_crew_health".into(), "add".into(), val)
@@ -1852,7 +1856,7 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             MappedEffect::StatModify(stat.into(), "add".into(), val)
         }
         "ArmorPiercing" | "AllPiercing" => {
-            MappedEffect::StatModify("shield_pierce".into(), "add".into(), val)
+            MappedEffect::StatModify("unsupported_officer_effect".into(), "add".into(), val)
         }
         "ShieldHPMax" | "HullHPMax"
             if op.eq_ignore_ascii_case("MultiplyAdd")
@@ -2881,7 +2885,7 @@ mod canonical_condition_tests {
     #[test]
     fn fcm_data_shots_maps_to_lcars_with_round_duration_and_and_condition() {
         let a: CanonicalAbility = serde_json::from_value(serde_json::json!({
-            "slot": "officer",
+            "slot": "captain",
             "trigger": "RoundStart",
             "modifier": "ShotsPerAttack",
             "operation": "MultiplyAdd",
@@ -2908,6 +2912,104 @@ mod canonical_condition_tests {
         assert_eq!(kids[0].enemy_type.as_deref(), Some("group_armadas"));
         assert_eq!(kids[1].condition_type, "defender_ship_type_is");
         assert_eq!(kids[1].ship_type.as_deref(), Some("armada"));
+    }
+
+    #[test]
+    fn fcm_data_canonical_assigns_shots_to_captain_seat_and_loot_to_bridge() {
+        let model = build_officer_model_file_default().expect("default officer model");
+        let fcm = model
+            .officers
+            .iter()
+            .find(|o| o.id == "fcm-data-3b9e4d")
+            .expect("FCM Data in canonical catalog");
+        let cap = fcm
+            .captain_ability
+            .as_ref()
+            .expect("FCM Data captain ability 1610205778");
+        assert!(
+            cap.effects
+                .iter()
+                .any(|e| e.stat.as_deref() == Some("shots_per_attack")),
+            "expected FCM Data captain_ability to carry shots_per_attack, got {:?}",
+            cap.effects
+        );
+        let bridge = fcm
+            .bridge_ability
+            .as_ref()
+            .expect("FCM Data bridge ability 1470259639");
+        assert!(
+            bridge
+                .effects
+                .iter()
+                .all(|e| e.stat.as_deref() != Some("shots_per_attack")),
+            "FCM Data bridge_ability must not carry captain shots_per_attack: {:?}",
+            bridge.effects
+        );
+        assert!(
+            bridge
+                .effects
+                .iter()
+                .any(|e| e.tag.as_deref() == Some("armadaloot:non_combat")),
+            "expected FCM Data bridge_ability to retain armadaloot:non_combat, got {:?}",
+            bridge.effects
+        );
+    }
+
+    #[test]
+    fn unsupported_armor_piercing_abilities_quarantine_instead_of_shield_pierce() {
+        let model = build_officer_model_file_default().expect("default officer model");
+        let by_id = |id: &str| {
+            model
+                .officers
+                .iter()
+                .find(|o| o.id == id)
+                .unwrap_or_else(|| panic!("missing officer {id}"))
+        };
+
+        for (officer_id, seat_name) in [
+            ("azetbur-7eff22", "bridge"),
+            ("paul-stamets-4aa6ab", "bridge"),
+            ("m-ral-986e7a", "captain"),
+            ("honorguard-worf-8ac58c", "captain"),
+        ] {
+            let officer = by_id(officer_id);
+            let ability = match seat_name {
+                "captain" => officer.captain_ability.as_ref().expect("captain ability"),
+                _ => officer.bridge_ability.as_ref().expect("bridge ability"),
+            };
+            assert!(
+                ability
+                    .effects
+                    .iter()
+                    .all(|e| e.stat.as_deref() != Some("shield_pierce")
+                        && e.stat.as_deref() != Some("pierce")),
+                "{officer_id} {seat_name} must never emit damage-through shield_pierce: {:?}",
+                ability.effects
+            );
+            assert!(
+                ability
+                    .effects
+                    .iter()
+                    .any(|e| e.stat.as_deref() == Some("unsupported_officer_effect")),
+                "{officer_id} {seat_name} should quarantine ArmorPiercing as unsupported_officer_effect: {:?}",
+                ability.effects
+            );
+        }
+
+        // Charvanek (2825675256) remains supported via base_armor_piercing_per_crew_health.
+        let charvanek = by_id("charvanek-0f1b5c");
+        let charvanek_bridge = charvanek
+            .bridge_ability
+            .as_ref()
+            .expect("Charvanek bridge ability");
+        assert!(
+            charvanek_bridge
+                .effects
+                .iter()
+                .any(|e| e.stat.as_deref() == Some("base_armor_piercing_per_crew_health")),
+            "Charvanek bridge ability must remain mapped to base_armor_piercing_per_crew_health: {:?}",
+            charvanek_bridge.effects
+        );
     }
 
     #[test]

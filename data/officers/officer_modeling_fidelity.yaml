@@ -106,3 +106,10 @@ planetfall-kirk-0def07: "Captain Defensive Focus (+20% existing Polaron Mitigati
 planetfall-ortegas-408465: "No captain (Chain of Command). Bridge Exploit Target (+5,000..+500,000 Polaron Mitigation on FKR/Vengeance vs FKR Hostiles) and BD Infusion Leverage (+2,500..+25,000 Infusion Capacitors on FKR/Vengeance vs FKR Armadas) are both modeled."
 planetfall-scotty-5a60c7: "No captain (Chain of Command). Bridge Infusion Capacitor Amplification (+10%..+100% Infusion Capacitor Spike on FKR/Vengeance vs FKR Hostiles) and BD Infusion Optimization (+2,500..+25,000 Infusion Capacitors on FKR/Vengeance vs Solo Outposts and Outpost Retaliation Attackers) are both modeled."
 planetfall-uhura-f1ba9e: "No captain (Chain of Command). Bridge Copious Capacitors (+750..+2,000 Infusion Capacitors on FKR/Vengeance vs FKR Hostiles) is modeled. BD Now We're Talking! (Polaron Ions loot) is economy → :non_combat."
+
+# QA #413 quick wins — seat alignment and single-axis ArmorPiercing quarantine.
+fcm-data-3b9e4d: "Captain Plexurus of Borg (1610205778) is in its verified captain seat (+ShotsPerAttack for 2 rounds vs Group Armadas); bridge Through Space and Time (ArmadaLoot) is economy → :non_combat."
+azetbur-7eff22: "Captain kinetic-hit Hull Breach gate remains unmodeled; bridge per-hit ArmorPiercing (3301945997) is quarantined as unsupported with diagnostics rather than mapped to damage-through shield_pierce."
+honorguard-worf-8ac58c: "Captain crew-Attack-scaled ArmorPiercing on crit vs players (2884241557) is quarantined as unsupported with diagnostics rather than mapped to damage-through shield_pierce."
+m-ral-986e7a: "Captain launch ArmorPiercing (508362235) is quarantined as unsupported with diagnostics pending single-axis base Armor Piercing pool support rather than mapped to damage-through shield_pierce."
+paul-stamets-4aa6ab: "Bridge CombatStart enemy ArmorPiercing reduction vs players while defending (862911683) is quarantined as unsupported with diagnostics rather than inverted into friendly damage-through shield_pierce."

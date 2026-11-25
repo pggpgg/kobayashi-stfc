@@ -388,6 +388,25 @@
     ],
     "notes": "Foundry: Shield Health Bonus for Battleship-class player ships."
   },
+  "473361651": {
+    "operator": "add",
+    "conditions": [
+      "ship_combat_only",
+      "defender_is_npc_hostile"
+    ],
+    "notes": "Holodeck (Client BuffSpec 473361651: ModAllPiercing MultiplyAdd at CombatStart, condition 27 CondTargetMarauderOrChallenge): increases base Armor Piercing, Shield Piercing, and Accuracy vs NPC hostiles (not PvP, not generic damage-through pierce).",
+    "targets": [
+      {
+        "stat": "armor_piercing"
+      },
+      {
+        "stat": "shield_piercing"
+      },
+      {
+        "stat": "accuracy"
+      }
+    ]
+  },
   "560958387": {
     "stat": "weapon_damage",
     "operator": "add",

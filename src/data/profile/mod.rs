@@ -5536,8 +5536,7 @@ mod tests {
     }
 
     #[test]
-    fn merge_building_bonuses_into_profile_merges_holodeck_pierce_not_opaque_buff() {
-        let mut profile = PlayerProfile::default();
+    fn merge_building_bonuses_into_profile_routes_holodeck_to_hostile_base_piercing_stats() {
         let imported_buildings = vec![BuildingEntry { bid: 69, level: 5 }];
         let mut bid_to_id = HashMap::new();
         bid_to_id.insert(69i64, "building_69".to_string());
@@ -5552,19 +5551,79 @@ mod tests {
             }],
         };
         let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/buildings");
+
+        let mut pve_profile = PlayerProfile::default();
         merge_building_bonuses_into_profile(
-            &mut profile,
+            &mut pve_profile,
             &imported_buildings,
             &bid_to_id,
             &building_index,
             data_dir.as_path(),
-            &BuildingBonusContext::default(),
+            &BuildingBonusContext {
+                mode: BuildingMode::ShipCombat,
+                defender_opponent: BuildingDefenderOpponent::NpcHostile,
+                ..BuildingBonusContext::default()
+            },
         );
+        for stat in ["armor_piercing", "shield_piercing", "accuracy"] {
+            assert_eq!(
+                pve_profile.bonuses.get(stat).copied(),
+                Some(0.8),
+                "Holodeck level 5 should contribute +80% to {stat} vs NPC hostiles"
+            );
+        }
         assert!(
-            profile.bonuses.get("pierce").copied().unwrap_or(0.0) > 0.0,
-            "holodeck level 5 should contribute pierce via normalized stat"
+            !pve_profile.bonuses.contains_key("pierce"),
+            "Holodeck must never feed generic damage-through Combatant.pierce"
         );
-        assert!(!profile.bonuses.contains_key("buff_473361651"));
+        assert!(!pve_profile.bonuses.contains_key("buff_473361651"));
+
+        // Verify end-to-end scaling on AttackerStats without touching Combatant.pierce.
+        let mut stats = AttackerStats {
+            armor_piercing: 100.0,
+            shield_piercing: 200.0,
+            accuracy: 300.0,
+        };
+        apply_profile_piercing_to_attacker_stats(&mut stats, &pve_profile, None);
+        assert!((stats.armor_piercing - 180.0).abs() < 1e-9);
+        assert!((stats.shield_piercing - 360.0).abs() < 1e-9);
+        assert!((stats.accuracy - 540.0).abs() < 1e-9);
+
+        // PvP and StationDefense controls: Holodeck 473361651 (condition 27) must stay inert.
+        for (label, ctx) in [
+            (
+                "PvP",
+                BuildingBonusContext {
+                    mode: BuildingMode::ShipCombat,
+                    defender_opponent: BuildingDefenderOpponent::PlayerShip,
+                    ..BuildingBonusContext::default()
+                },
+            ),
+            (
+                "StationDefense",
+                BuildingBonusContext {
+                    mode: BuildingMode::StationDefense,
+                    defender_opponent: BuildingDefenderOpponent::NpcHostile,
+                    ..BuildingBonusContext::default()
+                },
+            ),
+        ] {
+            let mut ctrl = PlayerProfile::default();
+            merge_building_bonuses_into_profile(
+                &mut ctrl,
+                &imported_buildings,
+                &bid_to_id,
+                &building_index,
+                data_dir.as_path(),
+                &ctx,
+            );
+            for stat in ["armor_piercing", "shield_piercing", "accuracy", "pierce"] {
+                assert!(
+                    !ctrl.bonuses.contains_key(stat),
+                    "Holodeck must not contribute {stat} in {label} context"
+                );
+            }
+        }
     }
 
     #[test]
@@ -5953,14 +6012,21 @@ mod tests {
             data_dir.as_path(),
             &BuildingBonusContext {
                 mode: BuildingMode::ShipCombat,
+                defender_opponent: BuildingDefenderOpponent::NpcHostile,
                 attacker_ship_type: Some(ShipType::Battleship),
                 ..BuildingBonusContext::default()
             },
         );
-        assert_eq!(
-            profile_bb.bonuses.get("pierce"),
-            Some(&5.0),
-            "Holodeck 20 pierce"
+        for stat in ["armor_piercing", "shield_piercing", "accuracy"] {
+            assert_eq!(
+                profile_bb.bonuses.get(stat),
+                Some(&5.0),
+                "Holodeck 20 base {stat} vs NPC hostiles"
+            );
+        }
+        assert!(
+            !profile_bb.bonuses.contains_key("pierce"),
+            "Holodeck 20 must not populate damage-through pierce"
         );
         assert_eq!(
             profile_bb.bonuses.get("armor"),
