@@ -157,7 +157,12 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   `EnemySentinel`, `TargetNotPlayerStation`, `SelfAtAssault2`, `TargetIsInvadingEntity`,
 ///   `TargetNotInvadingEntity`, `TargetIsArmadaOrInvadingEntity`, and Caleb Mir's
 ///   `EnemyNonArmadaHostileOrOutpost` / `EnemyOutpostOrRetaliator` gates.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 34;
+/// * 34 → 35 (2026-11): Hostile auto-inference catalog enrichment — verified Solo Armadas
+///   (Dominion Flagships, Borg Spheres/Expansion Cubes, Conqueror Borg Solo Armadas, Arena
+///   Solo Armada) auto-infer as `solo_armadas`, verified Outpost Retaliators (Cardassian/Node/
+///   Borg Galor-Class hostiles) auto-infer as `outpost_retaliation_attackers`, and canonical
+///   Borg `faction.loca_id: 13` maps to `OpponentFactionTag::Borg`.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 35;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.

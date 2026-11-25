@@ -19,6 +19,7 @@ import {
   type OptimizeStatusResponse,
   optimizeStart,
   type Preset,
+  type ResolvedContextSummary,
   type SimulateStats,
   savePreset,
   simulate,
@@ -101,8 +102,14 @@ export function useWorkspace() {
   const [shipLevel, setShipLevel] = useState(50);
   const [shipId, setShipId] = useState("");
   const [scenarioId, setScenarioId] = useState("");
-  /** Combat scenario for officer eligibility (empty = let the server infer from the target). */
+  /** Combat scenario override (empty = let the server infer from the target). */
   const [enemyType, setEnemyType] = useState("");
+  /** Additive Wave Defense toggle (combines `waves` with target's base type/faction/class). */
+  const [waveDefense, setWaveDefense] = useState(false);
+  /** Auto-inferred base enemy_type reported by WorkspaceHeader for the selected hostile. */
+  const [inferredEnemyType, setInferredEnemyType] = useState<string | null>(
+    null,
+  );
   /** Officer eligibility matrix for live crew-builder badges (fetched once; null until loaded). */
   const [eligibility, setEligibility] =
     useState<OfficerEligibilityResponse | null>(null);
@@ -121,6 +128,8 @@ export function useWorkspace() {
 
   // Simulation state
   const [simResult, setSimResult] = useState<SimulateStats | null>(null);
+  const [resolvedContext, setResolvedContext] =
+    useState<ResolvedContextSummary | null>(null);
   const [loadingSim, setLoadingSim] = useState(false);
   const [resultWarnings, setResultWarnings] = useState<string[]>([]);
   const [unresolvedOfficers, setUnresolvedOfficers] = useState<string[]>([]);
@@ -264,6 +273,7 @@ export function useWorkspace() {
       fastDiscovery,
       enableLearnedPairPrior,
       enemyType,
+      waveDefense,
     });
 
   // Preset saving state
@@ -318,6 +328,7 @@ export function useWorkspace() {
     shipTier,
     shipLevel,
     enemyType,
+    waveDefense,
     belowDeckUnlockLevels,
     simsPerCrew,
     optimizerSettings,
@@ -413,6 +424,7 @@ export function useWorkspace() {
       setOptimizeProgress(null);
       setOptimizePreview(null);
       setSimResult(null);
+      setResolvedContext(null);
       setRecommendations([]);
       setResultWarnings([]);
       setUnresolvedOfficers([]);
@@ -449,6 +461,7 @@ export function useWorkspace() {
     shipTier,
     shipLevel,
     enemyType,
+    waveDefense,
     crew,
     simsPerCrew,
     selectedSupportBuffs,
@@ -459,6 +472,7 @@ export function useWorkspace() {
       previousSimInputRef.current = simInputKey;
       setLoadingSim(false);
       setSimResult(null);
+      setResolvedContext(null);
     }
     return () => {
       simGenerationRef.current += 1;
@@ -497,6 +511,7 @@ export function useWorkspace() {
           chain_kills_target: chainGrindEnabled ? chainKillsTarget : undefined,
           strategy: optimizerStrategy,
           enemy_type: enemyType || undefined,
+          wave_defense: waveDefense || undefined,
         },
         activeProfileId,
       )
@@ -528,6 +543,7 @@ export function useWorkspace() {
     chainKillsTarget,
     optimizerStrategy,
     enemyType,
+    waveDefense,
   ]);
 
   // Fetch available heuristic seeds
@@ -710,6 +726,7 @@ export function useWorkspace() {
       shipLevel,
       supportBuffs: selectedSupportBuffs,
       enemyType: enemyType || undefined,
+      waveDefense,
     });
     if (!simParams) {
       setError("Select a captain first");
@@ -723,11 +740,13 @@ export function useWorkspace() {
     setWorkspaceInfo(null);
     setResultWarnings([]);
     setUnresolvedOfficers([]);
+    setResolvedContext(null);
     setLoadingSim(true);
     try {
       const res = await simulate(simParams, activeProfileId);
       if (generation !== simGenerationRef.current) return;
       setSimResult(res.stats);
+      setResolvedContext(res.resolved_context ?? null);
       setRecommendations([]);
       setResultWarnings(res.warnings ?? []);
       setUnresolvedOfficers(res.unresolved_officers ?? []);
@@ -741,6 +760,7 @@ export function useWorkspace() {
 
   const resetResults = () => {
     setSimResult(null);
+    setResolvedContext(null);
     setRecommendations([]);
     setResultWarnings([]);
     setUnresolvedOfficers([]);
@@ -774,6 +794,7 @@ export function useWorkspace() {
       setLastOptimizeEffectiveStrategy(
         status.result.scenario?.effective_strategy ?? null,
       );
+      setResolvedContext(status.result.scenario?.resolved_context ?? null);
       saveWarmStartFromRecommendations(
         optimizeWarmStartCacheKey(),
         completedRecommendations,
@@ -1098,6 +1119,7 @@ export function useWorkspace() {
           belowDecksSlots: belowDeckSlotCount(shipLevel, belowDeckUnlockLevels),
           supportBuffs: selectedSupportBuffs,
           enemyType: enemyType || undefined,
+          waveDefense,
           optimizeConstraints: {
             mustIncludeComma: optimizeMustInclude,
             excludeComma: optimizeExclude,
@@ -1252,6 +1274,10 @@ export function useWorkspace() {
     setScenarioId,
     enemyType,
     setEnemyType,
+    waveDefense,
+    setWaveDefense,
+    inferredEnemyType,
+    setInferredEnemyType,
     eligibility,
     shipTier,
     setShipTier,
@@ -1266,6 +1292,7 @@ export function useWorkspace() {
     setPins,
     // Simulation
     simResult,
+    resolvedContext,
     resetResults,
     resultWarnings,
     unresolvedOfficers,

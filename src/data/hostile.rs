@@ -19,11 +19,100 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::combat::types::enemy_type_to_key;
 use crate::combat::{
-    pierce_damage_through_bonus, AttackerStats, DefenderStats, EnemyTypes, OpponentFactionTag,
-    ShipType, WeaponStats, WeaponType,
+    pierce_damage_through_bonus, AttackerStats, DefenderStats, EnemyType, EnemyTypes,
+    OpponentFactionTag, ShipType, WeaponStats, WeaponType,
 };
 use crate::data::upstream_hostile_ship_type::upstream_hostile_ship_type_profile;
+
+/// Upstream Q-Continuum faction id (`loca_id: 72000`; Q's Trial encounters).
+pub const Q_CONTINUUM_FACTION_ID: i64 = 4_145_760_809;
+/// Upstream Cardassian Outpost faction id (`loca_id: 84001`; Cardassian Solo Outposts + Galor-Class Warship Retaliators).
+pub const OUTPOST_CARDASSIAN_FACTION_ID: i64 = 880_952_928;
+/// Upstream Borg Outpost faction id (`loca_id: 84003`; Borg Solo Outposts + Assimilated Galor-Class Retaliators).
+pub const OUTPOST_BORG_FACTION_ID: i64 = 2_706_737_293;
+/// Upstream Node Outpost faction id (`loca_id: 84002`; Node Solo Outposts + Controlled Galor-Class Retaliators).
+pub const OUTPOST_NODE_FACTION_ID: i64 = 4_269_128_921;
+
+/// True when upstream hostile metadata identifies an Outpost Retaliation Attacker
+/// (`Galor-Class Warship`, `Controlled Galor-Class`, `Assimilated Galor-Class` and Elite variants —
+/// `count: 0`, 100% system overlap with Solo Outposts, paired ability `loca_id`s 84504–84507).
+pub fn is_verified_outpost_retaliator(
+    is_outpost: bool,
+    faction_id: Option<i64>,
+    loca_id: Option<u64>,
+) -> bool {
+    !is_outpost
+        && matches!(
+            faction_id,
+            Some(OUTPOST_CARDASSIAN_FACTION_ID | OUTPOST_BORG_FACTION_ID | OUTPOST_NODE_FACTION_ID)
+        )
+        && matches!(loca_id, Some(84_504..=84_515 | 85_503..=85_511))
+}
+
+/// True when upstream hostile metadata identifies a curated Solo Armada target
+/// (`upstream_ship_type == 1`, `!is_outpost`, verified upstream `loca_id`).
+///
+/// Explicitly excludes Outposts (`is_outpost == true`), Group/Formation Armadas
+/// (`Borg Cube` 8100..=8105, `Formation Armada` 54201/57201, `Arena Armada` 71952, etc.).
+pub fn is_verified_solo_armada_target(
+    upstream_ship_type: u32,
+    is_outpost: bool,
+    loca_id: Option<u64>,
+) -> bool {
+    !is_outpost
+        && upstream_hostile_ship_type_profile(upstream_ship_type).is_armada_target
+        && matches!(
+            loca_id,
+            // Dominion Solo Armadas: Jem'Hadar Flagship (47050), Vanguard Flagship (47051), Dreadnought Flagship (47052)
+            Some(47_050..=47_052)
+                // Borg Solo Armadas: Borg Sphere (50050), Borg Recon Sphere (50051), Borg Expansion Cube (51050)
+                | Some(50_050..=50_051 | 51_050)
+                // Conqueror Borg Solo Armadas (Common / Uncommon / Rare)
+                | Some(88_050..=88_052)
+                // Arena Solo Armada (71952 Arena Armada stays GroupArmadas)
+                | Some(71_953)
+        )
+}
+
+/// Pure auto-inference for an NPC hostile's intrinsic base [`EnemyType`] from upstream fields.
+///
+/// Precedence prevents dead branches where `upstream_ship_type == 1` overlaps with Q's Trials
+/// (46/97 Q-Continuum rows), Outposts (all 55 `is_outpost: true` rows), and curated Solo Armadas:
+/// 1. Q-Continuum faction (`4145760809`) → [`EnemyType::QTrial`]
+/// 2. `is_outpost == true` → [`EnemyType::OutpostArmadas`] (strictly before solo heuristics)
+/// 3. Verified Outpost Retaliation Attackers → [`EnemyType::OutpostRetaliationAttackers`]
+/// 4. Verified Curated Solo Armadas → [`EnemyType::SoloArmadas`]
+/// 5. Remaining armada targets (`upstream_ship_type == 1`) → [`EnemyType::GroupArmadas`]
+/// 6. `upstream_ship_type` in `{3, 6}` (Separatist mission bosses) → [`EnemyType::MissionBosses`]
+/// 7. Default → [`EnemyType::RedMovingSpace`]
+pub fn infer_hostile_engagement_enemy_type_from_fields(
+    upstream_ship_type: u32,
+    is_outpost: bool,
+    faction_id: Option<i64>,
+    loca_id: Option<u64>,
+) -> EnemyType {
+    if faction_id == Some(Q_CONTINUUM_FACTION_ID) {
+        return EnemyType::QTrial;
+    }
+    if is_outpost {
+        return EnemyType::OutpostArmadas;
+    }
+    if is_verified_outpost_retaliator(is_outpost, faction_id, loca_id) {
+        return EnemyType::OutpostRetaliationAttackers;
+    }
+    if is_verified_solo_armada_target(upstream_ship_type, is_outpost, loca_id) {
+        return EnemyType::SoloArmadas;
+    }
+    if upstream_hostile_ship_type_profile(upstream_ship_type).is_armada_target {
+        return EnemyType::GroupArmadas;
+    }
+    if matches!(upstream_ship_type, 3 | 6) {
+        return EnemyType::MissionBosses;
+    }
+    EnemyType::RedMovingSpace
+}
 
 #[derive(Debug, Clone)]
 pub struct Hostile {
@@ -177,6 +266,43 @@ pub struct HostileIndexEntry {
     pub upstream_ship_type: Option<u32>,
     #[serde(default)]
     pub loca_id: Option<u64>,
+    /// Auto-inferred base combat engagement mode (`snake_case` [`EnemyType`], e.g. `"solo_armadas"`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub inferred_enemy_type: Option<String>,
+    /// True for Solo Outpost targets (`is_outpost: true` in upstream data).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub is_outpost: bool,
+    /// Auto-inferred opponent faction slug (`snake_case` [`OpponentFactionTag`]) when known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub faction_tag: Option<String>,
+    /// Curated hostile sub-family tags (e.g. `conqueror_borg`, `gorn_hunter`, `breen_warship`, `texas_class`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hostile_tags: Vec<String>,
+}
+
+impl HostileIndexEntry {
+    /// Build an index entry from a normalized [`HostileRecord`], including inferred mode,
+    /// outpost flag, faction slug, and effective hostile sub-family tags.
+    pub fn from_record(rec: &HostileRecord) -> Self {
+        Self {
+            id: rec.id.clone(),
+            hostile_name: rec.hostile_name.clone(),
+            level: rec.level,
+            ship_class: rec.ship_class.clone(),
+            rarity: Some(rec.rarity),
+            upstream_ship_type: Some(rec.upstream_ship_type),
+            loca_id: rec.loca_id,
+            inferred_enemy_type: Some(
+                enemy_type_to_key(rec.inferred_base_enemy_type()).to_string(),
+            ),
+            is_outpost: rec.is_outpost,
+            faction_tag: rec
+                .opponent_faction_tag()
+                .as_data_slug()
+                .map(str::to_string),
+            hostile_tags: rec.effective_hostile_tags(),
+        }
+    }
 }
 
 impl HostileRecord {
@@ -185,6 +311,44 @@ impl HostileRecord {
             self.crit_damage,
             self.crit_damage_is_bonus.unwrap_or(false),
         )
+    }
+
+    /// Intrinsic base [`EnemyType`] for this hostile: prefers explicit `engagement_enemy_types[0]`
+    /// when populated, else delegates to [`infer_hostile_engagement_enemy_type_from_fields`].
+    pub fn inferred_base_enemy_type(&self) -> EnemyType {
+        if let Some(et) = self
+            .engagement_enemy_types
+            .as_ref()
+            .and_then(|tags| tags.0.first().copied())
+        {
+            return et;
+        }
+        infer_hostile_engagement_enemy_type_from_fields(
+            self.upstream_ship_type,
+            self.is_outpost,
+            self.faction.as_ref().map(|f| f.id),
+            self.loca_id,
+        )
+    }
+
+    /// Effective hostile sub-family tag slugs (persisted `hostile_tags` plus faction-derived
+    /// native tags such as `texas_class` and `xindi_aquatic`), deduplicated in stable order.
+    pub fn effective_hostile_tags(&self) -> Vec<String> {
+        let mut tags = self.hostile_tags.clone();
+        if let Some(fid) = self.faction.as_ref().map(|f| f.id) {
+            let mask = crate::combat::hostile_tags::mask_from_native_faction(fid);
+            if mask & crate::combat::hostile_tags::HOSTILE_TAG_MASK_TEXAS_CLASS != 0
+                && !tags.iter().any(|t| t == "texas_class")
+            {
+                tags.push("texas_class".to_string());
+            }
+            if mask & crate::combat::hostile_tags::HOSTILE_TAG_MASK_XINDI_AQUATIC != 0
+                && !tags.iter().any(|t| t == "xindi_aquatic")
+            {
+                tags.push("xindi_aquatic".to_string());
+            }
+        }
+        tags
     }
 
     /// Bitmask for [`crate::combat::SimulationConfig::defender_hostile_tag_mask`] / [`crate::combat::CombatContext::defender_hostile_tag_mask`].
@@ -367,7 +531,9 @@ fn opponent_faction_from_upstream_id(id: i64) -> Option<OpponentFactionTag> {
         2064723306 => Some(OpponentFactionTag::Federation),
         4153667145 => Some(OpponentFactionTag::Klingon),
         669838839 => Some(OpponentFactionTag::Romulan),
-        // Note: `356485724` is Maverick (loca 88002), not Borg — do not map here (→ Unknown).
+        // Note: `356485724` is Conqueror Borg (`loca_id: 88002`) — intentionally kept separate from
+        // `OpponentFactionTag::Borg` (`2943562711`) so regular anti-Borg abilities do not misfire;
+        // Conqueror Borg gating uses `HOSTILE_TAG_MASK_CONQUEROR_BORG` / `hostile_tags`.
         2706737293 | 2943562711 => Some(OpponentFactionTag::Borg),
         3536012672 => Some(OpponentFactionTag::Cardassian),
         2504833658 | 1645257079 => Some(OpponentFactionTag::MirrorUniverse),
@@ -396,6 +562,7 @@ fn opponent_faction_from_faction_loca_id(loca: u64) -> Option<OpponentFactionTag
         3 => Some(OpponentFactionTag::Romulan),
         11 => Some(OpponentFactionTag::Augment),
         12 => Some(OpponentFactionTag::Swarm),
+        13 => Some(OpponentFactionTag::Borg),
         14 => Some(OpponentFactionTag::Assimilated),
         17 => Some(OpponentFactionTag::Actian),
         19 => Some(OpponentFactionTag::Cardassian),
@@ -706,6 +873,137 @@ mod tests {
         }"#;
         let r2: HostileRecord = serde_json::from_str(j2).unwrap();
         assert_eq!(r2.opponent_faction_tag(), OpponentFactionTag::Borg);
+
+        // Canonical Borg loca_id 13 fallback when faction.id is unknown (-1).
+        let j3 = r#"{
+            "id":"b13","hostile_name":"Borg Drone","level":25,"ship_class":"battleship",
+            "armor":1.0,"shield_deflection":1.0,"dodge":1.0,"hull_health":100.0,"shield_health":50.0,
+            "faction":{"id":-1,"loca_id":13}
+        }"#;
+        let r3: HostileRecord = serde_json::from_str(j3).unwrap();
+        assert_eq!(r3.opponent_faction_tag(), OpponentFactionTag::Borg);
+    }
+
+    #[test]
+    fn opponent_faction_tag_xindi_ids_and_borg_isolation() {
+        // All three Xindi numeric faction ids resolve strictly to Xindi.
+        for id in [2_352_723_133i64, 2_745_774_076, 505_966_333] {
+            let r: HostileRecord = serde_json::from_value(serde_json::json!({
+                "id": format!("xindi_{id}"), "hostile_name": "Xindi", "level": 50,
+                "ship_class": "interceptor", "armor": 1, "shield_deflection": 1, "dodge": 1,
+                "hull_health": 100, "shield_health": 50,
+                "faction": { "id": id, "loca_id": null }
+            }))
+            .unwrap();
+            assert_eq!(r.opponent_faction_tag(), OpponentFactionTag::Xindi);
+        }
+        // Conqueror Borg (356485724) and Ex-Borg (4138978039) must NEVER collide with Borg (2943562711).
+        let cb: HostileRecord = serde_json::from_value(serde_json::json!({
+            "id": "cb", "hostile_name": "Conqueror Borg Solo Armada", "level": 60,
+            "ship_class": "survey", "armor": 1, "shield_deflection": 1, "dodge": 1,
+            "hull_health": 100, "shield_health": 50,
+            "faction": { "id": 356_485_724, "loca_id": 88002 }
+        }))
+        .unwrap();
+        assert_eq!(cb.opponent_faction_tag(), OpponentFactionTag::Unknown);
+
+        let exb: HostileRecord = serde_json::from_value(serde_json::json!({
+            "id": "exb", "hostile_name": "Freebooter Interceptor", "level": 50,
+            "ship_class": "interceptor", "armor": 1, "shield_deflection": 1, "dodge": 1,
+            "hull_health": 100, "shield_health": 50,
+            "faction": { "id": 4_138_978_039i64, "loca_id": 24 }
+        }))
+        .unwrap();
+        assert_eq!(exb.opponent_faction_tag(), OpponentFactionTag::ExBorg);
+    }
+
+    #[test]
+    fn infer_hostile_engagement_enemy_type_precedence_and_curated_families() {
+        // 1. Q-Continuum beats upstream_ship_type == 1.
+        assert_eq!(
+            infer_hostile_engagement_enemy_type_from_fields(
+                1,
+                false,
+                Some(Q_CONTINUUM_FACTION_ID),
+                Some(72_001)
+            ),
+            EnemyType::QTrial
+        );
+        // 2. Outpost beats upstream_ship_type == 1 and any solo heuristic.
+        assert_eq!(
+            infer_hostile_engagement_enemy_type_from_fields(
+                1,
+                true,
+                Some(OUTPOST_CARDASSIAN_FACTION_ID),
+                Some(84_501)
+            ),
+            EnemyType::OutpostArmadas
+        );
+        // 3. Verified Outpost Retaliators across all three outpost factions.
+        for (fid, loca) in [
+            (OUTPOST_CARDASSIAN_FACTION_ID, 84_507),
+            (OUTPOST_CARDASSIAN_FACTION_ID, 85_503),
+            (OUTPOST_NODE_FACTION_ID, 84_510),
+            (OUTPOST_NODE_FACTION_ID, 85_508),
+            (OUTPOST_BORG_FACTION_ID, 84_513),
+            (OUTPOST_BORG_FACTION_ID, 85_511),
+        ] {
+            assert_eq!(
+                infer_hostile_engagement_enemy_type_from_fields(7, false, Some(fid), Some(loca)),
+                EnemyType::OutpostRetaliationAttackers,
+                "fid={fid} loca={loca}"
+            );
+        }
+        // 4. Verified Curated Solo Armadas.
+        for (fid, loca) in [
+            (1_530_685_377, 47_050), // Jem'Hadar Flagship
+            (1_530_685_377, 47_051), // Vanguard Flagship
+            (1_530_685_377, 47_052), // Dreadnought Flagship
+            (2_943_562_711, 50_050), // Borg Sphere
+            (2_943_562_711, 50_051), // Borg Recon Sphere
+            (2_943_562_711, 51_050), // Borg Expansion Cube
+            (356_485_724, 88_050),   // Conqueror Borg Solo Armada
+            (356_485_724, 88_052),   // Rare Conqueror Borg Solo Armada
+            (-1, 71_953),            // Arena Solo Armada
+        ] {
+            assert_eq!(
+                infer_hostile_engagement_enemy_type_from_fields(1, false, Some(fid), Some(loca)),
+                EnemyType::SoloArmadas,
+                "solo fid={fid} loca={loca}"
+            );
+        }
+        // 5. Group & Formation Armadas stay GroupArmadas (including Borg Cubes and Arena Armada).
+        for (fid, loca) in [
+            (2_943_562_711, 8_100),  // BORG CUBE
+            (-1, 54_201),            // Formation Armada
+            (-1, 57_201),            // Rare Formation Armada
+            (-1, 71_952),            // Arena Armada
+            (2_064_723_306, 18_000), // Federation Lt. Commander
+        ] {
+            assert_eq!(
+                infer_hostile_engagement_enemy_type_from_fields(1, false, Some(fid), Some(loca)),
+                EnemyType::GroupArmadas,
+                "group fid={fid} loca={loca}"
+            );
+        }
+        // 6. Mission bosses (ust 3 & 6) vs regular moving reds.
+        assert_eq!(
+            infer_hostile_engagement_enemy_type_from_fields(3, false, Some(-1), Some(12_321)),
+            EnemyType::MissionBosses
+        );
+        assert_eq!(
+            infer_hostile_engagement_enemy_type_from_fields(6, false, Some(-1), Some(12_322)),
+            EnemyType::MissionBosses
+        );
+        assert_eq!(
+            infer_hostile_engagement_enemy_type_from_fields(
+                2,
+                false,
+                Some(2_064_723_306),
+                Some(10_003)
+            ),
+            EnemyType::RedMovingSpace
+        );
     }
 
     #[test]

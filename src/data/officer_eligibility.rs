@@ -390,45 +390,20 @@ pub fn parse_optional_enemy_type(raw: Option<&str>) -> Result<Option<EnemyType>,
 }
 
 /// Upstream Q-Continuum faction id (`loca_id: 72000`; Q's Trial encounters).
-pub const Q_CONTINUUM_FACTION_ID: i64 = 4_145_760_809;
+pub use crate::data::hostile::Q_CONTINUUM_FACTION_ID;
 
 /// Infer the intrinsic base [`EnemyType`] of an NPC hostile from its catalog fields.
 ///
-/// Precedence prevents dead branches where `upstream_ship_type == 1` overlaps with Q's Trials
-/// (46/97 Q-Continuum rows) and Outposts (all 55 `is_outpost: true` rows):
-/// 1. Curated `hostile.engagement_enemy_types` primary tag (when populated)
-/// 2. Q-Continuum faction (`4145760809`) → [`EnemyType::QTrial`]
-/// 3. `hostile.is_outpost` → [`EnemyType::OutpostArmadas`]
-/// 4. `hostile.is_group_armada_target()` (`upstream_ship_type == 1`) → [`EnemyType::GroupArmadas`]
-/// 5. `upstream_ship_type` in `{3, 6}` (Separatist mission bosses) → [`EnemyType::MissionBosses`]
-/// 6. Default → [`EnemyType::RedMovingSpace`]
+/// Delegates to [`HostileRecord::inferred_base_enemy_type`] so runtime resolution and catalog
+/// normalization share a single verified precedence table (explicit `engagement_enemy_types`,
+/// Q-Continuum → `QTrial`, `is_outpost` → `OutpostArmadas`, verified Outpost Retaliators →
+/// `OutpostRetaliationAttackers`, curated Solo Armadas → `SoloArmadas`, `upstream_ship_type == 1`
+/// → `GroupArmadas`, `upstream_ship_type` in `{3, 6}` → `MissionBosses`, else `RedMovingSpace`).
 pub fn infer_base_hostile_enemy_type(hostile: Option<&HostileRecord>) -> EnemyType {
-    let Some(h) = hostile else {
-        return EnemyType::RedMovingSpace;
-    };
-    if let Some(et) = h
-        .engagement_enemy_types
-        .as_ref()
-        .and_then(|tags| tags.0.first().copied())
-    {
-        return et;
-    }
-    if h.faction
-        .as_ref()
-        .is_some_and(|f| f.id == Q_CONTINUUM_FACTION_ID)
-    {
-        return EnemyType::QTrial;
-    }
-    if h.is_outpost {
-        return EnemyType::OutpostArmadas;
-    }
-    if h.is_group_armada_target() {
-        return EnemyType::GroupArmadas;
-    }
-    if matches!(h.upstream_ship_type, 3 | 6) {
-        return EnemyType::MissionBosses;
-    }
-    EnemyType::RedMovingSpace
+    hostile.map_or(
+        EnemyType::RedMovingSpace,
+        HostileRecord::inferred_base_enemy_type,
+    )
 }
 
 /// Single source of truth for resolved combat engagement context, shared identically by the

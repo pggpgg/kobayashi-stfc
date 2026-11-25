@@ -30,6 +30,7 @@ export type MechanicsFidelityBacklogItem =
 export type SimulateCrew = Schemas["SimulateCrew"];
 export type SimulateStats = Schemas["SimulateStats"];
 export type SimulateResponse = Schemas["SimulateResponse"];
+export type ResolvedContextSummary = Schemas["ResolvedContextSummary"];
 
 export type OptimizeStartResponse = Schemas["OptimizeStartResponse"];
 export type OptimizeEstimate = Schemas["OptimizeEstimateResponse"];

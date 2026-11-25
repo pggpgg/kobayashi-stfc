@@ -9,9 +9,10 @@ use std::path::Path;
 use serde::Deserialize;
 use serde_json::Value;
 
+use kobayashi::combat::{EnemyType, EnemyTypes};
 use kobayashi::data::hostile::{
-    hostile_hull_type_raw_to_ship_class, HostileFactionRef, HostileIndex, HostileIndexEntry,
-    HostileRecord, HostileResourceDrop,
+    hostile_hull_type_raw_to_ship_class, infer_hostile_engagement_enemy_type_from_fields,
+    HostileFactionRef, HostileIndex, HostileIndexEntry, HostileRecord, HostileResourceDrop,
 };
 use kobayashi::data::hostile_loca::{
     load_hostile_loca_display_names, resolve_hostile_display_name,
@@ -217,8 +218,17 @@ fn raw_to_record(
     };
 
     let shield_mitigation = shield_mitigation_from_components(&raw.components);
+    let faction_id = raw.faction.as_ref().map(|f| f.id);
     let faction_loca_id = raw.faction.as_ref().and_then(|f| f.loca_id);
     let hostile_tags = curated_hostile_tags_for_upstream(raw.id, loca_id, faction_loca_id);
+    let inferred_enemy_type = infer_hostile_engagement_enemy_type_from_fields(
+        raw.ship_type,
+        raw.is_outpost,
+        faction_id,
+        loca_id,
+    );
+    let engagement_enemy_types = (inferred_enemy_type != EnemyType::RedMovingSpace)
+        .then(|| EnemyTypes::single(inferred_enemy_type));
 
     HostileRecord {
         id: id.clone(),
@@ -260,7 +270,7 @@ fn raw_to_record(
         crit_damage: stats.critical_damage,
         crit_damage_is_bonus: Some(true),
         hostile_tags,
-        engagement_enemy_types: None,
+        engagement_enemy_types,
         components: raw.components,
         ability: raw.ability,
         resources: raw.resources,
@@ -292,15 +302,7 @@ fn merge_kobayashi_fixture_index_entries(
         }
         let content = fs::read_to_string(&path)?;
         let rec: HostileRecord = serde_json::from_str(&content)?;
-        index_entries.push(HostileIndexEntry {
-            id: rec.id.clone(),
-            hostile_name: rec.hostile_name.clone(),
-            level: rec.level,
-            ship_class: rec.ship_class.clone(),
-            rarity: Some(rec.rarity),
-            upstream_ship_type: Some(rec.upstream_ship_type),
-            loca_id: rec.loca_id,
-        });
+        index_entries.push(HostileIndexEntry::from_record(&rec));
         merged += 1;
     }
     index_entries.sort_by(|a, b| {
@@ -378,15 +380,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut index_entries: Vec<HostileIndexEntry> = Vec::with_capacity(records.len());
     for rec in &records {
-        index_entries.push(HostileIndexEntry {
-            id: rec.id.clone(),
-            hostile_name: rec.hostile_name.clone(),
-            level: rec.level,
-            ship_class: rec.ship_class.clone(),
-            rarity: Some(rec.rarity),
-            upstream_ship_type: Some(rec.upstream_ship_type),
-            loca_id: rec.loca_id,
-        });
+        index_entries.push(HostileIndexEntry::from_record(rec));
         let out_path = out_dir.join(format!("{}.json", rec.id));
         fs::write(out_path, serde_json::to_string_pretty(rec)?)?;
     }

@@ -221,12 +221,23 @@ fn resolve_request_combat_context(
     } else {
         registry.resolve_hostile(request.hostile.trim())
     };
+    let defender_ship_rec = request
+        .defender_ship
+        .as_deref()
+        .filter(|ship| !ship.trim().is_empty())
+        .and_then(|ship| {
+            registry.resolve_ship_with_tier_level(
+                ship.trim(),
+                request.defender_ship_tier,
+                request.defender_ship_level,
+            )
+        });
     let resolved = resolve_combat_context(
         explicit,
         wave_defense,
         pvp || defender_opponent.defender_is_player_ship(),
         hostile.as_ref(),
-        None,
+        defender_ship_rec.as_ref().map(|s| s.ship_type()),
     );
     let engagement_override = ScenarioEngagementOverride {
         enemy_type: explicit,
@@ -896,6 +907,9 @@ pub struct ScenarioSummary {
     /// Exhaustive two-phase runs: scout-then-full-MC trial accounting (same struct shape as tiered budget stats).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exhaustive_adaptive_budget: Option<TieredScoutBudgetStats>,
+    /// Resolved combat context (auto-inferred enemy traits + explicit overrides/Wave Defense).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolved_context: Option<super::ResolvedContextSummary>,
 }
 
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
@@ -2821,6 +2835,34 @@ fn build_optimize_response(
         .collect();
     apply_pareto_highlights(&ranked_results, &mut recommendations);
 
+    let (resolved_ctx, engagement_override) = resolve_request_combat_context(registry, request);
+    let is_pvp_req = request
+        .defender_ship
+        .as_deref()
+        .is_some_and(|ship| !ship.trim().is_empty());
+    let hostile_for_summary = if is_pvp_req {
+        None
+    } else {
+        registry.resolve_hostile(request.hostile.trim())
+    };
+    let defender_ship_for_summary = request
+        .defender_ship
+        .as_deref()
+        .filter(|ship| !ship.trim().is_empty())
+        .and_then(|ship| {
+            registry.resolve_ship_with_tier_level(
+                ship.trim(),
+                request.defender_ship_tier,
+                request.defender_ship_level,
+            )
+        });
+    let resolved_context_summary = super::build_resolved_context_summary(
+        &resolved_ctx,
+        engagement_override.enemy_type.is_some(),
+        hostile_for_summary.as_ref(),
+        defender_ship_for_summary.as_ref(),
+    );
+
     OptimizeResponse {
         status: "ok",
         engine,
@@ -2857,6 +2899,7 @@ fn build_optimize_response(
             optimize_reuse_fingerprint: Some(meta.reuse_fingerprint.clone()),
             tiered_scout_budget: meta.tiered_scout_budget,
             exhaustive_adaptive_budget: meta.exhaustive_adaptive_budget,
+            resolved_context: Some(resolved_context_summary),
         },
         recommendations,
         duration_ms: Some(duration_ms),

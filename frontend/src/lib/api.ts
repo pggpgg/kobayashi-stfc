@@ -54,6 +54,7 @@ export type {
   ProfilesResponse,
   RefinementDetail,
   RefinementSlotChange,
+  ResolvedContextSummary,
   SeatAblation,
   SeatReplacementOption,
   ShipListItem,

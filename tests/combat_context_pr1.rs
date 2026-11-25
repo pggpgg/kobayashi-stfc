@@ -116,6 +116,7 @@ fn resolve_combat_context_fixes_qtrial_outpost_and_mission_boss_dead_branches() 
         boss.upstream_ship_type = ust;
         boss.is_outpost = false;
         boss.faction = None;
+        boss.engagement_enemy_types = None;
         let b_ctx = resolve_combat_context(None, false, false, Some(&boss), None);
         assert_eq!(b_ctx.primary_enemy_type, EnemyType::MissionBosses);
     }
