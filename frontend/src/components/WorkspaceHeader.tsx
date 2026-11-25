@@ -23,6 +23,15 @@ import {
   getShipComponentOverrides,
   getShipTiersLevels,
 } from "../lib/api";
+import {
+  enemyTypeIcon,
+  enemyTypeLabel,
+  factionTagLabel,
+  hostileTagLabel,
+  isArmadaEnemyType,
+  resolveEffectiveScenarioTags,
+  shipClassLabel,
+} from "../lib/enemyTypes";
 import type { SupportBuffId } from "../lib/supportBuffs";
 import type { CrewState } from "../lib/types";
 import { DEFAULT_BELOW_DECK_UNLOCK_LEVELS } from "../lib/types";
@@ -168,6 +177,11 @@ interface WorkspaceHeaderProps {
   onScenarioIdChange: (id: string) => void;
   enemyType: string;
   onEnemyTypeChange: (id: string) => void;
+  /** Additive Wave Defense toggle (`waves` combined with base target mode/faction/class). */
+  waveDefense?: boolean;
+  onWaveDefenseChange?: (enabled: boolean) => void;
+  /** Reports the auto-inferred base enemy_type for the selected hostile (for CrewBuilder badges). */
+  onInferredEnemyTypeChange?: (inferred: string | null) => void;
   shipTier: number;
   onShipTierChange: (tier: number) => void;
   shipLevel: number;
@@ -203,6 +217,9 @@ export default memo(function WorkspaceHeader({
   onScenarioIdChange,
   enemyType,
   onEnemyTypeChange,
+  waveDefense = false,
+  onWaveDefenseChange,
+  onInferredEnemyTypeChange,
   shipTier,
   onShipTierChange,
   shipLevel,
@@ -249,6 +266,32 @@ export default memo(function WorkspaceHeader({
   const selectedRosterShip = useMemo(
     () => ships.find((s) => s.id === shipId),
     [ships, shipId],
+  );
+  const selectedHostile = useMemo(
+    () => hostiles.find((h) => h.id === scenarioId) ?? null,
+    [hostiles, scenarioId],
+  );
+  const inferredEnemyType = selectedHostile?.inferred_enemy_type ?? null;
+  useEffect(() => {
+    onInferredEnemyTypeChange?.(inferredEnemyType);
+  }, [inferredEnemyType, onInferredEnemyTypeChange]);
+
+  const effectiveTags = useMemo(
+    () =>
+      resolveEffectiveScenarioTags(inferredEnemyType, enemyType, waveDefense),
+    [inferredEnemyType, enemyType, waveDefense],
+  );
+  const effectiveBaseMode = effectiveTags[0] ?? "red_moving_space";
+  const effectiveWaveActive = effectiveTags.includes("waves");
+  const effectiveHullClass = selectedHostile
+    ? isArmadaEnemyType(effectiveBaseMode)
+      ? "Armada"
+      : shipClassLabel(selectedHostile.ship_class)
+    : null;
+  const effectiveFactionLabel = factionTagLabel(selectedHostile?.faction_tag);
+  const hostileTraitLabels = useMemo(
+    () => (selectedHostile?.hostile_tags ?? []).map(hostileTagLabel),
+    [selectedHostile],
   );
   const rosterLocksShipProgress =
     ownedOnly &&
@@ -469,7 +512,107 @@ export default memo(function WorkspaceHeader({
         value={scenarioId}
         onChange={onScenarioIdChange}
       />
-      <ScenarioSelect value={enemyType} onChange={onEnemyTypeChange} />
+      <ScenarioSelect
+        value={enemyType}
+        onChange={onEnemyTypeChange}
+        inferredEnemyType={inferredEnemyType}
+      />
+      {onWaveDefenseChange && (
+        <button
+          type="button"
+          aria-pressed={waveDefense}
+          aria-label="Wave Defense mode"
+          onClick={() => onWaveDefenseChange(!waveDefense)}
+          title="Additive Wave Defense mode — combines Wave Defense officer abilities with the selected target's base type, faction, and hull class."
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            padding: "0.35rem 0.65rem",
+            fontSize: "0.8rem",
+            fontWeight: waveDefense ? 600 : 400,
+            borderRadius: 999,
+            border: `1px solid ${waveDefense ? "var(--accent)" : "var(--border)"}`,
+            background: waveDefense ? "rgba(232, 149, 46, 0.2)" : "var(--bg)",
+            color: waveDefense ? "var(--accent)" : "var(--text-muted)",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          🌊 Wave Defense
+        </button>
+      )}
+      {selectedHostile && (
+        <div
+          data-testid="target-context-badges"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            flexWrap: "wrap",
+          }}
+        >
+          <span
+            title={
+              enemyType
+                ? `Manual mode override: ${enemyTypeLabel(effectiveBaseMode)}`
+                : `Auto-inferred from selected hostile: ${enemyTypeLabel(effectiveBaseMode)}`
+            }
+            style={{
+              ...overrideChipBase,
+              border: `1px solid ${enemyType ? "var(--accent-dim)" : "var(--border)"}`,
+              background: enemyType
+                ? "rgba(232, 149, 46, 0.14)"
+                : "rgba(138, 166, 179, 0.1)",
+              color: "var(--text)",
+            }}
+          >
+            {enemyTypeIcon(effectiveBaseMode)}{" "}
+            {enemyTypeLabel(effectiveBaseMode)}
+            {effectiveWaveActive ? " + 🌊 Waves" : ""}
+            {enemyType && enemyType !== "waves" ? " (override)" : ""}
+          </span>
+          {effectiveHullClass && (
+            <span
+              title="Effective combat defender hull class (used for mitigation and class-gated abilities)"
+              style={{
+                ...overrideChipBase,
+                border: "1px solid var(--border)",
+                color: "var(--text-muted)",
+              }}
+            >
+              {effectiveHullClass}
+            </span>
+          )}
+          {effectiveFactionLabel && (
+            <span
+              title={`Auto-inferred faction/species: ${effectiveFactionLabel}`}
+              style={{
+                ...overrideChipBase,
+                border: "1px solid var(--border)",
+                background: "rgba(99, 179, 237, 0.12)",
+                color: "var(--text)",
+              }}
+            >
+              {effectiveFactionLabel}
+            </span>
+          )}
+          {hostileTraitLabels.map((trait) => (
+            <span
+              key={trait}
+              title={`Curated hostile sub-family tag: ${trait}`}
+              style={{
+                ...overrideChipBase,
+                border: "1px solid var(--border)",
+                background: "rgba(67, 181, 129, 0.12)",
+                color: "var(--text)",
+              }}
+            >
+              {trait}
+            </span>
+          ))}
+        </div>
+      )}
       <SupportBuffSelect
         selected={selectedSupportBuffs}
         onChange={onSelectedSupportBuffsChange}

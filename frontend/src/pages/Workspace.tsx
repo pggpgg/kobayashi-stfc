@@ -52,6 +52,7 @@ export default function Workspace() {
               ? { supportBuffs: ws.selectedSupportBuffs }
               : {}),
             enemyType: ws.enemyType,
+            waveDefense: ws.waveDefense,
             belowDecksPoolMode: ws.optimizerSettings?.belowDecksPoolMode,
           }
         : null,
@@ -65,6 +66,7 @@ export default function Workspace() {
       ws.activeProfileId,
       ws.selectedSupportBuffs,
       ws.enemyType,
+      ws.waveDefense,
       ws.optimizerSettings?.belowDecksPoolMode,
     ],
   );
@@ -135,6 +137,9 @@ export default function Workspace() {
           onScenarioIdChange={ws.setScenarioId}
           enemyType={ws.enemyType}
           onEnemyTypeChange={ws.setEnemyType}
+          waveDefense={ws.waveDefense}
+          onWaveDefenseChange={ws.setWaveDefense}
+          onInferredEnemyTypeChange={ws.setInferredEnemyType}
           shipTier={ws.shipTier}
           onShipTierChange={ws.setShipTier}
           shipLevel={ws.shipLevel}
@@ -258,6 +263,8 @@ export default function Workspace() {
               onPinsChange={ws.setPins}
               officerOptions={officerOptions}
               enemyType={ws.enemyType}
+              inferredEnemyType={ws.inferredEnemyType}
+              waveDefense={ws.waveDefense}
               eligibility={ws.eligibility}
             />
           )}
@@ -265,6 +272,7 @@ export default function Workspace() {
             <div id="guided-results" style={{ flex: 1, minHeight: 200 }}>
               <SimResults
                 simResult={ws.simResult}
+                resolvedContext={ws.resolvedContext}
                 recommendations={ws.recommendations}
                 warnings={ws.resultWarnings}
                 unresolvedOfficers={ws.unresolvedOfficers}

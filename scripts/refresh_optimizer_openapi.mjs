@@ -23,7 +23,7 @@ const previous = {
 const outputOnly = new Set([
   "OptimizeResponse", "OptimizeStatusResponse", "ScenarioSummary", "CrewRecommendation",
   "CrewFidelitySummary", "RefinementDetail", "RefinementSlotChange", "OptimizerFunnelTelemetry",
-  "OptimizerRolePoolTelemetry",
+  "OptimizerRolePoolTelemetry", "ResolvedContextSummary",
 ]);
 
 // These response DTOs omit None rather than serializing null. Schemars models

@@ -44,7 +44,9 @@
   "crit_damage": 2.0,
   "crit_damage_is_bonus": true,
   "hostile_tags": [],
-  "engagement_enemy_types": null,
+  "engagement_enemy_types": [
+    "group_armadas"
+  ],
   "components": [
     {
       "art_id": 5001,

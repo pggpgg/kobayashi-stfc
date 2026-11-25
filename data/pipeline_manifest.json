@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "combined_sha256": "5d086e3b5e75d3566e0b6ffc2c5dc494a8ade91382577f78287c4f84d8b7ff9e",
+  "combined_sha256": "29d16062395b07cc67f4b602bafe9290028399e63a0e92f129eddbdff070c4ef",
   "upstream": {
     "details_forbidden_tech": {
       "path": "data/upstream/data-stfc-space/forbidden_tech",
@@ -135,7 +135,7 @@
       "path": "data/hostiles",
       "present": true,
       "file_count": 6446,
-      "sha256": "83a8a36f5ccd077157efeb0e82550690bf95cd304ac6eccfde791b806890fefd",
+      "sha256": "f7b0896bfcb08fa99e7d2fe947801339c5fbb54afe9d7755c26e4d5eb40b5921",
       "data_version": "stfcspace-hostiles-2026-11-23+native-vger-gorn-l62-2026-11-10"
     },
     "hull_id_registry": {

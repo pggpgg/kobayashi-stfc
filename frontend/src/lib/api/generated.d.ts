@@ -2552,6 +2552,14 @@ export interface components {
                 warp?: number | null;
                 has_loot?: boolean | null;
                 primary_resource_name?: string | null;
+                /** @description Auto-inferred base combat engagement mode (snake_case EnemyType, e.g. solo_armadas). */
+                inferred_enemy_type?: string | null;
+                /** @description True when the target is a Solo Outpost (is_outpost true in upstream data). */
+                is_outpost?: boolean;
+                /** @description Auto-inferred opponent faction slug (snake_case OpponentFactionTag) when known. */
+                faction_tag?: string | null;
+                /** @description Curated hostile sub-family tags active on this target. */
+                hostile_tags?: string[];
             } & {
                 [key: string]: unknown;
             })[];
@@ -2761,6 +2769,7 @@ export interface components {
                 reason?: string;
                 ability_id?: string;
             }[];
+            resolved_context?: components["schemas"]["ResolvedContextSummary"];
         };
         SensitivityRequest: {
             /** @description Ship id (e.g. `uss_enterprise_d`). */
@@ -3024,6 +3033,7 @@ export interface components {
             }[];
             using_placeholder_combatants: boolean;
             warnings?: string[];
+            resolved_context?: components["schemas"]["ResolvedContextSummary"];
         };
         CrewCounterfactualRequest: {
             ship: string;
@@ -3126,6 +3136,7 @@ export interface components {
             variants_evaluated: number;
             using_placeholder_combatants: boolean;
             warnings?: string[];
+            resolved_context?: components["schemas"]["ResolvedContextSummary"];
         };
         FleetSlotRequestDto: {
             label?: string;
@@ -3781,6 +3792,8 @@ export interface components {
             optimizer_funnel: components["schemas"]["OptimizerFunnelTelemetry"];
             /** @description Echo of the client `strategy` field when present. */
             requested_strategy?: string;
+            /** @description Resolved combat context (auto-inferred enemy traits + explicit overrides/Wave Defense). */
+            resolved_context?: components["schemas"]["ResolvedContextSummary"];
             /** Format: uint64 */
             seed: number;
             ship: string;
@@ -3901,6 +3914,29 @@ export interface components {
             resource_id: number;
             /** @description Human-readable name of the primary farming resource (e.g. `"Tech Module"`). */
             resource_name: string;
+        };
+        /** @description Resolved combat engagement context actually evaluated by the engine (auto-inferred target metadata combined with any explicit `enemy_type` override or additive `wave_defense` flag). */
+        ResolvedContextSummary: {
+            /** @description Auto-inferred defender faction slug when known (e.g. `"borg"`, `"xindi"`, `"dominion"`). */
+            defender_faction?: string;
+            /** @description True when defender counts as an armada hostile (Group, Solo, or Outpost Armada). */
+            defender_is_armada: boolean;
+            /** @description True when defender counts as an Outpost. */
+            defender_is_outpost: boolean;
+            /** @description Reconciled combat defender hull class (`"armada"`, `"battleship"`, `"explorer"`, `"interceptor"`, `"survey"`). */
+            defender_ship_type?: string;
+            /** @description Complete deduplicated list of active engagement tags (e.g. `["red_moving_space", "waves"]`). */
+            engagement_enemy_types: string[];
+            /** @description Curated hostile sub-family tags active on the defender (when any). */
+            hostile_tags?: string[];
+            /** @description True when the caller supplied an explicit `enemy_type` override rather than using auto-inference. */
+            is_override: boolean;
+            /** @description Opponent category: `"npc_hostile"`, `"player_ship"`, or `"player_station"`. */
+            opponent_kind: string;
+            /** @description Primary engagement mode (`snake_case` `EnemyType`, e.g. `"solo_armadas"`, `"waves"`). */
+            primary_enemy_type: string;
+            /** @description True when additive Wave Defense mode (`waves`) is active. */
+            wave_defense: boolean;
         };
     };
     responses: never;
