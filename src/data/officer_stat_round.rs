@@ -333,6 +333,9 @@ mod tests {
             defender_hostile_tag_mask: 0,
             engagement_enemy_types: std::sync::Arc::new(Default::default()),
             combat_battle_type_id: None,
+            combat_game_context: crate::combat::CombatGameContext::OpenSpace,
+            attacker_is_defending: false,
+            attacker_at_station: false,
             defender_level: Some(50),
         }
     }

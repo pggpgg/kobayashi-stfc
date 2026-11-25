@@ -86,6 +86,6 @@ pub use stacking::{
     StatStacking,
 };
 pub use types::{
-    enemy_type_from_engagement_slug, enemy_type_to_key, EnemyType, EnemyTypes,
+    enemy_type_from_engagement_slug, enemy_type_to_key, CombatGameContext, EnemyType, EnemyTypes,
     HostileMitigationParams, OpponentKind, WeaponFiringSchedule, WeaponType,
 };

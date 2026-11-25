@@ -302,6 +302,7 @@ fn handle_simulate(args: &[String]) -> i32 {
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
+            ..SimulationConfig::default()
         },
         &CrewConfiguration::default(),
         defender_faction,

@@ -143,6 +143,10 @@ pub(crate) fn run_chain_trial(
             incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
             attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
+            combat_battle_type_id: input.combat_battle_type_id,
+            combat_game_context: input.combat_game_context,
+            attacker_is_defending: input.attacker_is_defending,
+            attacker_at_station: input.attacker_at_station,
         };
 
         let setup = build_combat_setup_with_officer_stat(
@@ -341,6 +345,10 @@ mod tests {
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_owner_faction: OpponentFactionTag::Unknown,
             officer_stat_round: None,
+            combat_battle_type_id: None,
+            combat_game_context: crate::combat::CombatGameContext::OpenSpace,
+            attacker_is_defending: false,
+            attacker_at_station: false,
         }
     }
 

@@ -2743,6 +2743,15 @@ export interface components {
             enemy_type?: string;
             /** @description When true, enables additive Wave Defense context (`waves`) alongside the resolved target engagement type. */
             wave_defense?: boolean;
+            /**
+             * @description Optional tactical overworld context for `CombatGameContext` conditions (defaults to `open_space`, or `station` when `enemy_type` is `pvp_station`). Unknown non-empty strings return HTTP 400.
+             * @enum {string}
+             */
+            game_context?: "open_space" | "station" | "capture_node" | "mining_node" | "takeover";
+            /** @description When true, models the attacking crew in the defending role (`SelfDefending` active, `SelfAttacking` inactive). */
+            attacker_is_defending?: boolean;
+            /** @description When true, models the attacking crew docked at / defending its station (`SelfAtStation`). */
+            attacker_at_station?: boolean;
         };
         SimulateStats: {
             win_rate: number;
@@ -3023,6 +3032,10 @@ export interface components {
             defender_profile_id?: string;
             enemy_type?: string;
             wave_defense?: boolean;
+            /** @enum {string} */
+            game_context?: "open_space" | "station" | "capture_node" | "mining_node" | "takeover";
+            attacker_is_defending?: boolean;
+            attacker_at_station?: boolean;
         };
         CompareCrewsResponse: {
             status: string;
@@ -3061,6 +3074,10 @@ export interface components {
             defender_profile_id?: string;
             enemy_type?: string;
             wave_defense?: boolean;
+            /** @enum {string} */
+            game_context?: "open_space" | "station" | "capture_node" | "mining_node" | "takeover";
+            attacker_is_defending?: boolean;
+            attacker_at_station?: boolean;
         };
         CounterfactualMetrics: {
             score: number;
@@ -3257,6 +3274,16 @@ export interface components {
              */
             analytical_prefilter_keep?: number | null;
             /**
+             * @description When `true`, models the attacking crew docked at / defending its station (`SelfAtStation`).
+             * @default null
+             */
+            attacker_at_station?: boolean | null;
+            /**
+             * @description When `true`, models the attacking crew in the defending role (`SelfDefending` active, `SelfAttacking` inactive).
+             * @default null
+             */
+            attacker_is_defending?: boolean | null;
+            /**
              * @description Below-decks pool tier. `strict` (default): combat-modifier-only below-decks officers. `scored`: all below-decks-ability officers ranked by combat relevance (combat → ambiguous → economy-only) with officer power as tiebreaker. `relaxed`: all eligible officers ranked by power. Unknown values fall back to strict.
              * @default null
              * @enum {string|null}
@@ -3330,6 +3357,11 @@ export interface components {
              * @default null
              */
             fast_discovery?: boolean | null;
+            /**
+             * @description Tactical overworld context: `"open_space"` (default), `"station"`, `"capture_node"`, `"mining_node"`, or `"takeover"`. Unrecognized strings fail validation with HTTP 400.
+             * @default null
+             */
+            game_context?: string | null;
             heuristics_only?: boolean | null;
             /** @description Safe seed-file stems; duplicate names are loaded once, ignoring ASCII case. */
             heuristics_seeds?: string[] | null;
@@ -3463,6 +3495,10 @@ export interface components {
             defender_profile_id?: string;
             enemy_type?: string;
             wave_defense?: boolean;
+            /** @enum {string} */
+            game_context?: "open_space" | "station" | "capture_node" | "mining_node" | "takeover";
+            attacker_is_defending?: boolean;
+            attacker_at_station?: boolean;
         };
         SyncIngressBatch: {
             [key: string]: unknown;
@@ -3917,6 +3953,15 @@ export interface components {
         };
         /** @description Resolved combat engagement context actually evaluated by the engine (auto-inferred target metadata combined with any explicit `enemy_type` override or additive `wave_defense` flag). */
         ResolvedContextSummary: {
+            /** @description True when the attacking crew is evaluated at / defending its station (`SelfAtStation`). */
+            attacker_at_station: boolean;
+            /** @description True when the attacking crew is evaluated in the defending role (`SelfDefending`). */
+            attacker_is_defending: boolean;
+            /**
+             * Format: uint32
+             * @description Derived STFC `CombatBattleType` id when verified for this scenario (`None` for unverified modes such as Assaults).
+             */
+            combat_battle_type_id?: number;
             /** @description Auto-inferred defender faction slug when known (e.g. `"borg"`, `"xindi"`, `"dominion"`). */
             defender_faction?: string;
             /** @description True when defender counts as an armada hostile (Group, Solo, or Outpost Armada). */
@@ -3927,6 +3972,8 @@ export interface components {
             defender_ship_type?: string;
             /** @description Complete deduplicated list of active engagement tags (e.g. `["red_moving_space", "waves"]`). */
             engagement_enemy_types: string[];
+            /** @description Tactical overworld context (`"open_space"`, `"station"`, `"capture_node"`, `"mining_node"`, `"takeover"`). */
+            game_context: string;
             /** @description Curated hostile sub-family tags active on the defender (when any). */
             hostile_tags?: string[];
             /** @description True when the caller supplied an explicit `enemy_type` override rather than using auto-inference. */

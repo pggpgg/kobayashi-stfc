@@ -413,6 +413,16 @@ pub enum AbilityConditionSpec {
     DefenderLevelAtMost {
         max_level: u32,
     },
+    /// Canonical `SelfDefending` (`attacker_is_defending`).
+    AttackerIsDefending,
+    /// Canonical `SelfAttacking` (`attacker_is_attacking`).
+    AttackerIsAttacking,
+    /// Canonical `SelfAtStation` (`attacker_at_station`).
+    AttackerAtStation,
+    /// Canonical `CombatGameContext` (`combat_game_context_is`, e.g. `capture_node`, `mining_node`, `takeover`).
+    CombatGameContextIs {
+        game_context: String,
+    },
     /// stfc.cc / upstream token with no [`crate::combat::abilities::AbilityCondition`] mapping yet.
     /// [`crate::combat::effect_spec_compile::compile_condition`] returns an error for this variant.
     StfcCcToken {

@@ -348,6 +348,23 @@ pub struct SimulationConfig {
     /// ([`crate::combat::snapshot::CombatStateSnapshot`]). Ignored when tracing is off.
     #[serde(default)]
     pub emit_state_snapshots: bool,
+    /// Verified STFC `CombatBattleType` id derived from the resolved scenario context
+    /// (`2` red/wave hostile, `3` mission boss / Q's Trial, `4` PvP capture/mining node,
+    /// `7` group armada / invading entity, `8` solo armada, `17` outpost armada,
+    /// `18` outpost retaliator, `1` open-space/station PvP). `None` fails closed with diagnostic.
+    #[serde(default)]
+    pub combat_battle_type_id: Option<u32>,
+    /// Tactical overworld context (open space, station, capture node, mining node, takeover).
+    #[serde(default)]
+    pub combat_game_context: CombatGameContext,
+    /// True when the attacker combatant is in the defending role (`SelfDefending` true,
+    /// `SelfAttacking` false). In PvP, the defending side's perspective inverts this flag.
+    #[serde(default)]
+    pub attacker_is_defending: bool,
+    /// True when the attacker combatant is docked at / defending its station (`SelfAtStation`).
+    /// In PvP station raids (`EnemyType::PvpStation`), the defending side automatically receives `true`.
+    #[serde(default)]
+    pub attacker_at_station: bool,
 }
 
 impl Default for SimulationConfig {
@@ -369,6 +386,51 @@ impl Default for SimulationConfig {
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
+            combat_battle_type_id: None,
+            combat_game_context: CombatGameContext::OpenSpace,
+            attacker_is_defending: false,
+            attacker_at_station: false,
+        }
+    }
+}
+
+/// Tactical overworld / battleground context for canonical `CombatGameContext`
+/// (`game_context=...`) and station defense (`SelfAtStation`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CombatGameContext {
+    /// Standard open-space fight (default for PvE and open-space PvP).
+    #[default]
+    OpenSpace,
+    /// Docked at / defending a player starbase (`SelfAtStation`).
+    Station,
+    /// Territory Capture Node PvP (`game_context=capture_node`, `battle_types=[4]`).
+    CaptureNode,
+    /// Resource Mining Node PvP (`game_context=mining_node`, `battle_types=[4]`).
+    MiningNode,
+    /// Territory Takeover PvP (`game_context=takeover`).
+    Takeover,
+}
+
+impl CombatGameContext {
+    pub fn from_data_slug(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().replace('-', "_").as_str() {
+            "open_space" | "space" | "default" => Some(Self::OpenSpace),
+            "station" => Some(Self::Station),
+            "capture_node" => Some(Self::CaptureNode),
+            "mining_node" => Some(Self::MiningNode),
+            "takeover" => Some(Self::Takeover),
+            _ => None,
+        }
+    }
+
+    pub const fn as_data_slug(self) -> &'static str {
+        match self {
+            Self::OpenSpace => "open_space",
+            Self::Station => "station",
+            Self::CaptureNode => "capture_node",
+            Self::MiningNode => "mining_node",
+            Self::Takeover => "takeover",
         }
     }
 }

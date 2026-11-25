@@ -29,7 +29,10 @@ use crate::data::import::{
     load_imported_roster_ids_unlocked_only, roster_import_fallback_warning_message,
 };
 
-use crate::data::officer_eligibility::{parse_optional_enemy_type, resolve_combat_context};
+use crate::data::officer_eligibility::{
+    parse_optional_enemy_type, parse_optional_game_context, resolve_combat_context,
+    resolve_combat_context_with_tactical,
+};
 use crate::data::profile::{validate_player_profile_payload, PlayerProfile};
 use crate::data::profile_index::{
     create_profile, delete_profile, effective_profile_id, load_profile_index, profile_path,
@@ -462,6 +465,16 @@ pub struct SimulateRequest {
     /// When `true`, enables additive Wave Defense context (`waves`) alongside the resolved target.
     #[serde(default)]
     pub wave_defense: Option<bool>,
+    /// Tactical overworld context: `"open_space"` (default), `"station"`, `"capture_node"`,
+    /// `"mining_node"`, or `"takeover"`. Unknown strings are rejected with HTTP 400.
+    #[serde(default)]
+    pub game_context: Option<String>,
+    /// When `true`, models the attacking crew in the defending role (`SelfDefending`).
+    #[serde(default)]
+    pub attacker_is_defending: Option<bool>,
+    /// When `true`, models the attacking crew docked at / defending its station (`SelfAtStation`).
+    #[serde(default)]
+    pub attacker_at_station: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
@@ -518,6 +531,15 @@ pub struct ResolvedContextSummary {
     /// Curated hostile sub-family tags active on the defender (when any).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hostile_tags: Vec<String>,
+    /// Derived STFC `CombatBattleType` id when verified for this scenario (`None` for unverified modes such as Assaults).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub combat_battle_type_id: Option<u32>,
+    /// Tactical overworld context (`"open_space"`, `"station"`, `"capture_node"`, `"mining_node"`, `"takeover"`).
+    pub game_context: String,
+    /// True when the attacking crew is evaluated in the defending role (`SelfDefending`).
+    pub attacker_is_defending: bool,
+    /// True when the attacking crew is evaluated at / defending its station (`SelfAtStation`).
+    pub attacker_at_station: bool,
 }
 
 pub(crate) fn build_resolved_context_summary(
@@ -565,6 +587,10 @@ pub(crate) fn build_resolved_context_summary(
         defender_is_outpost: resolved.defender_is_outpost,
         is_override,
         hostile_tags,
+        combat_battle_type_id: resolved.combat_battle_type_id,
+        game_context: resolved.combat_game_context.as_data_slug().to_string(),
+        attacker_is_defending: resolved.attacker_is_defending,
+        attacker_at_station: resolved.attacker_at_station,
     }
 }
 
@@ -808,6 +834,12 @@ pub struct CompareCrewsRequest {
     pub enemy_type: Option<String>,
     #[serde(default)]
     pub wave_defense: Option<bool>,
+    #[serde(default)]
+    pub game_context: Option<String>,
+    #[serde(default)]
+    pub attacker_is_defending: Option<bool>,
+    #[serde(default)]
+    pub attacker_at_station: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
@@ -883,6 +915,12 @@ pub struct CrewCounterfactualRequest {
     pub enemy_type: Option<String>,
     #[serde(default)]
     pub wave_defense: Option<bool>,
+    #[serde(default)]
+    pub game_context: Option<String>,
+    #[serde(default)]
+    pub attacker_is_defending: Option<bool>,
+    #[serde(default)]
+    pub attacker_at_station: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
@@ -1210,6 +1248,10 @@ pub fn simulate_payload(
     let explicit_enemy_type =
         parse_optional_enemy_type(req.enemy_type.as_deref()).map_err(SimulateError::Validation)?;
     let wave_defense = req.wave_defense.unwrap_or(false);
+    let game_context = parse_optional_game_context(req.game_context.as_deref())
+        .map_err(SimulateError::Validation)?;
+    let attacker_is_defending = req.attacker_is_defending.unwrap_or(false);
+    let attacker_at_station = req.attacker_at_station.unwrap_or(false);
     let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
         req.defender_ship.as_deref(),
         req.defender_ship_tier,
@@ -1239,12 +1281,15 @@ pub fn simulate_payload(
             p.defender_ship_level,
         )
     });
-    let resolved_ctx = resolve_combat_context(
+    let resolved_ctx = resolve_combat_context_with_tactical(
         explicit_enemy_type,
         wave_defense,
         is_pvp || defender_opponent.defender_is_player_ship(),
         hostile_for_scenario.as_ref(),
         defender_ship_for_scenario.as_ref().map(|s| s.ship_type()),
+        game_context,
+        attacker_is_defending,
+        attacker_at_station,
     );
     let resolved_context_summary = build_resolved_context_summary(
         &resolved_ctx,
@@ -1260,6 +1305,9 @@ pub fn simulate_payload(
     let engagement_override = ScenarioEngagementOverride {
         enemy_type: explicit_enemy_type,
         wave_defense,
+        game_context,
+        attacker_is_defending,
+        attacker_at_station,
     };
     let num_sims = req.num_sims.unwrap_or(5000).clamp(1, 100_000);
     let seed = req.seed.unwrap_or(0);
@@ -1331,9 +1379,14 @@ pub fn simulate_payload(
             )
         })
         .unwrap_or(below_decks_slots);
+    let def_profile = pvp
+        .as_ref()
+        .map(|p| p.defender_profile_id.as_str())
+        .filter(|s| !s.is_empty())
+        .or(profile_id);
     let player_defender_officer_crew = resolve_player_defender_officer_crew_for_simulate(
         registry,
-        profile_id,
+        def_profile,
         defender_below_decks_slots,
         req.defender_crew.as_ref(),
     )
@@ -1595,6 +1648,10 @@ pub fn compare_crews_payload(
     let explicit_enemy_type = parse_optional_enemy_type(req.enemy_type.as_deref())
         .map_err(CompareCrewsError::Validation)?;
     let wave_defense = req.wave_defense.unwrap_or(false);
+    let game_context = parse_optional_game_context(req.game_context.as_deref())
+        .map_err(CompareCrewsError::Validation)?;
+    let attacker_is_defending = req.attacker_is_defending.unwrap_or(false);
+    let attacker_at_station = req.attacker_at_station.unwrap_or(false);
     let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
         req.defender_ship.as_deref(),
         req.defender_ship_tier,
@@ -1623,12 +1680,15 @@ pub fn compare_crews_payload(
             p.defender_ship_level,
         )
     });
-    let resolved_ctx = resolve_combat_context(
+    let resolved_ctx = resolve_combat_context_with_tactical(
         explicit_enemy_type,
         wave_defense,
         is_pvp || defender_opponent.defender_is_player_ship(),
         hostile_for_scenario.as_ref(),
         defender_ship_for_scenario.as_ref().map(|s| s.ship_type()),
+        game_context,
+        attacker_is_defending,
+        attacker_at_station,
     );
     let resolved_context_summary = build_resolved_context_summary(
         &resolved_ctx,
@@ -1644,6 +1704,9 @@ pub fn compare_crews_payload(
     let engagement_override = ScenarioEngagementOverride {
         enemy_type: explicit_enemy_type,
         wave_defense,
+        game_context,
+        attacker_is_defending,
+        attacker_at_station,
     };
     let crew_count = req.crews.len();
     if !(2..=5).contains(&crew_count) {
@@ -1854,6 +1917,10 @@ pub fn crew_counterfactual_payload(
     let explicit_enemy_type = parse_optional_enemy_type(req.enemy_type.as_deref())
         .map_err(CrewCounterfactualError::Validation)?;
     let wave_defense = req.wave_defense.unwrap_or(false);
+    let game_context = parse_optional_game_context(req.game_context.as_deref())
+        .map_err(CrewCounterfactualError::Validation)?;
+    let attacker_is_defending = req.attacker_is_defending.unwrap_or(false);
+    let attacker_at_station = req.attacker_at_station.unwrap_or(false);
     let pvp = crate::optimizer::monte_carlo::pvp_scenario_params_from_api_fields(
         req.defender_ship.as_deref(),
         req.defender_ship_tier,
@@ -1882,12 +1949,15 @@ pub fn crew_counterfactual_payload(
             p.defender_ship_level,
         )
     });
-    let resolved_ctx = resolve_combat_context(
+    let resolved_ctx = resolve_combat_context_with_tactical(
         explicit_enemy_type,
         wave_defense,
         is_pvp || defender_opponent.defender_is_player_ship(),
         hostile_for_scenario.as_ref(),
         defender_ship_for_scenario.as_ref().map(|s| s.ship_type()),
+        game_context,
+        attacker_is_defending,
+        attacker_at_station,
     );
     let resolved_context_summary = build_resolved_context_summary(
         &resolved_ctx,
@@ -1903,6 +1973,9 @@ pub fn crew_counterfactual_payload(
     let engagement_override = ScenarioEngagementOverride {
         enemy_type: explicit_enemy_type,
         wave_defense,
+        game_context,
+        attacker_is_defending,
+        attacker_at_station,
     };
 
     if let Some(n) = req.below_decks_slots {
@@ -2141,6 +2214,7 @@ pub fn fleet_allocate_payload(
         let engagement_override = ScenarioEngagementOverride {
             enemy_type: explicit_enemy_type,
             wave_defense,
+            ..ScenarioEngagementOverride::default()
         };
         let label = s
             .label
@@ -2518,6 +2592,10 @@ pub fn replay_optimize_seed_payload(
     let explicit_enemy_type = parse_optional_enemy_type(req.enemy_type.as_deref())
         .map_err(ReplaySeedError::Validation)?;
     let wave_defense = req.wave_defense.unwrap_or(false);
+    let game_context = parse_optional_game_context(req.game_context.as_deref())
+        .map_err(ReplaySeedError::Validation)?;
+    let attacker_is_defending = req.attacker_is_defending.unwrap_or(false);
+    let attacker_at_station = req.attacker_at_station.unwrap_or(false);
     let target = match validate_scenario_target(&ScenarioTargetFields {
         hostile: Some(req.hostile.clone()),
         defender_ship: req.defender_ship.clone(),
@@ -2572,12 +2650,15 @@ pub fn replay_optimize_seed_payload(
             p.defender_ship_level,
         )
     });
-    let resolved_ctx = resolve_combat_context(
+    let resolved_ctx = resolve_combat_context_with_tactical(
         explicit_enemy_type,
         wave_defense,
         is_pvp || defender_opponent.defender_is_player_ship(),
         hostile_for_scenario.as_ref(),
         defender_ship_for_scenario.as_ref().map(|s| s.ship_type()),
+        game_context,
+        attacker_is_defending,
+        attacker_at_station,
     );
     let resolved_context_summary = build_resolved_context_summary(
         &resolved_ctx,
@@ -2593,6 +2674,9 @@ pub fn replay_optimize_seed_payload(
     let engagement_override = ScenarioEngagementOverride {
         enemy_type: explicit_enemy_type,
         wave_defense,
+        game_context,
+        attacker_is_defending,
+        attacker_at_station,
     };
 
     let officers: Vec<(String, String)> = registry
@@ -2634,9 +2718,14 @@ pub fn replay_optimize_seed_payload(
             )
         })
         .unwrap_or(below_decks_slots);
+    let def_profile = pvp
+        .as_ref()
+        .map(|p| p.defender_profile_id.as_str())
+        .filter(|s| !s.is_empty())
+        .or(profile_id);
     let player_defender_officer_crew = resolve_player_defender_officer_crew_for_optimize(
         registry,
-        profile_id,
+        def_profile,
         defender_below_decks_slots,
         req.defender_crew.as_ref(),
     )

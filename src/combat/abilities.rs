@@ -1,7 +1,9 @@
 use std::borrow::Cow;
 
 use crate::combat::condition::round_in_inclusive_first_n;
-use crate::combat::types::{EnemyType, EnemyTypes, OpponentFactionTag, ShipType};
+use crate::combat::types::{
+    CombatGameContext, EnemyType, EnemyTypes, OpponentFactionTag, ShipType,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AbilityClass {
@@ -734,6 +736,13 @@ pub struct CombatContext {
     pub combat_battle_type_id: Option<u32>,
     /// Optional defender level from hostile catalog for canonical `TargetMaxLevel`.
     pub defender_level: Option<u32>,
+    /// Tactical overworld context (open space, station, capture node, mining node, takeover).
+    pub combat_game_context: CombatGameContext,
+    /// True when this perspective's ship is in the defending role (`SelfDefending` true,
+    /// `SelfAttacking` false).
+    pub attacker_is_defending: bool,
+    /// True when this perspective's ship is docked at / defending its station (`SelfAtStation`).
+    pub attacker_at_station: bool,
 }
 
 /// Condition that gates effect activation. Evaluated at runtime in the combat loop.
@@ -793,6 +802,14 @@ pub enum AbilityCondition {
     /// True when defender level is <= max_level.
     /// If defender level is unavailable in context, this condition fails closed.
     DefenderLevelAtMost(u32),
+    /// Canonical `SelfDefending`: true when this combatant is in the defending role.
+    AttackerIsDefending,
+    /// Canonical `SelfAttacking`: true when this combatant is in the attacking role (`!attacker_is_defending`).
+    AttackerIsAttacking,
+    /// Canonical `SelfAtStation`: true when this combatant is docked at / defending its station.
+    AttackerAtStation,
+    /// Canonical `CombatGameContext` (`game_context=...`): true when scenario game context matches.
+    CombatGameContextIs(CombatGameContext),
     /// Constant used when a canonical token has no dynamic [`CombatContext`] signal yet, but the
     /// Kobayashi **ship-vs-hostile** scenario fixes its truth value (see `docs/CANONICAL_CONDITIONS.md`).
     LiteralBool(bool),
@@ -2604,6 +2621,9 @@ mod tests {
             engagement_enemy_types: std::sync::Arc::new(EnemyTypes::default()),
             combat_battle_type_id: None,
             defender_level: None,
+            combat_game_context: CombatGameContext::OpenSpace,
+            attacker_is_defending: false,
+            attacker_at_station: false,
         }
     }
 

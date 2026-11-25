@@ -804,16 +804,14 @@ impl OptimizationScenario<'_> {
     /// `engagement_override` (including `wave_defense` and explicit `Some(RedMovingSpace)`),
     /// and promotes non-default `enemy_type` when `engagement_override` was left unset.
     pub fn effective_engagement_override(&self) -> ScenarioEngagementOverride {
-        if self.engagement_override.enemy_type.is_some() || self.engagement_override.wave_defense {
-            self.engagement_override
-        } else if self.enemy_type != EnemyType::RedMovingSpace {
-            ScenarioEngagementOverride {
-                enemy_type: Some(self.enemy_type),
-                wave_defense: false,
-            }
-        } else {
-            ScenarioEngagementOverride::default()
+        let mut out = self.engagement_override;
+        if out.enemy_type.is_none()
+            && !out.wave_defense
+            && self.enemy_type != EnemyType::RedMovingSpace
+        {
+            out.enemy_type = Some(self.enemy_type);
         }
+        out
     }
 
     /// Active engagement tags used for any-tag-eligible officer pool filtering.

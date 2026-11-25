@@ -562,6 +562,7 @@ fn final_damage_reduction_halves_outbound_damage() {
         incoming_shield_mitigation_bonus_rounds: 0,
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
+        ..Default::default()
     };
     let run = |crew: &CrewConfiguration| {
         kobayashi::combat::simulate_combat_with_defender_faction_and_defender_crew(

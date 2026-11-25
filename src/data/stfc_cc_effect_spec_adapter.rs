@@ -343,13 +343,14 @@ fn map_condition_token(
                 ship_type: "armada".into(),
             }),
         }),
-        "TargetNotASB" | "SelfAttacking" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
+        "TargetNotASB" => Ok(AbilityConditionSpec::LiteralBool { value: true }),
+        "SelfAttacking" => Ok(AbilityConditionSpec::AttackerIsAttacking),
         "TargetNotPlayerStation" => Ok(AbilityConditionSpec::Not {
             inner: Box::new(AbilityConditionSpec::EngagementIncludes {
                 enemy_type: "pvp_station".into(),
             }),
         }),
-        "SelfDefending" => Ok(AbilityConditionSpec::LiteralBool { value: false }),
+        "SelfDefending" => Ok(AbilityConditionSpec::AttackerIsDefending),
         "SelfAtSoloArmada" => Ok(AbilityConditionSpec::EngagementIncludes {
             enemy_type: "solo_armadas".into(),
         }),
@@ -424,8 +425,27 @@ fn map_condition_token(
         "TargetIsInvadingEntity" => Ok(AbilityConditionSpec::EngagementIncludes {
             enemy_type: "invading_entities".into(),
         }),
-        "CombatGameContext" | "SelfAtStation" => {
-            Ok(AbilityConditionSpec::LiteralBool { value: false })
+        "SelfAtStation" => Ok(AbilityConditionSpec::AttackerAtStation),
+        "CombatGameContext" => {
+            if let Some(slug) = ability_attributes
+                .and_then(|attrs| {
+                    attrs.split(',').find_map(|seg| {
+                        let (k, v) = seg.trim().split_once('=')?;
+                        k.trim()
+                            .eq_ignore_ascii_case("game_context")
+                            .then(|| v.trim())
+                    })
+                })
+                .and_then(crate::combat::CombatGameContext::from_data_slug)
+            {
+                Ok(AbilityConditionSpec::CombatGameContextIs {
+                    game_context: slug.as_data_slug().to_string(),
+                })
+            } else {
+                Ok(AbilityConditionSpec::StfcCcToken {
+                    token: "CombatGameContext".to_string(),
+                })
+            }
         }
         "TargetIsArmadaOrInvadingEntity" => Ok(AbilityConditionSpec::Or {
             any: vec![

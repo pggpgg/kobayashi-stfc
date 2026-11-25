@@ -276,6 +276,7 @@ fn auto_inferred_outpost_retaliator_activates_caleb_mir_without_override() {
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::GroupArmadas),
             wave_defense: false,
+            ..Default::default()
         },
     );
 
@@ -345,6 +346,7 @@ fn auto_inferred_solo_armada_activates_dezoc_without_override() {
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::GroupArmadas),
             wave_defense: false,
+            ..Default::default()
         },
     );
 

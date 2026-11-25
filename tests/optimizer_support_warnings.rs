@@ -79,8 +79,39 @@ fn optimizer_warnings_identify_the_final_rank_after_novelty_ordering() {
 #[test]
 fn unknown_battle_type_is_reported_in_simulation_and_final_optimizer_rank() {
     let registry = DataRegistry::load().expect("registry");
+
+    // On a known battle type (standard red space hostile -> CombatBattleType 2), Tasha Yar's
+    // CombatBattleType condition resolves cleanly with NO unknown-battle-type warning.
+    let known_simulate_request = serde_json::json!({
+        "ship":"uss_saladin", "hostile":"1127817100", "num_sims":1, "seed":11,
+        "crew":{"captain":"Spock", "bridge":["Kirk","Tasha Yar"], "below_deck":[]}
+    });
+    let known_body = simulate_payload(
+        &registry,
+        &known_simulate_request.to_string(),
+        Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
+    )
+    .expect("valid known battle-type simulation request");
+    let known_response: serde_json::Value = serde_json::from_str(&known_body).unwrap();
+    assert_eq!(
+        known_response["resolved_context"]["combat_battle_type_id"],
+        2
+    );
+    assert!(
+        !known_response["warnings"]
+            .as_array()
+            .unwrap_or(&Vec::new())
+            .iter()
+            .filter_map(|v| v.as_str())
+            .any(|s| s.contains("combat ability") && s.contains("cannot be evaluated")),
+        "known battle-type scenario must not emit unknown-battle-type warning: {known_response}"
+    );
+
+    // On an unverified battle type (`assaults` -> combat_battle_type_id = None), Tasha Yar's
+    // CombatBattleType gate fails closed with a diagnostic warning in both simulate and optimize.
     let simulate_request = serde_json::json!({
         "ship":"uss_saladin", "hostile":"1127817100", "num_sims":1, "seed":11,
+        "enemy_type":"assaults",
         "crew":{"captain":"Spock", "bridge":["Kirk","Tasha Yar"], "below_deck":[]}
     });
     let body = simulate_payload(
@@ -90,6 +121,10 @@ fn unknown_battle_type_is_reported_in_simulation_and_final_optimizer_rank() {
     )
     .expect("valid simulation request");
     let response: serde_json::Value = serde_json::from_str(&body).unwrap();
+    assert!(
+        response["resolved_context"]["combat_battle_type_id"].is_null(),
+        "assaults should keep unknown combat_battle_type_id: {response}"
+    );
     assert!(
         response["warnings"]
             .as_array()
@@ -102,6 +137,7 @@ fn unknown_battle_type_is_reported_in_simulation_and_final_optimizer_rank() {
 
     let request = serde_json::json!({
         "ship":"uss_saladin", "hostile":"1127817100", "sims":10, "seed":11,
+        "enemy_type":"assaults", "wave_defense":true,
         "max_candidates":1, "strategy":"tiered", "tiered_scout_sims":5,
         "tiered_top_k":1, "below_decks_slots":0,
         // Exercise warning propagation independently of combat scores. A warm

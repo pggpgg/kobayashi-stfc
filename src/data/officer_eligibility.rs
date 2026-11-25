@@ -22,7 +22,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::combat::types::{EnemyType, EnemyTypes, OpponentKind, ShipType};
+use crate::combat::types::{CombatGameContext, EnemyType, EnemyTypes, OpponentKind, ShipType};
 use crate::data::hostile::HostileRecord;
 use crate::data::officer::Officer;
 
@@ -389,6 +389,84 @@ pub fn parse_optional_enemy_type(raw: Option<&str>) -> Result<Option<EnemyType>,
     })
 }
 
+/// Validate an optional API `game_context` parameter at the request boundary.
+///
+/// `None`, empty/whitespace, `"open_space"`, `"space"`, and `"default"` return `Ok(CombatGameContext::OpenSpace)`.
+/// Known tactical contexts (`"station"`, `"capture_node"`, `"mining_node"`, `"takeover"`) return `Ok(...)`.
+/// Any other non-empty string returns `Err(...)` so client typos fail fast with HTTP 400.
+pub fn parse_optional_game_context(raw: Option<&str>) -> Result<CombatGameContext, String> {
+    let Some(s) = raw else {
+        return Ok(CombatGameContext::OpenSpace);
+    };
+    let trimmed = s.trim();
+    if trimmed.is_empty() {
+        return Ok(CombatGameContext::OpenSpace);
+    }
+    CombatGameContext::from_data_slug(trimmed).ok_or_else(|| {
+        format!(
+            "unknown game_context {trimmed:?}; expected one of open_space, station, \
+             capture_node, mining_node, takeover"
+        )
+    })
+}
+
+/// Derive the verified STFC `CombatBattleType` numeric id for canonical `CombatBattleType`
+/// (`combat_battle_type_any`) gating.
+///
+/// Verified against all 17 `CombatBattleType` officer abilities in `data/officers/officers.canonical.json`
+/// and every scenario column in `data/officers/eligibility_matrix.json`:
+/// - `[17, 18, 2, 5, 6, 9]` (TMP Sulu, TMP Uhura, V'Ger Ilia): non-Armada Hostiles (`2`),
+///   Outpost Armadas (`17`), and Outpost Retaliation Attackers (`18`).
+/// - `[2, 3, 5, 6, 7, 8, 9]` (Data, Worf, Tasha Yar bridge): non-player targets including
+///   Red/Wave Hostiles (`2`), Mission Bosses & Q's Trial (`3`), Group Armadas & Invading
+///   Entities (`7`), and Solo Armadas (`8`).
+/// - `[3]` (Tasha Yar captain): Mission Bosses & Q's Trial (`3`).
+/// - `[4]` (Airiam, Cap. Tilly, Culber, Emp. Georgiou, K'Bisch, TOS Chekov, Tyler): PvP on a
+///   Capture Node or Mining Node (`4`).
+/// - `1` (open-space / station PvP): known PvP battle type that matches none of the PvE/node lists.
+/// - `None` (Alliance Assaults): unverified native battle-type id — fails closed with diagnostic.
+pub fn derive_combat_battle_type_id(
+    opponent_kind: OpponentKind,
+    engagement_enemy_types: &EnemyTypes,
+    game_context: CombatGameContext,
+) -> Option<u32> {
+    if opponent_kind.is_player() {
+        return match (opponent_kind, game_context) {
+            (
+                OpponentKind::PlayerShip,
+                CombatGameContext::CaptureNode | CombatGameContext::MiningNode,
+            ) => Some(4),
+            _ => Some(1),
+        };
+    }
+
+    // Check specific base PvE modes before generic `Waves` / `RedMovingSpace` so additive
+    // compositions like `[GroupArmadas, Waves]` retain their armada battle type (`7`).
+    if engagement_enemy_types.contains(EnemyType::OutpostArmadas) {
+        Some(17)
+    } else if engagement_enemy_types.contains(EnemyType::OutpostRetaliationAttackers) {
+        Some(18)
+    } else if engagement_enemy_types.contains(EnemyType::SoloArmadas) {
+        Some(8)
+    } else if engagement_enemy_types.contains(EnemyType::GroupArmadas)
+        || engagement_enemy_types.contains(EnemyType::InvadingEntities)
+    {
+        Some(7)
+    } else if engagement_enemy_types.contains(EnemyType::MissionBosses)
+        || engagement_enemy_types.contains(EnemyType::QTrial)
+    {
+        Some(3)
+    } else if engagement_enemy_types.contains(EnemyType::Assaults) {
+        None
+    } else if engagement_enemy_types.contains(EnemyType::RedMovingSpace)
+        || engagement_enemy_types.contains(EnemyType::Waves)
+    {
+        Some(2)
+    } else {
+        None
+    }
+}
+
 /// Upstream Q-Continuum faction id (`loca_id: 72000`; Q's Trial encounters).
 pub use crate::data::hostile::Q_CONTINUUM_FACTION_ID;
 
@@ -429,6 +507,14 @@ pub struct ResolvedCombatContext {
     /// True when the defender counts as an Armada hostile (Group, Solo, or Outpost Armada — for
     /// Armada Control Center and non-armada hostile exclusions).
     pub defender_is_armada_hostile: bool,
+    /// Verified STFC `CombatBattleType` id derived for this scenario (`None` when unverified, e.g. Assaults).
+    pub combat_battle_type_id: Option<u32>,
+    /// Tactical overworld context (`OpenSpace`, `Station`, `CaptureNode`, `MiningNode`, `Takeover`).
+    pub combat_game_context: CombatGameContext,
+    /// True when the attacker combatant is in the defending role (`SelfDefending`).
+    pub attacker_is_defending: bool,
+    /// True when the attacker combatant is docked at / defending its station (`SelfAtStation`).
+    pub attacker_at_station: bool,
 }
 
 impl ResolvedCombatContext {
@@ -467,38 +553,95 @@ pub fn resolve_combat_context(
     hostile: Option<&HostileRecord>,
     defender_ship_class: Option<ShipType>,
 ) -> ResolvedCombatContext {
+    resolve_combat_context_with_tactical(
+        explicit_enemy_type,
+        wave_defense,
+        is_pvp_target,
+        hostile,
+        defender_ship_class,
+        CombatGameContext::OpenSpace,
+        false,
+        false,
+    )
+}
+
+/// Full combat-context resolver including tactical overworld context (`game_context`) and
+/// attacker role/station flags (`attacker_is_defending`, `attacker_at_station`).
+#[allow(clippy::too_many_arguments)]
+pub fn resolve_combat_context_with_tactical(
+    explicit_enemy_type: Option<EnemyType>,
+    wave_defense: bool,
+    is_pvp_target: bool,
+    hostile: Option<&HostileRecord>,
+    defender_ship_class: Option<ShipType>,
+    combat_game_context: CombatGameContext,
+    attacker_is_defending: bool,
+    explicit_attacker_at_station: bool,
+) -> ResolvedCombatContext {
+    let attacker_at_station =
+        explicit_attacker_at_station || combat_game_context == CombatGameContext::Station;
     match explicit_enemy_type {
         Some(EnemyType::PvpStation) => {
+            let engagement_enemy_types = EnemyTypes::single(EnemyType::PvpStation);
+            let combat_battle_type_id = derive_combat_battle_type_id(
+                OpponentKind::PlayerStation,
+                &engagement_enemy_types,
+                combat_game_context,
+            );
             return ResolvedCombatContext {
                 opponent_kind: OpponentKind::PlayerStation,
                 primary_enemy_type: EnemyType::PvpStation,
-                engagement_enemy_types: EnemyTypes::single(EnemyType::PvpStation),
+                engagement_enemy_types,
                 combat_defender_ship_type: defender_ship_class
                     .or_else(|| hostile.map(HostileRecord::ship_type)),
                 defender_is_outpost: false,
                 defender_is_armada_hostile: false,
+                combat_battle_type_id,
+                combat_game_context,
+                attacker_is_defending,
+                attacker_at_station,
             };
         }
         Some(EnemyType::PvpSpace) => {
+            let engagement_enemy_types = EnemyTypes::single(EnemyType::PvpSpace);
+            let combat_battle_type_id = derive_combat_battle_type_id(
+                OpponentKind::PlayerShip,
+                &engagement_enemy_types,
+                combat_game_context,
+            );
             return ResolvedCombatContext {
                 opponent_kind: OpponentKind::PlayerShip,
                 primary_enemy_type: EnemyType::PvpSpace,
-                engagement_enemy_types: EnemyTypes::single(EnemyType::PvpSpace),
+                engagement_enemy_types,
                 combat_defender_ship_type: defender_ship_class
                     .or_else(|| hostile.map(HostileRecord::ship_type)),
                 defender_is_outpost: false,
                 defender_is_armada_hostile: false,
+                combat_battle_type_id,
+                combat_game_context,
+                attacker_is_defending,
+                attacker_at_station,
             };
         }
         None if is_pvp_target => {
+            let engagement_enemy_types = EnemyTypes::single(EnemyType::PvpSpace);
+            let combat_battle_type_id = derive_combat_battle_type_id(
+                OpponentKind::PlayerShip,
+                &engagement_enemy_types,
+                combat_game_context,
+            );
             return ResolvedCombatContext {
                 opponent_kind: OpponentKind::PlayerShip,
                 primary_enemy_type: EnemyType::PvpSpace,
-                engagement_enemy_types: EnemyTypes::single(EnemyType::PvpSpace),
+                engagement_enemy_types,
                 combat_defender_ship_type: defender_ship_class
                     .or_else(|| hostile.map(HostileRecord::ship_type)),
                 defender_is_outpost: false,
                 defender_is_armada_hostile: false,
+                combat_battle_type_id,
+                combat_game_context,
+                attacker_is_defending,
+                attacker_at_station,
             };
         }
         _ => {}
@@ -564,13 +707,24 @@ pub fn resolve_combat_context(
             base
         };
 
+    let engagement_enemy_types = EnemyTypes::new(tags);
+    let combat_battle_type_id = derive_combat_battle_type_id(
+        OpponentKind::NpcHostile,
+        &engagement_enemy_types,
+        combat_game_context,
+    );
+
     ResolvedCombatContext {
         opponent_kind: OpponentKind::NpcHostile,
         primary_enemy_type,
-        engagement_enemy_types: EnemyTypes::new(tags),
+        engagement_enemy_types,
         combat_defender_ship_type,
         defender_is_outpost,
         defender_is_armada_hostile,
+        combat_battle_type_id,
+        combat_game_context,
+        attacker_is_defending,
+        attacker_at_station,
     }
 }
 

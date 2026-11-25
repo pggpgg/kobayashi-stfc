@@ -261,6 +261,9 @@ fn ctx_for(faction: OpponentFactionTag) -> CombatContext {
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: std::sync::Arc::new(EnemyTypes::default()),
         combat_battle_type_id: None,
+        combat_game_context: kobayashi::combat::CombatGameContext::OpenSpace,
+        attacker_is_defending: false,
+        attacker_at_station: false,
         defender_level: Some(79),
     }
 }

@@ -1407,6 +1407,7 @@ mod tests {
             ship_id: None,
             enemy_type: None,
             battle_types: None,
+            game_context: None,
             conditions: None,
         });
         LcarsEffect {
@@ -1564,6 +1565,7 @@ mod tests {
                 ship_id: None,
                 enemy_type: None,
                 battle_types: None,
+                game_context: None,
                 conditions: None,
             }),
             chance: None,
@@ -1881,6 +1883,7 @@ mod tests {
                     ship_id: None,
                     enemy_type: Some("solo_armadas".to_string()),
                     battle_types: None,
+                    game_context: None,
                     conditions: None,
                 },
                 crate::lcars::LcarsCondition {
@@ -1899,6 +1902,7 @@ mod tests {
                     ship_id: None,
                     enemy_type: None,
                     battle_types: None,
+                    game_context: None,
                     conditions: None,
                 },
             ]);

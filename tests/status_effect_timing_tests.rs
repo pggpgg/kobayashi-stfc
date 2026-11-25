@@ -114,6 +114,7 @@ fn burning_combat_begin_ticks_exactly_duration_rounds_then_stops() {
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
+            ..Default::default()
         },
         &crew,
     );
@@ -195,6 +196,7 @@ fn burning_round_end_trigger_precedes_end_of_round_effects_in_event_order() {
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
+            ..Default::default()
         },
         &crew,
     );
@@ -292,6 +294,7 @@ fn morale_activation_precedes_first_attack_roll_each_round() {
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
+            ..Default::default()
         },
         &crew,
     );
@@ -399,6 +402,7 @@ fn hull_breach_round_start_chance_one_refreshes_duration_each_round() {
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
+            ..Default::default()
         },
         &crew,
     );
@@ -489,6 +493,7 @@ fn hull_breach_decays_when_round_start_proc_does_not_refresh() {
         incoming_shield_mitigation_bonus_rounds: 0,
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
+        ..Default::default()
     };
 
     let mut chosen = None;
@@ -597,6 +602,7 @@ fn hull_breach_round_start_trigger_precedes_crit_resolution_same_round() {
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
+            ..Default::default()
         },
         &crew,
     );

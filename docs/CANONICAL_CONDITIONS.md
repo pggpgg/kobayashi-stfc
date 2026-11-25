@@ -8,9 +8,9 @@ See [DESIGN.md](DESIGN.md) §3.4 for LCARS condition types, `[map_canonical_cond
 
 There are **60** distinct non-empty canonical tokens; `cargo run --bin report_unknown_mappings` should show **0** still-unmapped for the officer LCARS pipeline (each token resolves via `map_canonical_condition_token` and/or `generate_lcars` attribute merge). The table below is the **token-only** gap list: tokens that intentionally have **no** entry in `map_canonical_condition_token` because `generate_lcars` builds their LCARS from ability `attributes` instead.
 
-| Token                                                                                                              | Count         | Bucket   | Note                                                                                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------ | ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CombatBattleType` / `TargetMaxLevel` / `HullHealthBelowStartOfCombat` / `HullHealthBelow` / `HullHealthAbove`   | (varies)      | merged   | Emitted from canonical `attributes` by `generate_lcars`, not `map_canonical_condition_token` alone.                                                                    |
+| Token                                                                                                                               | Count         | Bucket   | Note                                                                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CombatBattleType` / `CombatGameContext` / `TargetMaxLevel` / `HullHealthBelowStartOfCombat` / `HullHealthBelow` / `HullHealthAbove` | (varies)      | merged   | Emitted from canonical `attributes` by `officer_model` / `generate_lcars`, not `map_canonical_condition_token` alone.                                                  |
 
 
 ### Task 2 audit (engine-ready mappings only)
@@ -21,28 +21,30 @@ Regression: `[task2_attribute_merged_hull_health_tokens_remain_token_only_unmapp
 
 ## Mapped today (reference)
 
-Handled in `[map_canonical_condition_token](../src/lcars/canonical_conditions.rs)` and/or **`generate_lcars` attribute merge** (see `[effect_condition_from_canonical](../src/bin/generate_lcars.rs)`): `TargetHasBurning`, `TargetHasAssimilated` (LCARS `defender_assimilated`), `TargetHasHullBreach`, `SelfHasBurning` (LCARS `attacker_burning`), `SelfHasHullBreach` (LCARS `attacker_hull_breach`), `SelfHasMorale`, `SelfOfficerTalNotOnBridge` (LCARS `attacker_officer_tal_not_on_bridge`), `CombatBattleType` (LCARS `combat_battle_type_any` with `battle_types=[...]` from canonical `attributes`; fails closed with a diagnostic when scenario battle type is unknown), `TargetMaxLevel` (LCARS `defender_level_at_most` with `max_level=` from canonical `attributes`; fails closed with a diagnostic when scenario defender level is unknown), `HullHealthBelowStartOfCombat` / `HullHealthBelow` / `HullHealthAbove` (LCARS `stat_below` / `stat_above` with `percentage=` from canonical `attributes`), **`EnemyHullFaction`** (LCARS `defender_hull_faction_id` with `faction_id` parsed from ability `attributes`; evaluated against `[CombatContext::defender_hull_faction_id](../src/combat/abilities.rs)` from hostile `faction.id` via `[SimulationConfig::defender_hull_faction_id](../src/combat/types.rs)`), `EnemyHostile`, `EnemyPlayer`, `EnemyArmada`, `**TargetIsArmada`** (same as `EnemyArmada`), `**TargetNotArmada`** (LCARS `not` around `defender_ship_type_is` `armada`), `Enemy{Explorer,Battleship,Interceptor,Survey,Surveyor,Armada}`, `Self{…}` hull classes (explorer, …; not `SelfHas`* breach/burn, which are explicit tokens above), plus §Scenario literals and §Engagement / armada helpers below.
+Handled in `[map_canonical_condition_token](../src/lcars/canonical_conditions.rs)` and/or **`officer_model` / `generate_lcars` attribute merge** (see `[effect_condition_from_canonical](../src/lcars/officer_model.rs)`): `TargetHasBurning`, `TargetHasAssimilated` (LCARS `defender_assimilated`), `TargetHasHullBreach`, `SelfHasBurning` (LCARS `attacker_burning`), `SelfHasHullBreach` (LCARS `attacker_hull_breach`), `SelfHasMorale`, `SelfOfficerTalNotOnBridge` (LCARS `attacker_officer_tal_not_on_bridge`), `CombatBattleType` (LCARS `combat_battle_type_any` with `battle_types=[...]` from canonical `attributes`; populated from resolved engagement + tactical context — `2` Red/Waves, `3` Mission Bosses/Q's Trial, `7` Group Armadas/Invading Entities, `8` Solo Armadas, `17` Outpost Armadas, `18` Outpost Retaliators, `4` Capture/Mining Node PvP, `1` Open-Space/Station/Takeover PvP — and fails closed with a diagnostic when unknown, e.g. `assaults`), `CombatGameContext` (LCARS `combat_game_context_is` with `game_context=` from canonical `attributes`: `open_space`, `station`, `capture_node`, `mining_node`, `takeover`), `SelfDefending` (`attacker_is_defending`), `SelfAttacking` (`attacker_is_attacking`), `SelfAtStation` (`attacker_at_station`), `TargetMaxLevel` (LCARS `defender_level_at_most` with `max_level=` from canonical `attributes`; fails closed with a diagnostic when scenario defender level is unknown), `HullHealthBelowStartOfCombat` / `HullHealthBelow` / `HullHealthAbove` (LCARS `stat_below` / `stat_above` with `percentage=` from canonical `attributes`), **`EnemyHullFaction`** (LCARS `defender_hull_faction_id` with `faction_id` parsed from ability `attributes`; evaluated against `[CombatContext::defender_hull_faction_id](../src/combat/abilities.rs)` from hostile `faction.id` via `[SimulationConfig::defender_hull_faction_id](../src/combat/types.rs)`), `EnemyHostile`, `EnemyPlayer`, `EnemyArmada`, `**TargetIsArmada**` (same as `EnemyArmada`), `**TargetNotArmada**` (LCARS `not` around `defender_ship_type_is` `armada`), `Enemy{Explorer,Battleship,Interceptor,Survey,Surveyor,Armada}`, `Self{…}` hull classes (explorer, …; not `SelfHas`* breach/burn, which are explicit tokens above), plus §Engagement / tactical helpers and §Scenario literals below.
 
-### Scenario literals (ship-vs-hostile)
+In PvP (`defender_is_player_ship == true`), the combat engine evaluates defending officer crews in their own swapped perspective: `SelfDefending`/`SelfAttacking` invert (`!attacker_is_defending`), `SelfAtStation` is true for `pvp_station` defenders, and ship-class/faction predicates swap attacker and defender.
 
-These tokens have **no dedicated `CombatContext` field** (or no field for the overworld nuance); they are mapped to LCARS `literal_true` / `literal_false` and [`AbilityCondition::LiteralBool`](../src/combat/abilities.rs) with fixed truth values for the **default Kobayashi engagement** (player ship attacks an NPC hostile in space, not station / capture-node / takeover / mining overworld). This removes `generate_lcars` noise and tightens gates versus silently dropping the token. Revisit if the engine gains those encounter contexts.
+### Scenario literals (remaining unmodeled overworld nuances)
+
+Tokens with no runtime predicate remain mapped to LCARS `literal_true` / `literal_false` and [`AbilityCondition::LiteralBool`](../src/combat/abilities.rs):
 
 | Canonical token | Value | Rationale (short) |
 | --- | :---: | --- |
 | `TargetNotASB` | true | Anti-station-boss nuance not modeled; treat as non-blocking in hostile fights. |
-| `SelfAttacking` | true | Attacker role matches ship-vs-hostile optimize path. |
-| `TargetNotPlayerStation` | true | Defender is an NPC hostile, not a player station. |
-| `TargetNotInvadingEntity` | true | Invading-entity encounter not distinguished on defender; treat as non-blocking for ship-vs-hostile. |
-| `SelfDefending` | false | Defense / capture-node defender context not active when the player is the attacker. |
-| `EnemySentinel` | false | Defense-platform / station-sentinel fights not the default defender model. |
-| `CombatGameContext` | false | Capture node, mining, takeover, etc. not represented in `CombatContext`. |
-| `SelfAtStation` / `SelfAtWaveDefenseChallenge` / `SelfAtAssault2` | false | Location / mode not active on the default path. |
-| `TargetIsInvadingEntity` | false | Invading entity tag not modeled separately from hull class. |
 
-### Engagement / armada helpers
+### Engagement / armada / tactical helpers
 
-- **`SelfAtSoloArmada`** → LCARS `engagement_includes` with `enemy_type: solo_armadas` → [`AbilityCondition::EngagementIncludes`](../src/combat/abilities.rs) with [`EnemyType::SoloArmadas`](../src/combat/types.rs). True when the hostile row supplies `engagement_enemy_types` including that tag (see [`HostileRecord::engagement_enemy_types`](../src/data/hostile.rs)); otherwise false in combat.
-- **`TargetIsArmadaOrInvadingEntity`** → LCARS `defender_ship_type_is` `armada` (same as armada hull class). The **invading-entity** half is still not a separate predicate; non-armada invading targets are not distinguished yet.
+- **`SelfAtSoloArmada`** → LCARS `engagement_includes` (`solo_armadas`).
+- **`SelfAtWaveDefenseChallenge`** → LCARS `engagement_includes` (`waves`), enabled via additive `wave_defense: true` or `enemy_type: "waves"`.
+- **`SelfAtAssault2`** → LCARS `engagement_includes` (`assaults`).
+- **`EnemySentinel`** / **`TargetNotPlayerStation`** → LCARS `engagement_includes` (`pvp_station`) / `not(engagement_includes: pvp_station)`.
+- **`TargetIsInvadingEntity`** / **`TargetNotInvadingEntity`** → LCARS `engagement_includes` (`invading_entities`) / `not(engagement_includes: invading_entities)`.
+- **`TargetIsArmadaOrInvadingEntity`** → `or(defender_ship_type_is: armada, engagement_includes: invading_entities)`.
+- **`EnemyNonArmadaHostileOrOutpost`** → `or(and(defender_is_npc_hostile, not(defender_ship_type_is: armada)), engagement_includes: outpost_armadas)`.
+- **`EnemyOutpostOrRetaliator`** → `or(engagement_includes: outpost_armadas, engagement_includes: outpost_retaliation_attackers)`.
+- **`SelfDefending`** / **`SelfAttacking`** / **`SelfAtStation`** → LCARS `attacker_is_defending` / `attacker_is_attacking` / `attacker_at_station`.
+- **`CombatGameContext`** → attribute-merged LCARS `combat_game_context_is` (`open_space`, `station`, `capture_node`, `mining_node`, `takeover`).
 
 ### Module line, opponent “any state”, cargo, and other approximations
 

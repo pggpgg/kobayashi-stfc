@@ -348,6 +348,9 @@ fn kirk_leader_duration_round_range_gates_bonus_to_first_round() {
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: std::sync::Arc::new(Default::default()),
         combat_battle_type_id: None,
+        combat_game_context: kobayashi::combat::CombatGameContext::OpenSpace,
+        attacker_is_defending: false,
+        attacker_at_station: false,
         defender_level: Some(50),
     };
 

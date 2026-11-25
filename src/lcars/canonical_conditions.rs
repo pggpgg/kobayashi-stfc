@@ -22,6 +22,7 @@ pub(super) fn lcars_cond_base(ty: impl Into<String>) -> LcarsCondition {
         ship_id: None,
         enemy_type: None,
         battle_types: None,
+        game_context: None,
         conditions: None,
     }
 }
@@ -50,6 +51,7 @@ pub(super) fn lcars_not(inner: LcarsCondition) -> LcarsCondition {
         ship_id: None,
         enemy_type: None,
         battle_types: None,
+        game_context: None,
         conditions: Some(vec![inner]),
     }
 }
@@ -77,6 +79,7 @@ fn lcars_or(children: Vec<LcarsCondition>) -> LcarsCondition {
         ship_id: None,
         enemy_type: None,
         battle_types: None,
+        game_context: None,
         conditions: Some(children),
     }
 }
@@ -135,9 +138,13 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
         "SelfOfficerTalNotOnBridge" => {
             return Some(lcars_cond_base("attacker_officer_tal_not_on_bridge"));
         }
-        // Kobayashi ship-vs-hostile scenario literals (see `docs/CANONICAL_CONDITIONS.md`).
-        "TargetNotASB" | "SelfAttacking" => {
+        // Kobayashi ship-vs-hostile scenario literal: non-ASB target.
+        "TargetNotASB" => {
             return Some(lcars_cond_base("literal_true"));
+        }
+        // PvP/combat role gates (dynamic per perspective: attacking vs defending).
+        "SelfAttacking" => {
+            return Some(lcars_cond_base("attacker_is_attacking"));
         }
         // Excludes player stations (`pvp_station` engagement tag); true in ship PvP and all PvE.
         "TargetNotPlayerStation" => {
@@ -151,9 +158,11 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
             st.enemy_type = Some("pvp_station".to_string());
             return Some(st);
         }
-        // Default ship-vs-hostile / PvP attack path assumes the player is not defending.
-        // Omit from LCARS `and` (do not emit literal_false — that arm never evaluates true).
-        "SelfDefending" => return None,
+        // Defending role gate (`ctx.attacker_is_defending`): false on default attack path,
+        // true for the defending player in PvP or when explicitly defending.
+        "SelfDefending" => {
+            return Some(lcars_cond_base("attacker_is_defending"));
+        }
         // Solo armada — matches [`crate::combat::EnemyType::SoloArmadas`] when hostile sets `engagement_enemy_types`.
         "SelfAtSoloArmada" => {
             let mut c = lcars_cond_base("engagement_includes");
@@ -221,6 +230,7 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
                 ship_id: None,
                 enemy_type: None,
                 battle_types: None,
+                game_context: None,
                 conditions: Some(vec![
                     lcars_cond_base("defender_is_npc_hostile"),
                     lcars_or(vec![
@@ -230,9 +240,11 @@ pub fn map_canonical_condition_token(token: &str) -> Option<LcarsCondition> {
                 ]),
             });
         }
-        // Station defense / overworld context tokens: deferred to PR 3 PvP role/location wiring.
-        "CombatGameContext" | "SelfAtStation" => {
-            return Some(lcars_cond_base("literal_false"));
+        // Station defense location gate (`ctx.attacker_at_station`); false on open-space attack,
+        // true when defending a station (`PvpStation` defender perspective or explicit flag).
+        // Note: `CombatGameContext` is attribute-merged from `game_context=...` in `officer_model.rs`.
+        "SelfAtStation" => {
+            return Some(lcars_cond_base("attacker_at_station"));
         }
         // Alliance Assault engagements (`EnemyType::Assaults`).
         "SelfAtAssault2" => {
@@ -354,6 +366,7 @@ pub fn is_canonical_condition_mapped(token: &str) -> bool {
 const OFFICER_LCARS_ATTRIBUTE_MERGED_CONDITION_TOKENS: &[&str] = &[
     "EnemyHullFaction",
     "CombatBattleType",
+    "CombatGameContext",
     "TargetMaxLevel",
     "HullHealthBelowStartOfCombat",
     "HullHealthBelow",
@@ -421,6 +434,7 @@ pub fn canonical_conditions_to_lcars(
             ship_id: None,
             enemy_type: None,
             battle_types: None,
+            game_context: None,
             conditions: Some(mapped),
         }),
     }
@@ -640,10 +654,13 @@ mod tests {
 
     #[test]
     fn scenario_literal_tokens_map_and_resolve() {
-        assert!(map_canonical_condition_token("SelfDefending").is_none());
+        assert!(map_canonical_condition_token("CombatGameContext").is_none());
+        assert!(is_canonical_officer_condition_resolved("CombatGameContext"));
         for (tok, expected) in [
             ("TargetNotASB", AbilityCondition::LiteralBool(true)),
-            ("SelfAttacking", AbilityCondition::LiteralBool(true)),
+            ("SelfAttacking", AbilityCondition::AttackerIsAttacking),
+            ("SelfDefending", AbilityCondition::AttackerIsDefending),
+            ("SelfAtStation", AbilityCondition::AttackerAtStation),
             (
                 "TargetNotPlayerStation",
                 AbilityCondition::Not(Box::new(AbilityCondition::EngagementIncludes(
@@ -654,7 +671,6 @@ mod tests {
                 "EnemySentinel",
                 AbilityCondition::EngagementIncludes(EnemyType::PvpStation),
             ),
-            ("CombatGameContext", AbilityCondition::LiteralBool(false)),
             (
                 "SelfAtAssault2",
                 AbilityCondition::EngagementIncludes(EnemyType::Assaults),

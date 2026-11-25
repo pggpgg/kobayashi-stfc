@@ -104,6 +104,10 @@ pub fn evaluate_ability_condition(cond: &AbilityCondition, ctx: &CombatContext) 
             .defender_level
             .map(|level| level <= *max_level)
             .unwrap_or(false),
+        AbilityCondition::AttackerIsDefending => ctx.attacker_is_defending,
+        AbilityCondition::AttackerIsAttacking => !ctx.attacker_is_defending,
+        AbilityCondition::AttackerAtStation => ctx.attacker_at_station,
+        AbilityCondition::CombatGameContextIs(expected) => ctx.combat_game_context == *expected,
         AbilityCondition::LiteralBool(v) => *v,
         AbilityCondition::Not(inner) => !evaluate_ability_condition(inner, ctx),
         AbilityCondition::And(conds) => conds.iter().all(|c| evaluate_ability_condition(c, ctx)),
@@ -267,6 +271,34 @@ fn fold_static_inner(cond: &AbilityCondition, ctx: &CombatContext) -> FoldedCond
         }
         AbilityCondition::DefenderLevelAtMost(max_level) => {
             if ctx.defender_level.is_some_and(|level| level <= *max_level) {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::AttackerIsDefending => {
+            if ctx.attacker_is_defending {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::AttackerIsAttacking => {
+            if !ctx.attacker_is_defending {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::AttackerAtStation => {
+            if ctx.attacker_at_station {
+                FoldedCondition::AlwaysTrue
+            } else {
+                FoldedCondition::AlwaysFalse
+            }
+        }
+        AbilityCondition::CombatGameContextIs(expected) => {
+            if ctx.combat_game_context == *expected {
                 FoldedCondition::AlwaysTrue
             } else {
                 FoldedCondition::AlwaysFalse
@@ -510,6 +542,9 @@ mod tests {
             engagement_enemy_types: std::sync::Arc::new(EnemyTypes::default()),
             combat_battle_type_id: None,
             defender_level: None,
+            combat_game_context: crate::combat::CombatGameContext::OpenSpace,
+            attacker_is_defending: false,
+            attacker_at_station: false,
         }
     }
 

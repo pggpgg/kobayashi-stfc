@@ -447,20 +447,20 @@ fn pon_captain_compiles_enemy_delay_at_combat_begin() {
 }
 
 #[test]
-fn pon_self_defending_unknown_gate_fails_closed_for_player_delay() {
+fn pon_self_defending_gate_stays_inactive_on_attack_path_for_player_delay() {
     let crew = resolve_crew("pon-a2ddd4", &[], 3);
     let delay = crew
         .seats
         .iter()
         .find(|seat| matches!(seat.ability.effect, AbilityEffect::DefenderFireDelay { .. }))
         .expect("Pon delay remains independently compilable");
-    fn contains_false_gate(condition: &AbilityCondition) -> bool {
+    fn contains_defending_gate(condition: &AbilityCondition) -> bool {
         match condition {
-            AbilityCondition::LiteralBool(false) => true,
+            AbilityCondition::AttackerIsDefending => true,
             AbilityCondition::And(children) | AbilityCondition::Or(children) => {
-                children.iter().any(contains_false_gate)
+                children.iter().any(contains_defending_gate)
             }
-            AbilityCondition::Not(child) => contains_false_gate(child),
+            AbilityCondition::Not(child) => contains_defending_gate(child),
             _ => false,
         }
     }
@@ -469,8 +469,8 @@ fn pon_self_defending_unknown_gate_fails_closed_for_player_delay() {
             .ability
             .condition
             .as_ref()
-            .is_some_and(contains_false_gate),
-        "unmapped canonical SelfDefending must remain an explicit fail-closed gate"
+            .is_some_and(contains_defending_gate),
+        "canonical SelfDefending must compile to an explicit AttackerIsDefending gate"
     );
 
     for seed in 0..300_u64 {
@@ -478,9 +478,9 @@ fn pon_self_defending_unknown_gate_fails_closed_for_player_delay() {
         let result = simulate_combat_from_setup(&setup, seed);
         assert!(
             !delay_events(&result.events)
-            .iter()
-            .any(|e| event_bool(e, "triggered") && event_phase(e) == "combat_begin"),
-            "unsupported SelfDefending gate must not activate Pon's combat-begin delay (seed={seed})"
+                .iter()
+                .any(|e| event_bool(e, "triggered") && event_phase(e) == "combat_begin"),
+            "SelfDefending gate must not activate Pon's combat-begin delay on the attack path (seed={seed})"
         );
     }
 }

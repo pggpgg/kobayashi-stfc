@@ -171,6 +171,7 @@ fn wave_defense_is_additive_in_combat_and_multi_tag_eligibility() {
         ScenarioEngagementOverride {
             enemy_type: None,
             wave_defense: false,
+            ..Default::default()
         },
     );
     let with_wave_flag = replay_with_context(
@@ -181,6 +182,7 @@ fn wave_defense_is_additive_in_combat_and_multi_tag_eligibility() {
         ScenarioEngagementOverride {
             enemy_type: None,
             wave_defense: true,
+            ..Default::default()
         },
     );
     let with_wave_enemy_type = replay_with_context(
@@ -191,6 +193,7 @@ fn wave_defense_is_additive_in_combat_and_multi_tag_eligibility() {
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::Waves),
             wave_defense: false,
+            ..Default::default()
         },
     );
 
@@ -263,6 +266,7 @@ fn solo_armada_context_fires_bashir_gossa_and_dezoc_officer_stat_all() {
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::GroupArmadas),
             wave_defense: false,
+            ..Default::default()
         },
     );
     let solo_replay = replay_with_context(
@@ -273,6 +277,7 @@ fn solo_armada_context_fires_bashir_gossa_and_dezoc_officer_stat_all() {
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::SoloArmadas),
             wave_defense: false,
+            ..Default::default()
         },
     );
 
@@ -310,6 +315,7 @@ fn solo_armada_context_fires_bashir_gossa_and_dezoc_officer_stat_all() {
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::GroupArmadas),
             wave_defense: false,
+            ..Default::default()
         },
     );
     let dezoc_solo = replay_optimize_iteration_with_registry_and_context(
@@ -330,6 +336,7 @@ fn solo_armada_context_fires_bashir_gossa_and_dezoc_officer_stat_all() {
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::SoloArmadas),
             wave_defense: false,
+            ..Default::default()
         },
     );
     assert!(
@@ -398,6 +405,7 @@ fn caleb_mir_bridge_and_bda_gates_match_verified_upstream_behavior() {
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::OutpostRetaliationAttackers),
             wave_defense: false,
+            ..Default::default()
         },
     );
     let retaliator_ctrl = replay_with_context(
@@ -408,6 +416,7 @@ fn caleb_mir_bridge_and_bda_gates_match_verified_upstream_behavior() {
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::OutpostRetaliationAttackers),
             wave_defense: false,
+            ..Default::default()
         },
     );
 
@@ -463,14 +472,17 @@ fn caleb_mir_bridge_and_bda_gates_match_verified_upstream_behavior() {
     let on_normal = run_borg_cube(ScenarioEngagementOverride {
         enemy_type: Some(EnemyType::RedMovingSpace),
         wave_defense: false,
+        ..Default::default()
     });
     let on_outpost = run_borg_cube(ScenarioEngagementOverride {
         enemy_type: Some(EnemyType::OutpostArmadas),
         wave_defense: false,
+        ..Default::default()
     });
     let on_group_armada = run_borg_cube(ScenarioEngagementOverride {
         enemy_type: Some(EnemyType::GroupArmadas),
         wave_defense: false,
+        ..Default::default()
     });
     assert!(
         on_normal.total_damage > on_group_armada.total_damage + 1e-3
@@ -514,6 +526,7 @@ fn newly_mapped_pvp_station_invading_entity_and_assault_gates_fire_exclusively_i
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::PvpStation),
             wave_defense: false,
+            ..Default::default()
         },
     );
     let joachim_space = replay_with_context(
@@ -524,6 +537,7 @@ fn newly_mapped_pvp_station_invading_entity_and_assault_gates_fire_exclusively_i
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::PvpSpace),
             wave_defense: false,
+            ..Default::default()
         },
     );
     assert!(
@@ -548,6 +562,7 @@ fn newly_mapped_pvp_station_invading_entity_and_assault_gates_fire_exclusively_i
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::InvadingEntities),
             wave_defense: false,
+            ..Default::default()
         },
     );
     let demarco_normal = replay_with_context(
@@ -565,6 +580,7 @@ fn newly_mapped_pvp_station_invading_entity_and_assault_gates_fire_exclusively_i
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::PvpStation),
             wave_defense: false,
+            ..Default::default()
         },
     );
     assert!(
@@ -605,6 +621,7 @@ fn newly_mapped_pvp_station_invading_entity_and_assault_gates_fire_exclusively_i
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::InvadingEntities),
             wave_defense: false,
+            ..Default::default()
         },
     );
     let masriad_normal = replay_optimize_iteration_with_registry_and_context(
@@ -625,6 +642,7 @@ fn newly_mapped_pvp_station_invading_entity_and_assault_gates_fire_exclusively_i
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::RedMovingSpace),
             wave_defense: false,
+            ..Default::default()
         },
     );
     assert!(
@@ -660,6 +678,7 @@ fn newly_mapped_pvp_station_invading_entity_and_assault_gates_fire_exclusively_i
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::Assaults),
             wave_defense: false,
+            ..Default::default()
         },
     );
     let kira_normal = replay_optimize_iteration_with_registry_and_context(
@@ -680,6 +699,7 @@ fn newly_mapped_pvp_station_invading_entity_and_assault_gates_fire_exclusively_i
         ScenarioEngagementOverride {
             enemy_type: Some(EnemyType::RedMovingSpace),
             wave_defense: false,
+            ..Default::default()
         },
     );
     assert!(
@@ -914,6 +934,9 @@ fn scenario_fingerprint_is_canonical_across_auto_and_invalidates_on_wave_defense
         below_decks_slots: 3,
         enemy_type,
         wave_defense,
+        game_context: None,
+        attacker_is_defending: false,
+        attacker_at_station: false,
         defender_opponent: "hostile",
         support_buffs: None,
         defender_support_buffs: None,

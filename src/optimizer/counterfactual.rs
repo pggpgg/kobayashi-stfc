@@ -580,12 +580,15 @@ pub fn analyze_crew_counterfactual_with_registry(
 ) -> CounterfactualOutcome {
     let effective_override = if scenario.engagement_override.enemy_type.is_some()
         || scenario.engagement_override.wave_defense
+        || scenario.engagement_override.game_context != crate::combat::CombatGameContext::OpenSpace
+        || scenario.engagement_override.attacker_is_defending
+        || scenario.engagement_override.attacker_at_station
     {
         scenario.engagement_override
     } else if scenario.enemy_type != EnemyType::RedMovingSpace {
         ScenarioEngagementOverride {
             enemy_type: Some(scenario.enemy_type),
-            wave_defense: false,
+            ..ScenarioEngagementOverride::default()
         }
     } else {
         ScenarioEngagementOverride::default()

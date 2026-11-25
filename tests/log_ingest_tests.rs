@@ -283,6 +283,7 @@ fn rich_engine_aligned_fixture_matches_canonical_sim_trace_subsequence() {
         incoming_shield_mitigation_bonus_rounds: 0,
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
+        ..Default::default()
     };
     let crew = CrewConfiguration::default();
     let sim = simulate_combat(&attacker, &defender, &config, &crew);
@@ -364,6 +365,7 @@ fn emit_state_snapshots_adds_state_snapshot_events() {
         incoming_shield_mitigation_bonus_rounds: 0,
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: true,
+        ..Default::default()
     };
     let crew = CrewConfiguration::default();
     let sim = simulate_combat(&attacker, &defender, &config, &crew);

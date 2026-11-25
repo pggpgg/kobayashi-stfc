@@ -77,6 +77,13 @@ pub struct ScenarioEngagementOverride {
     pub enemy_type: Option<crate::combat::EnemyType>,
     /// Additive Wave Defense toggle (composes `[base_pve_type, EnemyType::Waves]`).
     pub wave_defense: bool,
+    /// Tactical overworld context (open space, station, capture node, mining node, takeover).
+    pub game_context: crate::combat::CombatGameContext,
+    /// True when the attacker combatant is in the defending role (`SelfDefending` true,
+    /// `SelfAttacking` false).
+    pub attacker_is_defending: bool,
+    /// True when the attacker combatant is docked at / defending its station (`SelfAtStation`).
+    pub attacker_at_station: bool,
 }
 
 /// Who the defending combatant represents for canonical opponent-category conditions (`EnemyHostile` / `EnemyPlayer`).
@@ -1169,6 +1176,14 @@ pub(crate) struct CombatSimulationInput {
     pub attacker_owner_faction: OpponentFactionTag,
     /// Phase 4d: per-round officer-stat breakpoint context for the attacker crew.
     pub officer_stat_round: Option<crate::data::officer_stat_round::OfficerStatRoundContext>,
+    /// Verified STFC `CombatBattleType` id derived for this scenario (`None` when unverified).
+    pub combat_battle_type_id: Option<u32>,
+    /// Tactical overworld context (open space, station, capture node, mining node, takeover).
+    pub combat_game_context: crate::combat::CombatGameContext,
+    /// True when the attacker combatant is in the defending role (`SelfDefending`).
+    pub attacker_is_defending: bool,
+    /// True when the attacker combatant is docked at / defending its station (`SelfAtStation`).
+    pub attacker_at_station: bool,
 }
 
 /// PvP defender [`Combatant`] with opponent profile + defender crew officer-stat runtime,
@@ -1202,7 +1217,8 @@ fn build_pvp_defender_combatant(
         def_profile,
         &shared.player_defender_static_buffs,
     );
-    let cond_ctx = build_officer_stat_condition_context(shared, attacker_ship_rec);
+    let cond_ctx =
+        build_defender_officer_stat_condition_context(shared, attacker_ship_rec, def_ship);
     let defender_osr = crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
         shared.defender_officer_stat_totals,
         shared.defender_bridge_officer_stat_totals,
@@ -1592,6 +1608,10 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             },
             attacker_owner_faction: shared.attacker_owner_faction,
             officer_stat_round,
+            combat_battle_type_id: shared.combat_context.combat_battle_type_id,
+            combat_game_context: shared.combat_context.combat_game_context,
+            attacker_is_defending: shared.combat_context.attacker_is_defending,
+            attacker_at_station: shared.combat_context.attacker_at_station,
         };
     }
 
@@ -1749,6 +1769,10 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         incoming_shield_mitigation_bonus_rounds: shared.incoming_shield_mitigation_bonus_rounds,
         attacker_owner_faction: shared.attacker_owner_faction,
         officer_stat_round: None,
+        combat_battle_type_id: shared.combat_context.combat_battle_type_id,
+        combat_game_context: shared.combat_context.combat_game_context,
+        attacker_is_defending: shared.combat_context.attacker_is_defending,
+        attacker_at_station: shared.combat_context.attacker_at_station,
     }
 }
 
@@ -2202,6 +2226,52 @@ fn build_officer_stat_condition_context(
         defender_faction_id,
         defender_faction_slug,
         engagement_types,
+        combat_battle_type_id: shared.combat_context.combat_battle_type_id,
+        combat_game_context: shared.combat_context.combat_game_context,
+        attacker_is_defending: shared.combat_context.attacker_is_defending,
+        attacker_at_station: shared.combat_context.attacker_at_station,
+    }
+}
+
+/// Symmetric defender-perspective fight-setup condition context for PvP `defender_osr`
+/// (swaps attacker/defender ship records, owner/opponent factions, and role/station flags so
+/// defender officers like Mitchell `SelfAtStation` or Tyler `SelfDefending + CaptureNode` evaluate
+/// against the defender's own ship and perspective).
+fn build_defender_officer_stat_condition_context(
+    shared: &SharedScenarioData,
+    attacker_ship_rec: &ShipRecord,
+    defender_ship_rec: &ShipRecord,
+) -> crate::data::profile::OfficerStatConditionContext {
+    let defender_ship_type = Some(attacker_ship_rec.ship_type().as_data_slug().to_string());
+    let defender_faction_slug = attacker_ship_rec
+        .faction
+        .as_deref()
+        .and_then(OpponentFactionTag::from_data_slug)
+        .and_then(OpponentFactionTag::as_data_slug)
+        .map(str::to_string);
+    let engagement_types: Vec<String> = shared
+        .engagement_enemy_types
+        .0
+        .iter()
+        .map(|t| crate::combat::types::enemy_type_to_key(*t).to_string())
+        .collect();
+    crate::data::profile::OfficerStatConditionContext {
+        attacker_ship_class: Some(defender_ship_rec.ship_class.trim().to_string())
+            .filter(|s| !s.is_empty()),
+        attacker_ship_id: Some(defender_ship_rec.id.trim().to_string()).filter(|s| !s.is_empty()),
+        attacker_owner_faction: defender_ship_rec.faction.clone(),
+        defender_is_player_ship: true,
+        defender_ship_type,
+        defender_faction_id: None,
+        defender_faction_slug,
+        engagement_types,
+        combat_battle_type_id: shared.combat_context.combat_battle_type_id,
+        combat_game_context: shared.combat_context.combat_game_context,
+        attacker_is_defending: !shared.combat_context.attacker_is_defending,
+        attacker_at_station: shared
+            .combat_context
+            .engagement_enemy_types
+            .contains(crate::combat::EnemyType::PvpStation),
     }
 }
 
@@ -2409,6 +2479,10 @@ pub(crate) fn scenario_to_combat_input(
                 .iter()
                 .map(|t| crate::combat::types::enemy_type_to_key(*t).to_string())
                 .collect(),
+            combat_battle_type_id: combat_ctx.combat_battle_type_id,
+            combat_game_context: combat_ctx.combat_game_context,
+            attacker_is_defending: combat_ctx.attacker_is_defending,
+            attacker_at_station: combat_ctx.attacker_at_station,
         };
         let extra_target_weapon_damage = profile_target_weapon_damage_bonus_fraction(
             profile,
@@ -2529,6 +2603,10 @@ pub(crate) fn scenario_to_combat_input(
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_owner_faction: attacker_owner_faction_from_ship(Some(&ship_rec)),
             officer_stat_round,
+            combat_battle_type_id: combat_ctx.combat_battle_type_id,
+            combat_game_context: combat_ctx.combat_game_context,
+            attacker_is_defending: combat_ctx.attacker_is_defending,
+            attacker_at_station: combat_ctx.attacker_at_station,
         };
     }
 
@@ -2622,6 +2700,10 @@ pub(crate) fn scenario_to_combat_input(
         incoming_shield_mitigation_bonus_rounds: 0,
         attacker_owner_faction: attacker_owner_faction_from_ship(resolve_ship(ship).as_ref()),
         officer_stat_round: None,
+        combat_battle_type_id: None,
+        combat_game_context: crate::combat::CombatGameContext::OpenSpace,
+        attacker_is_defending: false,
+        attacker_at_station: false,
     }
 }
 
@@ -2867,12 +2949,15 @@ fn build_shared_scenario_data_standalone_for_profile(
 
     let ship_rec = resolve_ship(ship);
     let hostile_rec = resolve_hostile(hostile);
-    let combat_context = crate::data::officer_eligibility::resolve_combat_context(
+    let combat_context = crate::data::officer_eligibility::resolve_combat_context_with_tactical(
         engagement_override.enemy_type,
         engagement_override.wave_defense,
         defender_opponent.defender_is_player_ship(),
         hostile_rec.as_ref(),
         None,
+        engagement_override.game_context,
+        engagement_override.attacker_is_defending,
+        engagement_override.attacker_at_station,
     );
     let defender_opponent = if combat_context.opponent_kind.is_player() {
         DefenderOpponent::Player
@@ -3618,12 +3703,15 @@ pub(crate) fn build_shared_scenario_data_from_registry_with_context(
         (None, None, 0.0, 0)
     };
 
-    let combat_context = crate::data::officer_eligibility::resolve_combat_context(
+    let combat_context = crate::data::officer_eligibility::resolve_combat_context_with_tactical(
         engagement_override.enemy_type,
         engagement_override.wave_defense,
         pvp.is_some() || defender_opponent.defender_is_player_ship(),
         hostile_rec.as_ref(),
         defender_ship_rec.as_ref().map(|s| s.ship_type()),
+        engagement_override.game_context,
+        engagement_override.attacker_is_defending,
+        engagement_override.attacker_at_station,
     );
     let defender_opponent = if combat_context.opponent_kind.is_player() {
         DefenderOpponent::Player
@@ -4011,6 +4099,20 @@ pub(crate) fn build_shared_scenario_data_from_registry_with_context(
             defender_faction_tag,
         );
 
+    // In PvP, resolve defender officer tiers/levels from the opponent's own profile
+    // (`pvp.defender_profile_id`), never leaking the attacker's imported roster.
+    let defender_resolve_options = if let Some(ref pvp_cfg) = pvp {
+        let def_pid = profile_index::resolve_profile_id_for_api(Some(&pvp_cfg.defender_profile_id));
+        let def_roster_path = profile_path(&def_pid, ROSTER_IMPORTED)
+            .to_string_lossy()
+            .to_string();
+        import::load_imported_roster(&def_roster_path)
+            .map(|entries| resolve_options_from_roster(&entries))
+            .unwrap_or_default()
+    } else {
+        resolve_options.clone()
+    };
+
     let (
         player_defender_officer_seats,
         player_defender_static_buffs,
@@ -4022,7 +4124,7 @@ pub(crate) fn build_shared_scenario_data_from_registry_with_context(
         player_defender_officer_crew.as_ref(),
         &officer_index,
         lcars_data.as_ref(),
-        &resolve_options,
+        &defender_resolve_options,
     );
 
     let scenario_hostile_key = pvp

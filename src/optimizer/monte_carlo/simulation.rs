@@ -3,7 +3,7 @@
 use crate::combat::engine::{simulate_combat_from_setup_with_scratch, CombatTrialScratch};
 use crate::combat::{
     build_combat_setup_with_officer_stat, simulate_combat_with_defender_faction_and_defender_crew,
-    CombatEvent, OpponentFactionTag, SimulationConfig, TraceMode,
+    CombatEvent, SimulationConfig, TraceMode,
 };
 use crate::data::data_registry::DataRegistry;
 use crate::data::support_buffs;
@@ -385,11 +385,19 @@ pub(super) fn unsupported_crew_health_effects(
         inbound_raw,
     ) || unsupported_defender_raw_effects(&input.defender_crew)
         || unsupported_raw_counter_piercing(&input.crew, &input.defender_crew, inbound_raw)
-        // Battle type is not currently carried in CombatSimulationInput. Do
-        // not evaluate type-gated effects as unconditional; identify them in
+        // Battle type is carried in CombatSimulationInput from the resolved scenario.
+        // Unknown/unverified battle types (e.g. Assaults) still fail closed and trigger
         // the same result diagnostic as other unsupported combat mechanics.
-        || crew_has_unavailable_condition(&input.crew, input.defender_level.is_none())
-        || crew_has_unavailable_condition(&input.defender_crew, input.defender_level.is_none())
+        || crew_has_unavailable_condition(
+            &input.crew,
+            input.combat_battle_type_id.is_none(),
+            input.defender_level.is_none(),
+        )
+        || crew_has_unavailable_condition(
+            &input.defender_crew,
+            input.combat_battle_type_id.is_none(),
+            input.defender_level.is_none(),
+        )
 }
 
 fn unsupported_raw_counter_piercing(
@@ -404,17 +412,22 @@ fn unsupported_raw_counter_piercing(
 
 fn crew_has_unavailable_condition(
     crew: &crate::combat::CrewConfiguration,
+    battle_type_unknown: bool,
     level_unknown: bool,
 ) -> bool {
     use crate::combat::AbilityCondition;
-    fn unavailable(condition: &AbilityCondition, level_unknown: bool) -> bool {
+    fn unavailable(
+        condition: &AbilityCondition,
+        battle_type_unknown: bool,
+        level_unknown: bool,
+    ) -> bool {
         match condition {
-            AbilityCondition::CombatBattleTypeAny(_) => true,
+            AbilityCondition::CombatBattleTypeAny(ids) => ids.is_empty() || battle_type_unknown,
             AbilityCondition::DefenderLevelAtMost(_) => level_unknown,
-            AbilityCondition::Not(inner) => unavailable(inner, level_unknown),
-            AbilityCondition::And(parts) | AbilityCondition::Or(parts) => {
-                parts.iter().any(|part| unavailable(part, level_unknown))
-            }
+            AbilityCondition::Not(inner) => unavailable(inner, battle_type_unknown, level_unknown),
+            AbilityCondition::And(parts) | AbilityCondition::Or(parts) => parts
+                .iter()
+                .any(|part| unavailable(part, battle_type_unknown, level_unknown)),
             _ => false,
         }
     }
@@ -422,7 +435,7 @@ fn crew_has_unavailable_condition(
         seat.ability
             .condition
             .as_ref()
-            .is_some_and(|condition| unavailable(condition, level_unknown))
+            .is_some_and(|condition| unavailable(condition, battle_type_unknown, level_unknown))
     })
 }
 
@@ -775,6 +788,10 @@ fn run_candidate_monte_carlo(
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
+        combat_battle_type_id: input.combat_battle_type_id,
+        combat_game_context: input.combat_game_context,
+        attacker_is_defending: input.attacker_is_defending,
+        attacker_at_station: input.attacker_at_station,
     };
 
     // Precompute values that don't change per trial
@@ -1137,12 +1154,12 @@ impl CandidateTrialAccumulator {
             incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
             attacker_hyperthermic_decay_fraction: 0.0,
             emit_state_snapshots: false,
+            combat_battle_type_id: input.combat_battle_type_id,
+            combat_game_context: input.combat_game_context,
+            attacker_is_defending: input.attacker_is_defending,
+            attacker_at_station: input.attacker_at_station,
         };
-        let defender_faction = shared
-            .hostile_rec
-            .as_ref()
-            .map(|h| h.opponent_faction_tag())
-            .unwrap_or(OpponentFactionTag::Unknown);
+        let defender_faction = shared.defender_faction_for_combat();
         let setup = build_combat_setup_with_officer_stat(
             &input.attacker,
             &input.defender,
@@ -2021,6 +2038,10 @@ pub fn replay_optimize_iteration_with_registry_and_context(
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
+        combat_battle_type_id: input.combat_battle_type_id,
+        combat_game_context: input.combat_game_context,
+        attacker_is_defending: input.attacker_is_defending,
+        attacker_at_station: input.attacker_at_station,
     };
 
     let combat = simulate_combat_with_defender_faction_and_defender_crew(
@@ -2519,6 +2540,7 @@ pub(crate) fn run_monte_carlo_with_shared_variable_iterations(
 mod tests {
     use super::super::scenario::build_shared_scenario_data_from_registry;
     use super::*;
+    use crate::combat::OpponentFactionTag;
 
     #[test]
     fn repeated_registry_scenario_inputs_are_bitwise_stable() {
@@ -2644,13 +2666,14 @@ mod tests {
                 false,
             )],
         };
-        assert!(crew_has_unavailable_condition(&crew, false));
+        assert!(crew_has_unavailable_condition(&crew, true, false));
+        assert!(!crew_has_unavailable_condition(&crew, false, false));
         crew.seats[0].ability.condition = Some(AbilityCondition::Or(vec![
             AbilityCondition::LiteralBool(true),
             AbilityCondition::DefenderLevelAtMost(60),
         ]));
-        assert!(crew_has_unavailable_condition(&crew, true));
-        assert!(!crew_has_unavailable_condition(&crew, false));
+        assert!(crew_has_unavailable_condition(&crew, false, true));
+        assert!(!crew_has_unavailable_condition(&crew, false, false));
     }
 
     #[test]

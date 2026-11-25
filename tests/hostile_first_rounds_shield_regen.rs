@@ -66,6 +66,7 @@ fn pve_config(rounds: u32, seed: u64) -> SimulationConfig {
         incoming_shield_mitigation_bonus_rounds: 0,
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
+        ..Default::default()
     }
 }
 

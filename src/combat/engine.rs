@@ -195,6 +195,9 @@ pub struct PreCombatSetup {
     pub defender_receive_damage_effects: Vec<ActiveAbilityEffect>,
     // Combat begin state (initial round 0, all precomputable)
     pub combat_begin_ctx: CombatContext,
+    /// Defender-side precomputed context: swapped PvP perspective when `defender_is_player_ship`,
+    /// or attacker-frame clone when fighting an NPC hostile (matching hostile ability catalog).
+    pub defender_begin_ctx: CombatContext,
     pub combat_begin_filtered: Vec<ActiveAbilityEffect>,
     incoming_shot_deflection: u32,
     pub attacker_mitigation_additive: f64,
@@ -376,8 +379,50 @@ pub fn build_combat_setup_with_officer_stat(
         attacker_tal_assigned_captain_or_bridge,
         defender_hostile_tag_mask: config.defender_hostile_tag_mask,
         engagement_enemy_types: std::sync::Arc::clone(&engagement_enemy_types_arc),
-        combat_battle_type_id: None,
+        combat_battle_type_id: config.combat_battle_type_id,
         defender_level: config.defender_level,
+        combat_game_context: config.combat_game_context,
+        attacker_is_defending: config.attacker_is_defending,
+        attacker_at_station: config.attacker_at_station,
+    };
+    let defender_tal_assigned_captain_or_bridge =
+        attacker_crew_tal_assigned_captain_or_bridge(&defender_crew);
+    let defender_begin_ctx = if defender_is_player_ship {
+        CombatContext {
+            round_index: 1,
+            defender_hull_pct: 1.0,
+            defender_shield_pct: 1.0,
+            attacker_hull_pct: 1.0,
+            attacker_hull_pct_of_fight_start: None,
+            attacker_shield_pct: 1.0,
+            attacker_morale_active: false,
+            defender_morale_active: false,
+            defender_burning_active: false,
+            defender_hull_breach_active: false,
+            attacker_burning_active: false,
+            attacker_hull_breach_active: false,
+            defender_assimilated_active: false,
+            defender_faction: config.attacker_owner_faction,
+            attacker_owner_faction: defender_faction,
+            defender_hull_faction_id: 0,
+            defender_ship_type: attacker_ship_type,
+            attacker_ship_type: defender_ship_type,
+            attacker_ship_id: std::sync::Arc::from(defender.id.as_str()),
+            defender_is_npc_hostile: false,
+            defender_is_player_ship: true,
+            attacker_tal_assigned_captain_or_bridge: defender_tal_assigned_captain_or_bridge,
+            defender_hostile_tag_mask: 0,
+            engagement_enemy_types: std::sync::Arc::clone(&engagement_enemy_types_arc),
+            combat_battle_type_id: config.combat_battle_type_id,
+            defender_level: None,
+            combat_game_context: config.combat_game_context,
+            attacker_is_defending: !config.attacker_is_defending,
+            attacker_at_station: config
+                .engagement_enemy_types
+                .contains(crate::combat::types::EnemyType::PvpStation),
+        }
+    } else {
+        combat_begin_ctx.clone()
     };
     let combat_begin_pre_scale_filtered =
         filter_effects_by_condition_borrowed(&combat_begin_pre_scale, &combat_begin_ctx);
@@ -489,7 +534,7 @@ pub fn build_combat_setup_with_officer_stat(
 
     let mut defender_combat_begin_effects = fold_active_effects_for_setup(
         active_effects_for_timing(&defender_crew, TimingWindow::CombatBegin),
-        &combat_begin_ctx,
+        &defender_begin_ctx,
     );
     // A hostile's combat-start Isolytic Defense protects it from player fire.
     let hostile_combat_begin_isolytic_defense = if defender_is_npc_hostile {
@@ -503,27 +548,27 @@ pub fn build_combat_setup_with_officer_stat(
     };
     let defender_round_start_effects = fold_active_effects_for_setup(
         active_effects_for_timing(&defender_crew, TimingWindow::RoundStart),
-        &combat_begin_ctx,
+        &defender_begin_ctx,
     );
     let defender_attack_phase_effects = fold_active_effects_for_setup(
         active_effects_for_timing(&defender_crew, TimingWindow::AttackPhase),
-        &combat_begin_ctx,
+        &defender_begin_ctx,
     );
     let defender_defense_phase_effects = fold_active_effects_for_setup(
         active_effects_for_timing(&defender_crew, TimingWindow::DefensePhase),
-        &combat_begin_ctx,
+        &defender_begin_ctx,
     );
     let defender_shield_break_effects = fold_active_effects_for_setup(
         active_effects_for_timing(&defender_crew, TimingWindow::ShieldBreak),
-        &combat_begin_ctx,
+        &defender_begin_ctx,
     );
     let defender_round_end_effects = fold_active_effects_for_setup(
         active_effects_for_timing(&defender_crew, TimingWindow::RoundEnd),
-        &combat_begin_ctx,
+        &defender_begin_ctx,
     );
     let defender_receive_damage_effects = fold_active_effects_for_setup(
         active_effects_for_timing(&defender_crew, TimingWindow::ReceiveDamage),
-        &combat_begin_ctx,
+        &defender_begin_ctx,
     );
 
     let attacker_has_weapon_scoped_effects = combat_begin_effects
@@ -804,6 +849,7 @@ pub fn build_combat_setup_with_officer_stat(
         attacker_tal_assigned_captain_or_bridge,
         combat_begin_effects,
         combat_begin_ctx,
+        defender_begin_ctx,
         combat_begin_filtered,
         incoming_shot_deflection,
         attacker_mitigation_additive,
@@ -913,6 +959,7 @@ pub(crate) struct CombatTrialScratch {
     galaxy_growth_by_source: Vec<f64>,
     combat_ctx: CombatContext,
     aux_ctx: CombatContext,
+    defender_aux_ctx: CombatContext,
 }
 
 impl CombatTrialScratch {
@@ -944,6 +991,7 @@ impl CombatTrialScratch {
             galaxy_growth_by_source,
             combat_ctx: setup.combat_begin_ctx.clone(),
             aux_ctx: setup.combat_begin_ctx.clone(),
+            defender_aux_ctx: setup.defender_begin_ctx.clone(),
         }
     }
 
@@ -1029,6 +1077,7 @@ pub(crate) fn simulate_combat_from_setup_reusing_attacker(
         },
         combat_ctx: setup.combat_begin_ctx.clone(),
         aux_ctx: setup.combat_begin_ctx.clone(),
+        defender_aux_ctx: setup.defender_begin_ctx.clone(),
     };
     scratch.reset_for_trial(setup);
     let res = simulate_combat_from_setup_inner(setup, seed, &mut scratch);
@@ -1260,7 +1309,7 @@ fn simulate_combat_from_setup_inner(
 
     if setup.defender_has_combat_begin_burning {
         let defender_begin_mask =
-            filter_effects_mask(defender_combat_begin_effects, &setup.combat_begin_ctx);
+            filter_effects_mask(defender_combat_begin_effects, &setup.defender_begin_ctx);
         roll_burning_triggers(
             &mut RoundPhaseCtx {
                 trace: &mut trace,
@@ -1280,7 +1329,7 @@ fn simulate_combat_from_setup_inner(
 
     if setup.defender_has_combat_begin_hull_breach {
         let defender_begin_mask =
-            filter_effects_mask(defender_combat_begin_effects, &setup.combat_begin_ctx);
+            filter_effects_mask(defender_combat_begin_effects, &setup.defender_begin_ctx);
         roll_combat_begin_attacker_hull_breach(
             &mut RoundPhaseCtx {
                 trace: &mut trace,
@@ -1347,6 +1396,7 @@ fn simulate_combat_from_setup_inner(
     let attacker_fight_start_hull = (attacker.hull_health - st.total_attacker_hull_damage).max(0.0);
     let combat_ctx = &mut scratch.combat_ctx;
     let aux_ctx = &mut scratch.aux_ctx;
+    let defender_aux_ctx = &mut scratch.defender_aux_ctx;
     let defender_shield_break_carry = &mut scratch.defender_shield_break_carry;
     for round_index in 1..=rounds_to_simulate {
         rounds_completed = round_index;
@@ -1386,6 +1436,8 @@ fn simulate_combat_from_setup_inner(
             &mut trace,
             &mut rng,
             combat_ctx,
+            defender_aux_ctx,
+            setup.defender_is_player_ship,
             round_index,
             &attacker,
             defender,
@@ -1397,6 +1449,7 @@ fn simulate_combat_from_setup_inner(
             st.defender_hull_breach_rounds,
             st.attacker_burning_rounds,
             st.attacker_hull_breach_rounds,
+            st.assimilated_rounds_remaining,
             &mut st.total_hull_damage,
             st.total_attacker_hull_damage,
             &mut st.defender_shield_remaining,
@@ -1526,12 +1579,18 @@ fn simulate_combat_from_setup_inner(
         );
 
         if setup.defender_has_shots_bonus {
+            sync_defender_ctx_dynamic(
+                defender_aux_ctx,
+                combat_ctx,
+                &st,
+                setup.defender_is_player_ship,
+            );
             roll_defender_round_start_shots_bonus(
                 &mut trace,
                 &mut rng,
                 round_index,
                 defender_round_start_effects,
-                combat_ctx,
+                defender_aux_ctx,
                 st.defender_assimilated_rounds_remaining,
                 &mut st.defender_shots_bonus_entries,
             );
@@ -1684,7 +1743,12 @@ fn simulate_combat_from_setup_inner(
         };
         let (defender_base_piercing_bonus, defender_hostile_base_defense_reduction) =
             if setup.defender_has_round_base_defense_or_pierce_rows {
-                let def_persp_ctx = defender_perspective_context(combat_ctx, &st);
+                let def_persp_ctx = defender_perspective_context(
+                    &setup.defender_begin_ctx,
+                    combat_ctx,
+                    &st,
+                    setup.defender_is_player_ship,
+                );
                 let def_assim = st.defender_assimilated_rounds_remaining > 0;
                 resolve_defender_round_base_defense_and_pierce(
                     defender_combat_begin_effects,
@@ -1708,7 +1772,12 @@ fn simulate_combat_from_setup_inner(
         }
         let defender_combat_begin_crit_red_this_round =
             if setup.defender_has_hostile_crit_chance_reduction {
-                let def_persp_ctx = defender_perspective_context(combat_ctx, &st);
+                let def_persp_ctx = defender_perspective_context(
+                    &setup.defender_begin_ctx,
+                    combat_ctx,
+                    &st,
+                    setup.defender_is_player_ship,
+                );
                 let def_assim = st.defender_assimilated_rounds_remaining > 0;
                 update_round_start_timed_crit_reduction(
                     defender_crew,
@@ -1883,7 +1952,12 @@ fn simulate_combat_from_setup_inner(
         };
         let defender_opp_wd_red_this_round = if setup.defender_has_opponent_weapon_damage_reduction
         {
-            let def_persp_ctx = defender_perspective_context(combat_ctx, &st);
+            let def_persp_ctx = defender_perspective_context(
+                &setup.defender_begin_ctx,
+                combat_ctx,
+                &st,
+                setup.defender_is_player_ship,
+            );
             let assimilated = st.defender_assimilated_rounds_remaining > 0;
             accumulate_round_start_opponent_wd_reduction(
                 defender_crew,
@@ -1948,8 +2022,17 @@ fn simulate_combat_from_setup_inner(
             defense_phase_assimilated,
         );
 
-        let defender_inbound_defense_filtered =
-            filter_effects_mask(defender_defense_phase_effects, combat_ctx);
+        let defender_inbound_defense_filtered = if defender_defense_phase_effects.is_empty() {
+            ActiveMask::empty()
+        } else {
+            sync_defender_ctx_dynamic(
+                defender_aux_ctx,
+                combat_ctx,
+                &st,
+                setup.defender_is_player_ship,
+            );
+            filter_effects_mask(defender_defense_phase_effects, defender_aux_ctx)
+        };
         let hostile_combat_begin_isolytic_defense =
             if setup.hostile_combat_begin_isolytic_defense.is_empty() {
                 0.0
@@ -2301,6 +2384,8 @@ fn simulate_combat_from_setup_inner(
                         rng: &mut rng,
                         combat_ctx,
                         aux_ctx,
+                        defender_aux_ctx,
+                        defender_is_player_ship: setup.defender_is_player_ship,
                         config,
                         attacker: &attacker,
                         defender,
@@ -2435,6 +2520,8 @@ fn simulate_combat_from_setup_inner(
                     rng: &mut rng,
                     combat_ctx,
                     aux_ctx,
+                    defender_aux_ctx,
+                    defender_is_player_ship: setup.defender_is_player_ship,
                     config,
                     attacker: &attacker,
                     defender,
@@ -2669,7 +2756,12 @@ fn simulate_combat_from_setup_inner(
                 && defender_weapon.is_some()
                 && st.total_attacker_hull_damage < attacker.hull_health
             {
-                let def_persp_ctx = defender_perspective_context(combat_ctx, &st);
+                let def_persp_ctx = defender_perspective_context(
+                    &setup.defender_begin_ctx,
+                    combat_ctx,
+                    &st,
+                    setup.defender_is_player_ship,
+                );
                 let def_assim = st.defender_assimilated_rounds_remaining > 0;
                 let weapon_type = defender.weapon_type(weapon_index);
                 for effect in defender_attack_phase_effects.iter() {
@@ -2733,6 +2825,14 @@ fn simulate_combat_from_setup_inner(
             if shield_broke_this_round
                 && (!shield_break_effects.is_empty() || !defender_shield_break_effects.is_empty())
             {
+                if !defender_shield_break_effects.is_empty() {
+                    sync_defender_ctx_dynamic(
+                        defender_aux_ctx,
+                        combat_ctx,
+                        &st,
+                        setup.defender_is_player_ship,
+                    );
+                }
                 process_defender_shield_break(
                     &mut trace,
                     &mut rng,
@@ -2740,6 +2840,7 @@ fn simulate_combat_from_setup_inner(
                     &attacker,
                     defender,
                     combat_ctx,
+                    defender_aux_ctx,
                     shield_break_effects,
                     defender_shield_break_effects,
                     attack_phase_assimilated,
@@ -2828,6 +2929,8 @@ fn simulate_combat_from_setup_inner(
             &mut trace,
             &mut rng,
             aux_ctx,
+            defender_aux_ctx,
+            setup.defender_is_player_ship,
             round_index,
             &attacker,
             defender,
@@ -2841,6 +2944,7 @@ fn simulate_combat_from_setup_inner(
             &mut st.defender_burning_rounds,
             &mut st.defender_kemocite_stacks,
             st.attacker_burning_rounds,
+            st.assimilated_rounds_remaining,
             st.defender_assimilated_rounds_remaining,
             &mut st.total_hull_damage,
             &mut st.total_attacker_hull_damage,
@@ -3285,6 +3389,8 @@ fn apply_round_end_phase(
     trace: &mut TraceCollector,
     rng: &mut Rng,
     aux_ctx: &mut CombatContext,
+    defender_aux_ctx: &mut CombatContext,
+    defender_is_player_ship: bool,
     round_index: u32,
     attacker: &Combatant,
     defender: &Combatant,
@@ -3298,6 +3404,7 @@ fn apply_round_end_phase(
     defender_burning_rounds: &mut u32,
     defender_kemocite_stacks: &mut u32,
     attacker_burning_rounds: u32,
+    attacker_assimilated_rounds_remaining: u32,
     defender_assimilated_rounds_remaining: u32,
     total_hull_damage: &mut f64,
     total_attacker_hull_damage: &mut f64,
@@ -3470,7 +3577,31 @@ fn apply_round_end_phase(
     }
 
     if !defender_round_end_effects.is_empty() {
-        let defender_round_end_filtered = filter_effects_mask(defender_round_end_effects, aux_ctx);
+        if defender_is_player_ship {
+            set_ctx_dynamic(
+                defender_aux_ctx,
+                round_index,
+                CtxVitals {
+                    defender_hull_pct: aux_ctx.attacker_hull_pct,
+                    defender_shield_pct: aux_ctx.attacker_shield_pct,
+                    attacker_hull_pct: aux_ctx.defender_hull_pct,
+                    attacker_shield_pct: aux_ctx.defender_shield_pct,
+                },
+                CtxStatusFlags {
+                    attacker_morale_active: aux_ctx.defender_morale_active,
+                    defender_morale_active: aux_ctx.attacker_morale_active,
+                    defender_burning_active: aux_ctx.attacker_burning_active,
+                    defender_hull_breach_active: aux_ctx.attacker_hull_breach_active,
+                    attacker_burning_active: aux_ctx.defender_burning_active,
+                    attacker_hull_breach_active: aux_ctx.defender_hull_breach_active,
+                    defender_assimilated_active: attacker_assimilated_rounds_remaining > 0,
+                },
+            );
+        } else {
+            copy_ctx_dynamic(defender_aux_ctx, aux_ctx);
+        }
+        let defender_round_end_filtered =
+            filter_effects_mask(defender_round_end_effects, defender_aux_ctx);
         let defender_re_assimilated = defender_assimilated_rounds_remaining > 0;
         record_ability_activations(
             trace,
@@ -3523,6 +3654,7 @@ fn process_defender_shield_break(
     attacker: &Combatant,
     defender: &Combatant,
     combat_ctx: &CombatContext,
+    defender_ctx: &CombatContext,
     shield_break_effects: &[ActiveAbilityEffect],
     defender_shield_break_effects: &[ActiveAbilityEffect],
     attack_phase_assimilated: bool,
@@ -3590,7 +3722,7 @@ fn process_defender_shield_break(
     }
 
     if !defender_shield_break_effects.is_empty() {
-        let def_sb_filtered = filter_effects_mask(defender_shield_break_effects, combat_ctx);
+        let def_sb_filtered = filter_effects_mask(defender_shield_break_effects, defender_ctx);
         record_ability_activations(
             trace,
             round_index,
@@ -4100,6 +4232,8 @@ struct FireAttackerWeapon<'a> {
     rng: &'a mut Rng,
     combat_ctx: &'a CombatContext,
     aux_ctx: &'a mut CombatContext,
+    defender_aux_ctx: &'a mut CombatContext,
+    defender_is_player_ship: bool,
     config: &'a SimulationConfig,
     attacker: &'a Combatant,
     defender: &'a Combatant,
@@ -4159,6 +4293,8 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         rng,
         combat_ctx,
         aux_ctx,
+        defender_aux_ctx,
+        defender_is_player_ship,
         config,
         attacker,
         defender,
@@ -5016,15 +5152,24 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
 
             if hull_damage_this_round > 0.0 && !defender_receive_damage_effects.is_empty() {
                 let def_rd_assim = st.defender_assimilated_rounds_remaining > 0;
-                copy_ctx_dynamic(aux_ctx, combat_ctx);
-                aux_ctx.defender_hull_pct =
+                let updated_def_hull_pct =
                     1.0 - (st.total_hull_damage / defender.hull_health.max(0.0)).min(1.0);
-                aux_ctx.defender_shield_pct = if defender.shield_health > 0.0 {
+                let updated_def_shield_pct = if defender.shield_health > 0.0 {
                     st.defender_shield_remaining / defender.shield_health
                 } else {
                     1.0
                 };
-                let def_rd_filtered = filter_effects_mask(defender_receive_damage_effects, aux_ctx);
+                if defender_is_player_ship {
+                    sync_defender_ctx_dynamic(defender_aux_ctx, combat_ctx, st, true);
+                    defender_aux_ctx.attacker_hull_pct = updated_def_hull_pct;
+                    defender_aux_ctx.attacker_shield_pct = updated_def_shield_pct;
+                } else {
+                    copy_ctx_dynamic(defender_aux_ctx, combat_ctx);
+                    defender_aux_ctx.defender_hull_pct = updated_def_hull_pct;
+                    defender_aux_ctx.defender_shield_pct = updated_def_shield_pct;
+                }
+                let def_rd_filtered =
+                    filter_effects_mask(defender_receive_damage_effects, defender_aux_ctx);
                 roll_burning_triggers(
                     &mut RoundPhaseCtx {
                         trace: &mut *trace,
@@ -5178,6 +5323,8 @@ struct FireDefenderCounter<'a> {
     rng: &'a mut Rng,
     combat_ctx: &'a CombatContext,
     aux_ctx: &'a mut CombatContext,
+    defender_aux_ctx: &'a mut CombatContext,
+    defender_is_player_ship: bool,
     config: &'a SimulationConfig,
     attacker: &'a Combatant,
     defender: &'a Combatant,
@@ -5246,6 +5393,8 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         rng,
         combat_ctx,
         aux_ctx,
+        defender_aux_ctx,
+        defender_is_player_ship,
         config,
         attacker,
         defender,
@@ -5331,13 +5480,14 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         }
     }
 
-    let need_defender_ctx = !defender_combat_begin_effects.is_empty()
+    let need_defender_effects_ctx = !defender_combat_begin_effects.is_empty()
         || !defender_round_start_effects.is_empty()
         || !defender_attack_phase_effects.is_empty()
-        || !defender_defense_phase_effects.is_empty()
-        || attacker_has_hostile_crit_damage_reduction
-        || attacker_has_apex_barrier_bonus;
-    if need_defender_ctx {
+        || !defender_defense_phase_effects.is_empty();
+    let need_attacker_counter_ctx = attacker_has_hostile_crit_damage_reduction
+        || attacker_has_apex_barrier_bonus
+        || (!defender_is_player_ship && need_defender_effects_ctx);
+    if need_attacker_counter_ctx {
         set_ctx_dynamic(
             aux_ctx,
             round_index,
@@ -5358,9 +5508,17 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             },
         );
     }
+    if need_defender_effects_ctx {
+        if defender_is_player_ship {
+            sync_defender_ctx_dynamic(defender_aux_ctx, combat_ctx, st, true);
+        } else {
+            copy_ctx_dynamic(defender_aux_ctx, aux_ctx);
+        }
+    }
     let defender_combat_begin_filtered =
-        filter_effects_mask(defender_combat_begin_effects, aux_ctx);
-    let defender_round_start_filtered = filter_effects_mask(defender_round_start_effects, aux_ctx);
+        filter_effects_mask(defender_combat_begin_effects, defender_aux_ctx);
+    let defender_round_start_filtered =
+        filter_effects_mask(defender_round_start_effects, defender_aux_ctx);
     // The same owner-relative RoundStart effect used by attacker-owned
     // Slipstream targets the player when carried by the defender. Resolve it
     // before the first counter shot, without scaling the completed own/KSG
@@ -5376,8 +5534,10 @@ fn fire_defender_counter(p: FireDefenderCounter) {
             _ => None,
         })
         .sum();
-    let defender_attack_filtered = filter_effects_mask(defender_attack_phase_effects, aux_ctx);
-    let defender_defense_filtered = filter_effects_mask(defender_defense_phase_effects, aux_ctx);
+    let defender_attack_filtered =
+        filter_effects_mask(defender_attack_phase_effects, defender_aux_ctx);
+    let defender_defense_filtered =
+        filter_effects_mask(defender_defense_phase_effects, defender_aux_ctx);
     // ModAllPiercing/MultiplyAdd changes all three native counter-weapon stats
     // before the nonlinear mitigation curve. It is not damage-through pierce.
     let counter_pierce_bonus_fraction: f64 = defender_combat_begin_filtered
@@ -6895,23 +7055,44 @@ struct CombatRunState {
     defender_cum_hostile_crit_chance_reduction: f64,
 }
 
-fn defender_perspective_context(ctx: &CombatContext, st: &CombatRunState) -> CombatContext {
-    let mut swapped = ctx.clone();
-    swapped.attacker_ship_type = ctx.defender_ship_type;
-    swapped.defender_ship_type = ctx.attacker_ship_type;
-    swapped.attacker_hull_pct = ctx.defender_hull_pct;
-    swapped.defender_hull_pct = ctx.attacker_hull_pct;
-    swapped.attacker_shield_pct = ctx.defender_shield_pct;
-    swapped.defender_shield_pct = ctx.attacker_shield_pct;
-    swapped.attacker_morale_active = st.defender_morale_rounds_remaining > 0;
-    swapped.defender_morale_active = ctx.attacker_morale_active;
-    swapped.attacker_burning_active = ctx.defender_burning_active;
-    swapped.defender_burning_active = ctx.attacker_burning_active;
-    swapped.attacker_hull_breach_active = ctx.defender_hull_breach_active;
-    swapped.defender_hull_breach_active = ctx.attacker_hull_breach_active;
-    swapped.defender_assimilated_active = st.assimilated_rounds_remaining > 0;
-    swapped.defender_is_player_ship = ctx.defender_is_player_ship;
-    swapped.defender_is_npc_hostile = false;
+/// Sync dynamic vitals and status flags onto a pre-initialized `defender_aux_ctx`.
+/// When `defender_is_player_ship` is true (PvP), vitals and statuses are swapped so LCARS
+/// officer abilities on the defender see the defender as "attacker/self" and the attacker as
+/// "defender/enemy". For NPC hostiles (`false`), dynamic fields copy verbatim in the attacker frame.
+#[inline]
+fn sync_defender_ctx_dynamic(
+    dst: &mut CombatContext,
+    attacker_ctx: &CombatContext,
+    st: &CombatRunState,
+    defender_is_player_ship: bool,
+) {
+    if defender_is_player_ship {
+        dst.round_index = attacker_ctx.round_index;
+        dst.attacker_hull_pct = attacker_ctx.defender_hull_pct;
+        dst.defender_hull_pct = attacker_ctx.attacker_hull_pct;
+        dst.attacker_shield_pct = attacker_ctx.defender_shield_pct;
+        dst.defender_shield_pct = attacker_ctx.attacker_shield_pct;
+        dst.attacker_hull_pct_of_fight_start = None;
+        dst.attacker_morale_active = st.defender_morale_rounds_remaining > 0;
+        dst.defender_morale_active = attacker_ctx.attacker_morale_active;
+        dst.attacker_burning_active = attacker_ctx.defender_burning_active;
+        dst.defender_burning_active = attacker_ctx.attacker_burning_active;
+        dst.attacker_hull_breach_active = attacker_ctx.defender_hull_breach_active;
+        dst.defender_hull_breach_active = attacker_ctx.attacker_hull_breach_active;
+        dst.defender_assimilated_active = st.assimilated_rounds_remaining > 0;
+    } else {
+        copy_ctx_dynamic(dst, attacker_ctx);
+    }
+}
+
+fn defender_perspective_context(
+    defender_begin_ctx: &CombatContext,
+    ctx: &CombatContext,
+    st: &CombatRunState,
+    defender_is_player_ship: bool,
+) -> CombatContext {
+    let mut swapped = defender_begin_ctx.clone();
+    sync_defender_ctx_dynamic(&mut swapped, ctx, st, defender_is_player_ship);
     swapped
 }
 
@@ -7064,6 +7245,8 @@ fn apply_defender_round_start(
     trace: &mut TraceCollector,
     rng: &mut Rng,
     combat_ctx: &mut CombatContext,
+    defender_aux_ctx: &mut CombatContext,
+    defender_is_player_ship: bool,
     round_index: u32,
     attacker: &Combatant,
     defender: &Combatant,
@@ -7075,6 +7258,7 @@ fn apply_defender_round_start(
     defender_hull_breach_rounds: u32,
     attacker_burning_rounds: u32,
     attacker_hull_breach_rounds: u32,
+    attacker_assimilated_rounds_remaining: u32,
     total_hull_damage: &mut f64,
     total_attacker_hull_damage: f64,
     defender_shield_remaining: &mut f64,
@@ -7110,26 +7294,49 @@ fn apply_defender_round_start(
         0.0
     } else {
         // Defender RoundStart assimilate procs before attacker `combat_ctx` so `TargetHasAssimilated` gates see them.
-        set_ctx_dynamic(
-            combat_ctx,
-            round_index,
-            CtxVitals {
-                defender_hull_pct: defender_hull_pct_for_def_round_start,
-                defender_shield_pct: defender_shield_pct_for_def_round_start,
-                attacker_hull_pct: attacker_hull_pct_round,
-                attacker_shield_pct: attacker_shield_pct_round,
-            },
-            CtxStatusFlags {
-                attacker_morale_active: false,
-                defender_morale_active: defender_morale_rounds_remaining > 0,
-                defender_burning_active: defender_burning_rounds > 0,
-                defender_hull_breach_active: defender_hull_breach_rounds > 0,
-                attacker_burning_active: attacker_burning_rounds > 0,
-                attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
-                defender_assimilated_active: *defender_assimilated_rounds_remaining > 0,
-            },
-        );
-        let defender_rs_for_assim = filter_effects_mask(defender_round_start_effects, combat_ctx);
+        if defender_is_player_ship {
+            set_ctx_dynamic(
+                defender_aux_ctx,
+                round_index,
+                CtxVitals {
+                    defender_hull_pct: attacker_hull_pct_round,
+                    defender_shield_pct: attacker_shield_pct_round,
+                    attacker_hull_pct: defender_hull_pct_for_def_round_start,
+                    attacker_shield_pct: defender_shield_pct_for_def_round_start,
+                },
+                CtxStatusFlags {
+                    attacker_morale_active: defender_morale_rounds_remaining > 0,
+                    defender_morale_active: false,
+                    defender_burning_active: attacker_burning_rounds > 0,
+                    defender_hull_breach_active: attacker_hull_breach_rounds > 0,
+                    attacker_burning_active: defender_burning_rounds > 0,
+                    attacker_hull_breach_active: defender_hull_breach_rounds > 0,
+                    defender_assimilated_active: attacker_assimilated_rounds_remaining > 0,
+                },
+            );
+        } else {
+            set_ctx_dynamic(
+                defender_aux_ctx,
+                round_index,
+                CtxVitals {
+                    defender_hull_pct: defender_hull_pct_for_def_round_start,
+                    defender_shield_pct: defender_shield_pct_for_def_round_start,
+                    attacker_hull_pct: attacker_hull_pct_round,
+                    attacker_shield_pct: attacker_shield_pct_round,
+                },
+                CtxStatusFlags {
+                    attacker_morale_active: false,
+                    defender_morale_active: defender_morale_rounds_remaining > 0,
+                    defender_burning_active: defender_burning_rounds > 0,
+                    defender_hull_breach_active: defender_hull_breach_rounds > 0,
+                    attacker_burning_active: attacker_burning_rounds > 0,
+                    attacker_hull_breach_active: attacker_hull_breach_rounds > 0,
+                    defender_assimilated_active: *defender_assimilated_rounds_remaining > 0,
+                },
+            );
+        }
+        let defender_rs_for_assim =
+            filter_effects_mask(defender_round_start_effects, defender_aux_ctx);
         let hyperthermic_decay_fraction = defender_rs_for_assim
             .iter()
             .filter_map(|entry| match entry.effect {
