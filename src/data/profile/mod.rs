@@ -1819,6 +1819,14 @@ pub struct OfficerStatConditionContext {
     /// Engagement enemy-type tags resolved for this scenario (e.g. `solo_armadas`, `armada`).
     /// Powers `EngagementIncludes`.
     pub engagement_types: Vec<String>,
+    /// Verified STFC `CombatBattleType` id when known (powers `CombatBattleTypeAny`).
+    pub combat_battle_type_id: Option<u32>,
+    /// Tactical overworld context (powers `CombatGameContextIs`).
+    pub combat_game_context: crate::combat::CombatGameContext,
+    /// True when this side is in the defending role (`SelfDefending` true, `SelfAttacking` false).
+    pub attacker_is_defending: bool,
+    /// True when this side is docked at / defending its station (`SelfAtStation`).
+    pub attacker_at_station: bool,
 }
 
 /// Evaluate an [`AbilityConditionSpec`] against fight-setup context.
@@ -1869,6 +1877,20 @@ fn eval_static_condition(
                 .iter()
                 .any(|t| t.eq_ignore_ascii_case(enemy_type)),
         ),
+        C::CombatBattleTypeAny { battle_types } => {
+            if battle_types.is_empty() {
+                return Some(false);
+            }
+            ctx.combat_battle_type_id
+                .map(|id| battle_types.contains(&id))
+        }
+        C::CombatGameContextIs { game_context } => {
+            let expected = crate::combat::CombatGameContext::from_data_slug(game_context)?;
+            Some(ctx.combat_game_context == expected)
+        }
+        C::AttackerIsDefending => Some(ctx.attacker_is_defending),
+        C::AttackerIsAttacking => Some(!ctx.attacker_is_defending),
+        C::AttackerAtStation => Some(ctx.attacker_at_station),
         C::Not { inner } => eval_static_condition(inner, ctx).map(|b| !b),
         C::And { all } => {
             // Short-circuit: any definitely-false wins; otherwise propagate any undecidable.
@@ -1914,7 +1936,6 @@ fn eval_static_condition(
         | C::RoundRange { .. }
         | C::StatBelow { .. }
         | C::StatAbove { .. }
-        | C::CombatBattleTypeAny { .. }
         | C::DefenderLevelAtMost { .. }
         | C::StfcCcToken { .. } => None,
     }

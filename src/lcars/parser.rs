@@ -318,6 +318,10 @@ pub struct LcarsCondition {
     /// Used by `combat_battle_type_any`.
     #[serde(default)]
     pub battle_types: Option<Vec<u32>>,
+    /// Tactical overworld context slug (from canonical attributes `game_context=...`, e.g.
+    /// `capture_node`, `mining_node`, `takeover`). Used by `combat_game_context_is`.
+    #[serde(default)]
+    pub game_context: Option<String>,
     #[serde(default)]
     pub conditions: Option<Vec<LcarsCondition>>,
 }

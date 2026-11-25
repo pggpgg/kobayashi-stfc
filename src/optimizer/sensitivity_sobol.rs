@@ -220,6 +220,7 @@ pub fn run_sobol_with_progress(
     let engagement_override = ScenarioEngagementOverride {
         enemy_type: explicit_enemy_type,
         wave_defense: request.wave_defense.unwrap_or(false),
+        ..ScenarioEngagementOverride::default()
     };
 
     let shared = build_shared_scenario_data_from_registry_with_context(

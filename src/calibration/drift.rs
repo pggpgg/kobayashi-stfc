@@ -437,6 +437,7 @@ fn simulation_config_for_drift(spec: &DriftFixtureFile, trace: TraceMode) -> Sim
         incoming_shield_mitigation_bonus_rounds: 0,
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
+        ..SimulationConfig::default()
     }
 }
 

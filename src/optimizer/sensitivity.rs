@@ -203,6 +203,7 @@ pub fn run_sensitivity_with_progress(
     let engagement_override = ScenarioEngagementOverride {
         enemy_type: explicit_enemy_type,
         wave_defense: request.wave_defense.unwrap_or(false),
+        ..ScenarioEngagementOverride::default()
     };
 
     let shared = build_shared_scenario_data_from_registry_with_context(
@@ -359,6 +360,10 @@ pub(crate) fn run_one_sim_with_perturbations(
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
+        combat_battle_type_id: input.combat_battle_type_id,
+        combat_game_context: input.combat_game_context,
+        attacker_is_defending: input.attacker_is_defending,
+        attacker_at_station: input.attacker_at_station,
     };
 
     for (stat, delta) in perturbations {

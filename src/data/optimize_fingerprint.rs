@@ -162,7 +162,11 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   Solo Armada) auto-infer as `solo_armadas`, verified Outpost Retaliators (Cardassian/Node/
 ///   Borg Galor-Class hostiles) auto-infer as `outpost_retaliation_attackers`, and canonical
 ///   Borg `faction.loca_id: 13` maps to `OpponentFactionTag::Borg`.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 35;
+/// * 35 → 36 (2026-11): CombatBattleType derivation, PvP tactical context (`CombatGameContext`,
+///   `SelfDefending`/`SelfAttacking`/`SelfAtStation`), symmetric PvP defender perspective in
+///   `engine.rs` & defender `OfficerStatConditionContext`, `defender_profile_id` roster isolation,
+///   and unlocking `SelfDefending`-gated opponent weapon damage reduction (Carol, K'Bisch, TOS Chekov).
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 36;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -242,6 +246,9 @@ pub struct ReuseScenarioInputs<'a> {
     pub below_decks_slots: u32,
     pub enemy_type: Option<&'a str>,
     pub wave_defense: bool,
+    pub game_context: Option<&'a str>,
+    pub attacker_is_defending: bool,
+    pub attacker_at_station: bool,
     pub defender_opponent: &'a str,
     pub support_buffs: Option<&'a [String]>,
     pub defender_support_buffs: Option<&'a [String]>,
@@ -881,6 +888,72 @@ fn canary_fight_summaries() -> Vec<String> {
     summaries.push(format!(
         "ae_engagement_wave_defense:dmg={:.6};dhull={:.6};rounds={};",
         wave_res.total_damage, wave_res.defender_hull_remaining, wave_res.rounds_simulated
+    ));
+
+    // CombatBattleType + CombatGameContext + symmetric PvP defender perspective:
+    // attacker evaluates AttackerIsAttacking + CaptureNode + battle_type 4, while
+    // player defender evaluates swapped AttackerIsDefending + CaptureNode + battle_type 4.
+    let mut pvp_att = canary_combatant("canary_af_attacker");
+    pvp_att.attack = 500.0;
+    pvp_att.hull_health = 10_000.0;
+    let mut pvp_def = canary_combatant("canary_af_defender");
+    pvp_def.attack = 300.0;
+    pvp_def.hull_health = 10_000.0;
+    let mut att_node_seat = canary_seat(
+        CrewSeat::Bridge,
+        AbilityClass::BridgeAbility,
+        TimingWindow::CombatBegin,
+        AbilityEffect::AttackMultiplier(0.50),
+    );
+    att_node_seat.ability.condition = Some(AbilityCondition::And(vec![
+        AbilityCondition::DefenderIsPlayerShip,
+        AbilityCondition::AttackerIsAttacking,
+        AbilityCondition::CombatGameContextIs(crate::combat::CombatGameContext::CaptureNode),
+        AbilityCondition::CombatBattleTypeAny(vec![4]),
+    ]));
+    let mut def_node_seat = canary_seat(
+        CrewSeat::Captain,
+        AbilityClass::CaptainManeuver,
+        TimingWindow::CombatBegin,
+        AbilityEffect::OpponentWeaponDamageReduction {
+            reduction: 0.25,
+            cumulative: false,
+        },
+    );
+    def_node_seat.ability.condition = Some(AbilityCondition::And(vec![
+        AbilityCondition::DefenderIsPlayerShip,
+        AbilityCondition::AttackerIsDefending,
+        AbilityCondition::CombatGameContextIs(crate::combat::CombatGameContext::CaptureNode),
+        AbilityCondition::CombatBattleTypeAny(vec![4]),
+    ]));
+    let mut pvp_cfg = canary_config(2, 101);
+    pvp_cfg.engagement_enemy_types =
+        crate::combat::EnemyTypes(vec![crate::combat::EnemyType::PvpSpace]);
+    pvp_cfg.combat_battle_type_id = Some(4);
+    pvp_cfg.combat_game_context = crate::combat::CombatGameContext::CaptureNode;
+    pvp_cfg.attacker_is_defending = false;
+    let pvp_res = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &pvp_att,
+        &pvp_def,
+        &pvp_cfg,
+        &CrewConfiguration {
+            seats: vec![att_node_seat],
+        },
+        crate::combat::OpponentFactionTag::Federation,
+        crate::combat::ShipType::Explorer,
+        crate::combat::ShipType::Interceptor,
+        false,
+        true,
+        &CrewConfiguration {
+            seats: vec![def_node_seat],
+        },
+    );
+    summaries.push(format!(
+        "af_battle_type_and_pvp_defender_perspective:dmg={:.6};ahull={:.6};dhull={:.6};rounds={};",
+        pvp_res.total_damage,
+        pvp_res.attacker_hull_remaining,
+        pvp_res.defender_hull_remaining,
+        pvp_res.rounds_simulated
     ));
     summaries
 }
@@ -2364,12 +2437,19 @@ pub fn scenario_fingerprint(registry: &DataRegistry, inputs: &ReuseScenarioInput
     let explicit_enemy_type = inputs
         .enemy_type
         .and_then(crate::data::officer_eligibility::enemy_type_from_str);
-    let resolved_ctx = crate::data::officer_eligibility::resolve_combat_context(
+    let game_context = inputs
+        .game_context
+        .and_then(crate::combat::CombatGameContext::from_data_slug)
+        .unwrap_or_default();
+    let resolved_ctx = crate::data::officer_eligibility::resolve_combat_context_with_tactical(
         explicit_enemy_type,
         inputs.wave_defense,
         pvp || defender_opponent.defender_is_player_ship(),
         hostile_rec.as_ref(),
         None,
+        game_context,
+        inputs.attacker_is_defending,
+        inputs.attacker_at_station,
     );
     let engagement_keys = resolved_ctx.canonical_engagement_keys().join(",");
     let canonical_opponent = if resolved_ctx.opponent_kind.is_player() {
@@ -2383,9 +2463,12 @@ pub fn scenario_fingerprint(registry: &DataRegistry, inputs: &ReuseScenarioInput
         .filter(|s| !s.is_empty() && !s.eq_ignore_ascii_case("auto"))
         .filter(|_| explicit_enemy_type.is_none())
         .unwrap_or("");
+    let battle_type_key = resolved_ctx
+        .combat_battle_type_id
+        .map_or_else(|| "none".to_string(), |id| id.to_string());
 
     let mut canonical = format!(
-        "ship={};hostile={};tier={};level={};bd_slots={};engagement={};raw_enemy_type={};defender_opponent={};",
+        "ship={};hostile={};tier={};level={};bd_slots={};engagement={};raw_enemy_type={};defender_opponent={};battle_type={};game_context={};defending={};at_station={};",
         inputs.ship,
         inputs.hostile,
         inputs.ship_tier.unwrap_or(0),
@@ -2394,6 +2477,10 @@ pub fn scenario_fingerprint(registry: &DataRegistry, inputs: &ReuseScenarioInput
         engagement_keys,
         raw_unknown_enemy_type,
         canonical_opponent,
+        battle_type_key,
+        resolved_ctx.combat_game_context.as_data_slug(),
+        u8::from(resolved_ctx.attacker_is_defending),
+        u8::from(resolved_ctx.attacker_at_station),
     );
 
     push_ship_record_digest(
@@ -2760,7 +2847,10 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 38, "expected thirty-eight canary fights");
+        assert_eq!(summaries.len(), 39, "expected thirty-nine canary fights");
+        assert!(summaries.iter().any(|s| s.starts_with(
+            "af_battle_type_and_pvp_defender_perspective:dmg=1250.000000;ahull=9400.000000;dhull=8750.000000;rounds=2;"
+        )));
         assert!(summaries
             .iter()
             .any(|s| s.starts_with("ab_crit_mitigation_rating:ahull=9000.000000;")));

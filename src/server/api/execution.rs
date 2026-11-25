@@ -17,9 +17,7 @@ use crate::data::heuristics::{
 };
 use crate::data::import::{load_imported_roster, roster_import_fallback_warning_message};
 use crate::data::officer::normalize_officer_lookup_key;
-use crate::data::officer_eligibility::{
-    parse_optional_enemy_type, resolve_combat_context, ResolvedCombatContext,
-};
+use crate::data::officer_eligibility::{parse_optional_enemy_type, ResolvedCombatContext};
 use crate::data::optimize_fingerprint;
 use crate::data::optimize_history;
 use crate::data::optimize_observations::{
@@ -207,6 +205,12 @@ fn resolve_request_combat_context(
         .ok()
         .flatten();
     let wave_defense = request.wave_defense.unwrap_or(false);
+    let game_context = crate::data::officer_eligibility::parse_optional_game_context(
+        request.game_context.as_deref(),
+    )
+    .unwrap_or_default();
+    let attacker_is_defending = request.attacker_is_defending.unwrap_or(false);
+    let attacker_at_station = request.attacker_at_station.unwrap_or(false);
     let pvp = request
         .defender_ship
         .as_deref()
@@ -232,16 +236,22 @@ fn resolve_request_combat_context(
                 request.defender_ship_level,
             )
         });
-    let resolved = resolve_combat_context(
+    let resolved = crate::data::officer_eligibility::resolve_combat_context_with_tactical(
         explicit,
         wave_defense,
         pvp || defender_opponent.defender_is_player_ship(),
         hostile.as_ref(),
         defender_ship_rec.as_ref().map(|s| s.ship_type()),
+        game_context,
+        attacker_is_defending,
+        attacker_at_station,
     );
     let engagement_override = ScenarioEngagementOverride {
         enemy_type: explicit,
         wave_defense,
+        game_context,
+        attacker_is_defending,
+        attacker_at_station,
     };
     (resolved, engagement_override)
 }
@@ -1558,6 +1568,9 @@ fn prepare_optimize_run(
             below_decks_slots: below_decks_slots as u32,
             enemy_type: request.enemy_type.as_deref(),
             wave_defense: engagement_override.wave_defense,
+            game_context: Some(engagement_override.game_context.as_data_slug()),
+            attacker_is_defending: engagement_override.attacker_is_defending,
+            attacker_at_station: engagement_override.attacker_at_station,
             defender_opponent: if effective_defender_opponent.defender_is_player_ship() {
                 "player"
             } else {
@@ -1805,10 +1818,16 @@ fn prepare_optimize_run(
         learned_officer_scores.as_ref(),
     );
 
+    let def_profile = request
+        .defender_profile_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .or(profile_id);
     let player_defender_officer_crew =
         match super::resolve_player_defender_officer_crew_for_optimize(
             registry,
-            profile_id,
+            def_profile,
             defender_below_decks_slots_for_request(request, below_decks_slots),
             request.defender_crew.as_ref(),
         ) {

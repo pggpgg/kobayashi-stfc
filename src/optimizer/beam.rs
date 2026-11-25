@@ -119,8 +119,11 @@ fn static_context_from_shared(shared: &SharedScenarioData) -> CombatContext {
         attacker_tal_assigned_captain_or_bridge: false,
         defender_hostile_tag_mask: shared.defender_hostile_tag_mask_for_combat(),
         engagement_enemy_types: Arc::new(shared.engagement_enemy_types.clone()),
-        combat_battle_type_id: None,
+        combat_battle_type_id: shared.combat_context.combat_battle_type_id,
         defender_level: shared.defender_level,
+        combat_game_context: shared.combat_context.combat_game_context,
+        attacker_is_defending: shared.combat_context.attacker_is_defending,
+        attacker_at_station: shared.combat_context.attacker_at_station,
     }
 }
 

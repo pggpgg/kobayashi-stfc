@@ -136,6 +136,16 @@ pub struct ReplaySeedRequest {
     /// When `true`, enables additive Wave Defense context alongside the resolved target type.
     #[serde(default)]
     pub wave_defense: Option<bool>,
+    /// Tactical overworld context: `"open_space"` (default), `"station"`, `"capture_node"`,
+    /// `"mining_node"`, or `"takeover"`.
+    #[serde(default)]
+    pub game_context: Option<String>,
+    /// When `true`, models the attacking crew in the defending role (`SelfDefending`).
+    #[serde(default)]
+    pub attacker_is_defending: Option<bool>,
+    /// When `true`, models the attacking crew docked at / defending its station (`SelfAtStation`).
+    #[serde(default)]
+    pub attacker_at_station: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
@@ -273,6 +283,17 @@ pub struct OptimizeRequest {
     /// type so Wave Defense abilities fire without disabling base hostile/armada abilities.
     #[serde(default)]
     pub wave_defense: Option<bool>,
+    /// Tactical overworld context: `"open_space"` (default), `"station"`, `"capture_node"`,
+    /// `"mining_node"`, or `"takeover"`. Unrecognized strings fail validation with HTTP 400.
+    #[serde(default)]
+    pub game_context: Option<String>,
+    /// When `true`, models the attacking crew in the defending role (`SelfDefending` active,
+    /// `SelfAttacking` inactive).
+    #[serde(default)]
+    pub attacker_is_defending: Option<bool>,
+    /// When `true`, models the attacking crew docked at / defending its station (`SelfAtStation`).
+    #[serde(default)]
+    pub attacker_at_station: Option<bool>,
 }
 
 /// Resolve the effective [`BelowDecksPoolMode`] for a request. Unrecognized or unset
@@ -434,6 +455,14 @@ pub fn validate_request(
     {
         errors.push(ValidationIssue {
             field: "enemy_type",
+            messages: vec![msg],
+        });
+    }
+    if let Err(msg) = crate::data::officer_eligibility::parse_optional_game_context(
+        request.game_context.as_deref(),
+    ) {
+        errors.push(ValidationIssue {
+            field: "game_context",
             messages: vec![msg],
         });
     }

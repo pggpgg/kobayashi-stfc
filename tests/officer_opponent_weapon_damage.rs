@@ -290,7 +290,9 @@ fn round_start_opponent_weapon_reduction_distinguishes_cumulative_garak_from_sin
         lorca_res.attacker_hull_remaining
     );
 
-    // Carol captain has SelfDefending (unmodeled on attack path) -> must remain quarantined!
+    // Carol captain has [EnemyPlayer, SelfDefending] -> compiles cleanly to
+    // OpponentWeaponDamageReduction gated on AttackerIsDefending (inert when attacking,
+    // active when attacker_is_defending=true or when defending in PvP!).
     let carol = resolve_crew_to_buff_set(
         "carol-755a05",
         &[],
@@ -299,8 +301,77 @@ fn round_start_opponent_weapon_reduction_distinguishes_cumulative_garak_from_sin
         &ResolveOptions::default(),
     )
     .crew;
-    assert!(carol.seats.iter().any(|s| matches!(
-        s.ability.effect,
-        AbilityEffect::UnsupportedOfficerEffect { .. }
-    )));
+    assert!(
+        !carol.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::UnsupportedOfficerEffect { .. }
+        )),
+        "Carol should compile cleanly once SelfDefending is modeled"
+    );
+    assert!(
+        carol.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::OpponentWeaponDamageReduction { .. }
+        )),
+        "Carol captain should compile to OpponentWeaponDamageReduction"
+    );
+    // Attacking path (default attacker_is_defending = false): Carol captain stays inert.
+    let carol_attacking = simulate_combat_with_defender_faction_and_defender_crew(
+        &ship,
+        &ship,
+        &config,
+        &carol,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        false,
+        true,
+        &empty,
+    );
+    assert!(
+        (carol_attacking.attacker_hull_remaining - 9_700.0).abs() < 1e-6,
+        "Carol SelfDefending captain must stay inert while attacking, got {}",
+        carol_attacking.attacker_hull_remaining
+    );
+    // Defending path (attacker_is_defending = true): Carol captain reduces opponent weapon damage.
+    let def_config = SimulationConfig {
+        attacker_is_defending: true,
+        ..config.clone()
+    };
+    let carol_defending_self = simulate_combat_with_defender_faction_and_defender_crew(
+        &ship,
+        &ship,
+        &def_config,
+        &carol,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        false,
+        true,
+        &empty,
+    );
+    assert!(
+        carol_defending_self.attacker_hull_remaining > 9_700.0 + 1.0,
+        "Carol SelfDefending captain must reduce opponent damage when attacker_is_defending=true, got {}",
+        carol_defending_self.attacker_hull_remaining
+    );
+    // Symmetric PvP defender crew (attacker_is_defending = false): Carol on defender_crew
+    // sees swapped AttackerIsDefending=true and reduces attacker outbound damage!
+    let carol_as_pvp_defender = simulate_combat_with_defender_faction_and_defender_crew(
+        &ship,
+        &ship,
+        &config,
+        &empty,
+        OpponentFactionTag::Unknown,
+        ShipType::Battleship,
+        ShipType::Battleship,
+        false,
+        true,
+        &carol,
+    );
+    assert!(
+        carol_as_pvp_defender.total_damage < 300.0 - 1.0,
+        "Carol on PvP defender_crew must reduce attacker outbound damage, got {}",
+        carol_as_pvp_defender.total_damage
+    );
 }

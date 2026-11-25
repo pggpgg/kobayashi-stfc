@@ -5,7 +5,9 @@ use crate::combat::abilities::{
     DamageTakenTrigger, ReactiveDamageTakenKind, WeaponTypeScope, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::combat::condition::combine_optional_and;
-use crate::combat::types::{enemy_type_from_engagement_slug, OpponentFactionTag, ShipType};
+use crate::combat::types::{
+    enemy_type_from_engagement_slug, CombatGameContext, OpponentFactionTag, ShipType,
+};
 use crate::combat::TimingWindow;
 use crate::data::combat_effect_spec::{
     AbilityConditionSpec, AbilityModifierSpec, AbilityOperationSpec, AbilityTargetSpec,
@@ -37,6 +39,7 @@ pub enum EffectSpecCompileError {
     UnknownFactionSlug(String),
     UnknownShipTypeSlug(String),
     UnknownEngagementSlug(String),
+    UnknownGameContextSlug(String),
     EmptyConditionParts,
     StfcCcTokenNotCompilable {
         token: String,
@@ -65,6 +68,7 @@ impl std::fmt::Display for EffectSpecCompileError {
             Self::UnknownFactionSlug(s) => write!(f, "unknown defender faction slug '{s}'"),
             Self::UnknownShipTypeSlug(s) => write!(f, "unknown ship class slug '{s}'"),
             Self::UnknownEngagementSlug(s) => write!(f, "unknown engagement enemy_type slug '{s}'"),
+            Self::UnknownGameContextSlug(s) => write!(f, "unknown combat game_context slug '{s}'"),
             Self::EmptyConditionParts => write!(f, "condition list produced no runtime gates"),
             Self::StfcCcTokenNotCompilable { token } => write!(
                 f,
@@ -207,6 +211,15 @@ pub fn compile_condition(
         }
         AbilityConditionSpec::DefenderLevelAtMost { max_level } => {
             Ok(AbilityCondition::DefenderLevelAtMost(*max_level))
+        }
+        AbilityConditionSpec::AttackerIsDefending => Ok(AbilityCondition::AttackerIsDefending),
+        AbilityConditionSpec::AttackerIsAttacking => Ok(AbilityCondition::AttackerIsAttacking),
+        AbilityConditionSpec::AttackerAtStation => Ok(AbilityCondition::AttackerAtStation),
+        AbilityConditionSpec::CombatGameContextIs { game_context } => {
+            let ctx = CombatGameContext::from_data_slug(game_context).ok_or_else(|| {
+                EffectSpecCompileError::UnknownGameContextSlug(game_context.clone())
+            })?;
+            Ok(AbilityCondition::CombatGameContextIs(ctx))
         }
         AbilityConditionSpec::StfcCcToken { token } => {
             Err(EffectSpecCompileError::StfcCcTokenNotCompilable {

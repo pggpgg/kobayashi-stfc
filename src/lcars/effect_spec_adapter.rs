@@ -476,6 +476,24 @@ pub fn lcars_condition_to_spec(c: &LcarsCondition) -> Result<AbilityConditionSpe
                 .ok_or_else(|| "defender_level_at_most requires integer `max` level".to_string())?;
             Ok(AbilityConditionSpec::DefenderLevelAtMost { max_level })
         }
+        "attacker_is_defending" | "self_defending" => Ok(AbilityConditionSpec::AttackerIsDefending),
+        "attacker_is_attacking" | "self_attacking" => Ok(AbilityConditionSpec::AttackerIsAttacking),
+        "attacker_at_station" | "self_at_station" => Ok(AbilityConditionSpec::AttackerAtStation),
+        "combat_game_context_is" | "combat_game_context" => {
+            let slug = c
+                .game_context
+                .as_deref()
+                .or(c.tag.as_deref())
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .ok_or_else(|| {
+                    "combat_game_context_is requires `game_context` slug (e.g. capture_node)"
+                        .to_string()
+                })?;
+            Ok(AbilityConditionSpec::CombatGameContextIs {
+                game_context: slug.to_string(),
+            })
+        }
         _ => Err(format!(
             "unknown LCARS condition type '{}'",
             c.condition_type.trim()
@@ -1301,6 +1319,7 @@ mod tests {
             ship_id: None,
             enemy_type: None,
             battle_types: None,
+            game_context: None,
             conditions: None,
         };
         let spec = lcars_condition_to_spec(&c).expect("spec");
@@ -1481,6 +1500,7 @@ mod tests {
             ship_id: None,
             enemy_type: None,
             battle_types: None,
+            game_context: None,
             conditions: None,
         };
         let e_bad = LcarsEffect {
@@ -1519,6 +1539,7 @@ mod tests {
             ship_id: None,
             enemy_type: None,
             battle_types: None,
+            game_context: None,
             conditions: None,
         };
         let e_ok = LcarsEffect {

@@ -722,6 +722,10 @@ fn effect_condition_from_canonical(
         .conditions
         .iter()
         .any(|c| c.trim().eq_ignore_ascii_case("CombatBattleType"));
+    let wants_combat_game_context = a
+        .conditions
+        .iter()
+        .any(|c| c.trim().eq_ignore_ascii_case("CombatGameContext"));
     let wants_target_max_level = a
         .conditions
         .iter()
@@ -745,6 +749,7 @@ fn effect_condition_from_canonical(
             let t = c.trim();
             !t.eq_ignore_ascii_case("EnemyHullFaction")
                 && !t.eq_ignore_ascii_case("CombatBattleType")
+                && !t.eq_ignore_ascii_case("CombatGameContext")
                 && !t.eq_ignore_ascii_case("TargetMaxLevel")
                 && !t.eq_ignore_ascii_case("HullHealthBelowStartOfCombat")
                 && !t.eq_ignore_ascii_case("HullHealthBelow")
@@ -809,6 +814,7 @@ fn effect_condition_from_canonical(
                 ship_id: None,
                 enemy_type: None,
                 battle_types: None,
+                game_context: None,
                 conditions: None,
             }),
             None => {
@@ -839,12 +845,44 @@ fn effect_condition_from_canonical(
                 ship_id: None,
                 enemy_type: None,
                 battle_types: Some(ids),
+                game_context: None,
                 conditions: None,
             }),
             _ => {
                 failed_gate = true;
                 eprintln!(
                     "generate_lcars: CombatBattleType without parseable battle_types in attributes \
+                     (officer {officer_name:?}, ability {ability_label:?})"
+                );
+            }
+        }
+    }
+
+    if wants_combat_game_context {
+        match game_context_from_canonical_attributes(attrs) {
+            Some(ctx_slug) => conditions.push(LcarsCondition {
+                weapon_scope: Default::default(),
+                condition_type: "combat_game_context_is".to_string(),
+                stat: None,
+                threshold_pct: None,
+                min: None,
+                max: None,
+                faction: None,
+                group: None,
+                min_members: None,
+                tag: None,
+                ship_type: None,
+                faction_id: None,
+                ship_id: None,
+                enemy_type: None,
+                battle_types: None,
+                game_context: Some(ctx_slug),
+                conditions: None,
+            }),
+            None => {
+                failed_gate = true;
+                eprintln!(
+                    "generate_lcars: CombatGameContext without parseable game_context in attributes \
                      (officer {officer_name:?}, ability {ability_label:?})"
                 );
             }
@@ -869,6 +907,7 @@ fn effect_condition_from_canonical(
                 ship_id: None,
                 enemy_type: None,
                 battle_types: None,
+                game_context: None,
                 conditions: None,
             }),
             None => {
@@ -930,6 +969,7 @@ fn effect_condition_from_canonical(
             ship_id: None,
             enemy_type: None,
             battle_types: None,
+            game_context: None,
             conditions: None,
         });
     }
@@ -953,6 +993,7 @@ fn effect_condition_from_canonical(
             ship_id: None,
             enemy_type: None,
             battle_types: None,
+            game_context: None,
             conditions: Some(conditions),
         }),
     }
@@ -1278,6 +1319,21 @@ fn battle_types_from_canonical_attributes(raw: &str) -> Option<Vec<u32>> {
     Some(out)
 }
 
+fn game_context_from_canonical_attributes(raw: &str) -> Option<String> {
+    for part in raw.split(',') {
+        let mut it = part.trim().splitn(2, '=');
+        let key = it.next()?.trim();
+        if !key.eq_ignore_ascii_case("game_context") {
+            continue;
+        }
+        let val = it.next()?.trim();
+        if let Some(ctx) = crate::combat::CombatGameContext::from_data_slug(val) {
+            return Some(ctx.as_data_slug().to_string());
+        }
+    }
+    None
+}
+
 fn max_level_from_canonical_attributes(raw: &str) -> Option<u32> {
     for part in raw.split(',') {
         let mut it = part.trim().splitn(2, '=');
@@ -1357,6 +1413,7 @@ fn hull_health_condition_from_canonical_attributes(
         ship_id: None,
         enemy_type: None,
         battle_types: None,
+        game_context: None,
         conditions: None,
     })
 }
@@ -1559,10 +1616,6 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             Some("CombatStart" | "RoundStart" | "HitTaken")
         )
         && !crew_scaled
-        && !a
-            .conditions
-            .iter()
-            .any(|c| c.trim().eq_ignore_ascii_case("SelfDefending"))
         && !a.chance_by_rank.is_empty()
         && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
     // The generic crit modifiers run before the roll. They cannot grant a

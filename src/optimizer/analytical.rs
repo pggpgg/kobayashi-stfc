@@ -201,6 +201,10 @@ mod tests {
             incoming_shield_mitigation_bonus_rounds: 0,
             attacker_owner_faction: OpponentFactionTag::Unknown,
             officer_stat_round: None,
+            combat_battle_type_id: None,
+            combat_game_context: crate::combat::CombatGameContext::OpenSpace,
+            attacker_is_defending: false,
+            attacker_at_station: false,
         }
     }
 

@@ -180,6 +180,9 @@ fn harrison_sabotage_round_range_gates_bypass_to_first_combat_round() {
         defender_hostile_tag_mask: 0,
         engagement_enemy_types: std::sync::Arc::new(Default::default()),
         combat_battle_type_id: None,
+        combat_game_context: kobayashi::combat::CombatGameContext::OpenSpace,
+        attacker_is_defending: false,
+        attacker_at_station: false,
         defender_level: Some(50),
     };
     assert_eq!(

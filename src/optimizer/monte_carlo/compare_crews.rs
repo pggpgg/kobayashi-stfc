@@ -82,6 +82,10 @@ fn simulate_trial(
         incoming_shield_mitigation_bonus_rounds: input.incoming_shield_mitigation_bonus_rounds,
         attacker_hyperthermic_decay_fraction: 0.0,
         emit_state_snapshots: false,
+        combat_battle_type_id: input.combat_battle_type_id,
+        combat_game_context: input.combat_game_context,
+        attacker_is_defending: input.attacker_is_defending,
+        attacker_at_station: input.attacker_at_station,
     };
     let defender_faction = shared.defender_faction_for_combat();
     let defender_ship_type = shared.defender_ship_type_for_combat();

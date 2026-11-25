@@ -63,6 +63,9 @@ fn ctx_with(hull_pct: f64, defender_level: Option<u32>) -> CombatContext {
         attacker_owner_faction: OpponentFactionTag::Unknown,
         engagement_enemy_types: std::sync::Arc::new(EnemyTypes::default()),
         combat_battle_type_id: None,
+        combat_game_context: kobayashi::combat::CombatGameContext::OpenSpace,
+        attacker_is_defending: false,
+        attacker_at_station: false,
         defender_level,
     }
 }
