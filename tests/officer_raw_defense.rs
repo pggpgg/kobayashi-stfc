@@ -1,9 +1,9 @@
 //! Raw all-defense semantics, separate from choosing a combat officer-stat source.
 use kobayashi::combat::effect_spec_compile::compile_officer_combat_spec;
 use kobayashi::combat::{
-    simulate_combat, Ability, AbilityClass, AbilityEffect, AttackerStats, Combatant,
-    CrewConfiguration, CrewSeat, CrewSeatContext, DefenderStats, HostileMitigationParams, ShipType,
-    SimulationConfig, TimingWindow, TraceMode,
+    simulate_combat, Ability, AbilityClass, AbilityCondition, AbilityEffect, AttackerStats,
+    Combatant, CrewConfiguration, CrewSeat, CrewSeatContext, CrewStatAxis, CrewStatScaledTarget,
+    DefenderStats, HostileMitigationParams, ShipType, SimulationConfig, TimingWindow, TraceMode,
 };
 use kobayashi::data::combat_effect_spec::CombatEffectSpec;
 use kobayashi::lcars::{
@@ -12,17 +12,14 @@ use kobayashi::lcars::{
 };
 
 #[test]
-fn tom_paris_rank_four_is_quarantined_until_crew_defense_source_is_verified() {
+fn tom_paris_rank_four_defers_crew_defense_pre_all_and_preserves_hostile_gate() {
     let mut officers =
         index_lcars_officers_by_id(build_officer_model_file_default().unwrap().officers);
-    // The captain-swap observations reject treating Tom's own raw Defense as
-    // the established crew stat source; preserve rank metadata but do not apply
-    // the unsupported source as actual raw ship defense points.
     let tom = officers.get_mut("tom-paris-3640cc").unwrap();
     tom.stats = vec![LcarsLevelStats {
         level: 20,
         attack: 10.0,
-        defense: 420.6,
+        defense: 421.0,
         health: 100.0,
     }];
     let crew = resolve_crew_to_buff_set(
@@ -44,15 +41,25 @@ fn tom_paris_rank_four_is_quarantined_until_crew_defense_source_is_verified() {
     assert_eq!(crew.seats[0].ability.timing, TimingWindow::CombatBegin);
     assert_eq!(
         crew.seats[0].ability.effect,
-        AbilityEffect::UnsupportedOfficerEffect {
+        AbilityEffect::CrewStatScaledDeferred {
+            target: CrewStatScaledTarget::AllDefensesPreAll,
+            axis: CrewStatAxis::Defense,
             coefficient: 4.0,
-            chance: 1.0
+            chance: 1.0,
+            cumulative: false,
+            duration_rounds: 0,
+            reactive_trigger: None,
+            on_hit: false,
         }
+    );
+    assert_eq!(
+        crew.seats[0].ability.condition,
+        Some(AbilityCondition::DefenderIsNpcHostile)
     );
 }
 
 #[test]
-fn tom_paris_missing_officer_stat_remains_explicitly_unsupported() {
+fn tom_paris_missing_officer_stat_remains_deferred_until_scenario_has_crew_levels() {
     let mut officers =
         index_lcars_officers_by_id(build_officer_model_file_default().unwrap().officers);
     officers.get_mut("tom-paris-3640cc").unwrap().stats.clear();
@@ -68,9 +75,17 @@ fn tom_paris_missing_officer_stat_remains_explicitly_unsupported() {
         },
     )
     .crew;
-    assert!(
-        matches!(crew.seats.as_slice(), [seat] if matches!(seat.ability.effect, AbilityEffect::UnsupportedOfficerEffect { .. }))
-    );
+    assert!(matches!(
+        crew.seats.as_slice(),
+        [seat] if matches!(
+            seat.ability.effect,
+            AbilityEffect::CrewStatScaledDeferred {
+                target: CrewStatScaledTarget::AllDefensesPreAll,
+                axis: CrewStatAxis::Defense,
+                ..
+            }
+        )
+    ));
 }
 
 #[test]

@@ -133,13 +133,16 @@ fn hugh_and_pic_beverly_respect_duration_chance_and_armada_exclusion() {
         ..Default::default()
     };
     let config = SimulationConfig {
-        rounds: 3,
+        rounds: 4,
         seed: 7,
         trace_mode: TraceMode::Events,
         ..Default::default()
     };
 
     // Hugh R5: 100% chance, +0.25 crit chance for 2 rounds vs non-Armada hostile.
+    // On a 1-weapon ship, R1's hit occurs on the final sub-round, so the 2-round buff takes effect
+    // at R2 sub-round 1 (matching live STFC Fight 4 sub-turn boundaries), lasts R2 + R3, and expires
+    // at R4.
     let hugh_r5 = resolve_crew_to_buff_set(
         "",
         &[],
@@ -164,13 +167,17 @@ fn hugh_and_pic_beverly_respect_duration_chance_and_armada_exclusion() {
         &CrewConfiguration::default(),
     );
     let ch = crit_chances(&res_hostile, "attack");
-    assert_eq!(ch.len(), 3);
+    assert_eq!(ch.len(), 4);
     assert!((ch[0] - 0.0).abs() < 1e-6);
     assert!(
         (ch[1] - 0.25).abs() < 1e-6,
         "round 2 should have +0.25: {ch:?}"
     );
-    assert!((ch[2] - 0.0).abs() < 1e-6, "round 3 should expire: {ch:?}");
+    assert!(
+        (ch[2] - 0.25).abs() < 1e-6,
+        "round 3 should still have +0.25 (2 full rounds active): {ch:?}"
+    );
+    assert!((ch[3] - 0.0).abs() < 1e-6, "round 4 should expire: {ch:?}");
 
     // Hugh must NOT activate against an Armada.
     let res_armada = simulate_combat_with_defender_faction_and_defender_crew(
@@ -185,7 +192,10 @@ fn hugh_and_pic_beverly_respect_duration_chance_and_armada_exclusion() {
         false,
         &CrewConfiguration::default(),
     );
-    assert_eq!(crit_chances(&res_armada, "attack"), vec![0.0, 0.0, 0.0]);
+    assert_eq!(
+        crit_chances(&res_armada, "attack"),
+        vec![0.0, 0.0, 0.0, 0.0]
+    );
 
     // Hugh R1 (45% chance): should proc roughly ~45% of seeds across 200 trials.
     let hugh_r1 = resolve_crew_to_buff_set(
@@ -265,7 +275,7 @@ fn hugh_and_pic_beverly_respect_duration_chance_and_armada_exclusion() {
         &CrewConfiguration::default(),
     );
     let mults = crit_mults(&res_bev, "attack");
-    for (a, e) in mults.iter().zip([2.0, 2.08, 2.16]) {
+    for (a, e) in mults.iter().zip([2.0, 2.08, 2.16, 2.24]) {
         assert!((a - e).abs() < 1e-6, "PIC Beverly mults: {mults:?}");
     }
     let res_bev_armada = simulate_combat_with_defender_faction_and_defender_crew(
@@ -280,7 +290,10 @@ fn hugh_and_pic_beverly_respect_duration_chance_and_armada_exclusion() {
         false,
         &CrewConfiguration::default(),
     );
-    assert_eq!(crit_mults(&res_bev_armada, "attack"), vec![2.0, 2.0, 2.0]);
+    assert_eq!(
+        crit_mults(&res_bev_armada, "attack"),
+        vec![2.0, 2.0, 2.0, 2.0]
+    );
 }
 
 #[test]
@@ -468,8 +481,11 @@ fn janeway_wok_carol_and_mudd_apply_one_round_defensive_stacks_to_later_weapons(
         res_carol.attacker_hull_remaining
     );
 
-    // Kathryn Janeway captain (+0.06 shield mitigation for 1 round -> 0.86 on weapon 1):
-    // Per round: 20 + 14 = 34 hull dmg -> 2 rounds = 68 hull dmg -> 9_932 hull.
+    // Kathryn Janeway captain (+0.06 shield mitigation for 1 round):
+    // R1: weapon 0 hits at 0.80 (20 hull dmg -> grants stack expiring end of R1); weapon 1 hits
+    // at 0.86 (14 hull dmg -> last sub-round grant carries into R2 per STFC sub-turn boundary).
+    // R2: R1 W0 stack expired, R1 W1 stack active -> weapon 0 hits at 0.86 (14 hull dmg, +stack),
+    // weapon 1 hits at 0.92 (8 hull dmg) -> total 20 + 14 + 14 + 8 = 56 hull dmg -> 9_944 hull.
     let janeway = resolve_crew_to_buff_set(
         "kathryn-janeway-bd4a19",
         &[],
@@ -491,13 +507,14 @@ fn janeway_wok_carol_and_mudd_apply_one_round_defensive_stacks_to_later_weapons(
         &CrewConfiguration::default(),
     );
     assert!(
-        (res_janeway.attacker_hull_remaining - 9_932.0).abs() < 1e-6,
+        (res_janeway.attacker_hull_remaining - 9_944.0).abs() < 1e-6,
         "Janeway captain hull remaining={}",
         res_janeway.attacker_hull_remaining
     );
 
     // Mudd captain (-10% Armada weapon damage for 1 round on HitTaken, max_level=70):
-    // Unshielded attacker: weapon 0 deals 100, Mudd triggers, weapon 1 deals 90 -> 190/round.
+    // Unshielded attacker: R1 weapon 0 deals 100 (+stack), weapon 1 deals 90 (+last-subround stack
+    // carrying into R2); R2 weapon 0 deals 90 (+stack), weapon 1 deals 80 -> 360 total -> 9_640.
     let mut unshielded = attacker.clone();
     unshielded.shield_health = 0.0;
     let mudd = resolve_crew_to_buff_set(
@@ -521,7 +538,7 @@ fn janeway_wok_carol_and_mudd_apply_one_round_defensive_stacks_to_later_weapons(
         &CrewConfiguration::default(),
     );
     assert!(
-        (res_mudd_armada.attacker_hull_remaining - 9_620.0).abs() < 1e-6,
+        (res_mudd_armada.attacker_hull_remaining - 9_640.0).abs() < 1e-6,
         "Mudd vs L50 Armada hull remaining={}",
         res_mudd_armada.attacker_hull_remaining
     );
@@ -972,21 +989,55 @@ fn krell_mirek_mirror_uhura_and_quarantined_officers_behave_correctly() {
         base_res.attacker_hull_remaining
     );
 
-    // Quarantined HullDamageTaken officers (Michael Burnham & The Doctor) MUST stay UnsupportedOfficerEffect.
-    for id in ["michael-burnham-6c711c", "the-doctor-327fc3"] {
-        let crew =
-            resolve_crew_to_buff_set("", &[id.into()], &[], &officers, &ResolveOptions::default())
-                .crew;
-        assert!(
-            crew.seats.iter().all(|s| matches!(
-                s.ability.effect,
-                AbilityEffect::UnsupportedOfficerEffect { .. }
-            )),
-            "{id} bridge ability must remain quarantined as UnsupportedOfficerEffect, got {:?}",
-            crew.seats
-                .iter()
-                .map(|s| s.ability.effect)
-                .collect::<Vec<_>>()
-        );
-    }
+    // Quarantined enemy-targeting HullDamageTaken MultiplyBaseSub officer (Michael Burnham) MUST
+    // stay UnsupportedOfficerEffect.
+    let burnham_crew = resolve_crew_to_buff_set(
+        "",
+        &["michael-burnham-6c711c".into()],
+        &[],
+        &officers,
+        &ResolveOptions::default(),
+    )
+    .crew;
+    assert!(
+        burnham_crew.seats.iter().all(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::UnsupportedOfficerEffect { .. }
+        )),
+        "michael-burnham-6c711c bridge ability must remain quarantined as UnsupportedOfficerEffect, got {:?}",
+        burnham_crew
+            .seats
+            .iter()
+            .map(|s| s.ability.effect)
+            .collect::<Vec<_>>()
+    );
+
+    // The Doctor (HullDamageTaken SelfShip MultiplyBaseAdd AllDefenses, 2R, Health) is now modeled
+    // via unified op 5 reactive PRE_ALL CrewStatScaledDeferred.
+    let doctor_crew = resolve_crew_to_buff_set(
+        "",
+        &["the-doctor-327fc3".into()],
+        &[],
+        &officers,
+        &ResolveOptions::default(),
+    )
+    .crew;
+    assert!(
+        doctor_crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::CrewStatScaledDeferred {
+                target: kobayashi::combat::CrewStatScaledTarget::AllDefensesPreAll,
+                axis: kobayashi::combat::CrewStatAxis::Health,
+                duration_rounds: 2,
+                reactive_trigger: Some(kobayashi::combat::DamageTakenTrigger::HullDamage),
+                ..
+            }
+        )),
+        "the-doctor-327fc3 bridge ability must compile to reactive 2R PRE_ALL CrewStatScaledDeferred, got {:?}",
+        doctor_crew
+            .seats
+            .iter()
+            .map(|s| s.ability.effect)
+            .collect::<Vec<_>>()
+    );
 }

@@ -1157,6 +1157,11 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::CrewStatScaledDeferred { .. }
+                | AbilityEffect::PreAllDefenseAdd { .. }
+                | AbilityEffect::PreAllPiercingAdd { .. }
+                | AbilityEffect::OnHitPreAllPiercingAdd { .. }
+                | AbilityEffect::FlatWeaponDamagePreCrit { .. }
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
@@ -1374,6 +1379,11 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::CrewStatScaledDeferred { .. }
+                | AbilityEffect::PreAllDefenseAdd { .. }
+                | AbilityEffect::PreAllPiercingAdd { .. }
+                | AbilityEffect::OnHitPreAllPiercingAdd { .. }
+                | AbilityEffect::FlatWeaponDamagePreCrit { .. }
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
@@ -1573,6 +1583,11 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::CrewStatScaledDeferred { .. }
+                | AbilityEffect::PreAllDefenseAdd { .. }
+                | AbilityEffect::PreAllPiercingAdd { .. }
+                | AbilityEffect::OnHitPreAllPiercingAdd { .. }
+                | AbilityEffect::FlatWeaponDamagePreCrit { .. }
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
@@ -1832,6 +1847,11 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::CrewStatScaledDeferred { .. }
+                | AbilityEffect::PreAllDefenseAdd { .. }
+                | AbilityEffect::PreAllPiercingAdd { .. }
+                | AbilityEffect::OnHitPreAllPiercingAdd { .. }
+                | AbilityEffect::FlatWeaponDamagePreCrit { .. }
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
@@ -1981,6 +2001,11 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::CrewStatScaledDeferred { .. }
+                | AbilityEffect::PreAllDefenseAdd { .. }
+                | AbilityEffect::PreAllPiercingAdd { .. }
+                | AbilityEffect::OnHitPreAllPiercingAdd { .. }
+                | AbilityEffect::FlatWeaponDamagePreCrit { .. }
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
@@ -2224,6 +2249,11 @@ impl EffectAccumulator {
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::CrewStatScaledDeferred { .. }
+                | AbilityEffect::PreAllDefenseAdd { .. }
+                | AbilityEffect::PreAllPiercingAdd { .. }
+                | AbilityEffect::OnHitPreAllPiercingAdd { .. }
+                | AbilityEffect::FlatWeaponDamagePreCrit { .. }
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
@@ -2650,6 +2680,18 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
                     ),
                     chance,
                 ),
+                ReactiveDamageTakenKind::PreAllAllDefensesAdd(v) => (
+                    ReactiveDamageTakenKind::PreAllAllDefensesAdd(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
+                ReactiveDamageTakenKind::PreAllAllPiercingAdd(v) => (
+                    ReactiveDamageTakenKind::PreAllAllPiercingAdd(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
                 ReactiveDamageTakenKind::ApplyDefenderBurning
                 | ReactiveDamageTakenKind::ApplyDefenderHullBreach
                 | ReactiveDamageTakenKind::ApplyAttackerMorale => {
@@ -2702,6 +2744,65 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
                 v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
             )
         }
+        AbilityEffect::CrewStatScaledDeferred {
+            target,
+            axis,
+            coefficient,
+            chance,
+            cumulative,
+            duration_rounds,
+            reactive_trigger,
+            on_hit,
+        } => AbilityEffect::CrewStatScaledDeferred {
+            target,
+            axis,
+            coefficient: coefficient * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            chance,
+            cumulative,
+            duration_rounds,
+            reactive_trigger,
+            on_hit,
+        },
+        AbilityEffect::PreAllDefenseAdd {
+            armor,
+            shield_deflection,
+            dodge,
+            cumulative,
+        } => AbilityEffect::PreAllDefenseAdd {
+            armor: armor * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            shield_deflection: shield_deflection * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            dodge: dodge * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            cumulative,
+        },
+        AbilityEffect::PreAllPiercingAdd {
+            armor_piercing,
+            shield_piercing,
+            accuracy,
+            cumulative,
+        } => AbilityEffect::PreAllPiercingAdd {
+            armor_piercing: armor_piercing * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            shield_piercing: shield_piercing * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            accuracy: accuracy * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            cumulative,
+        },
+        AbilityEffect::OnHitPreAllPiercingAdd {
+            armor_piercing,
+            shield_piercing,
+            accuracy,
+        } => AbilityEffect::OnHitPreAllPiercingAdd {
+            armor_piercing: armor_piercing * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            shield_piercing: shield_piercing * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            accuracy: accuracy * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+        },
+        AbilityEffect::FlatWeaponDamagePreCrit {
+            amount,
+            chance,
+            cumulative,
+        } => AbilityEffect::FlatWeaponDamagePreCrit {
+            amount: amount * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            chance,
+            cumulative,
+        },
         AbilityEffect::HostileBasePiercingStatsReduction(v) => {
             AbilityEffect::HostileBasePiercingStatsReduction(
                 v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,

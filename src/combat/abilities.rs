@@ -65,6 +65,40 @@ pub enum DamageTakenTrigger {
     CriticalHit,
 }
 
+/// Which crew-wide effective officer stat axis scales an `op 5` (`MultiplyBaseAdd`) ability.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CrewStatAxis {
+    Attack,
+    Defense,
+    Health,
+}
+
+/// Which combat channel receives the resolved `coefficient * effective_crew_stat` amount
+/// for an `op 5` (`MultiplyBaseAdd`) officer ability.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CrewStatScaledTarget {
+    /// PRE_ALL: added to base Armor, Shield Deflection, and Dodge before `(1 + def_pool)`.
+    AllDefensesPreAll,
+    /// PRE_ALL: added to base Armor before `(1 + armor_pool)`.
+    BaseArmorPreAll,
+    /// PRE_ALL: added to base Shield Deflection before `(1 + shield_deflection_pool)`.
+    BaseShieldDeflectionPreAll,
+    /// PRE_ALL: added to base Dodge before `(1 + dodge_pool)`.
+    BaseDodgePreAll,
+    /// PRE_ALL: added to base Armor Piercing, Shield Piercing, and Accuracy before `(1 + piercing_pool)`.
+    AllPiercingPreAll,
+    /// PRE_ALL: added to base Armor Piercing before `(1 + ap_pool)`.
+    BaseArmorPiercingPreAll,
+    /// PRE_ALL: added to base Shield Piercing before `(1 + sp_pool)`.
+    BaseShieldPiercingPreAll,
+    /// PRE_ALL: added to base Accuracy before `(1 + acc_pool)`.
+    BaseAccuracyPreAll,
+    /// Direct flat shield repair at RoundStart: `coefficient * effective_crew_stat`.
+    ShieldRepairFlat,
+    /// POST_ALL pre-crit per-shot weapon damage addition: `base * (1 + wd_pool) + amount`, then `* crit_mult`.
+    WeaponDamageFlatPreCrit,
+}
+
 /// Effect granted once per qualifying incoming weapon volley by [`AbilityEffect::ReactiveDamageTaken`].
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ReactiveDamageTakenKind {
@@ -76,6 +110,12 @@ pub enum ReactiveDamageTakenKind {
     HostileCritChanceReduction(f64),
     /// Multiplicative bonus applied to existing Apex Barrier (`barrier * (1 + sum)`).
     ApexBarrierMultiplierBonus(f64),
+    /// PRE_ALL base defense points added to Armor, Shield Deflection, and Dodge before `(1 + def_pool)`
+    /// (e.g. The Doctor `HullDamageTaken`, `num_rounds=2`).
+    PreAllAllDefensesAdd(f64),
+    /// PRE_ALL base piercing points added to AP, SP, and Accuracy before `(1 + piercing_pool)`
+    /// (e.g. B'Elanna Torres `HitTaken`, `num_rounds=1`).
+    PreAllAllPiercingAdd(f64),
     ApplyDefenderBurning,
     ApplyDefenderHullBreach,
     ApplyAttackerMorale,
@@ -211,6 +251,56 @@ pub enum AbilityEffect {
     BaseArmorPiercingPerCrewHealth(f64),
     /// Deferred setup coefficient; scenario construction resolves it to raw points.
     BaseMitigationStatsPerCrewHealth(f64),
+    /// Unified deferred `op 5` (`MultiplyBaseAdd`) crew-stat-scaled effect. Scenario setup
+    /// resolves `amount = coefficient * effective_crew_stat(axis)` into the concrete runtime
+    /// effect ([`Self::PreAllDefenseAdd`], [`Self::PreAllPiercingAdd`],
+    /// [`Self::OnHitPreAllPiercingAdd`], [`Self::ReactiveDamageTaken`], [`Self::ShieldRegen`], or
+    /// [`Self::FlatWeaponDamagePreCrit`]) once crew stats are known; unresolved seats stay inert
+    /// with diagnostics.
+    CrewStatScaledDeferred {
+        target: CrewStatScaledTarget,
+        axis: CrewStatAxis,
+        coefficient: f64,
+        chance: f64,
+        cumulative: bool,
+        duration_rounds: u32,
+        reactive_trigger: Option<DamageTakenTrigger>,
+        on_hit: bool,
+    },
+    /// PRE_ALL base defensive stat points added to raw ship Armor, Shield Deflection, and/or Dodge
+    /// **before** `(1 + launch_def_pool + combat_start_def_pool)` (verified `op 5` `AllDefenses`,
+    /// `ShipArmor`, `Shields` (Gowron SD), and `ShipDodge` — e.g. Tom Paris, SNW, Ba'el, Martok).
+    PreAllDefenseAdd {
+        armor: f64,
+        shield_deflection: f64,
+        dodge: f64,
+        cumulative: bool,
+    },
+    /// PRE_ALL base piercing points added to raw ship Armor Piercing, Shield Piercing, and/or
+    /// Accuracy **before** `(1 + profile_piercing_pool + combat_start_piercing_pool)` (verified
+    /// `op 5` `AllPiercing`, `ArmorPiercing`, `ShieldPiercing`, `Accuracy` — e.g. Charvanek,
+    /// Marcus, Kang, Jadzia Dax, Cap. Tilly).
+    PreAllPiercingAdd {
+        armor_piercing: f64,
+        shield_piercing: f64,
+        accuracy: f64,
+        cumulative: bool,
+    },
+    /// Cumulative PRE_ALL piercing points granted once per qualifying outbound weapon volley
+    /// (`EnemyTakesHit`, e.g. Six of Eleven vs Armadas).
+    OnHitPreAllPiercingAdd {
+        armor_piercing: f64,
+        shield_piercing: f64,
+        accuracy: f64,
+    },
+    /// POST_ALL pre-crit flat weapon damage added per weapon shot before crit multiplication,
+    /// mitigation, and isolytic damage (verified `op 5` `AllDamage` — e.g. Mirek, Yuki, Wesley
+    /// Crusher, Tomalak, Krell, Ro Mudd, Tyler, TOS Kirk).
+    FlatWeaponDamagePreCrit {
+        amount: f64,
+        chance: f64,
+        cumulative: bool,
+    },
     /// Officer-granted dodge bonus; additive fraction (e.g. 0.10 = +10% dodge).
     /// Dodge is ship-type-weighted in the mitigation formula: interceptors benefit proportionally
     /// more from dodge than battleships. Applied to the player's effective mitigation on counter-fire.
@@ -1701,7 +1791,9 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
                 | ReactiveDamageTakenKind::AttackerShieldMitigationBonus(v)
                 | ReactiveDamageTakenKind::BaseWeaponDamageBonus(v)
                 | ReactiveDamageTakenKind::OpponentWeaponDamageReduction(v)
-                | ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v) => *v = scale(*v),
+                | ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v)
+                | ReactiveDamageTakenKind::PreAllAllDefensesAdd(v)
+                | ReactiveDamageTakenKind::PreAllAllPiercingAdd(v) => *v = scale(*v),
                 ReactiveDamageTakenKind::ApplyDefenderBurning
                 | ReactiveDamageTakenKind::ApplyDefenderHullBreach
                 | ReactiveDamageTakenKind::ApplyAttackerMorale => {}
@@ -1724,6 +1816,43 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         AbilityEffect::BaseArmorPiercingAdd(v) => *v = scale(*v),
         AbilityEffect::BaseArmorPiercingPerCrewHealth(v)
         | AbilityEffect::BaseMitigationStatsPerCrewHealth(v) => *v = scale(*v),
+        AbilityEffect::CrewStatScaledDeferred {
+            coefficient,
+            chance,
+            ..
+        } => {
+            *coefficient = scale(*coefficient);
+            *chance = cap_one(*chance);
+        }
+        AbilityEffect::PreAllDefenseAdd {
+            armor,
+            shield_deflection,
+            dodge,
+            ..
+        } => {
+            *armor = scale(*armor);
+            *shield_deflection = scale(*shield_deflection);
+            *dodge = scale(*dodge);
+        }
+        AbilityEffect::PreAllPiercingAdd {
+            armor_piercing,
+            shield_piercing,
+            accuracy,
+            ..
+        }
+        | AbilityEffect::OnHitPreAllPiercingAdd {
+            armor_piercing,
+            shield_piercing,
+            accuracy,
+        } => {
+            *armor_piercing = scale(*armor_piercing);
+            *shield_piercing = scale(*shield_piercing);
+            *accuracy = scale(*accuracy);
+        }
+        AbilityEffect::FlatWeaponDamagePreCrit { amount, chance, .. } => {
+            *amount = scale(*amount);
+            *chance = cap_one(*chance);
+        }
         AbilityEffect::DodgeBonus(v) => *v = cap_one(*v),
         AbilityEffect::IsolyticDamageBonus(v) => *v = scale(*v),
         AbilityEffect::IsolyticDefenseBonus(v) => *v = scale(*v),
@@ -1873,13 +2002,43 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
                 | ReactiveDamageTakenKind::BaseWeaponDamageBonus(v)
                 | ReactiveDamageTakenKind::OpponentWeaponDamageReduction(v)
                 | ReactiveDamageTakenKind::HostileCritChanceReduction(v)
-                | ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v) => *v *= multiplier,
+                | ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v)
+                | ReactiveDamageTakenKind::PreAllAllDefensesAdd(v)
+                | ReactiveDamageTakenKind::PreAllAllPiercingAdd(v) => *v *= multiplier,
                 ReactiveDamageTakenKind::ApplyDefenderBurning
                 | ReactiveDamageTakenKind::ApplyDefenderHullBreach
                 | ReactiveDamageTakenKind::ApplyAttackerMorale => {
                     *chance = (*chance * multiplier).clamp(0.0, 1.0);
                 }
             },
+            AbilityEffect::CrewStatScaledDeferred { coefficient, .. } => *coefficient *= multiplier,
+            AbilityEffect::PreAllDefenseAdd {
+                armor,
+                shield_deflection,
+                dodge,
+                ..
+            } => {
+                *armor *= multiplier;
+                *shield_deflection *= multiplier;
+                *dodge *= multiplier;
+            }
+            AbilityEffect::PreAllPiercingAdd {
+                armor_piercing,
+                shield_piercing,
+                accuracy,
+                ..
+            }
+            | AbilityEffect::OnHitPreAllPiercingAdd {
+                armor_piercing,
+                shield_piercing,
+                accuracy,
+            } => {
+                *armor_piercing *= multiplier;
+                *shield_piercing *= multiplier;
+                *accuracy *= multiplier;
+            }
+            AbilityEffect::FlatWeaponDamagePreCrit { amount, .. } => *amount *= multiplier,
+            AbilityEffect::ShieldRegen(v) => *v *= multiplier,
             // Full factor (`1 + bonus`): scale only the bonus, else a <1 effectiveness
             // debuff would push a crit below ×1.0 (weaker than a normal hit).
             AbilityEffect::CritDamageMultiplier(c) => {

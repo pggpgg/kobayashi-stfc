@@ -545,6 +545,16 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "base_armor_piercing_per_crew_health" => {
             Some(AbilityModifierSpec::BaseArmorPiercingPerCrewHealth)
         }
+        "crew_scaled_all_defenses" => Some(AbilityModifierSpec::CrewScaledAllDefenses),
+        "crew_scaled_armor" => Some(AbilityModifierSpec::CrewScaledArmor),
+        "crew_scaled_shield_deflection" => Some(AbilityModifierSpec::CrewScaledShieldDeflection),
+        "crew_scaled_dodge" => Some(AbilityModifierSpec::CrewScaledDodge),
+        "crew_scaled_all_piercing" => Some(AbilityModifierSpec::CrewScaledAllPiercing),
+        "crew_scaled_armor_piercing" => Some(AbilityModifierSpec::CrewScaledArmorPiercing),
+        "crew_scaled_shield_piercing" => Some(AbilityModifierSpec::CrewScaledShieldPiercing),
+        "crew_scaled_accuracy" => Some(AbilityModifierSpec::CrewScaledAccuracy),
+        "crew_scaled_shield_repair" => Some(AbilityModifierSpec::CrewScaledShieldRepair),
+        "crew_scaled_weapon_damage" => Some(AbilityModifierSpec::CrewScaledWeaponDamage),
         "base_armor_piercing_add" => Some(AbilityModifierSpec::BaseArmorPiercingAdd),
         "dodge" => Some(AbilityModifierSpec::Dodge),
         "damage_reduction" => Some(AbilityModifierSpec::DamageReduction),
@@ -676,6 +686,16 @@ fn effect_value_with_officer_stat(
         stat,
         coefficient_per_rank: coefficients_per_rank,
     };
+    if effect
+        .stat
+        .as_deref()
+        .is_some_and(|s| s.starts_with("crew_scaled_"))
+    {
+        // Verified `op 5` crew-stat-scaled abilities defer multiplication by total effective
+        // crew Attack/Defense/Health to scenario setup; preserve `scaling_spec` so the compiler
+        // knows which crew axis to read.
+        return (base_value, Some(scaling_spec));
+    }
     let rank_value = base_value;
     let raw_points = effect.stat.as_deref() == Some("base_mitigation_stats_add");
     let resolved = match (rank_value, officer_stats) {

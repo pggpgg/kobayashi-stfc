@@ -32,9 +32,9 @@ pub use abilities::{
     hostile_full_regen_unless_attacker_ship,
     hostile_hyperthermic_decay_fraction_from_defender_crew, Ability, AbilityClass,
     AbilityCondition, AbilityEffect, ActiveAbilityEffect, CombatContext, CrewConfiguration,
-    CrewSeat, CrewSeatContext, DamageTakenTrigger, DefenderOnHitGate, DefenderOnHitStat,
-    ReactiveDamageTakenKind, TimingWindow, WeaponTypeScope, NO_EXPLICIT_CONTRIBUTION_BATCH,
-    TAL_OFFICER_LCARS_ID,
+    CrewSeat, CrewSeatContext, CrewStatAxis, CrewStatScaledTarget, DamageTakenTrigger,
+    DefenderOnHitGate, DefenderOnHitStat, ReactiveDamageTakenKind, TimingWindow, WeaponTypeScope,
+    NO_EXPLICIT_CONTRIBUTION_BATCH, TAL_OFFICER_LCARS_ID,
 };
 pub use damage::{
     apply_shield_hull_split, compute_apex_damage_factor, compute_damage_through_factor,

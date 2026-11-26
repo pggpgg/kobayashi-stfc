@@ -10,9 +10,9 @@ pub use crate::combat::types::{
     effective_shots_for_weapon, round_half_even, AttackerStats, CombatEvent, Combatant,
     CrewOfficerStatTotals, DefenderStats, EnemyTypes, EventSource, HostileMitigationParams,
     OpponentFactionTag, ShipType, SimulationConfig, SimulationResult, TraceCollector, TraceMode,
-    WeaponStats, WeaponType, BATTLESHIP_COEFFICIENTS, EPSILON, EXPLORER_COEFFICIENTS,
-    HULL_BREACH_CRIT_BONUS, INTERCEPTOR_COEFFICIENTS, MAX_COMBAT_ROUNDS, MORALE_PIERCING_BONUS,
-    SURVEY_COEFFICIENTS,
+    WeaponStats, WeaponType, ASSIMILATED_EFFECTIVENESS_MULTIPLIER, BATTLESHIP_COEFFICIENTS,
+    EPSILON, EXPLORER_COEFFICIENTS, HULL_BREACH_CRIT_BONUS, INTERCEPTOR_COEFFICIENTS,
+    MAX_COMBAT_ROUNDS, MORALE_PIERCING_BONUS, SURVEY_COEFFICIENTS,
 };
 
 use serde_json::{Map, Value};
@@ -256,6 +256,8 @@ pub struct PreCombatSetup {
     attack_phase_has_on_hit_timed_bonuses: bool,
     attack_phase_has_on_hit_crit_chance_reduction: bool,
     defender_attack_phase_has_on_hit_crit_chance_reduction: bool,
+    attack_phase_has_on_hit_pre_all_piercing: bool,
+    attacker_has_flat_weapon_damage_pre_crit: bool,
     attack_phase_has_on_hit_crit_stacks: bool,
     defense_phase_has_burning: bool,
     defender_inbound_defense_has_burning: bool,
@@ -595,6 +597,8 @@ pub fn build_combat_setup_with_officer_stat(
                     | AbilityEffect::BaseMitigationStatsAdd(_)
                     | AbilityEffect::HostileBasePiercingStatsReduction(_)
                     | AbilityEffect::BaseArmorPiercingAdd(_)
+                    | AbilityEffect::PreAllDefenseAdd { .. }
+                    | AbilityEffect::PreAllPiercingAdd { .. }
             )
         });
     let defender_has_round_base_defense_or_pierce_rows = defender_combat_begin_effects
@@ -649,6 +653,13 @@ pub fn build_combat_setup_with_officer_stat(
                 }
             )
         });
+    let attack_phase_has_on_hit_pre_all_piercing = attack_phase_effects
+        .iter()
+        .any(|e| matches!(e.effect, AbilityEffect::OnHitPreAllPiercingAdd { .. }));
+    let attacker_has_flat_weapon_damage_pre_crit = combat_begin_effects
+        .iter()
+        .chain(round_start_effects.iter())
+        .any(|e| matches!(e.effect, AbilityEffect::FlatWeaponDamagePreCrit { .. }));
     let attack_phase_has_on_hit_crit_stacks = attack_phase_effects
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::OnHitCritDamageStack { .. }));
@@ -905,6 +916,8 @@ pub fn build_combat_setup_with_officer_stat(
         attack_phase_has_on_hit_timed_bonuses,
         attack_phase_has_on_hit_crit_chance_reduction,
         defender_attack_phase_has_on_hit_crit_chance_reduction,
+        attack_phase_has_on_hit_pre_all_piercing,
+        attacker_has_flat_weapon_damage_pre_crit,
         attack_phase_has_on_hit_crit_stacks,
         defense_phase_has_burning,
         defender_inbound_defense_has_burning,
@@ -1162,6 +1175,10 @@ fn simulate_combat_from_setup_inner(
         attacker_cum_base_mitigation_bonus: 0.0,
         attacker_cum_base_piercing_bonus: 0.0,
         defender_cum_base_piercing_bonus: 0.0,
+        attacker_cum_pre_all_def: DefenderStats::default(),
+        attacker_cum_pre_all_pierce: AttackerStats::default(),
+        attacker_cb_flat_weapon_damage: ShotsBonusSums::default(),
+        attacker_cum_flat_weapon_damage: ShotsBonusSums::default(),
         attacker_cum_hostile_crit_chance_reduction: 0.0,
         defender_cum_hostile_crit_chance_reduction: 0.0,
     };
@@ -1369,6 +1386,27 @@ fn simulate_combat_from_setup_inner(
 
     if let Some(duration) = setup.defender_self_morale_duration {
         st.defender_morale_rounds_remaining = st.defender_morale_rounds_remaining.max(duration);
+    }
+
+    if setup.attacker_has_flat_weapon_damage_pre_crit {
+        for effect in combat_begin_filtered.iter() {
+            if let AbilityEffect::FlatWeaponDamagePreCrit { amount, chance, .. } = effect.effect {
+                if amount.is_finite() && amount > 0.0 {
+                    let c = chance.clamp(0.0, 1.0);
+                    let triggered = if c >= 1.0 {
+                        true
+                    } else if c <= 0.0 {
+                        false
+                    } else {
+                        ((rng.next_u64() as f64) / (u64::MAX as f64)) < c
+                    };
+                    if triggered {
+                        st.attacker_cb_flat_weapon_damage
+                            .add(effect.weapon_scope, amount);
+                    }
+                }
+            }
+        }
     }
 
     let rounds_to_simulate = config
@@ -1635,7 +1673,36 @@ fn simulate_combat_from_setup_inner(
             attacker_base_armor_piercing_add,
             attacker_base_piercing_bonus,
             attacker_hostile_base_defense_reduction,
+            attacker_pre_all_def_round,
+            attacker_pre_all_pierce_round,
         ) = if setup.has_round_base_defense_or_pierce_rows {
+            let mut pre_def = DefenderStats::default();
+            let mut pre_pierce = AttackerStats::default();
+            for effect in combat_begin_round_level.iter() {
+                match scale_active_effect(effect, combat_begin_assimilated_this_round) {
+                    AbilityEffect::PreAllDefenseAdd {
+                        armor,
+                        shield_deflection,
+                        dodge,
+                        ..
+                    } => {
+                        pre_def.armor += armor;
+                        pre_def.shield_deflection += shield_deflection;
+                        pre_def.dodge += dodge;
+                    }
+                    AbilityEffect::PreAllPiercingAdd {
+                        armor_piercing,
+                        shield_piercing,
+                        accuracy,
+                        ..
+                    } => {
+                        pre_pierce.armor_piercing += armor_piercing;
+                        pre_pierce.shield_piercing += shield_piercing;
+                        pre_pierce.accuracy += accuracy;
+                    }
+                    _ => {}
+                }
+            }
             for effect in full_round_start.iter() {
                 match scale_active_effect(effect, round_start_assimilated) {
                     AbilityEffect::CumulativeBaseMitigationStatsBonus(v) => {
@@ -1643,6 +1710,38 @@ fn simulate_combat_from_setup_inner(
                     }
                     AbilityEffect::CumulativeBasePiercingStatsBonus(v) => {
                         st.attacker_cum_base_piercing_bonus += v;
+                    }
+                    AbilityEffect::PreAllDefenseAdd {
+                        armor,
+                        shield_deflection,
+                        dodge,
+                        cumulative,
+                    } => {
+                        if cumulative {
+                            st.attacker_cum_pre_all_def.armor += armor;
+                            st.attacker_cum_pre_all_def.shield_deflection += shield_deflection;
+                            st.attacker_cum_pre_all_def.dodge += dodge;
+                        } else {
+                            pre_def.armor += armor;
+                            pre_def.shield_deflection += shield_deflection;
+                            pre_def.dodge += dodge;
+                        }
+                    }
+                    AbilityEffect::PreAllPiercingAdd {
+                        armor_piercing,
+                        shield_piercing,
+                        accuracy,
+                        cumulative,
+                    } => {
+                        if cumulative {
+                            st.attacker_cum_pre_all_pierce.armor_piercing += armor_piercing;
+                            st.attacker_cum_pre_all_pierce.shield_piercing += shield_piercing;
+                            st.attacker_cum_pre_all_pierce.accuracy += accuracy;
+                        } else {
+                            pre_pierce.armor_piercing += armor_piercing;
+                            pre_pierce.shield_piercing += shield_piercing;
+                            pre_pierce.accuracy += accuracy;
+                        }
                     }
                     _ => {}
                 }
@@ -1737,10 +1836,71 @@ fn simulate_combat_from_setup_inner(
                 ap_add,
                 pierce_b + st.attacker_cum_base_piercing_bonus,
                 def_red,
+                DefenderStats {
+                    armor: pre_def.armor + st.attacker_cum_pre_all_def.armor,
+                    shield_deflection: pre_def.shield_deflection
+                        + st.attacker_cum_pre_all_def.shield_deflection,
+                    dodge: pre_def.dodge + st.attacker_cum_pre_all_def.dodge,
+                },
+                pre_pierce,
             )
         } else {
-            (0.0, 0.0, -0.0, -0.0, -0.0, 0.0, 0.0)
+            (
+                0.0,
+                0.0,
+                -0.0,
+                -0.0,
+                -0.0,
+                0.0,
+                0.0,
+                DefenderStats::default(),
+                AttackerStats::default(),
+            )
         };
+        let attacker_flat_weapon_damage_this_round =
+            if setup.attacker_has_flat_weapon_damage_pre_crit {
+                let mut sums = st.attacker_cb_flat_weapon_damage;
+                if combat_begin_assimilated_this_round {
+                    sums = ShotsBonusSums {
+                        all: sums.all * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                        energy_only: sums.energy_only * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                        kinetic_only: sums.kinetic_only * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    };
+                }
+                for effect in full_round_start.iter() {
+                    if let AbilityEffect::FlatWeaponDamagePreCrit {
+                        amount,
+                        chance,
+                        cumulative,
+                    } = scale_active_effect(effect, round_start_assimilated)
+                    {
+                        if amount.is_finite() && amount > 0.0 {
+                            let c = chance.clamp(0.0, 1.0);
+                            let triggered = if c >= 1.0 {
+                                true
+                            } else if c <= 0.0 {
+                                false
+                            } else {
+                                ((rng.next_u64() as f64) / (u64::MAX as f64)) < c
+                            };
+                            if triggered {
+                                if cumulative {
+                                    st.attacker_cum_flat_weapon_damage
+                                        .add(effect.weapon_scope, amount);
+                                } else {
+                                    sums.add(effect.weapon_scope, amount);
+                                }
+                            }
+                        }
+                    }
+                }
+                sums.all += st.attacker_cum_flat_weapon_damage.all;
+                sums.energy_only += st.attacker_cum_flat_weapon_damage.energy_only;
+                sums.kinetic_only += st.attacker_cum_flat_weapon_damage.kinetic_only;
+                sums
+            } else {
+                ShotsBonusSums::default()
+            };
         let (defender_base_piercing_bonus, defender_hostile_base_defense_reduction) =
             if setup.defender_has_round_base_defense_or_pierce_rows {
                 let def_persp_ctx = defender_perspective_context(
@@ -2406,6 +2566,12 @@ fn simulate_combat_from_setup_inner(
                             - defender_hostile_base_defense_reduction,
                         attacker_base_armor_bonus,
                         attacker_base_mitigation_add,
+                        attacker_pre_all_def_add: DefenderStats {
+                            armor: attacker_pre_all_def_round.armor + att_reactive.pre_all_def_add,
+                            shield_deflection: attacker_pre_all_def_round.shield_deflection
+                                + att_reactive.pre_all_def_add,
+                            dodge: attacker_pre_all_def_round.dodge + att_reactive.pre_all_def_add,
+                        },
                         attacker_base_piercing_reduction,
                         defender_base_piercing_bonus,
                         weapon_round_base: &weapon_round_base,
@@ -2513,6 +2679,17 @@ fn simulate_combat_from_setup_inner(
                         .iter()
                         .map(|e| e.reduction)
                         .sum::<f64>();
+                let attacker_pre_all_pierce_add = AttackerStats {
+                    armor_piercing: attacker_pre_all_pierce_round.armor_piercing
+                        + st.attacker_cum_pre_all_pierce.armor_piercing
+                        + att_reactive.pre_all_pierce_add,
+                    shield_piercing: attacker_pre_all_pierce_round.shield_piercing
+                        + st.attacker_cum_pre_all_pierce.shield_piercing
+                        + att_reactive.pre_all_pierce_add,
+                    accuracy: attacker_pre_all_pierce_round.accuracy
+                        + st.attacker_cum_pre_all_pierce.accuracy
+                        + att_reactive.pre_all_pierce_add,
+                };
                 fire_attacker_weapon(FireAttackerWeapon {
                     st: &mut st,
                     phase_effects_round: &mut phase_effects_round,
@@ -2544,6 +2721,9 @@ fn simulate_combat_from_setup_inner(
                     attacker_accuracy_bonus,
                     attacker_base_armor_piercing_add,
                     attacker_base_piercing_bonus,
+                    attacker_pre_all_pierce_add,
+                    attacker_flat_weapon_damage_pre_crit: attacker_flat_weapon_damage_this_round
+                        .for_weapon(attacker.weapon_type(weapon_index)),
                     attacker_hostile_base_defense_reduction,
                     phase_effects: &mut phase_effects,
                     hull_breach_effects,
@@ -2606,6 +2786,7 @@ fn simulate_combat_from_setup_inner(
                         took_hull: attacker_took_hull,
                         took_shield: attacker_took_shield,
                         took_crit: counter_crit_hit_this_subround,
+                        is_last_sub_round: weapon_index + 1 == num_sub_rounds,
                     },
                 );
                 combat_ctx.defender_burning_active = st.defender_burning_rounds > 0;
@@ -2670,6 +2851,7 @@ fn simulate_combat_from_setup_inner(
                         took_hull: defender_took_hull,
                         took_shield: defender_took_shield,
                         took_crit: outbound_crit_hit_this_subround,
+                        is_last_sub_round: weapon_index + 1 == num_sub_rounds,
                     },
                 );
                 combat_ctx.attacker_burning_active = st.attacker_burning_rounds > 0;
@@ -2740,6 +2922,37 @@ fn simulate_combat_from_setup_inner(
                     } = scale_active_effect(effect, attack_phase_assimilated)
                     {
                         st.attacker_cum_hostile_crit_chance_reduction += reduction;
+                        record_ability_activations(
+                            &mut trace,
+                            round_index,
+                            "after_hit",
+                            &attacker,
+                            std::slice::from_ref(effect),
+                            attack_phase_assimilated,
+                        );
+                    }
+                }
+            }
+            if setup.attack_phase_has_on_hit_pre_all_piercing
+                && defender_alive_before_shot
+                && st.total_hull_damage < defender.hull_health
+                && effective_shots > 0
+                && attacker.weapon_attack(weapon_index).is_some()
+            {
+                let weapon_type = attacker.weapon_type(weapon_index);
+                for effect in attack_phase_filtered.iter() {
+                    if !effect.weapon_scope.matches(weapon_type) {
+                        continue;
+                    }
+                    if let AbilityEffect::OnHitPreAllPiercingAdd {
+                        armor_piercing,
+                        shield_piercing,
+                        accuracy,
+                    } = scale_active_effect(effect, attack_phase_assimilated)
+                    {
+                        st.attacker_cum_pre_all_pierce.armor_piercing += armor_piercing;
+                        st.attacker_cum_pre_all_pierce.shield_piercing += shield_piercing;
+                        st.attacker_cum_pre_all_pierce.accuracy += accuracy;
                         record_ability_activations(
                             &mut trace,
                             round_index,
@@ -4256,6 +4469,8 @@ struct FireAttackerWeapon<'a> {
     attacker_accuracy_bonus: f64,
     attacker_base_armor_piercing_add: f64,
     attacker_base_piercing_bonus: f64,
+    attacker_pre_all_pierce_add: AttackerStats,
+    attacker_flat_weapon_damage_pre_crit: f64,
     attacker_hostile_base_defense_reduction: f64,
     phase_effects: &'a mut EffectAccumulator,
     hull_breach_effects: &'a [ActiveAbilityEffect],
@@ -4317,6 +4532,8 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
         attacker_accuracy_bonus,
         attacker_base_armor_piercing_add,
         attacker_base_piercing_bonus,
+        attacker_pre_all_pierce_add,
+        attacker_flat_weapon_damage_pre_crit,
         attacker_hostile_base_defense_reduction,
         phase_effects,
         hull_breach_effects,
@@ -4432,11 +4649,14 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             // The component-base contribution is separate from the profile-scaled
             // weapon value.  Multiplying the latter by a base-damage bonus would
             // apply the profile and officer multipliers to it a second time.
+            // Verified `op 5` `AllDamage` (`FlatWeaponDamagePreCrit`) adds flat
+            // pre-crit damage per shot before crit multiplication, mitigation, and isolytic.
             let effective_attack = effective_attack
                 + attacker
                     .weapon_component_base_attack(weapon_index)
                     .unwrap_or(0.0)
-                    * phase_effects.component_base_weapon_damage_frac();
+                    * phase_effects.component_base_weapon_damage_frac()
+                + attacker_flat_weapon_damage_pre_crit;
 
             let roll = (rng.next_u64() as f64) / (u64::MAX as f64);
             trace.record_if(|| CombatEvent {
@@ -4477,6 +4697,29 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
                     adjusted_attacker.shield_piercing =
                         scale(adjusted_attacker.shield_piercing, prof.shield_piercing);
                     adjusted_attacker.accuracy = scale(adjusted_attacker.accuracy, prof.accuracy);
+                }
+                if attacker_pre_all_pierce_add.armor_piercing != 0.0
+                    || attacker_pre_all_pierce_add.shield_piercing != 0.0
+                    || attacker_pre_all_pierce_add.accuracy != 0.0
+                {
+                    let prof = params.profile_piercing_fractions.unwrap_or_default();
+                    let mult_ap =
+                        (1.0 + prof.armor_piercing.max(0.0) + attacker_base_piercing_bonus)
+                            .max(0.0);
+                    let mult_sp =
+                        (1.0 + prof.shield_piercing.max(0.0) + attacker_base_piercing_bonus)
+                            .max(0.0);
+                    let mult_acc =
+                        (1.0 + prof.accuracy.max(0.0) + attacker_base_piercing_bonus).max(0.0);
+                    adjusted_attacker.armor_piercing = (adjusted_attacker.armor_piercing
+                        + attacker_pre_all_pierce_add.armor_piercing * mult_ap)
+                        .max(0.0);
+                    adjusted_attacker.shield_piercing = (adjusted_attacker.shield_piercing
+                        + attacker_pre_all_pierce_add.shield_piercing * mult_sp)
+                        .max(0.0);
+                    adjusted_attacker.accuracy = (adjusted_attacker.accuracy
+                        + attacker_pre_all_pierce_add.accuracy * mult_acc)
+                        .max(0.0);
                 }
                 adjusted_attacker.accuracy += attacker_accuracy_bonus;
                 if attacker_base_armor_piercing_add != 0.0 {
@@ -5344,6 +5587,7 @@ struct FireDefenderCounter<'a> {
     attacker_base_mitigation_bonus: f64,
     attacker_base_armor_bonus: f64,
     attacker_base_mitigation_add: f64,
+    attacker_pre_all_def_add: DefenderStats,
     attacker_base_piercing_reduction: f64,
     defender_base_piercing_bonus: f64,
     weapon_round_base: &'a EffectAccumulator,
@@ -5414,6 +5658,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         attacker_base_mitigation_bonus,
         attacker_base_armor_bonus,
         attacker_base_mitigation_add,
+        attacker_pre_all_def_add,
         attacker_base_piercing_reduction,
         defender_base_piercing_bonus,
         weapon_round_base,
@@ -5574,8 +5819,15 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 || params.defender_stats.dodge > 0.0
         })
         .map(|params| {
+            let pre_all_base = DefenderStats {
+                armor: (params.defender_stats.armor + attacker_pre_all_def_add.armor).max(0.0),
+                shield_deflection: (params.defender_stats.shield_deflection
+                    + attacker_pre_all_def_add.shield_deflection)
+                    .max(0.0),
+                dodge: (params.defender_stats.dodge + attacker_pre_all_def_add.dodge).max(0.0),
+            };
             let mut stats = crate::combat::mitigation::apply_base_mitigation_stat_bonuses(
-                params.defender_stats,
+                pre_all_base,
                 DefenderStats {
                     armor: attacker.armor + attacker_base_armor_bonus,
                     shield_deflection: attacker.shield_deflection,
@@ -6827,12 +7079,19 @@ struct ReactiveStackTotals {
     opp_weapon_damage_reduction: f64,
     opp_crit_chance_reduction: f64,
     apex_barrier_multiplier: f64,
+    pre_all_def_add: f64,
+    pre_all_pierce_add: f64,
 }
 
 struct ReactiveDamageTakenEvents {
     took_hull: bool,
     took_shield: bool,
     took_crit: bool,
+    /// True on the final sub-round of a round: STFC resolves reactive damage-taken grants
+    /// at the boundary of the next sub-turn, so a hit on the last sub-round applies at the
+    /// start of `round_index + 1` (preventing 1-round stacks from expiring before ever taking
+    /// effect — verified against the 2026-11-26 Vi'Dar + B'Elanna Torres capture).
+    is_last_sub_round: bool,
 }
 
 fn sum_reactive_stacks(
@@ -6859,6 +7118,8 @@ fn sum_reactive_stacks(
             ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v) => {
                 out.apex_barrier_multiplier += v
             }
+            ReactiveDamageTakenKind::PreAllAllDefensesAdd(v) => out.pre_all_def_add += v,
+            ReactiveDamageTakenKind::PreAllAllPiercingAdd(v) => out.pre_all_pierce_add += v,
             ReactiveDamageTakenKind::ApplyDefenderBurning
             | ReactiveDamageTakenKind::ApplyDefenderHullBreach
             | ReactiveDamageTakenKind::ApplyAttackerMorale => {}
@@ -6920,10 +7181,15 @@ fn grant_reactive_damage_taken_stacks<'a, I>(
                 *self_morale_rounds = (*self_morale_rounds).max(duration_rounds.max(1));
             }
             _ => {
+                let effective_start_round = if events.is_last_sub_round {
+                    round_index.saturating_add(1)
+                } else {
+                    round_index
+                };
                 let expires_round = if duration_rounds == 0 {
                     u32::MAX
                 } else {
-                    round_index.saturating_add(duration_rounds - 1)
+                    effective_start_round.saturating_add(duration_rounds - 1)
                 };
                 stacks.push(ReactiveDamageTakenStack {
                     expires_round,
@@ -7050,6 +7316,12 @@ struct CombatRunState {
     attacker_cum_base_mitigation_bonus: f64,
     attacker_cum_base_piercing_bonus: f64,
     defender_cum_base_piercing_bonus: f64,
+    /// Cumulative PRE_ALL base defense/piercing points (e.g. Cap. Tilly, Six of Eleven on-hit).
+    attacker_cum_pre_all_def: DefenderStats,
+    attacker_cum_pre_all_pierce: AttackerStats,
+    /// Combat-begin and cumulative round-start POST_ALL pre-crit flat weapon damage (e.g. Mirek, Ro Mudd, Tyler, TOS Kirk).
+    attacker_cb_flat_weapon_damage: ShotsBonusSums,
+    attacker_cum_flat_weapon_damage: ShotsBonusSums,
     /// Cumulative opponent crit-chance reductions (e.g. Changeling Kira RoundStart, Sela on-hit).
     attacker_cum_hostile_crit_chance_reduction: f64,
     defender_cum_hostile_crit_chance_reduction: f64,

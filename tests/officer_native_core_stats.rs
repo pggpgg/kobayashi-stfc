@@ -6,7 +6,7 @@ use std::fs;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use kobayashi::combat::{AbilityEffect, TimingWindow};
+use kobayashi::combat::{AbilityEffect, CrewStatAxis, CrewStatScaledTarget, TimingWindow};
 use kobayashi::data::native_officer_core_stats::stats_for_native_officer;
 use kobayashi::lcars::{
     build_officer_model, build_officer_model_file_default, index_lcars_officers_by_id,
@@ -78,9 +78,15 @@ fn source_backed_core_stats_flow_into_crew_totals_and_tom_coefficient() {
     assert_eq!(tom_seat.ability.timing, TimingWindow::CombatBegin);
     assert_eq!(
         tom_seat.ability.effect,
-        AbilityEffect::UnsupportedOfficerEffect {
+        AbilityEffect::CrewStatScaledDeferred {
+            target: CrewStatScaledTarget::AllDefensesPreAll,
+            axis: CrewStatAxis::Defense,
             coefficient: 4.0,
-            chance: 1.0
+            chance: 1.0,
+            cumulative: false,
+            duration_rounds: 0,
+            reactive_trigger: None,
+            on_hit: false,
         }
     );
 }
@@ -176,9 +182,15 @@ fn hand_authored_lcars_fractional_stat_remains_fractional() {
     assert_eq!(resolved.crew.seats.len(), 1);
     assert_eq!(
         resolved.crew.seats[0].ability.effect,
-        AbilityEffect::UnsupportedOfficerEffect {
+        AbilityEffect::CrewStatScaledDeferred {
+            target: CrewStatScaledTarget::AllDefensesPreAll,
+            axis: CrewStatAxis::Defense,
             coefficient: 4.0,
-            chance: 1.0
+            chance: 1.0,
+            cumulative: false,
+            duration_rounds: 0,
+            reactive_trigger: None,
+            on_hit: false,
         }
     );
 }

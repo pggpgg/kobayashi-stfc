@@ -156,12 +156,14 @@ fn ro_mudd_preserves_ranked_proc_and_coefficient_as_unresolved() {
             s.ability.class == AbilityClass::BridgeAbility
                 && matches!(
                     s.ability.effect,
-                    AbilityEffect::UnsupportedOfficerEffect { .. }
+                    AbilityEffect::CrewStatScaledDeferred { .. }
                 )
         })
-        .expect("Ro Mudd's unverified crew damage must be explicitly retained");
+        .expect(
+            "Ro Mudd's crew-Attack flat weapon damage must retain ranked chance and coefficient",
+        );
     assert!(
-        matches!(proc.ability.effect, AbilityEffect::UnsupportedOfficerEffect { coefficient, chance }
+        matches!(proc.ability.effect, AbilityEffect::CrewStatScaledDeferred { coefficient, chance, .. }
         if (coefficient - 3.0).abs() < 1e-12 && (chance - 0.4).abs() < 1e-12)
     );
 }
@@ -245,10 +247,9 @@ fn annorax_unknown_hit_timing_is_not_mapped_to_an_unconditional_barrier() {
 fn known_unimplemented_officer_abilities_are_not_silent_proxies() {
     let officers = index_lcars_officers_by_id(build_officer_model_file_default().unwrap().officers);
     for id in [
-        "gowron-27ac30",
-        "marcus-073931",
         "vemet-00a218",
-        "b-elanna-torres-75cf02",
+        "ent-e-troi-46cdc3",
+        "changeling-kira-666ebe",
     ] {
         assert!(officers.contains_key(id), "missing catalog officer {id}");
         let buff = resolve_crew_to_buff_set(id, &[], &[], &officers, &ResolveOptions::default());
@@ -273,6 +274,18 @@ fn known_unimplemented_officer_abilities_are_not_silent_proxies() {
             );
         }
     }
+    // Gowron, Marcus, and B'Elanna Torres are now modeled via unified op 5 CrewStatScaledDeferred
+    // (never silent legacy shield_regen/mitigation proxies).
+    for id in ["gowron-27ac30", "marcus-073931", "b-elanna-torres-75cf02"] {
+        let buff = resolve_crew_to_buff_set(id, &[], &[], &officers, &ResolveOptions::default());
+        assert!(
+            buff.crew.seats.iter().any(|s| matches!(
+                s.ability.effect,
+                AbilityEffect::CrewStatScaledDeferred { .. }
+            )),
+            "{id} must use deferred op 5 crew-stat scaling"
+        );
+    }
 }
 
 #[test]
@@ -280,9 +293,8 @@ fn unsupported_source_families_remain_visible_for_passive_and_below_deck_seats()
     let officers = index_lcars_officers_by_id(build_officer_model_file_default().unwrap().officers);
     for (captain, below) in [
         ("origins-burnham-e854d6", ""),
-        ("tyler-1dcc4d", ""),
+        ("toli-2d704a", ""),
         ("", "vil-winn-adami-6c42f3"),
-        ("", "tom-paris-3640cc"),
     ] {
         let below = if below.is_empty() {
             vec![]
@@ -304,6 +316,19 @@ fn unsupported_source_families_remain_visible_for_passive_and_below_deck_seats()
         );
     }
 
+    // Tyler and Tom Paris are now modeled via unified op 5 CrewStatScaledDeferred.
+    for (captain, below) in [
+        ("tyler-1dcc4d", vec![]),
+        ("", vec!["tom-paris-3640cc".into()]),
+    ] {
+        let buff =
+            resolve_crew_to_buff_set(captain, &[], &below, &officers, &ResolveOptions::default());
+        assert!(buff.crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::CrewStatScaledDeferred { .. }
+        )));
+    }
+
     // Brad Boimler below-deck (non-crew-scaled AllDefenses MultiplyAdd) is now modeled as raw
     // BaseMitigationStatsBonus rather than quarantined.
     let boimler = resolve_crew_to_buff_set(
@@ -323,9 +348,9 @@ fn unsupported_source_families_remain_visible_for_passive_and_below_deck_seats()
 #[test]
 fn unsupported_officer_is_not_reported_as_implemented_by_coverage() {
     let officers = index_lcars_officers_by_id(build_officer_model_file_default().unwrap().officers);
-    let mudd = officers.get("ro-mudd-21a89a").unwrap();
-    let effect = &mudd.bridge_ability.as_ref().unwrap().effects[0];
-    let coverage = lcars_effect_coverage(effect, &mudd.id, &ResolveOptions::default());
+    let vemet = officers.get("vemet-00a218").unwrap();
+    let effect = &vemet.bridge_ability.as_ref().unwrap().effects[0];
+    let coverage = lcars_effect_coverage(effect, &vemet.id, &ResolveOptions::default());
     assert_eq!(coverage.tier, MechanicCoverageTier::Ignored);
     assert_eq!(coverage.pathway, "unsupported_officer_effect");
 }

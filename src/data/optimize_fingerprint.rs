@@ -171,7 +171,14 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   damage-through `pierce`; FCM Data `1610205778` moves to its verified captain seat; unsupported
 ///   single-axis `ArmorPiercing` abilities (Azetbur, Honorguard Worf, M'Ral, Paul Stamets) stay
 ///   quarantined with diagnostics instead of falling through to damage-through `shield_pierce`.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 37;
+/// * 37 → 38 (2026-11): Unified `operation 5` (`MultiplyBaseAdd`) crew-stat-scaled officer engine
+///   (#423) — effective 3-axis crew A/D/H evaluation at combat start, `PRE_ALL` defenses & piercing
+///   (Tom Paris, SNW, Ba'el, Gowron, Martok, The Doctor, Cap. Tilly, B'Elanna, Charvanek, Marcus,
+///   Kang, Six of Eleven, etc.), direct flat `ShieldHPRepair` (Beverly Crusher, Spock, TOS Spock),
+///   `POST_ALL` pre-crit `FlatWeaponDamagePreCrit` (Mirek, Wesley Crusher, Ro Mudd, Tyler, TOS
+///   Kirk, etc.), plus final-subround reactive stack expiry parity. New canary `ag_op5_crew_scaled`
+///   exercises the new engine effects while this bump invalidates catalog-resolved crews.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 38;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -1944,6 +1951,109 @@ fn canary_fights() -> Vec<CanaryFight> {
         ],
     };
 
+    // Unified op 5 (MultiplyBaseAdd): PRE_ALL defenses & piercing, POST_ALL pre-crit flat weapon
+    // damage, on-hit cumulative PRE_ALL piercing, and 1R reactive PRE_ALL piercing.
+    let mut op5_attacker = canary_combatant("canary_op5_attacker");
+    op5_attacker.attack = 400.0;
+    op5_attacker.hull_health = 15_000.0;
+    op5_attacker.shield_health = 8_000.0;
+    op5_attacker.armor = 3.0;
+    op5_attacker.shield_deflection = 3.0;
+    op5_attacker.dodge = 3.0;
+    op5_attacker.hostile_mitigation_params = Some(crate::combat::HostileMitigationParams {
+        round_native_defense_stats: false,
+        defender_stats: crate::combat::DefenderStats {
+            armor: 200.0,
+            shield_deflection: 200.0,
+            dodge: 200.0,
+        },
+        weapon_pierce_defender_stats: None,
+        base_attacker_stats: crate::combat::AttackerStats {
+            armor_piercing: 4_000.0,
+            shield_piercing: 4_000.0,
+            accuracy: 4_000.0,
+        },
+        profile_piercing_fractions: None,
+        base_attacker_weapon_stats: Vec::new(),
+        ship_type: crate::combat::ShipType::Interceptor,
+        mystery_mitigation_factor: 0.0,
+        floor: 0.16,
+        ceiling: 0.72,
+    });
+    let mut op5_defender = canary_combatant("canary_op5_defender");
+    op5_defender.attack = 320.0;
+    op5_defender.hull_health = 22_000.0;
+    op5_defender.hostile_mitigation_params = Some(crate::combat::HostileMitigationParams {
+        round_native_defense_stats: false,
+        defender_stats: crate::combat::DefenderStats {
+            armor: 12_000.0,
+            shield_deflection: 12_000.0,
+            dodge: 12_000.0,
+        },
+        weapon_pierce_defender_stats: None,
+        base_attacker_stats: crate::combat::AttackerStats {
+            armor_piercing: 500.0,
+            shield_piercing: 500.0,
+            accuracy: 500.0,
+        },
+        profile_piercing_fractions: Some(crate::combat::AttackerStats {
+            armor_piercing: 4.0,
+            shield_piercing: 4.0,
+            accuracy: 4.0,
+        }),
+        base_attacker_weapon_stats: Vec::new(),
+        ship_type: crate::combat::ShipType::Explorer,
+        mystery_mitigation_factor: 0.0,
+        floor: 0.16,
+        ceiling: 0.72,
+    });
+    let op5_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::BelowDeck,
+                AbilityClass::BelowDeck,
+                TimingWindow::CombatBegin,
+                AbilityEffect::PreAllDefenseAdd {
+                    armor: 800.0,
+                    shield_deflection: 800.0,
+                    dodge: 800.0,
+                    cumulative: false,
+                },
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::FlatWeaponDamagePreCrit {
+                    amount: 250.0,
+                    chance: 1.0,
+                    cumulative: false,
+                },
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::DefensePhase,
+                AbilityEffect::ReactiveDamageTaken {
+                    trigger: crate::combat::DamageTakenTrigger::AnyDamage,
+                    kind: crate::combat::ReactiveDamageTakenKind::PreAllAllPiercingAdd(1_200.0),
+                    chance: 1.0,
+                    duration_rounds: 1,
+                },
+            ),
+            canary_seat(
+                CrewSeat::Captain,
+                AbilityClass::CaptainManeuver,
+                TimingWindow::AttackPhase,
+                AbilityEffect::OnHitPreAllPiercingAdd {
+                    armor_piercing: 400.0,
+                    shield_piercing: 400.0,
+                    accuracy: 400.0,
+                },
+            ),
+        ],
+    };
+
     vec![
         (
             "a_plain",
@@ -2127,6 +2237,13 @@ fn canary_fights() -> Vec<CanaryFight> {
             track_c2_defender,
             canary_config(6, 59),
             track_c2_crew,
+        ),
+        (
+            "ag_op5_crew_scaled",
+            op5_attacker,
+            op5_defender,
+            canary_config(6, 61),
+            op5_crew,
         ),
     ]
 }
@@ -2852,7 +2969,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 39, "expected thirty-nine canary fights");
+        assert_eq!(summaries.len(), 40, "expected forty canary fights");
         assert!(summaries.iter().any(|s| s.starts_with(
             "af_battle_type_and_pvp_defender_perspective:dmg=1250.000000;ahull=9400.000000;dhull=8750.000000;rounds=2;"
         )));
