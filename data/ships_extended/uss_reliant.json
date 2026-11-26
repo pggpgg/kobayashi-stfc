@@ -2336,7 +2336,10 @@
       "condition_defender_hull_breach": false,
       "condition_opponent_faction": null,
       "condition_opponent_ship_class": null,
-      "condition_opponent_hostile_tags": null,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_hostile_tags": [
+        "augment_exile"
+      ],
       "round_cap": null,
       "level_scaled_values": [
         11.0,
@@ -2432,6 +2435,23 @@
       ]
     },
     {
+      "id": "m_ara_insulation",
+      "timing": "combat_begin",
+      "effect_type": "dilithium_destabilization_immunity",
+      "value": 0.0,
+      "duration_rounds": null,
+      "condition_morale": false,
+      "condition_defender_burning": false,
+      "condition_defender_hull_breach": false,
+      "condition_opponent_faction": null,
+      "condition_opponent_ship_class": null,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_hostile_tags": [
+        "augment_exile"
+      ],
+      "round_cap": null
+    },
+    {
       "id": "1972093910",
       "timing": "combat_begin",
       "effect_type": "combat_noop",
@@ -2456,7 +2476,10 @@
       "condition_defender_hull_breach": false,
       "condition_opponent_faction": null,
       "condition_opponent_ship_class": null,
-      "condition_opponent_hostile_tags": null,
+      "condition_defender_is_npc_hostile": true,
+      "condition_opponent_hostile_tags": [
+        "augment_exile"
+      ],
       "round_cap": null
     }
   ],

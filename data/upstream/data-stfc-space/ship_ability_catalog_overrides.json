@@ -208,6 +208,33 @@
       "effect_type": "combat_noop",
       "value_override": 0,
       "unsupported_reason": "Decimator hits while Morale is active stack base Kinetic Weapon Damage."
+    },
+    "2868529361": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "values_scale_with_ship_level": true,
+      "condition_opponent_hostile_tags": ["augment_exile"],
+      "condition_defender_is_npc_hostile": true,
+      "additional_effects": [
+        {
+          "id": "m_ara_insulation",
+          "timing": "combat_begin",
+          "effect_type": "dilithium_destabilization_immunity",
+          "value": 0,
+          "condition_opponent_hostile_tags": ["augment_exile"],
+          "condition_defender_is_npc_hostile": true
+        }
+      ]
+    },
+    "793996890": {
+      "timing": "combat_begin",
+      "effect_type": "apex_barrier",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "condition_opponent_hostile_tags": ["augment_exile"],
+      "condition_defender_is_npc_hostile": true
     }
   }
 }

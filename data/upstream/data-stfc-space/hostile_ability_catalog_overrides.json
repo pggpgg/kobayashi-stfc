@@ -383,6 +383,22 @@
         }
       ],
       "source_note": "Update 96 Polaron Arsenal (loca 96507, Polaron War Open Strongholds): +5000% Isolytic Dampeners, Inertial Diverters, Shield Sweep."
+    },
+    "492210137": {
+      "timing": "combat_begin",
+      "effect_type": "isolytic_damage",
+      "value_is_percentage": false,
+      "ignore_upstream_value_is_percentage": true,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "apex_barrier",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 5000
+        }
+      ],
+      "source_note": "Augment Exile [WOK] Hijacked D7 Class & DY-200-class (loca 78052): bundles Augmented Force (+15% Isolytic Damage) and Not So Wounded (+5,000 Apex Barrier) at combat start."
     }
   }
 }

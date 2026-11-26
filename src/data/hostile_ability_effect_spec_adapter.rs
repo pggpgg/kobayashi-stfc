@@ -20,7 +20,10 @@ pub fn hostile_ability_effect_type_to_modifier(effect_type: &str) -> Option<Abil
         "pierce_bonus" | "armor_pierce" | "shield_pierce" => {
             Some(AbilityModifierSpec::ProcPierceBonus)
         }
-        "conqueror_borg_beam_suppression" | "borg_conqueror_beam_suppression" => None,
+        "conqueror_borg_beam_suppression"
+        | "borg_conqueror_beam_suppression"
+        | "dilithium_destabilization_immunity"
+        | "m_ara_insulation" => None,
         "accuracy" | "accuracy_bonus" => None,
         _ => ship_ability_effect_type_to_modifier(effect_type),
     }

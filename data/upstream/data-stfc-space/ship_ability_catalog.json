@@ -204,7 +204,11 @@
       "timing": "combat_begin",
       "effect_type": "apex_barrier",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "condition_opponent_hostile_tags": [
+        "augment_exile"
+      ],
+      "condition_defender_is_npc_hostile": true
     },
     "835292335": {
       "timing": "combat_begin",
@@ -705,7 +709,7 @@
       "effect_type": "conqueror_borg_beam_suppression",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0.0,
+      "value_override": 0,
       "condition_opponent_hostile_tags": [
         "conqueror_borg"
       ]
@@ -887,7 +891,24 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_damage",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "values_scale_with_ship_level": true,
+      "condition_opponent_hostile_tags": [
+        "augment_exile"
+      ],
+      "condition_defender_is_npc_hostile": true,
+      "additional_effects": [
+        {
+          "id": "m_ara_insulation",
+          "timing": "combat_begin",
+          "effect_type": "dilithium_destabilization_immunity",
+          "value": 0,
+          "condition_opponent_hostile_tags": [
+            "augment_exile"
+          ],
+          "condition_defender_is_npc_hostile": true
+        }
+      ]
     },
     "2869476908": {
       "timing": "combat_begin",

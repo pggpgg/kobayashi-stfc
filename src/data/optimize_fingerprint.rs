@@ -187,7 +187,12 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   reactive `HitTaken` flat Apex Barrier (`num_rounds=2`), and single-axis `ArmorPiercing` pool
 ///   scaling (M'Ral launch, Azetbur on-hit, Paul Stamets PvP). New canary `ah_batch_b_mechanics`
 ///   covers the engine paths while this bump invalidates persisted profile/catalog observations.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 39;
+/// * 39 → 40 (2026-11): Augment Exile [WOK] hostile tag (`faction.id 1306860549`), U.S.S. Reliant
+///   ability gates (`Always Reliant`, `Reliant Barrier`, and `M/ARA Insulation`
+///   `DilithiumDestabilizationImmunity`), Hijacked D7 / DY-200 `Not So Wounded` (+5,000 Apex
+///   Barrier), and WOK Carol Marcus Exile loot routing. Canary `ai_reliant_dilithium_immunity`
+///   verifies `DilithiumDestabilizationImmunity` suppresses `HostileLethalCombatBegin`.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 40;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -975,6 +980,56 @@ fn canary_fight_summaries() -> Vec<String> {
         pvp_res.attacker_hull_remaining,
         pvp_res.defender_hull_remaining,
         pvp_res.rounds_simulated
+    ));
+
+    // U.S.S. Reliant M/ARA Insulation (`DilithiumDestabilizationImmunity`) vs Augment Exile
+    // `HostileLethalCombatBegin` (100% lethal chance): must survive all rounds instead of dying at round 0.
+    let mut reliant_att = canary_combatant("canary_ai_reliant");
+    reliant_att.attack = 400.0;
+    reliant_att.hull_health = 10_000.0;
+    let mut exile_def = canary_combatant("canary_ai_exile");
+    exile_def.attack = 100.0;
+    exile_def.hull_health = 10_000.0;
+    let mut immune_seat = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::CombatBegin,
+        AbilityEffect::DilithiumDestabilizationImmunity,
+    );
+    immune_seat.ability.condition = Some(AbilityCondition::And(vec![
+        AbilityCondition::DefenderIsNpcHostile,
+        AbilityCondition::DefenderHostileTagsAllPresent {
+            required_mask: crate::combat::hostile_tags::HOSTILE_TAG_MASK_AUGMENT_EXILE,
+        },
+    ]));
+    let lethal_seat = canary_seat(
+        CrewSeat::Ship,
+        AbilityClass::ShipAbility,
+        TimingWindow::CombatBegin,
+        AbilityEffect::HostileLethalCombatBegin { chance: 1.0 },
+    );
+    let mut reliant_cfg = canary_config(2, 103);
+    reliant_cfg.defender_hostile_tag_mask =
+        crate::combat::hostile_tags::HOSTILE_TAG_MASK_AUGMENT_EXILE;
+    let reliant_res = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &reliant_att,
+        &exile_def,
+        &reliant_cfg,
+        &CrewConfiguration {
+            seats: vec![immune_seat],
+        },
+        crate::combat::OpponentFactionTag::Unknown,
+        crate::combat::ShipType::Interceptor,
+        crate::combat::ShipType::Explorer,
+        true,
+        false,
+        &CrewConfiguration {
+            seats: vec![lethal_seat],
+        },
+    );
+    summaries.push(format!(
+        "ai_reliant_dilithium_immunity:dmg={:.6};ahull={:.6};rounds={};",
+        reliant_res.total_damage, reliant_res.attacker_hull_remaining, reliant_res.rounds_simulated
     ));
     summaries
 }
@@ -3049,7 +3104,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 41, "expected forty-one canary fights");
+        assert_eq!(summaries.len(), 42, "expected forty-two canary fights");
         assert!(summaries.iter().any(|s| s.starts_with(
             "af_battle_type_and_pvp_defender_perspective:dmg=1250.000000;ahull=9400.000000;dhull=8750.000000;rounds=2;"
         )));

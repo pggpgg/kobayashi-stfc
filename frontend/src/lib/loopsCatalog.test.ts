@@ -57,6 +57,8 @@ describe("loops catalog", () => {
       ["xindi-aquatic", "Xindi-Aquatic Cruiser"],
       ["xindi-aquatic-enhanced", "Xindi-Aquatic Enhanced Cruiser"],
       ["silent-enemies", "SILENT ENEMY"],
+      ["augment-exiles", "Hijacked D7 Class"],
+      ["augment-exiles", "DY-200-class"],
     ] as const;
 
     for (const [loopId, name] of cases) {
@@ -251,5 +253,24 @@ describe("loops catalog liveness against the installed hostile catalog", () => {
     expect(resolveLoopHostiles(installedHostiles, loop).length).toBeGreaterThan(
       0,
     );
+  });
+
+  it("resolves the Augment Exiles (U.S.S. Reliant) ladder across all five Exile hostile families", () => {
+    const loop = findLoop("augment-exiles");
+    const ladder = resolveLoopHostiles(installedHostiles, loop);
+
+    expect(loop.specialtyShipIds).toEqual(["uss_reliant"]);
+    expect(ladder.length).toBe(96);
+    expect(Math.min(...ladder.map((row) => row.level))).toBe(26);
+    expect(Math.max(...ladder.map((row) => row.level))).toBe(70);
+    for (const family of [
+      "Hijacked D3 Class",
+      "Hijacked D7 Class",
+      "Hijacked Legionary",
+      "Hijacked U.S.S. Mayflower",
+      "DY-200-class",
+    ]) {
+      expect(ladder.some((row) => hostileLabel(row) === family)).toBe(true);
+    }
   });
 });

@@ -347,6 +347,11 @@ impl HostileRecord {
             {
                 tags.push("xindi_aquatic".to_string());
             }
+            if mask & crate::combat::hostile_tags::HOSTILE_TAG_MASK_AUGMENT_EXILE != 0
+                && !tags.iter().any(|t| t == "augment_exile")
+            {
+                tags.push("augment_exile".to_string());
+            }
         }
         tags
     }

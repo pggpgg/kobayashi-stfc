@@ -479,6 +479,25 @@ export const LOOP_CATALOG: readonly LoopDefinition[] = [
       "https://startrekfleetcommand.com/news/the-u-s-s-dauntless-revolutionizing-the-hostile-hunt/",
   },
   {
+    id: "augment-exiles",
+    name: "Augment Exiles",
+    summary:
+      "Hunt Augment Exile [WOK] Hijacked ships and DY-200 pursuit targets in Exile space.",
+    progression:
+      "Hijacked Splicers, Augment faction store mega claims, Wrath Credits, and U.S.S. Reliant upgrades",
+    engagement: "hostile",
+    minOps: 26,
+    hostilePatterns: [
+      /^hijacked (d3 class|d7 class|legionary|u\.s\.s\. mayflower)$/i,
+      /^dy-200-class$/i,
+    ],
+    shipPolicy: "recommended",
+    specialtyShipIds: ["uss_reliant"],
+    specialtyShipLabel:
+      "U.S.S. Reliant (immune to Hijacked D7 & DY-200 Dilithium Destabilization)",
+    goals: ALL_GOALS,
+  },
+  {
     id: "academy-drones",
     name: "Academy drones",
     summary: "Training Drone hostiles tied to Academy Space progression.",
