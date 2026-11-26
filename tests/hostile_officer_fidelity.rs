@@ -377,40 +377,60 @@ fn unresolved_hit_mechanics_remain_inert_in_multishot_hostile_fights() {
     let base = simulate_combat(&player, &hostile, &config, &CrewConfiguration::default());
     let annorax = crew("", &[ANNORAX.to_owned()], &[], 5);
     let arix = crew(ARIX, &[], &[], 1);
-    for (buff, class, timing) in [
-        (
-            annorax,
-            AbilityClass::BridgeAbility,
-            TimingWindow::DefensePhase,
-        ),
-        (
-            arix,
-            AbilityClass::CaptainManeuver,
-            TimingWindow::AttackPhase,
-        ),
-    ] {
-        let disabled = buff
-            .crew
-            .seats
-            .into_iter()
-            .find(|s| s.ability.class == class)
-            .unwrap();
-        assert_eq!(disabled.ability.timing, timing);
-        assert!(matches!(
-            disabled.ability.effect,
-            AbilityEffect::UnsupportedOfficerEffect { .. }
-        ));
-        let test_crew = CrewConfiguration {
-            seats: vec![disabled],
-        };
-        let result = simulate_combat(&player, &hostile, &config, &test_crew);
-        assert_eq!(result.attacker_hull_remaining, base.attacker_hull_remaining);
-        assert_eq!(result.total_damage, base.total_damage);
-        assert!(!result
-            .events
-            .iter()
-            .any(|e| e.event_type == "burning_trigger"));
-    }
+
+    // Annorax (verified 2026-11-26 Batch B Fight D): resolves to reactive HitTaken flat Apex
+    // Barrier (+2000..+3200 once per volley for 2 rounds) and reduces incoming hull damage.
+    let annorax_seat = annorax
+        .crew
+        .seats
+        .into_iter()
+        .find(|s| s.ability.class == AbilityClass::BridgeAbility)
+        .unwrap();
+    assert_eq!(annorax_seat.ability.timing, TimingWindow::DefensePhase);
+    assert!(matches!(
+        annorax_seat.ability.effect,
+        AbilityEffect::ReactiveDamageTaken {
+            trigger: kobayashi::combat::DamageTakenTrigger::AnyDamage,
+            kind: kobayashi::combat::ReactiveDamageTakenKind::ApexBarrierFlatBonus(v),
+            duration_rounds: 2,
+            ..
+        } if (v - 3200.0).abs() < 1e-6
+    ));
+    let annorax_res = simulate_combat(
+        &player,
+        &hostile,
+        &config,
+        &CrewConfiguration {
+            seats: vec![annorax_seat],
+        },
+    );
+    assert!(
+        annorax_res.attacker_hull_remaining > base.attacker_hull_remaining,
+        "Annorax reactive Apex Barrier must reduce incoming damage over multi-round fights"
+    );
+
+    // Arix remains unresolved and inert.
+    let disabled = arix
+        .crew
+        .seats
+        .into_iter()
+        .find(|s| s.ability.class == AbilityClass::CaptainManeuver)
+        .unwrap();
+    assert_eq!(disabled.ability.timing, TimingWindow::AttackPhase);
+    assert!(matches!(
+        disabled.ability.effect,
+        AbilityEffect::UnsupportedOfficerEffect { .. }
+    ));
+    let test_crew = CrewConfiguration {
+        seats: vec![disabled],
+    };
+    let result = simulate_combat(&player, &hostile, &config, &test_crew);
+    assert_eq!(result.attacker_hull_remaining, base.attacker_hull_remaining);
+    assert_eq!(result.total_damage, base.total_damage);
+    assert!(!result
+        .events
+        .iter()
+        .any(|e| e.event_type == "burning_trigger"));
 }
 
 #[test]

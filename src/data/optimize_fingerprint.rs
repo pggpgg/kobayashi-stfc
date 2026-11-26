@@ -178,7 +178,16 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   `POST_ALL` pre-crit `FlatWeaponDamagePreCrit` (Mirek, Wesley Crusher, Ro Mudd, Tyler, TOS
 ///   Kirk, etc.), plus final-subround reactive stack expiry parity. New canary `ag_op5_crew_scaled`
 ///   exercises the new engine effects while this bump invalidates catalog-resolved crews.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 38;
+/// * 38 → 39 (2026-11): Batch B live-verified combat fixes (Fights A–F) — native Defensive Tactics
+///   (`rid 1914017763`, `bid 2859405133`) CombatStart non-Armada hostile weapon-damage reduction
+///   (`-5%..-30%`, additive with Chen/T'Laan), ship `officer_bonus.attack` additive in the
+///   `weapon_damage` MULT pool (matching Realta vs Vi'Dar captures), unified `op 6`
+///   (`MultiplyBaseSub`) `ShieldHPRepair` flat enemy shield drain (Ent-E Troi, Vemet, Six Of Eleven
+///   cap, Michael Burnham), Suder (`2041170794`) round-boundary hull repair, Annorax (`2281926825`)
+///   reactive `HitTaken` flat Apex Barrier (`num_rounds=2`), and single-axis `ArmorPiercing` pool
+///   scaling (M'Ral launch, Azetbur on-hit, Paul Stamets PvP). New canary `ah_batch_b_mechanics`
+///   covers the engine paths while this bump invalidates persisted profile/catalog observations.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 39;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -2054,6 +2063,70 @@ fn canary_fights() -> Vec<CanaryFight> {
         ],
     };
 
+    // Canary ah: Batch B verified mechanics — op 6 flat enemy shield drain (RoundStart & OnHit),
+    // Annorax reactive flat Apex Barrier, single-axis ArmorPiercing (launch & on-hit & enemy
+    // reduction), and Defensive Tactics + Chen additive opponent weapon-damage reduction.
+    let mut batch_b_attacker = op5_attacker.clone();
+    batch_b_attacker.id = "canary_batch_b_attacker".to_string();
+    batch_b_attacker.apex_barrier = 800.0;
+    let mut batch_b_defender = op5_defender.clone();
+    batch_b_defender.id = "canary_batch_b_defender".to_string();
+    batch_b_defender.shield_health = 8_000.0;
+    let batch_b_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::OpponentWeaponDamageReduction {
+                    reduction: 0.30,
+                    cumulative: false,
+                },
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::RoundStart,
+                AbilityEffect::DefenderShieldDrainFlat(600.0),
+            ),
+            canary_seat(
+                CrewSeat::Captain,
+                AbilityClass::CaptainManeuver,
+                TimingWindow::AttackPhase,
+                AbilityEffect::OnHitDefenderShieldDrainFlat(250.0),
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::DefensePhase,
+                AbilityEffect::ReactiveDamageTaken {
+                    trigger: crate::combat::DamageTakenTrigger::AnyDamage,
+                    kind: crate::combat::ReactiveDamageTakenKind::ApexBarrierFlatBonus(2_000.0),
+                    chance: 1.0,
+                    duration_rounds: 2,
+                },
+            ),
+            canary_seat(
+                CrewSeat::Captain,
+                AbilityClass::CaptainManeuver,
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseArmorPiercingBonus(0.35),
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::AttackPhase,
+                AbilityEffect::OnHitBaseArmorPiercingBonus(0.40),
+            ),
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileBaseArmorPiercingReduction(0.50),
+            ),
+        ],
+    };
+
     vec![
         (
             "a_plain",
@@ -2244,6 +2317,13 @@ fn canary_fights() -> Vec<CanaryFight> {
             op5_defender,
             canary_config(6, 61),
             op5_crew,
+        ),
+        (
+            "ah_batch_b_mechanics",
+            batch_b_attacker,
+            batch_b_defender,
+            canary_config(6, 67),
+            batch_b_crew,
         ),
     ]
 }
@@ -2969,7 +3049,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 40, "expected forty canary fights");
+        assert_eq!(summaries.len(), 41, "expected forty-one canary fights");
         assert!(summaries.iter().any(|s| s.starts_with(
             "af_battle_type_and_pvp_defender_perspective:dmg=1250.000000;ahull=9400.000000;dhull=8750.000000;rounds=2;"
         )));

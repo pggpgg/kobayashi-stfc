@@ -44,9 +44,9 @@
   "monte_carlo": {
     "iterations": 2000,
     "seed": 0,
-    "min_win_rate": 0.99,
+    "min_win_rate": 0.95,
     "min_r1_kill_rate": 0.0001,
-    "min_avg_hull_remaining": 0.8
+    "min_avg_hull_remaining": 0.7
   },
   "trace_expectations": {
     "min_hunt_the_hunters_isolytic_bonus_composed": 55.0,
@@ -59,6 +59,7 @@
     "Acrocanth Isolytic Vulnerability: sim total_isolytic_damage should match total_damage when the isolytic leg alone depletes shields and hull.",
     "Bands recalibrated after dae611e3 (Apply imported ship components): the demo profile imports Gorn Eviscerator components (hull_id 1273528452), which the sim now applies, lowering deterministic total_damage from ~570M to ~487.6M (sim/kill 1.567). sim_bands + log_sim_ratio_bands re-centered on the components-applied values; Monte Carlo / trace expectations unchanged.",
     "Bands recalibrated after the multi-shot equal-damage fix (set_pre_attack_damage_base now resets the PreAttackDamage stack per hit; hit N of a multi-shot weapon previously dealt N x base). Deterministic total_damage drops from ~487.6M to ~329.8M and sim/kill improves from 1.567 to 1.060 — the sim now tracks the in-game kill summary much more closely.",
-    "With hostile-first volleys and shield overflow, the demo-profile Monte Carlo produced one round-one kill in 2,000 seeds while the recorded fight was a round-one critical win. The 0.0001 floor catches a complete loss of this outcome but is not an estimate of the historical probability. Hostile-first damage lowered average surviving hull to about 0.87, so the smoke floor is 0.8 rather than a log-derived target."
+    "With hostile-first volleys and shield overflow, the demo-profile Monte Carlo produced one round-one kill in 2,000 seeds while the recorded fight was a round-one critical win. The 0.0001 floor catches a complete loss of this outcome but is not an estimate of the historical probability. Hostile-first damage lowered average surviving hull to about 0.87, so the smoke floor is 0.8 rather than a log-derived target.",
+    "Demo-profile Monte Carlo smoke floors adjusted (min_win_rate 0.99 -> 0.95, min_avg_hull_remaining 0.8 -> 0.7; all observed sim_bands, log_sim_ratio_bands, and trace_expectations unchanged and passing at sim/kill=1.000) after moving ship officer_bonus.attack into the additive weapon_damage MULT pool (Batch B Realta +100% vs Vi'Dar +350% -> 94.6x vs 98.1x; also consistent with this CSV's 70.13M/1.252M = 56.03x DPR vs >146x under multiplicative 6x). Previously the 6x multiplicative officer_bonus.attack bug masked profiles/demo lacking buffs.imported.json (syndicate, artifacts, Fleet Commanders, consumables, Defensive Tactics); with the true additive formula, demo-profile MC sits at win_rate=0.9860, r1_kill=0.9860, avg_hull=0.7464."
   ]
 }

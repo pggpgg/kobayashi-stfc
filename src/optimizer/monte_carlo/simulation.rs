@@ -460,6 +460,7 @@ fn unsupported_defender_raw_effects(crew: &crate::combat::CrewConfiguration) -> 
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
+                | AbilityEffect::HostileBaseArmorPiercingReduction(_)
                 | AbilityEffect::HostileCritChanceReduction(_)
         )
     })
@@ -476,7 +477,13 @@ fn unsupported_crew_health_effects_for_crew(
         | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
         | AbilityEffect::CrewStatScaledDeferred { .. }
         | AbilityEffect::UnsupportedOfficerEffect { .. } => true,
-        AbilityEffect::BaseArmorPiercingAdd(value) if value != 0.0 => !has_outbound_raw,
+        AbilityEffect::BaseArmorPiercingAdd(value)
+        | AbilityEffect::BaseArmorPiercingBonus(value)
+        | AbilityEffect::OnHitBaseArmorPiercingBonus(value)
+            if value != 0.0 =>
+        {
+            !has_outbound_raw
+        }
         AbilityEffect::PreAllPiercingAdd {
             armor_piercing,
             shield_piercing,
@@ -505,7 +512,12 @@ fn unsupported_crew_health_effects_for_crew(
             kind: ReactiveDamageTakenKind::PreAllAllDefensesAdd(v),
             ..
         } if v != 0.0 => !has_inbound_raw,
-        AbilityEffect::HostileBasePiercingStatsReduction(value) if value != 0.0 => !has_inbound_raw,
+        AbilityEffect::HostileBasePiercingStatsReduction(value)
+        | AbilityEffect::HostileBaseArmorPiercingReduction(value)
+            if value != 0.0 =>
+        {
+            !has_inbound_raw
+        }
         _ => false,
     })
 }

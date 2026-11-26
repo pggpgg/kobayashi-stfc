@@ -264,6 +264,7 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
                 "unsupported_officer_effect"
                     | "base_mitigation_stats_bonus"
                     | "base_piercing_stats_bonus"
+                    | "base_armor_piercing_bonus"
             ) || stat.starts_with("crew_scaled_")
         }) {
             // Keep inert diagnostic markers, crew-stat-scaled op 5 abilities, and

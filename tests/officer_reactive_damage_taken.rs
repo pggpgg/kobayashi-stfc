@@ -989,8 +989,9 @@ fn krell_mirek_mirror_uhura_and_quarantined_officers_behave_correctly() {
         base_res.attacker_hull_remaining
     );
 
-    // Quarantined enemy-targeting HullDamageTaken MultiplyBaseSub officer (Michael Burnham) MUST
-    // stay UnsupportedOfficerEffect.
+    // Verified enemy-targeting HullDamageTaken MultiplyBaseSub ShieldHPRepair officer
+    // (Michael Burnham, Batch B Fight C unified op 6 family) compiles to reactive
+    // CrewStatScaledDeferred::DefenderShieldDrainFlat.
     let burnham_crew = resolve_crew_to_buff_set(
         "",
         &["michael-burnham-6c711c".into()],
@@ -1000,11 +1001,16 @@ fn krell_mirek_mirror_uhura_and_quarantined_officers_behave_correctly() {
     )
     .crew;
     assert!(
-        burnham_crew.seats.iter().all(|s| matches!(
+        burnham_crew.seats.iter().any(|s| matches!(
             s.ability.effect,
-            AbilityEffect::UnsupportedOfficerEffect { .. }
+            AbilityEffect::CrewStatScaledDeferred {
+                target: kobayashi::combat::CrewStatScaledTarget::DefenderShieldDrainFlat,
+                axis: kobayashi::combat::CrewStatAxis::Attack,
+                reactive_trigger: Some(kobayashi::combat::DamageTakenTrigger::HullDamage),
+                ..
+            }
         )),
-        "michael-burnham-6c711c bridge ability must remain quarantined as UnsupportedOfficerEffect, got {:?}",
+        "michael-burnham-6c711c bridge ability must compile to reactive op 6 DefenderShieldDrainFlat, got {:?}",
         burnham_crew
             .seats
             .iter()

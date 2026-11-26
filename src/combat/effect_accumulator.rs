@@ -1165,7 +1165,12 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::BaseArmorPiercingBonus(_)
+                | AbilityEffect::OnHitBaseArmorPiercingBonus(_)
                 | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
+                | AbilityEffect::HostileBaseArmorPiercingReduction(_)
+                | AbilityEffect::DefenderShieldDrainFlat(_)
+                | AbilityEffect::OnHitDefenderShieldDrainFlat(_)
                 | AbilityEffect::BaseArmorBonus(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::CumulativeBaseMitigationStatsBonus(_) => {}
@@ -1387,7 +1392,12 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::BaseArmorPiercingBonus(_)
+                | AbilityEffect::OnHitBaseArmorPiercingBonus(_)
                 | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
+                | AbilityEffect::HostileBaseArmorPiercingReduction(_)
+                | AbilityEffect::DefenderShieldDrainFlat(_)
+                | AbilityEffect::OnHitDefenderShieldDrainFlat(_)
                 | AbilityEffect::BaseArmorBonus(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::CumulativeBaseMitigationStatsBonus(_) => {}
@@ -1591,7 +1601,12 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::BaseArmorPiercingBonus(_)
+                | AbilityEffect::OnHitBaseArmorPiercingBonus(_)
                 | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
+                | AbilityEffect::HostileBaseArmorPiercingReduction(_)
+                | AbilityEffect::DefenderShieldDrainFlat(_)
+                | AbilityEffect::OnHitDefenderShieldDrainFlat(_)
                 | AbilityEffect::BaseArmorBonus(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::CumulativeBaseMitigationStatsBonus(_) => {}
@@ -1855,7 +1870,12 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::BaseArmorPiercingBonus(_)
+                | AbilityEffect::OnHitBaseArmorPiercingBonus(_)
                 | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
+                | AbilityEffect::HostileBaseArmorPiercingReduction(_)
+                | AbilityEffect::DefenderShieldDrainFlat(_)
+                | AbilityEffect::OnHitDefenderShieldDrainFlat(_)
                 | AbilityEffect::BaseArmorBonus(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::CumulativeBaseMitigationStatsBonus(_)
@@ -2009,7 +2029,12 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::BaseArmorPiercingBonus(_)
+                | AbilityEffect::OnHitBaseArmorPiercingBonus(_)
                 | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
+                | AbilityEffect::HostileBaseArmorPiercingReduction(_)
+                | AbilityEffect::DefenderShieldDrainFlat(_)
+                | AbilityEffect::OnHitDefenderShieldDrainFlat(_)
                 | AbilityEffect::BaseArmorBonus(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::CumulativeBaseMitigationStatsBonus(_) => {}
@@ -2257,7 +2282,12 @@ impl EffectAccumulator {
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::BaseArmorPiercingBonus(_)
+                | AbilityEffect::OnHitBaseArmorPiercingBonus(_)
                 | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
+                | AbilityEffect::HostileBaseArmorPiercingReduction(_)
+                | AbilityEffect::DefenderShieldDrainFlat(_)
+                | AbilityEffect::OnHitDefenderShieldDrainFlat(_)
                 | AbilityEffect::BaseArmorBonus(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::CumulativeBaseMitigationStatsBonus(_) => {}
@@ -2425,7 +2455,12 @@ fn preserves_non_officer_research_value(effect: &ActiveAbilityEffect) -> bool {
                 | AbilityEffect::HostileBasePiercingStatsReduction(_)
                 | AbilityEffect::HostileBaseDefenseStatsReduction(_)
                 | AbilityEffect::BasePiercingStatsBonus(_)
+                | AbilityEffect::BaseArmorPiercingBonus(_)
+                | AbilityEffect::OnHitBaseArmorPiercingBonus(_)
                 | AbilityEffect::CumulativeBasePiercingStatsBonus(_)
+                | AbilityEffect::HostileBaseArmorPiercingReduction(_)
+                | AbilityEffect::DefenderShieldDrainFlat(_)
+                | AbilityEffect::OnHitDefenderShieldDrainFlat(_)
                 | AbilityEffect::BaseArmorBonus(_)
                 | AbilityEffect::BaseMitigationStatsBonus(_)
                 | AbilityEffect::CumulativeBaseMitigationStatsBonus(_)
@@ -2674,8 +2709,20 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
                     ),
                     chance,
                 ),
+                ReactiveDamageTakenKind::ApexBarrierFlatBonus(v) => (
+                    ReactiveDamageTakenKind::ApexBarrierFlatBonus(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
                 ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v) => (
                     ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(
+                        v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+                    ),
+                    chance,
+                ),
+                ReactiveDamageTakenKind::DrainOpponentShieldFlat(v) => (
+                    ReactiveDamageTakenKind::DrainOpponentShieldFlat(
                         v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
                     ),
                     chance,
@@ -2826,6 +2873,23 @@ pub(crate) fn scale_effect(effect: AbilityEffect, assimilated_active: bool) -> A
         }
         AbilityEffect::BasePiercingStatsBonus(v) => {
             AbilityEffect::BasePiercingStatsBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::BaseArmorPiercingBonus(v) => {
+            AbilityEffect::BaseArmorPiercingBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::OnHitBaseArmorPiercingBonus(v) => {
+            AbilityEffect::OnHitBaseArmorPiercingBonus(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::HostileBaseArmorPiercingReduction(v) => {
+            AbilityEffect::HostileBaseArmorPiercingReduction(
+                v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER,
+            )
+        }
+        AbilityEffect::DefenderShieldDrainFlat(v) => {
+            AbilityEffect::DefenderShieldDrainFlat(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
+        }
+        AbilityEffect::OnHitDefenderShieldDrainFlat(v) => {
+            AbilityEffect::OnHitDefenderShieldDrainFlat(v * ASSIMILATED_EFFECTIVENESS_MULTIPLIER)
         }
         AbilityEffect::CumulativeBasePiercingStatsBonus(v) => {
             AbilityEffect::CumulativeBasePiercingStatsBonus(

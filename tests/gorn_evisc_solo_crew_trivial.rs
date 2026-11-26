@@ -41,19 +41,25 @@ fn run_solo(label: &str, crew: &CrewCandidate) -> (f64, f64, f64) {
 
 #[test]
 fn gorn_evisc_non_combat_captain_alone_is_trivial_win_vs_447012258() {
-    // Non-combat captain (Quark), no bridge, no below-decks — ship hull ability + demo profile + Enaran chaos only.
+    // Non-combat captain (Quark), no bridge, no below-decks — ship hull ability + demo profile +
+    // Enaran chaos only. Note: `profiles/demo` lacks `buffs.imported.json` (syndicate, artifacts,
+    // Fleet Commanders, consumables, Defensive Tactics), so its Gorn Eviscerator carries ~half the
+    // real Ops-60 player's hull (~36M vs 84.8M) and weapon_damage (~28x vs 56x). After fixing ship
+    // `officer_bonus.attack` from multiplicative `(1 + 5.0) = 6x` to additive in the weapon_damage
+    // MULT pool (Batch B verified), demo-profile Quark solo no longer gets a bogus 6x inflation and
+    // wins only on round-1 crits (~21%) rather than surviving to round 2.
     let solo = CrewCandidate {
         captain: "quark-2fd57b".to_string(),
         bridge: vec![],
         below_decks: vec![],
     };
-    let (win_rate, _, hull) = run_solo("quark_solo", &solo);
+    let (win_rate, r1_kill, hull) = run_solo("quark_solo", &solo);
     assert!(
-        win_rate > 0.99,
-        "non-combat captain alone should trivially win (got {win_rate})"
+        win_rate > 0.15 && r1_kill > 0.15,
+        "demo-profile Quark solo should still score round-1 isolytic crit wins (got win_rate={win_rate}, r1_kill={r1_kill})"
     );
     assert!(
-        hull > 0.5,
-        "expected comfortable hull remaining on wins (got {hull})"
+        hull > 0.10,
+        "expected positive average hull remaining across trials (got {hull})"
     );
 }

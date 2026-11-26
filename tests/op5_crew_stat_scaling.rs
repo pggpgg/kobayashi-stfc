@@ -1,8 +1,9 @@
-//! Unified `operation 5` (`MultiplyBaseAdd`) crew-stat-scaled officer tests.
+//! Unified `operation 5` (`MultiplyBaseAdd`) and `operation 6` (`MultiplyBaseSub`) crew-stat-scaled officer tests.
 //!
-//! Covers all 43 verified `SelfShip` / `SelfAllShips` `MultiplyBaseAdd` abilities across all four
-//! empirically proven families (2026-10-26 Realta captain-swap + 2026-11-26 Vi'Dar/Realta live
-//! captures) and verifies the 7 unverified `op 5` / `op 6` abilities stay quarantined.
+//! Covers all 47 verified `MultiplyBaseAdd` (`SelfShip` / `SelfAllShips`) and `MultiplyBaseSub`
+//! (`EnemyShip` `ShieldHPRepair`) abilities across all five empirically proven families
+//! (2026-10-26 Realta captain-swap + 2026-11-26 Vi'Dar/Realta Batch A & Batch B live captures)
+//! and verifies the 3 unverified `op 5` / `op 6` abilities stay quarantined.
 
 use kobayashi::combat::{
     build_combat_setup, simulate_combat, simulate_combat_from_setup, Ability, AbilityClass,
@@ -518,11 +519,56 @@ fn all_50_op5_and_op6_abilities_route_or_quarantine_explicitly() {
             None,
             false,
         ),
+        // op 6 ShieldHPRepair EnemyShip / EnemyAllShips (4 abilities, Batch B Fight C)
+        (
+            "ent-e-troi-46cdc3",
+            "bridge",
+            CrewStatScaledTarget::DefenderShieldDrainFlat,
+            CrewStatAxis::Attack,
+            TimingWindow::RoundStart,
+            false,
+            0,
+            None,
+            false,
+        ),
+        (
+            "vemet-00a218",
+            "bridge",
+            CrewStatScaledTarget::DefenderShieldDrainFlat,
+            CrewStatAxis::Health,
+            TimingWindow::RoundStart,
+            false,
+            0,
+            None,
+            false,
+        ),
+        (
+            "six-of-eleven-20cbe8",
+            "captain",
+            CrewStatScaledTarget::DefenderShieldDrainFlat,
+            CrewStatAxis::Defense,
+            TimingWindow::AttackPhase,
+            false,
+            0,
+            None,
+            true,
+        ),
+        (
+            "michael-burnham-6c711c",
+            "bridge",
+            CrewStatScaledTarget::DefenderShieldDrainFlat,
+            CrewStatAxis::Attack,
+            TimingWindow::DefensePhase,
+            false,
+            0,
+            Some(DamageTakenTrigger::HullDamage),
+            false,
+        ),
     ];
     assert_eq!(
         verified.len(),
-        43,
-        "all 43 verified op 5 abilities accounted for"
+        47,
+        "all 47 verified op 5 / op 6 abilities accounted for"
     );
 
     for &(
@@ -600,15 +646,11 @@ fn all_50_op5_and_op6_abilities_route_or_quarantine_explicitly() {
         }
     }
 
-    // All 7 unverified op 5 / op 6 abilities remain quarantined as UnsupportedOfficerEffect.
+    // All 3 remaining unverified op 5 / op 6 abilities remain quarantined as UnsupportedOfficerEffect.
     let quarantined: &[(&str, &str)] = &[
         ("honorguard-worf-8ac58c", "captain"),
         ("changeling-kira-666ebe", "bridge"),
         ("toli-2d704a", "bridge"),
-        ("ent-e-troi-46cdc3", "bridge"),
-        ("vemet-00a218", "bridge"),
-        ("six-of-eleven-20cbe8", "captain"),
-        ("michael-burnham-6c711c", "bridge"),
     ];
     for &(oid, seat_kind) in quarantined {
         let buff = match seat_kind {

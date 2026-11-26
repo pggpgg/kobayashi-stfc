@@ -13,6 +13,7 @@ use crate::combat::CrewSeatContext;
 use crate::data::import::{GlobalBuffEntry, ResearchEntry};
 use crate::data::native_consumable_buffs::{
     bonuses_from_catalog_for_ship, combat_start_defense_seats_from_catalog_for_group,
+    combat_start_opponent_weapon_damage_reduction_seats_from_catalog_for_group,
     NativeConsumableBuffCatalog,
 };
 use serde::Deserialize;
@@ -219,6 +220,21 @@ pub fn combat_start_defense_seats_for_imported_buffs(
         66,
         imported,
         attacker_ship_class,
+        now_unix_seconds,
+    )
+}
+
+/// Verified native research CombatStart opponent weapon-damage reduction seats
+/// (`Defensive Tactics`, bid `2859405133`, `-5%..-30%` vs non-Armada hostiles).
+/// Stacks additively with officer `OpponentWeaponDamageReduction` (e.g. Chen/T'Laan).
+pub fn combat_start_opponent_weapon_damage_reduction_seats_for_imported_buffs(
+    imported: &[GlobalBuffEntry],
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
+    combat_start_opponent_weapon_damage_reduction_seats_from_catalog_for_group(
+        embedded_catalog(),
+        66,
+        imported,
         now_unix_seconds,
     )
 }
@@ -448,5 +464,43 @@ mod tests {
             None
         );
         assert!(combat_start_defense_seats_for_imported_buffs(&[], Some("explorer"), 0).is_empty());
+    }
+
+    #[test]
+    fn defensive_tactics_emits_non_armada_hostile_weapon_damage_reduction_seat() {
+        let active = [entry(2_859_405_133, 5)];
+        let seats =
+            combat_start_opponent_weapon_damage_reduction_seats_for_imported_buffs(&active, 0);
+        assert_eq!(seats.len(), 1);
+        assert_eq!(
+            seats[0].ability.effect,
+            crate::combat::AbilityEffect::OpponentWeaponDamageReduction {
+                reduction: 0.3,
+                cumulative: false,
+            }
+        );
+        assert!(matches!(
+            seats[0].ability.condition,
+            Some(crate::combat::AbilityCondition::And(_))
+        ));
+
+        let rank1 = combat_start_opponent_weapon_damage_reduction_seats_for_imported_buffs(
+            &[entry(2_859_405_133, 1)],
+            0,
+        );
+        assert_eq!(
+            rank1[0].ability.effect,
+            crate::combat::AbilityEffect::OpponentWeaponDamageReduction {
+                reduction: 0.05,
+                cumulative: false,
+            }
+        );
+
+        let mut expired = entry(2_859_405_133, 5);
+        expired.expiry_time = Some(100);
+        assert!(
+            combat_start_opponent_weapon_damage_reduction_seats_for_imported_buffs(&[expired], 100)
+                .is_empty()
+        );
     }
 }

@@ -97,6 +97,9 @@ pub enum CrewStatScaledTarget {
     ShieldRepairFlat,
     /// POST_ALL pre-crit per-shot weapon damage addition: `base * (1 + wd_pool) + amount`, then `* crit_mult`.
     WeaponDamageFlatPreCrit,
+    /// Verified `op 6` (`MultiplyBaseSub`) flat enemy shield HP drain: `coefficient * effective_crew_stat`
+    /// (e.g. Ent-E Troi, Vemet, Six Of Eleven captain, Michael Burnham).
+    DefenderShieldDrainFlat,
 }
 
 /// Effect granted once per qualifying incoming weapon volley by [`AbilityEffect::ReactiveDamageTaken`].
@@ -108,8 +111,12 @@ pub enum ReactiveDamageTakenKind {
     BaseWeaponDamageBonus(f64),
     OpponentWeaponDamageReduction(f64),
     HostileCritChanceReduction(f64),
+    /// Flat rating added to Apex Barrier (`barrier + sum`, before multiplier; e.g. Annorax `HitTaken`).
+    ApexBarrierFlatBonus(f64),
     /// Multiplicative bonus applied to existing Apex Barrier (`barrier * (1 + sum)`).
     ApexBarrierMultiplierBonus(f64),
+    /// Flat shield HP drained from the opponent upon taking qualifying damage (e.g. Michael Burnham).
+    DrainOpponentShieldFlat(f64),
     /// PRE_ALL base defense points added to Armor, Shield Deflection, and Dodge before `(1 + def_pool)`
     /// (e.g. The Doctor `HullDamageTaken`, `num_rounds=2`).
     PreAllAllDefensesAdd(f64),
@@ -233,6 +240,12 @@ pub enum AbilityEffect {
     /// Native `ModAllPiercing` / `MultiplyAdd` on self ship: adds to the shared native `MultVal`
     /// percentage pool for raw Armor Piercing, Shield Piercing and Accuracy.
     BasePiercingStatsBonus(f64),
+    /// Native `ArmorPiercing` / `MultiplyAdd` on self ship: adds only to raw Armor Piercing in the
+    /// shared native `MultVal` pool (e.g. M'Ral launch; verified 2026-11-26 Fight E).
+    BaseArmorPiercingBonus(f64),
+    /// Cumulative `ArmorPiercing` / `MultiplyAdd` fraction granted once per qualifying outbound
+    /// weapon volley (`EnemyTakesHit`, e.g. Azetbur).
+    OnHitBaseArmorPiercingBonus(f64),
     /// Cumulative round-start additive fraction on raw Armor Piercing, Shield Piercing and
     /// Accuracy (e.g. Borg Queen below-decks vs Assimilated players).
     CumulativeBasePiercingStatsBonus(f64),
@@ -245,6 +258,9 @@ pub enum AbilityEffect {
     /// raw AP/SP/accuracy percentage pool as native piercing increases. The
     /// source coefficient is not capped; resolved raw points clamp at zero.
     HostileBasePiercingStatsReduction(f64),
+    /// Native single-axis `ArmorPiercing` / `MultiplySub` on the enemy (e.g. Paul Stamets):
+    /// subtracts only from the opponent's raw Armor Piercing percentage pool.
+    HostileBaseArmorPiercingReduction(f64),
     /// Raw armor-piercing points, applied before mitigation is calculated.
     BaseArmorPiercingAdd(f64),
     /// Deferred setup coefficient; scenario construction resolves it to raw points.
@@ -477,6 +493,12 @@ pub enum AbilityEffect {
         fraction: f64,
         duration_rounds: u32,
     },
+    /// Flat shield HP drained from opponent at RoundStart (verified `op 6` `ShieldHPRepair`
+    /// `MultiplyBaseSub` — e.g. Ent-E Troi, Vemet).
+    DefenderShieldDrainFlat(f64),
+    /// Flat shield HP drained from opponent once per qualifying outbound weapon volley
+    /// (`EnemyTakesHit`, e.g. Six Of Eleven captain).
+    OnHitDefenderShieldDrainFlat(f64),
     /// Aggregation / psionic-style hostile ability: at round start, melt `fraction` of the **player
     /// ship's max hull** (0.50 = 50% of max HHP). Seat conditions control which rounds it applies.
     HostileHyperthermicDecay {
@@ -1791,7 +1813,9 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
                 | ReactiveDamageTakenKind::AttackerShieldMitigationBonus(v)
                 | ReactiveDamageTakenKind::BaseWeaponDamageBonus(v)
                 | ReactiveDamageTakenKind::OpponentWeaponDamageReduction(v)
+                | ReactiveDamageTakenKind::ApexBarrierFlatBonus(v)
                 | ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v)
+                | ReactiveDamageTakenKind::DrainOpponentShieldFlat(v)
                 | ReactiveDamageTakenKind::PreAllAllDefensesAdd(v)
                 | ReactiveDamageTakenKind::PreAllAllPiercingAdd(v) => *v = scale(*v),
                 ReactiveDamageTakenKind::ApplyDefenderBurning
@@ -1806,10 +1830,13 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::CumulativeBaseMitigationStatsBonus(v)
         | AbilityEffect::HostileBaseDefenseStatsReduction(v)
         | AbilityEffect::BasePiercingStatsBonus(v)
+        | AbilityEffect::BaseArmorPiercingBonus(v)
+        | AbilityEffect::OnHitBaseArmorPiercingBonus(v)
         | AbilityEffect::CumulativeBasePiercingStatsBonus(v)
         | AbilityEffect::BaseArmorBonus(v) => *v = scale(*v),
         AbilityEffect::BaseMitigationStatsAdd(v) => *v = scale(*v),
-        AbilityEffect::HostileBasePiercingStatsReduction(v) => *v = scale(*v),
+        AbilityEffect::HostileBasePiercingStatsReduction(v)
+        | AbilityEffect::HostileBaseArmorPiercingReduction(v) => *v = scale(*v),
         AbilityEffect::OpponentWeaponDamageReduction { reduction, .. } => {
             *reduction = scale(*reduction)
         }
@@ -1935,6 +1962,8 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
             fraction,
             duration_rounds: _,
         } => *fraction = cap_one(*fraction),
+        AbilityEffect::DefenderShieldDrainFlat(v)
+        | AbilityEffect::OnHitDefenderShieldDrainFlat(v) => *v = scale(*v),
         AbilityEffect::HostileEngagementDefensiveBonus(v) => *v = cap_one(*v),
         AbilityEffect::CumulativeOpponentShieldMitigationDebuff { per_round, cap } => {
             *per_round = scale(*per_round);
@@ -1991,6 +2020,9 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
             | AbilityEffect::CumulativeBaseMitigationStatsBonus(v)
             | AbilityEffect::HostileBaseDefenseStatsReduction(v)
             | AbilityEffect::BasePiercingStatsBonus(v)
+            | AbilityEffect::BaseArmorPiercingBonus(v)
+            | AbilityEffect::OnHitBaseArmorPiercingBonus(v)
+            | AbilityEffect::HostileBaseArmorPiercingReduction(v)
             | AbilityEffect::CumulativeBasePiercingStatsBonus(v) => *v *= multiplier,
             AbilityEffect::OpponentWeaponDamageReduction { reduction, .. } => {
                 *reduction *= multiplier
@@ -2002,7 +2034,9 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
                 | ReactiveDamageTakenKind::BaseWeaponDamageBonus(v)
                 | ReactiveDamageTakenKind::OpponentWeaponDamageReduction(v)
                 | ReactiveDamageTakenKind::HostileCritChanceReduction(v)
+                | ReactiveDamageTakenKind::ApexBarrierFlatBonus(v)
                 | ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v)
+                | ReactiveDamageTakenKind::DrainOpponentShieldFlat(v)
                 | ReactiveDamageTakenKind::PreAllAllDefensesAdd(v)
                 | ReactiveDamageTakenKind::PreAllAllPiercingAdd(v) => *v *= multiplier,
                 ReactiveDamageTakenKind::ApplyDefenderBurning
@@ -2011,6 +2045,8 @@ pub fn scale_crew_captain_maneuver_effects(crew: &mut CrewConfiguration, multipl
                     *chance = (*chance * multiplier).clamp(0.0, 1.0);
                 }
             },
+            AbilityEffect::DefenderShieldDrainFlat(v)
+            | AbilityEffect::OnHitDefenderShieldDrainFlat(v) => *v *= multiplier,
             AbilityEffect::CrewStatScaledDeferred { coefficient, .. } => *coefficient *= multiplier,
             AbilityEffect::PreAllDefenseAdd {
                 armor,
