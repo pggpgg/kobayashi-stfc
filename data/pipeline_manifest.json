@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "combined_sha256": "2f7296e240f4e3773961648b2535e41c1bf266cf57805074840b34c15f3e0400",
+  "combined_sha256": "a41e68f8484a759c8d63e91a3b328ac4411d9df45b73faaba98f8ef09639a05c",
   "upstream": {
     "details_forbidden_tech": {
       "path": "data/upstream/data-stfc-space/forbidden_tech",
@@ -128,7 +128,7 @@
     "hostile_ability_catalog": {
       "path": "data/upstream/data-stfc-space/hostile_ability_catalog.json",
       "present": true,
-      "sha256": "e754ca93ddf76cf86f2faeb644d42d2a8bcca71a24c1f561b70813144e31ed78",
+      "sha256": "b0ef37987d37194b78aa4ec91f809e0ef1c99feae87c469d0539bd7670707756",
       "records": 2
     },
     "hostiles": {
@@ -160,7 +160,7 @@
     "ship_ability_catalog": {
       "path": "data/upstream/data-stfc-space/ship_ability_catalog.json",
       "present": true,
-      "sha256": "004fc45a227bd37335fcd73cac5f71b86d1cd3769919377a690f6048b4cc966a",
+      "sha256": "695e1cb8096ab6e34ff9e335dd6514d4f9f3816b89c56f4d05ed973f57cb45e0",
       "records": 2
     },
     "ship_id_registry": {
@@ -174,7 +174,7 @@
       "path": "data/ships_extended",
       "present": true,
       "file_count": 117,
-      "sha256": "87fc1c46396345126e3234f3c7c0c8640533cb2b30b4c72634f538e2b771adb8",
+      "sha256": "787d52cca6eddea67189d819a049ab9f21d20e0b450f1ed46de9b3d8262b87df",
       "data_version": "stfcspace-ships-2026-11-23"
     },
     "support_buffs": {

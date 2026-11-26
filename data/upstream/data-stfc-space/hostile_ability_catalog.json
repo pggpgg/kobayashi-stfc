@@ -19,7 +19,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -83,7 +83,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -250,14 +250,14 @@
       "effect_type": "isolytic_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 15.0,
+      "value_override": 15,
       "extra_seats": [
         {
           "timing": "combat_begin",
           "effect_type": "apex_barrier",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 20000.0
+          "value_override": 20000
         }
       ]
     },
@@ -454,7 +454,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0
+      "value_override": 10
     },
     "263488486": {
       "timing": "combat_begin",
@@ -481,7 +481,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -715,7 +715,7 @@
       "effect_type": "crit_chance",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 100.0,
+      "value_override": 100,
       "round_cap": 4,
       "extra_seats": [
         {
@@ -923,7 +923,17 @@
       "timing": "combat_begin",
       "effect_type": "isolytic_damage",
       "value_is_percentage": false,
-      "ignore_upstream_value_is_percentage": true
+      "ignore_upstream_value_is_percentage": true,
+      "extra_seats": [
+        {
+          "timing": "combat_begin",
+          "effect_type": "apex_barrier",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "value_override": 5000
+        }
+      ],
+      "source_note": "Augment Exile [WOK] Hijacked D7 Class & DY-200-class (loca 78052): bundles Augmented Force (+15% Isolytic Damage) and Not So Wounded (+5,000 Apex Barrier) at combat start."
     },
     "498088062": {
       "timing": "combat_begin",
@@ -1089,7 +1099,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -1209,7 +1219,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -1524,21 +1534,21 @@
       "effect_type": "isolytic_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 30.0,
+      "value_override": 30,
       "extra_seats": [
         {
           "timing": "combat_begin",
           "effect_type": "apex_barrier",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 3000000.0
+          "value_override": 3000000
         },
         {
           "timing": "combat_begin",
           "effect_type": "crit_damage",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 135.0
+          "value_override": 135
         }
       ]
     },
@@ -1835,7 +1845,7 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 6,
-      "value_override": 1.0
+      "value_override": 1
     },
     "1004890011": {
       "timing": "combat_begin",
@@ -2225,7 +2235,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 3.0
+          "value_override": 3
         }
       ]
     },
@@ -2511,7 +2521,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -2922,7 +2932,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 3.0
+          "value_override": 3
         },
         {
           "timing": "combat_begin",
@@ -3193,7 +3203,7 @@
       "effect_type": "isolytic_damage",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 1.0
+      "value_override": 1
     },
     "1745672917": {
       "timing": "round_end",
@@ -3258,7 +3268,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -3521,7 +3531,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0
+      "value_override": 10
     },
     "1901813094": {
       "timing": "combat_begin",
@@ -3863,7 +3873,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -4226,7 +4236,7 @@
       "effect_type": "crit_chance",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 1000.0,
+      "value_override": 1000,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -4428,7 +4438,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -4484,7 +4494,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -4592,7 +4602,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -4722,7 +4732,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -4899,7 +4909,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -4928,7 +4938,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -5454,7 +5464,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0
+      "value_override": 10
     },
     "2889405208": {
       "timing": "combat_begin",
@@ -5588,7 +5598,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -6519,7 +6529,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -6594,7 +6604,7 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 100,
-      "value_override": 1.0
+      "value_override": 1
     },
     "3505786380": {
       "timing": "combat_begin",
@@ -6691,7 +6701,7 @@
           "effect_type": "apex_shred",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 2.0
+          "value_override": 2
         }
       ]
     },
@@ -6733,7 +6743,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -6833,7 +6843,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 3.0
+          "value_override": 3
         },
         {
           "timing": "combat_begin",
@@ -6863,7 +6873,7 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 100,
-      "value_override": 1.0
+      "value_override": 1
     },
     "3699372727": {
       "timing": "combat_begin",
@@ -7000,7 +7010,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -7016,7 +7026,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0
+      "value_override": 10
     },
     "3801822245": {
       "timing": "combat_begin",
@@ -7096,7 +7106,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -7140,7 +7150,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -7175,7 +7185,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },
@@ -7277,7 +7287,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "combat_begin",
@@ -7346,7 +7356,7 @@
       "effect_type": "isolytic_defense",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 10.0,
+      "value_override": 10,
       "extra_seats": [
         {
           "timing": "round_start",
@@ -7467,7 +7477,7 @@
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
       "duration_rounds": 100,
-      "value_override": 1.0
+      "value_override": 1
     },
     "4022486293": {
       "timing": "combat_begin",
@@ -7481,7 +7491,7 @@
       "effect_type": "isolytic_cascade",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 1.0
+      "value_override": 1
     },
     "4024382545": {
       "timing": "combat_begin",
@@ -7761,7 +7771,7 @@
           "effect_type": "hostile_crit_damage_floor",
           "value_is_percentage": false,
           "ignore_upstream_value_is_percentage": true,
-          "value_override": 1.0
+          "value_override": 1
         }
       ]
     },

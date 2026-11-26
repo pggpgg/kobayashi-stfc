@@ -28,7 +28,10 @@ pub fn ship_ability_effect_type_to_modifier(effect_type: &str) -> Option<Ability
         "crit_damage" => Some(AbilityModifierSpec::CritDamage),
         "apex_shred" => Some(AbilityModifierSpec::ApexShred),
         "apex_barrier" => Some(AbilityModifierSpec::ApexBarrier),
-        "conqueror_borg_beam_suppression" | "borg_conqueror_beam_suppression" => None,
+        "conqueror_borg_beam_suppression"
+        | "borg_conqueror_beam_suppression"
+        | "dilithium_destabilization_immunity"
+        | "m_ara_insulation" => None,
         "shield_regen" | "shield_hp_repair" => Some(AbilityModifierSpec::OfficerShieldRegenFlat),
         "hull_regen" | "hull_hp_repair" | "hull_repair" => {
             Some(AbilityModifierSpec::OfficerHullRegenFlat)

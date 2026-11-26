@@ -526,6 +526,8 @@ pub(crate) fn hostile_ability_effect_from_catalog(
         // Attacker-only hull abilities that must not apply on hostile defender crew.
         "conqueror_borg_beam_suppression"
         | "borg_conqueror_beam_suppression"
+        | "dilithium_destabilization_immunity"
+        | "m_ara_insulation"
         | "accuracy"
         | "accuracy_bonus" => None,
         _ => ship_ability_effect_from_catalog(effect_type, timing, value, duration_rounds),

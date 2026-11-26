@@ -253,7 +253,12 @@ fn loot_modifier_applies(
             )
         }
         "TrelliumRewards" => defender_faction == OpponentFactionTag::MirrorUniverse,
-        "WokAugmentAllLootRewards" => defender_faction == OpponentFactionTag::Augment,
+        "WokAugmentAllLootRewards" => {
+            defender_faction == OpponentFactionTag::Augment
+                || (hostile.hostile_tag_mask()
+                    & crate::combat::hostile_tags::HOSTILE_TAG_MASK_AUGMENT_EXILE)
+                    != 0
+        }
         "BrokenShipPartsLoot" => res_lower.contains("broken") && res_lower.contains("part"),
         "CombatParsteelReward" => res_lower == "parsteel",
         "CombatTritaniumReward" => res_lower == "tritanium",
@@ -560,5 +565,36 @@ mod tests {
                 < 1e-6,
             "once hold is full for both crews, extra loot multiplier must not exceed hold capacity"
         );
+    }
+
+    #[test]
+    fn wok_augment_all_loot_rewards_applies_to_augment_exile_faction() {
+        let mut exile = yoton_cruiser_stub();
+        exile.id = "565037258".to_string();
+        exile.hostile_name = "Hijacked D7 Class".to_string();
+        exile.faction = Some(crate::data::hostile::HostileFactionRef {
+            id: 1_306_860_549,
+            loca_id: Some(78_000),
+        });
+        assert!(loot_modifier_applies(
+            "WokAugmentAllLootRewards",
+            &exile,
+            exile.opponent_faction_tag(),
+            false,
+            "Common Hijacked Splicer",
+        ));
+
+        let mut fed = yoton_cruiser_stub();
+        fed.faction = Some(crate::data::hostile::HostileFactionRef {
+            id: 2_064_723_306,
+            loca_id: Some(1),
+        });
+        assert!(!loot_modifier_applies(
+            "WokAugmentAllLootRewards",
+            &fed,
+            fed.opponent_faction_tag(),
+            false,
+            "Common Hijacked Splicer",
+        ));
     }
 }

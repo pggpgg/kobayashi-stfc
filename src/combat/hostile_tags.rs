@@ -17,12 +17,16 @@ pub const HOSTILE_TAG_MASK_BREEN_WARSHIP: u32 = 1 << 5;
 pub const HOSTILE_TAG_MASK_TEXAS_CLASS: u32 = 1 << 6;
 /// Xindi-Aquatic hostile faction. Reptilians and other Xindi use different native ids.
 pub const HOSTILE_TAG_MASK_XINDI_AQUATIC: u32 = 1 << 7;
+/// Augment Exile [WOK] hostile faction (`faction.id` 1306860549, `loca_id` 78000):
+/// Hijacked D3/D7/Legionary/Mayflower and DY-200-class; U.S.S. Reliant counter gates.
+pub const HOSTILE_TAG_MASK_AUGMENT_EXILE: u32 = 1 << 8;
 
 /// Native faction ids are a stable gate even when a legacy normalized row has no tags.
 pub fn mask_from_native_faction(faction_id: i64) -> u32 {
     match faction_id {
         2_796_195_869 => HOSTILE_TAG_MASK_TEXAS_CLASS,
         2_745_774_076 => HOSTILE_TAG_MASK_XINDI_AQUATIC,
+        1_306_860_549 => HOSTILE_TAG_MASK_AUGMENT_EXILE,
         _ => 0,
     }
 }
@@ -39,6 +43,7 @@ pub fn hostile_tag_mask_for_slug(slug: &str) -> Option<u32> {
         "breen_warship" => Some(HOSTILE_TAG_MASK_BREEN_WARSHIP),
         "texas_class" => Some(HOSTILE_TAG_MASK_TEXAS_CLASS),
         "xindi_aquatic" => Some(HOSTILE_TAG_MASK_XINDI_AQUATIC),
+        "augment_exile" => Some(HOSTILE_TAG_MASK_AUGMENT_EXILE),
         _ => None,
     }
 }

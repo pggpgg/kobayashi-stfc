@@ -611,6 +611,10 @@ pub enum AbilityEffect {
     /// defender’s **Quantum Resonance Beam** (Suppressor) and **Hyperthermic Resonance Beam**
     /// (Obliterator) for instant-loss resolution; see [`crate::combat::conqueror_borg_beams`].
     ConquerorBorgBeamSuppression,
+    /// Marker: U.S.S. Reliant **M/ARA Insulation** vs Augment Exile [WOK] hostiles — grants
+    /// immunity to Hijacked D7 Class and DY-200-class **Dilithium Destabilization**
+    /// ([`AbilityEffect::HostileLethalCombatBegin`]).
+    DilithiumDestabilizationImmunity,
     /// On shield break (attacker proc): chance to skip all defender counter-attacks for `delay_rounds`
     /// combat rounds starting the round after the break (Uhura-style reload delay).
     DefenderFireDelay {
@@ -1992,6 +1996,7 @@ pub fn scale_bridge_officer_ability_effect(effect: &mut AbilityEffect, bonus_add
         | AbilityEffect::HostileShieldDamageRouting { .. }
         | AbilityEffect::HostileFullRegenUnlessAttackerShip { .. }
         | AbilityEffect::ConquerorBorgBeamSuppression
+        | AbilityEffect::DilithiumDestabilizationImmunity
         | AbilityEffect::DefenderOnHitStack { .. } => {}
     }
 }

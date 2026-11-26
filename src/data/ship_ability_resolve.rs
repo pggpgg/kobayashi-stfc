@@ -231,6 +231,13 @@ pub fn ship_ability_effect_from_catalog(
             Some(AbilityEffect::ConquerorBorgBeamSuppression)
         }
 
+        "dilithium_destabilization_immunity" | "m_ara_insulation" => {
+            if timing != TimingWindow::CombatBegin {
+                return None;
+            }
+            Some(AbilityEffect::DilithiumDestabilizationImmunity)
+        }
+
         "shield_regen" | "shield_hp_repair" => Some(AbilityEffect::ShieldRegen(value)),
 
         // Fraction of MAX shield HP restored per application ("recovers X% of total SHP") —

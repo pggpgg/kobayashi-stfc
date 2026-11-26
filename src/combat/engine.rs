@@ -205,6 +205,9 @@ pub struct PreCombatSetup {
     pub attacker_dodge_bonus: f64,
     pub conqueror_borg_beam_suppression: bool,
     pub effective_conqueror_borg_beam_suppression: bool,
+    /// Attacker has active `DilithiumDestabilizationImmunity` (U.S.S. Reliant M/ARA Insulation
+    /// gated on Augment Exile hostiles), suppressing `HostileLethalCombatBegin`.
+    pub attacker_immune_to_dilithium_destabilization: bool,
     pub quantum_beam_instant_loss: bool,
     pub evo_assim_instant_loss: bool,
     /// Faction-gated lethal strike (Tal Shiar / Mo'Kai / S31 / Q): wrong hull → instant loss.
@@ -454,6 +457,9 @@ pub fn build_combat_setup_with_officer_stat(
     let conqueror_borg_beam_suppression = combat_begin_filtered
         .iter()
         .any(|e| matches!(e.effect, AbilityEffect::ConquerorBorgBeamSuppression));
+    let attacker_immune_to_dilithium_destabilization = combat_begin_filtered
+        .iter()
+        .any(|e| matches!(e.effect, AbilityEffect::DilithiumDestabilizationImmunity));
     let effective_conqueror_borg_beam_suppression =
         effective_conqueror_borg_beam_suppression(conqueror_borg_beam_suppression, &attacker.id);
     let quantum_beam_instant_loss = quantum_resonance_beam_instant_loss(
@@ -888,6 +894,7 @@ pub fn build_combat_setup_with_officer_stat(
         attacker_dodge_bonus,
         conqueror_borg_beam_suppression,
         effective_conqueror_borg_beam_suppression,
+        attacker_immune_to_dilithium_destabilization,
         quantum_beam_instant_loss,
         evo_assim_instant_loss,
         faction_gate_instant_loss,
@@ -1386,7 +1393,8 @@ fn simulate_combat_from_setup_inner(
         );
     }
 
-    if setup.defender_has_lethal_combat_begin {
+    if setup.defender_has_lethal_combat_begin && !setup.attacker_immune_to_dilithium_destabilization
+    {
         if let Some(true) = roll_hostile_lethal_combat_begin(defender_crew, &mut rng) {
             let instant_loss_hull = max_att_hull;
             let attacker_hull_remaining = (attacker.hull_health - instant_loss_hull).max(0.0);
