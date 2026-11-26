@@ -82,9 +82,11 @@ fn unknown_battle_type_is_reported_in_simulation_and_final_optimizer_rank() {
 
     // On a known battle type (standard red space hostile -> CombatBattleType 2), Tasha Yar's
     // CombatBattleType condition resolves cleanly with NO unknown-battle-type warning.
+    // Use non-op-5 crewmates (Kirk + Uhura) so missing officer levels under
+    // `NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS` do not emit an unrelated crew-stat warning.
     let known_simulate_request = serde_json::json!({
         "ship":"uss_saladin", "hostile":"1127817100", "num_sims":1, "seed":11,
-        "crew":{"captain":"Spock", "bridge":["Kirk","Tasha Yar"], "below_deck":[]}
+        "crew":{"captain":"Kirk", "bridge":["Uhura","Tasha Yar"], "below_deck":[]}
     });
     let known_body = simulate_payload(
         &registry,
@@ -112,7 +114,7 @@ fn unknown_battle_type_is_reported_in_simulation_and_final_optimizer_rank() {
     let simulate_request = serde_json::json!({
         "ship":"uss_saladin", "hostile":"1127817100", "num_sims":1, "seed":11,
         "enemy_type":"assaults",
-        "crew":{"captain":"Spock", "bridge":["Kirk","Tasha Yar"], "below_deck":[]}
+        "crew":{"captain":"Kirk", "bridge":["Uhura","Tasha Yar"], "below_deck":[]}
     });
     let body = simulate_payload(
         &registry,
@@ -142,9 +144,9 @@ fn unknown_battle_type_is_reported_in_simulation_and_final_optimizer_rank() {
         "tiered_top_k":1, "below_decks_slots":0,
         // Exercise warning propagation independently of combat scores. A warm
         // start alone does not guarantee that this crew wins the final ranking.
-        "constraints":{"captain_must_be":"Spock", "bridge_must_include":["Kirk","Tasha Yar"]},
+        "constraints":{"captain_must_be":"Kirk", "bridge_must_include":["Uhura","Tasha Yar"]},
         "warm_start_crews":[
-            {"captain":"Spock", "bridge":["Kirk","Tasha Yar"], "below_decks":[]}
+            {"captain":"Kirk", "bridge":["Uhura","Tasha Yar"], "below_decks":[]}
         ]
     });
     let body = optimize_payload(

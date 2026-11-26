@@ -2338,6 +2338,7 @@ fn effective_officer_stat_totals(
 /// table exists. LCARS officer-stat sources can be scoped to individual seats;
 /// their scope is not preserved by the current adapter, so an active or
 /// undecidable crew Health contribution cannot be resolved safely here.
+#[cfg(test)]
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn effective_crew_health_at_combat_start(
     totals: crate::combat::CrewOfficerStatTotals,
@@ -2393,6 +2394,113 @@ pub(crate) fn effective_crew_health_at_combat_start(
             .health
     };
     health.is_finite().then_some(health)
+}
+
+/// Seat-aware effective crew Attack, Defense, and Health totals at combat start for `op 5`
+/// (`MultiplyBaseAdd`) officer abilities.
+///
+/// Reuses the same profile seat pools (`officer_*`, `_bridge`, `_captain`, `_below_decks`),
+/// `static_buffs`, and statically-decidable `self_pending` / `opponent_pending` launch
+/// contributions as [`compute_officer_stat_runtime_bonus_from_parts`]. Returns `None` for any
+/// axis that has a pending launch contribution whose static conditions are undecidable (`None`).
+/// Dynamic per-round officer-stat buffs (e.g. Kirk RoundStart Morale) have not fired yet at
+/// combat start and do not invalidate combat-start totals.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn effective_crew_stats_at_combat_start(
+    totals: crate::combat::CrewOfficerStatTotals,
+    bridge_totals: crate::combat::CrewOfficerStatTotals,
+    officer_rows: &[crate::lcars::resolver::CrewedOfficerStats],
+    profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    static_buffs: &HashMap<String, f64>,
+    self_pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+    cond_ctx: &OfficerStatConditionContext,
+    opponent_pending: &[crate::lcars::resolver::PendingOfficerStatContribution],
+) -> (Option<f64>, Option<f64>, Option<f64>) {
+    let mut attack_undecidable = false;
+    let mut defense_undecidable = false;
+    let mut health_undecidable = false;
+    for (rows, attacker_target) in [(self_pending, true), (opponent_pending, false)] {
+        for row in rows.iter().filter(|r| r.target_attacker == attacker_target) {
+            let mut any_false = false;
+            let mut any_unknown = false;
+            for condition in &row.conditions {
+                match eval_static_condition(condition, cond_ctx) {
+                    Some(false) => {
+                        any_false = true;
+                        break;
+                    }
+                    None => any_unknown = true,
+                    Some(true) => {}
+                }
+            }
+            if !any_false && any_unknown {
+                match row.stat_key.as_str() {
+                    "officer_attack" => attack_undecidable = true,
+                    "officer_defense" => defense_undecidable = true,
+                    "officer_health" => health_undecidable = true,
+                    "officer_stat_all" => {
+                        attack_undecidable = true;
+                        defense_undecidable = true;
+                        health_undecidable = true;
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    let stat_all = static_buffs.get("officer_stat_all").copied().unwrap_or(0.0);
+    let mut mults = OfficerStatAxisMults {
+        crew_wide_attack: static_buffs.get("officer_attack").copied().unwrap_or(0.0) + stat_all,
+        crew_wide_defense: static_buffs.get("officer_defense").copied().unwrap_or(0.0) + stat_all,
+        crew_wide_health: static_buffs.get("officer_health").copied().unwrap_or(0.0) + stat_all,
+        ..OfficerStatAxisMults::default()
+    };
+    apply_pending_officer_stat_contributions(&mut mults, self_pending, true, cond_ctx);
+    apply_pending_officer_stat_contributions(&mut mults, opponent_pending, false, cond_ctx);
+
+    let effective = if !officer_rows.is_empty() {
+        evaluate_officer_stats_with_mults(officer_rows, profile, owner_faction_slug, &mults)
+            .effective_totals
+    } else {
+        let lookup = ProfileBonusLookup::new(profile, owner_faction_slug);
+        let below_a = (totals.attack - bridge_totals.attack).max(0.0);
+        let below_d = (totals.defense - bridge_totals.defense).max(0.0);
+        let below_h = (totals.health - bridge_totals.health).max(0.0);
+        crate::combat::CrewOfficerStatTotals {
+            attack: axis_rating_from_parts(
+                bridge_totals.attack,
+                below_a,
+                lookup.get("officer_attack"),
+                mults.crew_wide_attack,
+                mults.bridge_only_attack,
+                lookup.get("officer_attack_below_decks"),
+            ),
+            defense: axis_rating_from_parts(
+                bridge_totals.defense,
+                below_d,
+                lookup.get("officer_defense"),
+                mults.crew_wide_defense,
+                mults.bridge_only_defense,
+                lookup.get("officer_defense_below_decks"),
+            ),
+            health: axis_rating_from_parts(
+                bridge_totals.health,
+                below_h,
+                lookup.get("officer_health"),
+                mults.crew_wide_health,
+                mults.bridge_only_health,
+                lookup.get("officer_health_below_decks"),
+            ),
+        }
+    };
+
+    (
+        (!attack_undecidable && effective.attack.is_finite()).then_some(effective.attack),
+        (!defense_undecidable && effective.defense.is_finite()).then_some(effective.defense),
+        (!health_undecidable && effective.health.is_finite()).then_some(effective.health),
+    )
 }
 
 /// Returns [`OfficerStatRuntimeBonus::default`] when the ship has no breakpoint table (legacy /

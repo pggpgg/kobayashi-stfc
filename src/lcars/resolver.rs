@@ -258,16 +258,17 @@ fn is_static_effect(effect: &LcarsEffect) -> bool {
         return false;
     }
     if effect.effect_type == "stat_modify" {
-        if matches!(
-            effective_stat_for_effect(effect),
-            Some(
+        if effective_stat_for_effect(effect).is_some_and(|stat| {
+            matches!(
+                stat,
                 "unsupported_officer_effect"
                     | "base_mitigation_stats_bonus"
                     | "base_piercing_stats_bonus"
-            )
-        ) {
-            // Keep inert diagnostic markers and raw-defense/piercing base-stat bonuses as
-            // CombatBegin seats so Pike scaling, Assimilation, PvP symmetry, and the nonlinear
+            ) || stat.starts_with("crew_scaled_")
+        }) {
+            // Keep inert diagnostic markers, crew-stat-scaled op 5 abilities, and
+            // raw-defense/piercing base-stat bonuses as CombatBegin seats so Pike scaling,
+            // Assimilation, PvP symmetry, crew-stat materialization, and the nonlinear
             // mitigation curve apply uniformly.
             return false;
         }
@@ -878,7 +879,7 @@ pub fn resolve_crew_to_buff_set(
             let Some(stat) = effective_stat_for_effect(effect) else {
                 continue;
             };
-            if stat == "unsupported_officer_effect" {
+            if stat == "unsupported_officer_effect" || stat.starts_with("crew_scaled_") {
                 continue;
             }
             // Phase 4a: officer-rating keys accept on_combat_start / on_round_start in addition

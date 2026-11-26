@@ -1127,7 +1127,8 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                             | "hull_hp_additive_pool"
                             | "shield_hp_additive_pool"
                             | "hostile_base_defense_stats_reduction"
-                    ) {
+                    ) || stat.starts_with("crew_scaled_")
+                    {
                         v
                     } else {
                         transform_canonical_to_lcars_value(modifier, op, v)
@@ -1145,7 +1146,11 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
             } else {
                 Some(lcars_values.first().copied().unwrap_or(value_rank1))
             };
-            let duration = if stat == "crit_damage_flat" && stacks_on_damage_taken(a) {
+            let duration = if stat.starts_with("crew_scaled_") {
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|rounds| LcarsDuration::Rounds { rounds })
+                    .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
+            } else if stat == "crit_damage_flat" && stacks_on_damage_taken(a) {
                 LcarsDuration::Rounds {
                     rounds: num_rounds_from_attributes(a.attributes.as_deref())?,
                 }
@@ -1519,10 +1524,78 @@ fn add_state_type_from_attributes(raw: &str) -> Option<StateType> {
     None
 }
 
+/// Verified `op 5` (`MultiplyBaseAdd`) crew-stat-scaled (`officer_stat=1/2/3`) `SelfShip`
+/// abilities. Backed by live battle-log verification across all four channels:
+/// - Defenses (`AllDefenses`, `ShipArmor`, `Shields` Shield Deflection, `ShipDodge`): `PRE_ALL`
+/// - Piercing (`AllPiercing`, `ArmorPiercing`, `ShieldPiercing`, `Accuracy`): `PRE_ALL`
+/// - Shield repair (`ShieldHPRepair`): direct flat `coeff * effective_crew_stat`
+/// - Weapon damage (`AllDamage`): `POST_ALL` pre-crit per-shot `coeff * effective_crew_stat`
+///
+/// Unverified triggers (e.g. `CriticalShotFired` Honorguard Worf) and enemy-targeted
+/// `MultiplyBaseSub` abilities return `None` and stay quarantined.
+fn crew_scaled_op5_stat_name(modifier: &str, a: &CanonicalAbility) -> Option<&'static str> {
+    let op = a.operation.as_deref().unwrap_or("");
+    if !op.eq_ignore_ascii_case("MultiplyBaseAdd") {
+        return None;
+    }
+    a.attributes
+        .as_deref()
+        .and_then(officer_stat_from_canonical_attributes)?;
+    if !matches!(a.target.as_deref(), Some("SelfShip" | "SelfAllShips")) {
+        return None;
+    }
+    let trigger = a.trigger.as_deref()?;
+    match modifier {
+        "AllDefenses"
+            if matches!(
+                trigger,
+                "CombatStart" | "RoundStart" | "HullDamageTaken" | "HitTaken"
+            ) =>
+        {
+            Some("crew_scaled_all_defenses")
+        }
+        "ShipArmor" if matches!(trigger, "CombatStart" | "RoundStart") => Some("crew_scaled_armor"),
+        "Shields" if matches!(trigger, "CombatStart" | "RoundStart") => {
+            Some("crew_scaled_shield_deflection")
+        }
+        "ShipDodge" if matches!(trigger, "CombatStart" | "RoundStart") => Some("crew_scaled_dodge"),
+        "AllPiercing"
+            if matches!(
+                trigger,
+                "CombatStart" | "RoundStart" | "HitTaken" | "EnemyTakesHit"
+            ) =>
+        {
+            Some("crew_scaled_all_piercing")
+        }
+        "ArmorPiercing" if matches!(trigger, "CombatStart" | "RoundStart") => {
+            Some("crew_scaled_armor_piercing")
+        }
+        "ShieldPiercing" if matches!(trigger, "CombatStart" | "RoundStart") => {
+            Some("crew_scaled_shield_piercing")
+        }
+        "Accuracy" if matches!(trigger, "CombatStart" | "RoundStart") => {
+            Some("crew_scaled_accuracy")
+        }
+        "ShieldHPRepair" if trigger == "RoundStart" => Some("crew_scaled_shield_repair"),
+        "AllDamage" if matches!(trigger, "CombatStart" | "RoundStart") => {
+            Some("crew_scaled_weapon_damage")
+        }
+        _ => None,
+    }
+}
+
 fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
     let val = a.value_by_rank.first().copied().unwrap_or(0.0);
     let op = a.operation.as_deref().unwrap_or("Add");
     let chance = a.chance_by_rank.first().copied().unwrap_or(1.0);
+
+    if let Some(crew_stat_key) = crew_scaled_op5_stat_name(modifier, a) {
+        return Some(MappedEffect::StatModify(
+            crew_stat_key.into(),
+            "add".into(),
+            val,
+        ));
+    }
 
     // These source abilities require combat operations or target/trigger
     // semantics not yet represented by the runtime. Retain their coefficients
@@ -1686,11 +1759,7 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         || matches!(
             a.ability_id.as_deref(),
             Some(
-                "3958845992"
-                    | "3939864485"
-                    | "1877391678"
-                    | "1180450595"
-                    | "4289717791"
+                "4289717791"
                     | "2633638696"
                     | "2281926825"
                     // Plasma Backlash needs a confirmed energy-hit event for multi-shot weapons.
@@ -2819,7 +2888,7 @@ mod canonical_condition_tests {
     }
 
     #[test]
-    fn ortegas_defense_requires_verified_operation_and_health_source() {
+    fn ortegas_defense_requires_verified_operation_and_officer_stat_source() {
         let source = serde_json::json!({
             "ability_id": "2416006584", "modifier": "AllDefenses",
             "operation": "MultiplyBaseAdd", "trigger": "CombatStart", "target": "SelfShip",
@@ -2831,7 +2900,7 @@ mod canonical_condition_tests {
         };
         assert_eq!(
             effect(source.clone()).stat.as_deref(),
-            Some("base_mitigation_stats_per_crew_health")
+            Some("crew_scaled_all_defenses")
         );
         let mut wrong_operation = source.clone();
         wrong_operation["operation"] = "MultiplyAdd".into();
@@ -2839,10 +2908,16 @@ mod canonical_condition_tests {
             effect(wrong_operation).stat.as_deref(),
             Some("unsupported_officer_effect")
         );
-        let mut wrong_source = source;
-        wrong_source["attributes"] = "officer_stat=2".into();
+        let mut defense_source = source.clone();
+        defense_source["attributes"] = "officer_stat=2".into();
         assert_eq!(
-            effect(wrong_source).stat.as_deref(),
+            effect(defense_source).stat.as_deref(),
+            Some("crew_scaled_all_defenses")
+        );
+        let mut missing_source = source;
+        missing_source["attributes"] = "".into();
+        assert_eq!(
+            effect(missing_source).stat.as_deref(),
             Some("unsupported_officer_effect")
         );
     }
@@ -2996,7 +3071,7 @@ mod canonical_condition_tests {
             );
         }
 
-        // Charvanek (2825675256) remains supported via base_armor_piercing_per_crew_health.
+        // Charvanek (2825675256) remains supported via unified crew_scaled_armor_piercing.
         let charvanek = by_id("charvanek-0f1b5c");
         let charvanek_bridge = charvanek
             .bridge_ability
@@ -3006,8 +3081,8 @@ mod canonical_condition_tests {
             charvanek_bridge
                 .effects
                 .iter()
-                .any(|e| e.stat.as_deref() == Some("base_armor_piercing_per_crew_health")),
-            "Charvanek bridge ability must remain mapped to base_armor_piercing_per_crew_health: {:?}",
+                .any(|e| e.stat.as_deref() == Some("crew_scaled_armor_piercing")),
+            "Charvanek bridge ability must remain mapped to crew_scaled_armor_piercing: {:?}",
             charvanek_bridge.effects
         );
     }

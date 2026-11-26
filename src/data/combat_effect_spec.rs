@@ -187,6 +187,17 @@ pub enum AbilityModifierSpec {
     BaseArmorPiercingPerCrewHealth,
     /// Coefficient times the effective crew health at combat setup, for all defenses.
     BaseMitigationStatsPerCrewHealth,
+    /// Unified `op 5` (`MultiplyBaseAdd`) crew-stat-scaled modifiers (`officer_stat` in `ValueSpec.officer_stat_scaling`).
+    CrewScaledAllDefenses,
+    CrewScaledArmor,
+    CrewScaledShieldDeflection,
+    CrewScaledDodge,
+    CrewScaledAllPiercing,
+    CrewScaledArmorPiercing,
+    CrewScaledShieldPiercing,
+    CrewScaledAccuracy,
+    CrewScaledShieldRepair,
+    CrewScaledWeaponDamage,
     /// Research/catalog `shield_deflection`; compiles identically to [`MitigationAdditive`](AbilityModifierSpec::MitigationAdditive).
     ShieldDeflection,
     Dodge,

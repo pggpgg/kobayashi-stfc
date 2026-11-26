@@ -1516,10 +1516,19 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             attacker = apply_static_buffs_to_combatant(attacker, &merged_static);
         }
         let mut seats = crew_seats;
-        let crew_health = if !shared.is_pvp()
-            && candidate_health_stats_complete(candidate, shared.lcars_data.as_ref(), &resolve_opts)
-        {
-            crate::data::profile::effective_crew_health_at_combat_start(
+        let opponent_enemy_pending_for_crew_stats = if shared.is_pvp() {
+            shared
+                .defender_pending_officer_stat_contributions
+                .as_slice()
+        } else {
+            &[]
+        };
+        let crew_stats = if candidate_officer_stats_complete(
+            candidate,
+            shared.lcars_data.as_ref(),
+            &resolve_opts,
+        ) {
+            crate::data::profile::effective_crew_stats_at_combat_start(
                 officer_stat_totals,
                 bridge_officer_stat_totals,
                 &officer_stat_rows,
@@ -1528,14 +1537,12 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 &merged_static,
                 &pending_officer_stat_contributions,
                 &cond_ctx,
-                &[],
-                &dynamic_officer_stat_contributions,
+                opponent_enemy_pending_for_crew_stats,
             )
         } else {
-            // Opponent dynamic crew-stat effects are not bound here for PvP.
-            None
+            (None, None, None)
         };
-        resolve_crew_health_effects(&mut seats, crew_health);
+        resolve_crew_stat_effects(&mut seats, crew_stats);
         extend_crew_with_ship_abilities(&mut seats, Some(ship_rec));
         extend_crew_with_research_derived_attack_phase_seats(
             &mut seats,
@@ -2131,8 +2138,8 @@ fn build_crew_and_buffs(
     }
 }
 
-/// A crew-health-scaled coefficient cannot be resolved from a partial crew.
-fn candidate_health_stats_complete(
+/// A crew-stat-scaled coefficient cannot be resolved from a partial crew.
+fn candidate_officer_stats_complete(
     candidate: &CrewCandidate,
     lcars_data: Option<&LcarsOfficerData>,
     options: &ResolveOptions,
@@ -2156,16 +2163,29 @@ fn candidate_health_stats_complete(
             let Some(level) = options.level_for(&id) else {
                 return false;
             };
-            officer
-                .stats_at_level(level)
-                .is_some_and(|s| s.health.is_finite() && s.health >= 0.0)
+            officer.stats_at_level(level).is_some_and(|s| {
+                s.attack.is_finite()
+                    && s.attack >= 0.0
+                    && s.defense.is_finite()
+                    && s.defense >= 0.0
+                    && s.health.is_finite()
+                    && s.health >= 0.0
+            })
         })
 }
 
-/// Resolve crew-health coefficients after setup modifiers, preserving each
-/// ability's own condition and timing. Unsupported health contexts stay inert.
-fn resolve_crew_health_effects(seats: &mut [CrewSeatContext], health: Option<f64>) {
-    use crate::combat::AbilityEffect;
+/// Resolve deferred `op 5` (`MultiplyBaseAdd`) crew-stat-scaled effects once effective crew
+/// Attack, Defense, and Health are known at combat start, preserving each ability's condition,
+/// timing, duration, chance, and weapon scope. Unsupported or missing crew-stat contexts stay
+/// deferred/inert with diagnostics.
+fn resolve_crew_stat_effects(
+    seats: &mut [CrewSeatContext],
+    crew_stats: (Option<f64>, Option<f64>, Option<f64>),
+) {
+    use crate::combat::{
+        AbilityEffect, CrewStatAxis, CrewStatScaledTarget, ReactiveDamageTakenKind,
+    };
+    let (attack, defense, health) = crew_stats;
     let mut missing = false;
     for seat in seats {
         let resolved = match seat.ability.effect {
@@ -2174,6 +2194,119 @@ fn resolve_crew_health_effects(seats: &mut [CrewSeatContext], health: Option<f64
             }
             AbilityEffect::BaseMitigationStatsPerCrewHealth(coefficient) => {
                 health.map(|h| AbilityEffect::BaseMitigationStatsAdd(coefficient * h))
+            }
+            AbilityEffect::CrewStatScaledDeferred {
+                target,
+                axis,
+                coefficient,
+                chance,
+                cumulative,
+                duration_rounds,
+                reactive_trigger,
+                on_hit,
+            } => {
+                let axis_val = match axis {
+                    CrewStatAxis::Attack => attack,
+                    CrewStatAxis::Defense => defense,
+                    CrewStatAxis::Health => health,
+                };
+                axis_val.map(|stat_total| {
+                    let amount = coefficient * stat_total;
+                    if let Some(trigger) = reactive_trigger {
+                        let kind = match target {
+                            CrewStatScaledTarget::AllDefensesPreAll => {
+                                ReactiveDamageTakenKind::PreAllAllDefensesAdd(amount)
+                            }
+                            CrewStatScaledTarget::AllPiercingPreAll => {
+                                ReactiveDamageTakenKind::PreAllAllPiercingAdd(amount)
+                            }
+                            _ => unreachable!("reactive CrewStatScaledDeferred only supports AllDefenses/AllPiercing"),
+                        };
+                        return AbilityEffect::ReactiveDamageTaken {
+                            trigger,
+                            kind,
+                            chance,
+                            duration_rounds,
+                        };
+                    }
+                    if on_hit {
+                        return AbilityEffect::OnHitPreAllPiercingAdd {
+                            armor_piercing: amount,
+                            shield_piercing: amount,
+                            accuracy: amount,
+                        };
+                    }
+                    match target {
+                        CrewStatScaledTarget::AllDefensesPreAll => AbilityEffect::PreAllDefenseAdd {
+                            armor: amount,
+                            shield_deflection: amount,
+                            dodge: amount,
+                            cumulative,
+                        },
+                        CrewStatScaledTarget::BaseArmorPreAll => AbilityEffect::PreAllDefenseAdd {
+                            armor: amount,
+                            shield_deflection: 0.0,
+                            dodge: 0.0,
+                            cumulative,
+                        },
+                        CrewStatScaledTarget::BaseShieldDeflectionPreAll => {
+                            AbilityEffect::PreAllDefenseAdd {
+                                armor: 0.0,
+                                shield_deflection: amount,
+                                dodge: 0.0,
+                                cumulative,
+                            }
+                        }
+                        CrewStatScaledTarget::BaseDodgePreAll => AbilityEffect::PreAllDefenseAdd {
+                            armor: 0.0,
+                            shield_deflection: 0.0,
+                            dodge: amount,
+                            cumulative,
+                        },
+                        CrewStatScaledTarget::AllPiercingPreAll => {
+                            AbilityEffect::PreAllPiercingAdd {
+                                armor_piercing: amount,
+                                shield_piercing: amount,
+                                accuracy: amount,
+                                cumulative,
+                            }
+                        }
+                        CrewStatScaledTarget::BaseArmorPiercingPreAll => {
+                            AbilityEffect::PreAllPiercingAdd {
+                                armor_piercing: amount,
+                                shield_piercing: 0.0,
+                                accuracy: 0.0,
+                                cumulative,
+                            }
+                        }
+                        CrewStatScaledTarget::BaseShieldPiercingPreAll => {
+                            AbilityEffect::PreAllPiercingAdd {
+                                armor_piercing: 0.0,
+                                shield_piercing: amount,
+                                accuracy: 0.0,
+                                cumulative,
+                            }
+                        }
+                        CrewStatScaledTarget::BaseAccuracyPreAll => {
+                            AbilityEffect::PreAllPiercingAdd {
+                                armor_piercing: 0.0,
+                                shield_piercing: 0.0,
+                                accuracy: amount,
+                                cumulative,
+                            }
+                        }
+                        CrewStatScaledTarget::ShieldRepairFlat => {
+                            AbilityEffect::ShieldRegen(amount)
+                        }
+                        CrewStatScaledTarget::WeaponDamageFlatPreCrit => {
+                            AbilityEffect::FlatWeaponDamagePreCrit {
+                                amount,
+                                chance,
+                                cumulative,
+                            }
+                        }
+                    }
+                })
             }
             _ => continue,
         };
@@ -2185,7 +2318,7 @@ fn resolve_crew_health_effects(seats: &mut [CrewSeatContext], health: Option<f64
     }
     if missing {
         static WARN_ONCE: std::sync::Once = std::sync::Once::new();
-        WARN_ONCE.call_once(|| tracing::warn!("Crew-health-scaled officer effects are unsupported when crew stats or combat-start health conditions are unknown"));
+        WARN_ONCE.call_once(|| tracing::warn!("Crew-stat-scaled officer effects are unsupported when crew stats or combat-start stat conditions are unknown"));
     }
 }
 
@@ -4555,7 +4688,10 @@ mod tests {
             .find(|s| {
                 matches!(
                     s.ability.effect,
-                    AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                    AbilityEffect::CrewStatScaledDeferred {
+                        target: crate::combat::CrewStatScaledTarget::AllDefensesPreAll,
+                        ..
+                    }
                 )
             })
             .unwrap()
@@ -4563,18 +4699,32 @@ mod tests {
             .condition
             .clone();
         let unchanged = seats.clone();
-        resolve_crew_health_effects(&mut seats, None);
+        resolve_crew_stat_effects(&mut seats, (None, None, None));
         assert_eq!(
             seats, unchanged,
-            "unknown health must not substitute a guessed value"
+            "unknown crew stats must not substitute a guessed value"
         );
-        resolve_crew_health_effects(&mut seats, Some(100.0));
-        assert!(seats
-            .iter()
-            .any(|s| s.ability.effect == AbilityEffect::BaseArmorPiercingAdd(1600.0)));
+        resolve_crew_stat_effects(&mut seats, (Some(50.0), Some(75.0), Some(100.0)));
+        assert!(seats.iter().any(|s| {
+            s.ability.effect
+                == AbilityEffect::PreAllPiercingAdd {
+                    armor_piercing: 1600.0,
+                    shield_piercing: 0.0,
+                    accuracy: 0.0,
+                    cumulative: false,
+                }
+        }));
         let ortegas = seats
             .iter()
-            .find(|s| s.ability.effect == AbilityEffect::BaseMitigationStatsAdd(1800.0))
+            .find(|s| {
+                s.ability.effect
+                    == AbilityEffect::PreAllDefenseAdd {
+                        armor: 1800.0,
+                        shield_deflection: 1800.0,
+                        dodge: 1800.0,
+                        cumulative: false,
+                    }
+            })
             .unwrap();
         assert_eq!(ortegas.ability.condition, ortegas_condition);
     }
@@ -6223,5 +6373,121 @@ mod tests {
             below_decks: vec![],
         };
         assert!(unresolved_officer_names(&candidate, &name_to_id).is_empty());
+    }
+
+    #[test]
+    fn op5_scenario_materializes_all_three_axes_including_wesley_and_kirk_spock() {
+        let registry = crate::data::data_registry::DataRegistry::load().expect("load registry");
+        let mut shared = build_shared_scenario_data_from_registry(
+            &registry,
+            "realta",
+            "159955007",
+            Some(4),
+            Some(20),
+            None,
+            Default::default(),
+            DefenderOpponent::Hostile,
+            None,
+            None,
+        );
+        let lcars = shared.lcars_data.as_ref().expect("lcars loaded");
+        let mut tiers = HashMap::new();
+        let mut levels = HashMap::new();
+        for (name, tier, level) in [
+            ("Beverly Crusher", 5u8, 30u32),
+            ("Mirek", 5, 30),
+            ("B'Elanna Torres", 5, 30),
+            ("Tom Paris", 4, 20),
+            ("Wesley Crusher", 5, 30),
+            ("Kirk", 5, 30),
+            ("Spock", 5, 30),
+        ] {
+            let id = resolve_officer_name(&lcars.name_to_id, name).expect(name);
+            tiers.insert(id.clone(), tier);
+            levels.insert(id, level);
+        }
+        shared.resolve_options = ResolveOptions {
+            tier: None,
+            officer_tiers: Some(tiers),
+            officer_levels: Some(levels),
+        };
+
+        // 1. Mixed 3-axis crew: Beverly (Health -> ShieldRegen), Mirek (Defense -> FlatWeaponDamagePreCrit),
+        //    B'Elanna (Attack -> Reactive PreAllAllPiercingAdd), Tom Paris (Defense -> PreAllDefenseAdd).
+        let mixed = CrewCandidate {
+            captain: "Beverly Crusher".into(),
+            bridge: vec!["Mirek".into(), "B'Elanna Torres".into()],
+            below_decks: vec!["Tom Paris".into()],
+        };
+        let input = scenario_to_combat_input_from_shared(&shared, &mixed, 7);
+        assert!(
+            input.crew.seats.iter().all(|s| !matches!(
+                s.ability.effect,
+                AbilityEffect::CrewStatScaledDeferred { .. }
+            )),
+            "all deferred op 5 seats must materialize when crew levels are known"
+        );
+        assert!(input
+            .crew
+            .seats
+            .iter()
+            .any(|s| matches!(s.ability.effect, AbilityEffect::ShieldRegen(v) if v > 100.0)));
+        assert!(input.crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::FlatWeaponDamagePreCrit { amount, .. } if amount > 100.0
+        )));
+        assert!(input.crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::ReactiveDamageTaken {
+                kind: crate::combat::ReactiveDamageTakenKind::PreAllAllPiercingAdd(v),
+                duration_rounds: 1,
+                ..
+            } if v > 100.0
+        )));
+        assert!(input.crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::PreAllDefenseAdd { armor, shield_deflection, dodge, .. }
+                if armor > 100.0 && (armor - shield_deflection).abs() < 1e-9 && (armor - dodge).abs() < 1e-9
+        )));
+
+        // 2. Wesley Crusher: his own bridge SelfOfficer OfficerStatAll launch buff must fold into
+        //    effective crew Attack when resolving his captain AllDamage op 5 ability!
+        let wesley = CrewCandidate {
+            captain: "Wesley Crusher".into(),
+            bridge: vec![],
+            below_decks: vec![],
+        };
+        let wesley_input = scenario_to_combat_input_from_shared(&shared, &wesley, 7);
+        let wesley_id = resolve_officer_name(&lcars.name_to_id, "Wesley Crusher").unwrap();
+        let wesley_raw_attack = lcars.by_id[&wesley_id].stats_at_level(30).unwrap().attack;
+        let wesley_dmg = wesley_input
+            .crew
+            .seats
+            .iter()
+            .find_map(|s| match s.ability.effect {
+                AbilityEffect::FlatWeaponDamagePreCrit { amount, .. } => Some(amount),
+                _ => None,
+            })
+            .expect("Wesley captain FlatWeaponDamagePreCrit materialized");
+        assert!(
+            wesley_dmg > wesley_raw_attack,
+            "Wesley's own launch OfficerStatAll buff must increase materialized Attack damage ({wesley_dmg} vs raw {wesley_raw_attack})"
+        );
+
+        // 3. Kirk + Spock: Kirk's dynamic RoundStart Morale OfficerStatAll row must NOT block
+        //    Spock's ShieldHPRepair op 5 materialization at combat start!
+        let kirk_spock = CrewCandidate {
+            captain: "Kirk".into(),
+            bridge: vec!["Spock".into()],
+            below_decks: vec![],
+        };
+        let ks_input = scenario_to_combat_input_from_shared(&shared, &kirk_spock, 7);
+        assert!(
+            ks_input.crew.seats.iter().any(|s| matches!(
+                s.ability.effect,
+                AbilityEffect::ShieldRegen(v) if v > 100.0
+            )),
+            "Spock ShieldHPRepair must materialize cleanly alongside Kirk's dynamic Morale OfficerStatAll"
+        );
     }
 }

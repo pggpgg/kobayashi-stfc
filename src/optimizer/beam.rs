@@ -505,7 +505,85 @@ fn score_single_effect(
                     scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 1.5;
                     scores[BEAM_CAPTAIN_DIVERSITY] += w * m * 1.2;
                 }
+                crate::combat::ReactiveDamageTakenKind::PreAllAllDefensesAdd(v) => {
+                    let m = soft_mag(v * p, 5_000.0);
+                    scores[BEAM_SURVIVABILITY] += w * m * 2.5;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.0;
+                }
+                crate::combat::ReactiveDamageTakenKind::PreAllAllPiercingAdd(v) => {
+                    let m = soft_mag(v * p, 5_000.0);
+                    scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 2.5;
+                    scores[BEAM_DAMAGE] += w * m * 1.6;
+                }
             }
+        }
+        AbilityEffect::CrewStatScaledDeferred {
+            target,
+            coefficient,
+            chance,
+            ..
+        } => {
+            use crate::combat::CrewStatScaledTarget;
+            let p = chance.clamp(0.0, 1.0);
+            let m = soft_mag(coefficient * p, 2.0);
+            match target {
+                CrewStatScaledTarget::AllDefensesPreAll
+                | CrewStatScaledTarget::BaseArmorPreAll
+                | CrewStatScaledTarget::BaseShieldDeflectionPreAll
+                | CrewStatScaledTarget::BaseDodgePreAll => {
+                    scores[BEAM_SURVIVABILITY] += w * m * 2.6;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.1;
+                    scores[BEAM_CAPTAIN_DIVERSITY] += w * m * 1.2;
+                }
+                CrewStatScaledTarget::AllPiercingPreAll
+                | CrewStatScaledTarget::BaseArmorPiercingPreAll
+                | CrewStatScaledTarget::BaseShieldPiercingPreAll
+                | CrewStatScaledTarget::BaseAccuracyPreAll => {
+                    scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 2.6;
+                    scores[BEAM_DAMAGE] += w * m * 1.6;
+                    scores[BEAM_R1_BURST] += w * m * 1.4 * early_mult;
+                }
+                CrewStatScaledTarget::ShieldRepairFlat => {
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.4;
+                    scores[BEAM_SURVIVABILITY] += w * m * 2.1;
+                    scores[BEAM_CAPTAIN_DIVERSITY] += w * m * 1.2;
+                }
+                CrewStatScaledTarget::WeaponDamageFlatPreCrit => {
+                    scores[BEAM_DAMAGE] += w * m * 2.4;
+                    scores[BEAM_R1_BURST] += w * m * 2.0 * early_mult;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.5;
+                }
+            }
+        }
+        AbilityEffect::PreAllDefenseAdd {
+            armor,
+            shield_deflection,
+            dodge,
+            ..
+        } => {
+            let m = soft_mag(armor.max(shield_deflection).max(dodge), 5_000.0);
+            scores[BEAM_SURVIVABILITY] += w * m * 2.6;
+            scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.0;
+        }
+        AbilityEffect::PreAllPiercingAdd {
+            armor_piercing,
+            shield_piercing,
+            accuracy,
+            ..
+        }
+        | AbilityEffect::OnHitPreAllPiercingAdd {
+            armor_piercing,
+            shield_piercing,
+            accuracy,
+        } => {
+            let m = soft_mag(armor_piercing.max(shield_piercing).max(accuracy), 5_000.0);
+            scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 2.6;
+            scores[BEAM_DAMAGE] += w * m * 1.6;
+        }
+        AbilityEffect::FlatWeaponDamagePreCrit { amount, chance, .. } => {
+            let m = soft_mag(amount * chance.clamp(0.0, 1.0), 50_000.0);
+            scores[BEAM_DAMAGE] += w * m * 2.4;
+            scores[BEAM_R1_BURST] += w * m * 2.0 * early_mult;
         }
         AbilityEffect::DefenderShieldDrainPerRound { fraction, .. } => {
             let m = soft_mag(fraction, 0.15);

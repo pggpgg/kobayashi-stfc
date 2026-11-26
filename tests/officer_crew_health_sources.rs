@@ -1,6 +1,6 @@
-//! Source-bound crew-health coefficient tests; numeric materialization is tested
-//! separately at scenario setup where profile and crew health are available.
-use kobayashi::combat::{AbilityEffect, TimingWindow};
+//! Source-bound crew-stat-scaled (`op 5`) coefficient tests; numeric materialization is tested
+//! separately at scenario setup where profile and crew stats are available.
+use kobayashi::combat::{AbilityEffect, CrewStatAxis, CrewStatScaledTarget, TimingWindow};
 use kobayashi::lcars::{
     build_officer_model_file_default, index_lcars_officers_by_id, resolve_crew_to_buff_set,
     ResolveOptions,
@@ -32,13 +32,25 @@ fn source_bound_officers_defer_raw_crew_health_and_preserve_gates() {
         .find(|s| {
             matches!(
                 s.ability.effect,
-                AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
+                AbilityEffect::CrewStatScaledDeferred {
+                    target: CrewStatScaledTarget::BaseArmorPiercingPreAll,
+                    ..
+                }
             )
         })
         .expect("Charvanek deferred piercing");
     assert_eq!(
         charvanek.ability.effect,
-        AbilityEffect::BaseArmorPiercingPerCrewHealth(8.0)
+        AbilityEffect::CrewStatScaledDeferred {
+            target: CrewStatScaledTarget::BaseArmorPiercingPreAll,
+            axis: CrewStatAxis::Health,
+            coefficient: 8.0,
+            chance: 1.0,
+            cumulative: false,
+            duration_rounds: 0,
+            reactive_trigger: None,
+            on_hit: false,
+        }
     );
     assert_eq!(charvanek.ability.timing, TimingWindow::CombatBegin);
     let ortegas = buff
@@ -48,13 +60,25 @@ fn source_bound_officers_defer_raw_crew_health_and_preserve_gates() {
         .find(|s| {
             matches!(
                 s.ability.effect,
-                AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                AbilityEffect::CrewStatScaledDeferred {
+                    target: CrewStatScaledTarget::AllDefensesPreAll,
+                    ..
+                }
             )
         })
         .expect("SNW Ortegas deferred all-defense");
     assert_eq!(
         ortegas.ability.effect,
-        AbilityEffect::BaseMitigationStatsPerCrewHealth(18.0)
+        AbilityEffect::CrewStatScaledDeferred {
+            target: CrewStatScaledTarget::AllDefensesPreAll,
+            axis: CrewStatAxis::Health,
+            coefficient: 18.0,
+            chance: 1.0,
+            cumulative: false,
+            duration_rounds: 0,
+            reactive_trigger: None,
+            on_hit: false,
+        }
     );
     assert_eq!(ortegas.ability.timing, TimingWindow::CombatBegin);
     assert!(

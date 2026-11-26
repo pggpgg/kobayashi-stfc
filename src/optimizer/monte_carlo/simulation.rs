@@ -440,12 +440,22 @@ fn crew_has_unavailable_condition(
 }
 
 fn unsupported_defender_raw_effects(crew: &crate::combat::CrewConfiguration) -> bool {
-    use crate::combat::AbilityEffect;
+    use crate::combat::{AbilityEffect, ReactiveDamageTakenKind};
     crew.seats.iter().any(|seat| {
         matches!(
             seat.ability.effect,
             AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
                 | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+                | AbilityEffect::CrewStatScaledDeferred { .. }
+                | AbilityEffect::PreAllDefenseAdd { .. }
+                | AbilityEffect::PreAllPiercingAdd { .. }
+                | AbilityEffect::OnHitPreAllPiercingAdd { .. }
+                | AbilityEffect::FlatWeaponDamagePreCrit { .. }
+                | AbilityEffect::ReactiveDamageTaken {
+                    kind: ReactiveDamageTakenKind::PreAllAllDefensesAdd(_)
+                        | ReactiveDamageTakenKind::PreAllAllPiercingAdd(_),
+                    ..
+                }
                 | AbilityEffect::UnsupportedOfficerEffect { .. }
                 | AbilityEffect::BaseArmorPiercingAdd(_)
                 | AbilityEffect::BaseMitigationStatsAdd(_)
@@ -460,13 +470,41 @@ fn unsupported_crew_health_effects_for_crew(
     has_outbound_raw: bool,
     has_inbound_raw: bool,
 ) -> bool {
-    use crate::combat::AbilityEffect;
+    use crate::combat::{AbilityEffect, ReactiveDamageTakenKind};
     crew.seats.iter().any(|seat| match seat.ability.effect {
         AbilityEffect::BaseArmorPiercingPerCrewHealth(_)
         | AbilityEffect::BaseMitigationStatsPerCrewHealth(_)
+        | AbilityEffect::CrewStatScaledDeferred { .. }
         | AbilityEffect::UnsupportedOfficerEffect { .. } => true,
         AbilityEffect::BaseArmorPiercingAdd(value) if value != 0.0 => !has_outbound_raw,
+        AbilityEffect::PreAllPiercingAdd {
+            armor_piercing,
+            shield_piercing,
+            accuracy,
+            ..
+        }
+        | AbilityEffect::OnHitPreAllPiercingAdd {
+            armor_piercing,
+            shield_piercing,
+            accuracy,
+        } if armor_piercing != 0.0 || shield_piercing != 0.0 || accuracy != 0.0 => {
+            !has_outbound_raw
+        }
+        AbilityEffect::ReactiveDamageTaken {
+            kind: ReactiveDamageTakenKind::PreAllAllPiercingAdd(v),
+            ..
+        } if v != 0.0 => !has_outbound_raw,
         AbilityEffect::BaseMitigationStatsAdd(value) if value != 0.0 => !has_inbound_raw,
+        AbilityEffect::PreAllDefenseAdd {
+            armor,
+            shield_deflection,
+            dodge,
+            ..
+        } if armor != 0.0 || shield_deflection != 0.0 || dodge != 0.0 => !has_inbound_raw,
+        AbilityEffect::ReactiveDamageTaken {
+            kind: ReactiveDamageTakenKind::PreAllAllDefensesAdd(v),
+            ..
+        } if v != 0.0 => !has_inbound_raw,
         AbilityEffect::HostileBasePiercingStatsReduction(value) if value != 0.0 => !has_inbound_raw,
         _ => false,
     })
