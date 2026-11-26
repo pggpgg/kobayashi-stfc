@@ -599,6 +599,81 @@ pub(crate) fn combat_start_defense_seats_from_catalog_for_group(
         .collect()
 }
 
+/// Verified CombatStart enemy weapon-damage reduction research (`Defensive Tactics`,
+/// rid `1914017763`, bid `2859405133`: `AllDamage` `MultiplySub` on `EnemyShip` vs
+/// non-Armada hostiles, ranks 1–5 = `5%..30%`). Verified against 2026-11-26 live
+/// captures (baseline `0.70×` hostile damage and PMC additive `1.00 - 0.30 - 0.66 = 0.04×`).
+pub(crate) fn combat_start_opponent_weapon_damage_reduction_seats_from_catalog_for_group(
+    catalog: &NativeConsumableBuffCatalog,
+    expected_group: u32,
+    imported: &[GlobalBuffEntry],
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
+    const DEFENSIVE_TACTICS_BID: i64 = 2_859_405_133;
+    const DEFENSIVE_TACTICS_SHA256: &str =
+        "6e1756ede11a14a8785377fb806764ee7d99323a8798753ff85e32f85c8cc49d";
+    const DEFENSIVE_TACTICS_RANKS: [f64; 6] = [0.05, 0.1, 0.15, 0.2, 0.3, 0.0];
+
+    if catalog.schema_version != 1 || catalog.source_group != expected_group || expected_group != 66
+    {
+        return Vec::new();
+    }
+    active_highest_levels(imported, now_unix_seconds)
+        .into_iter()
+        .filter_map(|(bid, level)| {
+            if bid != DEFENSIVE_TACTICS_BID {
+                return None;
+            }
+            let spec = catalog.buffs.get(&bid)?;
+            let exact = spec.sha256 == DEFENSIVE_TACTICS_SHA256
+                && spec.modifier_code == 2
+                && spec.operation_code == 4
+                && spec.target_code == 6
+                && spec.trigger_code == 25
+                && spec.condition_codes == [27, 131]
+                && spec.attribute_fields.is_empty()
+                && spec.unknown_fields.is_empty()
+                && spec.num_rounds == 0
+                && spec.ranked_value_type == 0
+                && spec.ranked_values == DEFENSIVE_TACTICS_RANKS
+                && spec.ranked_value_count == 99
+                && spec.ranked_chances == [1.0]
+                && spec.ranked_chance_count == 99;
+            if !exact {
+                return None;
+            }
+            let rank = usize::try_from(level - 1).ok()?;
+            if rank >= spec.ranked_value_count || rank >= spec.ranked_chance_count {
+                return None;
+            }
+            let value = spec.ranked_values[rank.min(spec.ranked_values.len() - 1)];
+            (value.is_finite() && value > 0.0).then(|| CrewSeatContext {
+                seat: CrewSeat::Ship,
+                ability: Ability {
+                    name: format!("native_{expected_group}_{bid}"),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: AbilityEffect::OpponentWeaponDamageReduction {
+                        reduction: value,
+                        cumulative: false,
+                    },
+                    condition: Some(AbilityCondition::And(vec![
+                        AbilityCondition::DefenderIsNpcHostile,
+                        AbilityCondition::Not(Box::new(AbilityCondition::DefenderShipTypeIs(
+                            ShipType::Armada,
+                        ))),
+                    ])),
+                    weapon_scope: Default::default(),
+                },
+                boosted: false,
+                officer_id: None,
+                contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+            })
+        })
+        .collect()
+}
+
 fn combat_start_condition(
     spec: &NativeBuffSpec,
     source_group: u32,

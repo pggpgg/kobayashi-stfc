@@ -2802,7 +2802,11 @@ pub fn apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
     }
     let bonus_lookup = ProfileBonusLookup::new(profile, owner_faction_slug);
     let gb = |k: &str| bonus_lookup.get(k);
-    let weapon = 1.0 + gb("weapon_damage") + extra_wd;
+    // Officer Attack contributes to the same native weapon-damage MULT pool as research,
+    // buildings, and technology (verified 2026-11-26: Realta +100% officer_bonus vs Vi'Dar
+    // +350% officer_bonus yielded ~94.6x vs ~98.1x weapon scaling, ratio 1.037x rather than
+    // multiplicative 2.25x).
+    let weapon = 1.0 + gb("weapon_damage") + osr.attack_bonus + extra_wd;
     // Officer Health contributes to the same native MULT pool as HP research,
     // buildings and technology, rather than multiplying the completed pool again.
     let hull_hp = 1.0 + gb("hull_hp") + osr.health_bonus + static_health.hull_fraction;
@@ -2866,20 +2870,16 @@ pub fn apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
     let damage_reduction_add = gb("damage_reduction");
     let mitigation_add = armor_add + shield_deflection_add + dodge_add + damage_reduction_add;
 
-    // Weapon officer scaling is retained separately pending native combat proof.
-    // Health's shared pool is verified by the historical Realta journal.
-    let attack_mult = 1.0 + osr.attack_bonus;
-
     apply_bonuses_to_weapon_rows(
         &mut attacker.weapons,
-        weapon * attack_mult,
+        weapon,
         crit_chance_add,
         crit_damage_mult,
         crit_damage_flat,
     );
 
     Combatant {
-        attack: attacker.attack * weapon * attack_mult,
+        attack: attacker.attack * weapon,
         hull_health: (attacker.hull_health + hull_hp_flat) * hull_hp,
         shield_health: (attacker.shield_health + shield_hp_flat) * shield_hp,
         crit_chance: (attacker.crit_chance + crit_chance_add).clamp(0.0, 1.0),
@@ -4457,9 +4457,9 @@ mod tests {
             ]),
         );
         for (actual, expected) in [
-            (compiled.attack, 262.5),
-            (compiled.weapon_attack(0).unwrap(), 75.0),
-            (compiled.weapon_attack(1).unwrap(), 187.5),
+            (compiled.attack, 218.75),
+            (compiled.weapon_attack(0).unwrap(), 62.5),
+            (compiled.weapon_attack(1).unwrap(), 156.25),
             (compiled.weapon_crit_chance(0), 0.45),
             (compiled.weapon_crit_chance(1), 0.35),
             (compiled.weapon_crit_multiplier(0), 6.75),
@@ -5026,12 +5026,12 @@ mod tests {
             defense_dodge_add: 0.0,
         };
         let out = apply_profile_to_attacker(attacker, &profile, None, osr);
-        // attack: 100 × (1 + 0.10) × (1 + 0.50)                 = 165
+        // attack: 100 × (1 + 0.10 + 0.50)                     = 160
         // hull:   1000 × (1 + 0.20 + 1.00)                     = 2200
         // shield_hp (new — health_mult on shield too): 500 × (1 + 0) × (1 + 1.00) = 1000
         // mitigation: 0.10 + 0 (armor + add) + 0.40 (shield_defl add) + 0 (dodge add) = 0.50
         // shield_mitigation: 0.20 + 0.05 = 0.25 (officer_defense add removed)
-        assert!((out.attack - 165.0).abs() < 1e-9, "attack = {}", out.attack);
+        assert!((out.attack - 160.0).abs() < 1e-9, "attack = {}", out.attack);
         assert!(
             (out.hull_health - 2200.0).abs() < 1e-9,
             "hull_health = {}",

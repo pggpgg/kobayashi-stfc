@@ -345,6 +345,7 @@ fn score_single_effect(
             scores[BEAM_CAPTAIN_DIVERSITY] += w * m * 1.4;
         }
         AbilityEffect::HostileBasePiercingStatsReduction(v)
+        | AbilityEffect::HostileBaseArmorPiercingReduction(v)
         | AbilityEffect::HostileCounterStatDebuff { reduction: v, .. } => {
             let m = soft_mag(v, 0.20);
             scores[BEAM_SURVIVABILITY] += w * m * 2.6;
@@ -353,6 +354,8 @@ fn score_single_effect(
         }
         AbilityEffect::HostileBaseDefenseStatsReduction(v)
         | AbilityEffect::BasePiercingStatsBonus(v)
+        | AbilityEffect::BaseArmorPiercingBonus(v)
+        | AbilityEffect::OnHitBaseArmorPiercingBonus(v)
         | AbilityEffect::CumulativeBasePiercingStatsBonus(v) => {
             let m = soft_mag(v, 0.35);
             scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 2.7;
@@ -482,10 +485,20 @@ fn score_single_effect(
                     scores[BEAM_SURVIVABILITY] += w * m * 1.9;
                     scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.5;
                 }
+                crate::combat::ReactiveDamageTakenKind::ApexBarrierFlatBonus(v) => {
+                    let m = soft_mag(v * p * dur_boost, 2_500.0);
+                    scores[BEAM_SURVIVABILITY] += w * m * 2.3;
+                    scores[BEAM_SUSTAIN_CHAIN] += w * m * 2.0;
+                }
                 crate::combat::ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v) => {
                     let m = soft_mag(v * p, 0.50);
                     scores[BEAM_SURVIVABILITY] += w * m * 2.1;
                     scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.8;
+                }
+                crate::combat::ReactiveDamageTakenKind::DrainOpponentShieldFlat(v) => {
+                    let m = soft_mag(v * p, 50_000.0);
+                    scores[BEAM_DAMAGE] += w * m * 1.5;
+                    scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 1.6;
                 }
                 crate::combat::ReactiveDamageTakenKind::ApplyDefenderBurning => {
                     *provides_state |= STATE_BURNING;
@@ -553,6 +566,11 @@ fn score_single_effect(
                     scores[BEAM_R1_BURST] += w * m * 2.0 * early_mult;
                     scores[BEAM_SUSTAIN_CHAIN] += w * m * 1.5;
                 }
+                CrewStatScaledTarget::DefenderShieldDrainFlat => {
+                    scores[BEAM_DAMAGE] += w * m * 1.8;
+                    scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 1.8;
+                    scores[BEAM_R1_BURST] += w * m * 1.4 * early_mult;
+                }
             }
         }
         AbilityEffect::PreAllDefenseAdd {
@@ -587,6 +605,12 @@ fn score_single_effect(
         }
         AbilityEffect::DefenderShieldDrainPerRound { fraction, .. } => {
             let m = soft_mag(fraction, 0.15);
+            scores[BEAM_DAMAGE] += w * m * 1.6;
+            scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 1.8;
+        }
+        AbilityEffect::DefenderShieldDrainFlat(v)
+        | AbilityEffect::OnHitDefenderShieldDrainFlat(v) => {
+            let m = soft_mag(v, 50_000.0);
             scores[BEAM_DAMAGE] += w * m * 1.6;
             scores[BEAM_ANTI_DODGE_PIERCE] += w * m * 1.8;
         }

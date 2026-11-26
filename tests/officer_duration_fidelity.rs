@@ -23,7 +23,6 @@ fn start_relative_hull_gates_and_enemy_hull_drains_are_diagnostic_not_self_effec
     for (id, class) in [
         ("charvanek-0f1b5c", AbilityClass::CaptainManeuver),
         ("tal-c3e4eb", AbilityClass::BridgeAbility),
-        ("suder-d348a9", AbilityClass::BridgeAbility),
     ] {
         let buff = resolve_crew_to_buff_set(id, &[], &[], &officers, &ResolveOptions::default());
         let ability = buff.crew.seats.iter().find(|seat| {
@@ -35,6 +34,26 @@ fn start_relative_hull_gates_and_enemy_hull_drains_are_diagnostic_not_self_effec
         });
         assert!(ability.is_some(), "{id} must retain an unsupported marker");
     }
+
+    // Suder's RoundEnd HullRepair (verified 2026-11-26 Batch B Fight C) now maps to
+    // round-boundary HullRegenPrevRoundFraction.
+    let suder = resolve_crew_to_buff_set(
+        "suder-d348a9",
+        &[],
+        &[],
+        &officers,
+        &ResolveOptions::default(),
+    );
+    assert!(
+        suder.crew.seats.iter().any(|seat| {
+            seat.ability.class == AbilityClass::BridgeAbility
+                && matches!(
+                    seat.ability.effect,
+                    AbilityEffect::HullRegenPrevRoundFraction(f) if f > 0.0
+                )
+        }),
+        "suder-d348a9 bridge ability must map to HullRegenPrevRoundFraction"
+    );
 }
 
 #[test]
@@ -222,6 +241,16 @@ fn annorax_unknown_hit_timing_is_not_mapped_to_an_unconditional_barrier() {
         &officers,
         &ResolveOptions::default(),
     );
+    // Verified 2026-11-26 Batch B Fight D: Annorax compiles to reactive per-volley
+    // HitTaken flat Apex Barrier (2 rounds), never an unconditional static ApexBarrierBonus.
+    assert!(
+        !buff
+            .crew
+            .seats
+            .iter()
+            .any(|s| matches!(s.ability.effect, AbilityEffect::ApexBarrierBonus(_))),
+        "Annorax must not become an unconditional ApexBarrierBonus"
+    );
     let a = buff
         .crew
         .seats
@@ -229,14 +258,16 @@ fn annorax_unknown_hit_timing_is_not_mapped_to_an_unconditional_barrier() {
         .find(|s| {
             matches!(
                 s.ability.effect,
-                AbilityEffect::UnsupportedOfficerEffect { .. }
+                AbilityEffect::ReactiveDamageTaken {
+                    trigger: kobayashi::combat::DamageTakenTrigger::AnyDamage,
+                    kind: kobayashi::combat::ReactiveDamageTakenKind::ApexBarrierFlatBonus(v),
+                    duration_rounds: 2,
+                    ..
+                } if (v - 2000.0).abs() < 1e-12
             )
         })
-        .expect("Annorax's unresolved within-volley timing must be explicit");
+        .expect("Annorax must resolve to 2-round reactive HitTaken ApexBarrierFlatBonus(2000)");
     assert_eq!(a.ability.timing, TimingWindow::DefensePhase);
-    assert!(
-        matches!(a.ability.effect, AbilityEffect::UnsupportedOfficerEffect { coefficient, chance } if (coefficient - 2000.0).abs() < 1e-12 && (chance - 1.0).abs() < 1e-12)
-    );
     assert!(
         a.ability.condition.is_some(),
         "hostile, armada, and Tal conditions must remain"
@@ -246,11 +277,7 @@ fn annorax_unknown_hit_timing_is_not_mapped_to_an_unconditional_barrier() {
 #[test]
 fn known_unimplemented_officer_abilities_are_not_silent_proxies() {
     let officers = index_lcars_officers_by_id(build_officer_model_file_default().unwrap().officers);
-    for id in [
-        "vemet-00a218",
-        "ent-e-troi-46cdc3",
-        "changeling-kira-666ebe",
-    ] {
+    for id in ["vemet-00a218", "changeling-kira-666ebe"] {
         assert!(officers.contains_key(id), "missing catalog officer {id}");
         let buff = resolve_crew_to_buff_set(id, &[], &[], &officers, &ResolveOptions::default());
         assert!(
@@ -274,16 +301,22 @@ fn known_unimplemented_officer_abilities_are_not_silent_proxies() {
             );
         }
     }
-    // Gowron, Marcus, and B'Elanna Torres are now modeled via unified op 5 CrewStatScaledDeferred
-    // (never silent legacy shield_regen/mitigation proxies).
-    for id in ["gowron-27ac30", "marcus-073931", "b-elanna-torres-75cf02"] {
+    // Gowron, Marcus, B'Elanna Torres (op 5) and Ent-E Troi, Vemet bridge (op 6 ShieldHPRepair,
+    // verified 2026-11-26 Batch B Fight C) are modeled via unified CrewStatScaledDeferred.
+    for id in [
+        "gowron-27ac30",
+        "marcus-073931",
+        "b-elanna-torres-75cf02",
+        "ent-e-troi-46cdc3",
+        "vemet-00a218",
+    ] {
         let buff = resolve_crew_to_buff_set(id, &[], &[], &officers, &ResolveOptions::default());
         assert!(
             buff.crew.seats.iter().any(|s| matches!(
                 s.ability.effect,
                 AbilityEffect::CrewStatScaledDeferred { .. }
             )),
-            "{id} must use deferred op 5 crew-stat scaling"
+            "{id} must use deferred op 5 / op 6 crew-stat scaling"
         );
     }
 }
@@ -348,9 +381,9 @@ fn unsupported_source_families_remain_visible_for_passive_and_below_deck_seats()
 #[test]
 fn unsupported_officer_is_not_reported_as_implemented_by_coverage() {
     let officers = index_lcars_officers_by_id(build_officer_model_file_default().unwrap().officers);
-    let vemet = officers.get("vemet-00a218").unwrap();
-    let effect = &vemet.bridge_ability.as_ref().unwrap().effects[0];
-    let coverage = lcars_effect_coverage(effect, &vemet.id, &ResolveOptions::default());
+    let kira = officers.get("changeling-kira-666ebe").unwrap();
+    let effect = &kira.bridge_ability.as_ref().unwrap().effects[0];
+    let coverage = lcars_effect_coverage(effect, &kira.id, &ResolveOptions::default());
     assert_eq!(coverage.tier, MechanicCoverageTier::Ignored);
     assert_eq!(coverage.pathway, "unsupported_officer_effect");
 }

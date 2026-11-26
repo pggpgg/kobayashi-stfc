@@ -407,6 +407,7 @@ pub fn compile_officer_combat_spec_full(
                     ..
                 } | AbilityEffect::BaseMitigationStatsBonus(_)
                     | AbilityEffect::BasePiercingStatsBonus(_)
+                    | AbilityEffect::BaseArmorPiercingBonus(_)
             ))
         // State durations describe each proc after it fires, not an expiry
         // window for the ability itself. In particular, a hit-triggered burn
@@ -424,6 +425,8 @@ pub fn compile_officer_combat_spec_full(
                 | AbilityEffect::TimedHostileCritChanceReduction { .. }
                 | AbilityEffect::DefenderOnHitStack { .. }
                 | AbilityEffect::OnHitPreAllPiercingAdd { .. }
+                | AbilityEffect::OnHitBaseArmorPiercingBonus(_)
+                | AbilityEffect::OnHitDefenderShieldDrainFlat(_)
         )
         || matches!(
             effect,
@@ -498,12 +501,14 @@ fn try_compile_reactive_damage_taken(
         DamageTakenTriggerKind::CriticalHit => DamageTakenTrigger::CriticalHit,
     };
     // Preserve existing `HitTaken` pathways (Archer/Trip `DamageTakenCritStack` and legacy
-    // `HitTaken` officers) — route verified `OpponentWeaponDamageReduction` (Mudd) and
-    // crew-scaled reactive `op 5` defenses/piercing (B'Elanna Torres, The Doctor) here.
+    // `HitTaken` officers) — route verified `OpponentWeaponDamageReduction` (Mudd),
+    // flat `ApexBarrier` (Annorax, Batch B Fight D), and crew-scaled reactive `op 5`
+    // defenses/piercing (B'Elanna Torres, The Doctor) here.
     if trigger == DamageTakenTrigger::AnyDamage
         && !matches!(
             spec.modifier,
             AbilityModifierSpec::OpponentWeaponDamageReduction
+                | AbilityModifierSpec::ApexBarrier
                 | AbilityModifierSpec::CrewScaledAllDefenses
                 | AbilityModifierSpec::CrewScaledAllPiercing
         )
@@ -669,7 +674,7 @@ fn try_compile_reactive_damage_taken(
             )
         }
         AbilityModifierSpec::ApexBarrier => {
-            if !is_self_target || op != "multiply" {
+            if !is_self_target || !matches!(op, "multiply" | "add") {
                 return Some(unsupported());
             }
             let v = match spec
@@ -682,14 +687,22 @@ fn try_compile_reactive_damage_taken(
                 Ok(_) => return Some(unsupported()),
                 Err(e) => return Some(Err(e)),
             };
-            (
-                ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v),
-                scalar_chance,
-                duration_rounds,
-            )
+            let kind = if op == "add" {
+                ReactiveDamageTakenKind::ApexBarrierFlatBonus(v)
+            } else {
+                ReactiveDamageTakenKind::ApexBarrierMultiplierBonus(v)
+            };
+            (kind, scalar_chance, duration_rounds)
         }
-        AbilityModifierSpec::CrewScaledAllDefenses | AbilityModifierSpec::CrewScaledAllPiercing => {
-            if !is_self_target || op != "add" {
+        AbilityModifierSpec::CrewScaledAllDefenses
+        | AbilityModifierSpec::CrewScaledAllPiercing
+        | AbilityModifierSpec::CrewScaledEnemyShieldDrain => {
+            let valid_target = if spec.modifier == AbilityModifierSpec::CrewScaledEnemyShieldDrain {
+                spec.target == AbilityTargetSpec::DefenderOpponent
+            } else {
+                is_self_target
+            };
+            if !valid_target || op != "add" {
                 return Some(unsupported());
             }
             let axis = match spec
@@ -719,10 +732,17 @@ fn try_compile_reactive_damage_taken(
                 Ok(_) => return Some(unsupported()),
                 Err(e) => return Some(Err(e)),
             };
-            let target = if spec.modifier == AbilityModifierSpec::CrewScaledAllDefenses {
-                crate::combat::abilities::CrewStatScaledTarget::AllDefensesPreAll
-            } else {
-                crate::combat::abilities::CrewStatScaledTarget::AllPiercingPreAll
+            let target = match spec.modifier {
+                AbilityModifierSpec::CrewScaledAllDefenses => {
+                    crate::combat::abilities::CrewStatScaledTarget::AllDefensesPreAll
+                }
+                AbilityModifierSpec::CrewScaledAllPiercing => {
+                    crate::combat::abilities::CrewStatScaledTarget::AllPiercingPreAll
+                }
+                AbilityModifierSpec::CrewScaledEnemyShieldDrain => {
+                    crate::combat::abilities::CrewStatScaledTarget::DefenderShieldDrainFlat
+                }
+                _ => unreachable!(),
             };
             return Some(Ok((
                 timing,
@@ -1430,13 +1450,18 @@ fn compile_officer_combat_spec_impl(
         | AbilityModifierSpec::CrewScaledShieldPiercing
         | AbilityModifierSpec::CrewScaledAccuracy
         | AbilityModifierSpec::CrewScaledShieldRepair
-        | AbilityModifierSpec::CrewScaledWeaponDamage => {
+        | AbilityModifierSpec::CrewScaledWeaponDamage
+        | AbilityModifierSpec::CrewScaledEnemyShieldDrain => {
             use crate::combat::abilities::{CrewStatAxis, CrewStatScaledTarget};
-            if !matches!(
-                spec.target,
-                AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
-            ) || spec.operation != AbilityOperationSpec::Add
-            {
+            let valid_target = if spec.modifier == AbilityModifierSpec::CrewScaledEnemyShieldDrain {
+                spec.target == AbilityTargetSpec::DefenderOpponent
+            } else {
+                matches!(
+                    spec.target,
+                    AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+                )
+            };
+            if !valid_target || spec.operation != AbilityOperationSpec::Add {
                 return Err(EffectSpecCompileError::UnsupportedModifierOperation {
                     modifier: spec.modifier,
                     operation: spec.operation,
@@ -1481,6 +1506,9 @@ fn compile_officer_combat_spec_impl(
             let on_hit = timing == TimingWindow::AttackPhase && spec.officer.post_weapon_grant;
             let allowed_timing = match spec.modifier {
                 AbilityModifierSpec::CrewScaledShieldRepair => timing == TimingWindow::RoundStart,
+                AbilityModifierSpec::CrewScaledEnemyShieldDrain => {
+                    timing == TimingWindow::RoundStart || on_hit
+                }
                 AbilityModifierSpec::CrewScaledAllPiercing => {
                     matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) || on_hit
                 }
@@ -1514,12 +1542,19 @@ fn compile_officer_combat_spec_impl(
                 AbilityModifierSpec::CrewScaledWeaponDamage => {
                     CrewStatScaledTarget::WeaponDamageFlatPreCrit
                 }
+                AbilityModifierSpec::CrewScaledEnemyShieldDrain => {
+                    CrewStatScaledTarget::DefenderShieldDrainFlat
+                }
                 _ => unreachable!(),
             };
             let cumulative = if on_hit {
-                true
+                target != CrewStatScaledTarget::DefenderShieldDrainFlat
             } else if timing == TimingWindow::RoundStart
-                && target != CrewStatScaledTarget::ShieldRepairFlat
+                && !matches!(
+                    target,
+                    CrewStatScaledTarget::ShieldRepairFlat
+                        | CrewStatScaledTarget::DefenderShieldDrainFlat
+                )
             {
                 !matches!(spec.duration.as_ref(), Some(DurationSpec::Rounds { .. }))
             } else {
@@ -1589,6 +1624,29 @@ fn compile_officer_combat_spec_impl(
             Ok((
                 timing,
                 AbilityEffect::HostileBasePiercingStatsReduction(fraction.max(0.0)),
+                compiled_condition.clone(),
+            ))
+        }
+        AbilityModifierSpec::HostileBaseArmorPiercingReduction => {
+            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if spec.target != AbilityTargetSpec::DefenderOpponent
+                || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let fraction = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            Ok((
+                timing,
+                AbilityEffect::HostileBaseArmorPiercingReduction(fraction.max(0.0)),
                 compiled_condition.clone(),
             ))
         }
@@ -1721,6 +1779,33 @@ fn compile_officer_combat_spec_impl(
                 AbilityEffect::BasePiercingStatsBonus(fraction),
                 compiled_condition.clone(),
             ))
+        }
+        AbilityModifierSpec::BaseArmorPiercingBonus => {
+            let on_hit = timing == TimingWindow::AttackPhase && spec.officer.post_weapon_grant;
+            if !matches!(timing, TimingWindow::CombatBegin | TimingWindow::RoundStart) && !on_hit {
+                return Err(EffectSpecCompileError::UnsupportedTrigger(spec.trigger));
+            }
+            if !matches!(
+                spec.target,
+                AbilityTargetSpec::AttackerSelf | AbilityTargetSpec::SelfShip
+            ) || spec.operation != AbilityOperationSpec::Add
+            {
+                return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                    modifier: spec.modifier,
+                    operation: spec.operation,
+                });
+            }
+            let fraction = scalar_fraction(
+                spec.value
+                    .as_ref()
+                    .ok_or(EffectSpecCompileError::MissingScalarValue)?,
+            )?;
+            let effect = if on_hit {
+                AbilityEffect::OnHitBaseArmorPiercingBonus(fraction)
+            } else {
+                AbilityEffect::BaseArmorPiercingBonus(fraction)
+            };
+            Ok((timing, effect, compiled_condition.clone()))
         }
         AbilityModifierSpec::CumulativeBasePiercingStatsBonus => {
             if timing != TimingWindow::RoundStart {

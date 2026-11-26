@@ -531,6 +531,7 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
             Some(AbilityModifierSpec::HostileBaseDefenseStatsReduction)
         }
         "base_piercing_stats_bonus" => Some(AbilityModifierSpec::BasePiercingStatsBonus),
+        "base_armor_piercing_bonus" => Some(AbilityModifierSpec::BaseArmorPiercingBonus),
         "cumulative_base_piercing_stats_bonus" => {
             Some(AbilityModifierSpec::CumulativeBasePiercingStatsBonus)
         }
@@ -538,6 +539,9 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "base_mitigation_stats_add" => Some(AbilityModifierSpec::BaseMitigationStatsAdd),
         "hostile_base_piercing_stats_reduction" => {
             Some(AbilityModifierSpec::HostileBasePiercingStatsReduction)
+        }
+        "hostile_base_armor_piercing_reduction" => {
+            Some(AbilityModifierSpec::HostileBaseArmorPiercingReduction)
         }
         "base_mitigation_stats_per_crew_health" => {
             Some(AbilityModifierSpec::BaseMitigationStatsPerCrewHealth)
@@ -555,6 +559,7 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "crew_scaled_accuracy" => Some(AbilityModifierSpec::CrewScaledAccuracy),
         "crew_scaled_shield_repair" => Some(AbilityModifierSpec::CrewScaledShieldRepair),
         "crew_scaled_weapon_damage" => Some(AbilityModifierSpec::CrewScaledWeaponDamage),
+        "crew_scaled_enemy_shield_drain" => Some(AbilityModifierSpec::CrewScaledEnemyShieldDrain),
         "base_armor_piercing_add" => Some(AbilityModifierSpec::BaseArmorPiercingAdd),
         "dodge" => Some(AbilityModifierSpec::Dodge),
         "damage_reduction" => Some(AbilityModifierSpec::DamageReduction),

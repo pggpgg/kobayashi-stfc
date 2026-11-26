@@ -1170,7 +1170,8 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
             } else if matches!(
                 a.trigger.as_deref(),
                 Some("HullDamageTaken" | "ShieldDamageTaken" | "CriticalShotTaken")
-            ) {
+            ) || (stat == "apex_barrier" && a.trigger.as_deref() == Some("HitTaken"))
+            {
                 num_rounds_from_attributes(a.attributes.as_deref())
                     .map(|rounds| LcarsDuration::Rounds { rounds })
                     .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
@@ -1584,12 +1585,42 @@ fn crew_scaled_op5_stat_name(modifier: &str, a: &CanonicalAbility) -> Option<&'s
     }
 }
 
+/// Verified `op 6` (`MultiplyBaseSub`) crew-stat-scaled (`officer_stat=1/2/3`) `EnemyShip`
+/// shield drains (`ShieldHPRepair`). Verified against 2026-11-26 Fight C + 1-round reset
+/// captures (Ent-E Troi: `370,176 = 8 × effective_crew_attack` flat enemy shield drain per
+/// trigger; mirrors `op 5` `ShieldHPRepair` flat addition).
+///
+/// Enemy `AllDefenses MultiplyBaseSub` (Toli, Changeling Kira) remain unverified and quarantined.
+fn crew_scaled_op6_stat_name(modifier: &str, a: &CanonicalAbility) -> Option<&'static str> {
+    let op = a.operation.as_deref().unwrap_or("");
+    if !op.eq_ignore_ascii_case("MultiplyBaseSub") {
+        return None;
+    }
+    a.attributes
+        .as_deref()
+        .and_then(officer_stat_from_canonical_attributes)?;
+    if !matches!(a.target.as_deref(), Some("EnemyShip" | "EnemyAllShips")) {
+        return None;
+    }
+    let trigger = a.trigger.as_deref()?;
+    match modifier {
+        "ShieldHPRepair"
+            if matches!(trigger, "RoundStart" | "EnemyTakesHit" | "HullDamageTaken") =>
+        {
+            Some("crew_scaled_enemy_shield_drain")
+        }
+        _ => None,
+    }
+}
+
 fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
     let val = a.value_by_rank.first().copied().unwrap_or(0.0);
     let op = a.operation.as_deref().unwrap_or("Add");
     let chance = a.chance_by_rank.first().copied().unwrap_or(1.0);
 
-    if let Some(crew_stat_key) = crew_scaled_op5_stat_name(modifier, a) {
+    if let Some(crew_stat_key) =
+        crew_scaled_op5_stat_name(modifier, a).or_else(|| crew_scaled_op6_stat_name(modifier, a))
+    {
         return Some(MappedEffect::StatModify(
             crew_stat_key.into(),
             "add".into(),
@@ -1620,6 +1651,23 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             .as_deref()
             .and_then(officer_stat_from_canonical_attributes)
             == Some(OfficerStat::Health);
+    let supported_self_armor_piercing = modifier == "ArmorPiercing"
+        && op.eq_ignore_ascii_case("MultiplyAdd")
+        && a.target.as_deref() == Some("SelfShip")
+        && matches!(
+            a.trigger.as_deref(),
+            Some("ShipLaunched" | "CombatStart" | "RoundStart" | "EnemyTakesHit")
+        )
+        && !crew_scaled
+        && !a.chance_by_rank.is_empty()
+        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
+    let supported_enemy_armor_piercing_reduction = modifier == "ArmorPiercing"
+        && op.eq_ignore_ascii_case("MultiplySub")
+        && a.target.as_deref() == Some("EnemyShip")
+        && matches!(a.trigger.as_deref(), Some("CombatStart" | "RoundStart"))
+        && !crew_scaled
+        && !a.chance_by_rank.is_empty()
+        && a.chance_by_rank.iter().all(|chance| *chance == 1.0);
     let supported_enemy_piercing_reduction = modifier == "AllPiercing"
         && op.eq_ignore_ascii_case("MultiplySub")
         && a.target.as_deref() == Some("EnemyShip")
@@ -1712,7 +1760,10 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         && !supported_launch_officer_stat)
         || unsupported_critical_shot_modifier
         || unsupported_enemy_crit_damage
-        || (modifier == "ArmorPiercing" && !supported_charvanek_armor_piercing)
+        || (modifier == "ArmorPiercing"
+            && !supported_charvanek_armor_piercing
+            && !supported_self_armor_piercing
+            && !supported_enemy_armor_piercing_reduction)
         || (modifier == "AllPiercing"
             && !supported_enemy_piercing_reduction
             && !supported_self_all_piercing)
@@ -1760,8 +1811,6 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             a.ability_id.as_deref(),
             Some(
                 "4289717791"
-                    | "2633638696"
-                    | "2281926825"
                     // Plasma Backlash needs a confirmed energy-hit event for multi-shot weapons.
                     | "2603504550"
                     // Mudd's source rank values conflict with the advertised
@@ -1771,9 +1820,6 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
                     // the current self-shield-break path treats this as a flat,
                     // guaranteed heal.
                     | "1608351478"
-                    // Suder's native trigger is RoundEnd, but his text does
-                    // not establish when previous-round repair is applied.
-                    | "2041170794"
             )
         )
     {
@@ -1910,6 +1956,16 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             // Charvanek's bridge ability scales raw Armor Piercing by total
             // crew Health, resolved after profile and setup conditions.
             MappedEffect::StatModify("base_armor_piercing_per_crew_health".into(), "add".into(), val)
+        }
+        "ArmorPiercing" if supported_self_armor_piercing => {
+            MappedEffect::StatModify("base_armor_piercing_bonus".into(), "add".into(), val)
+        }
+        "ArmorPiercing" if supported_enemy_armor_piercing_reduction => {
+            MappedEffect::StatModify(
+                "hostile_base_armor_piercing_reduction".into(),
+                "add".into(),
+                val,
+            )
         }
         "AllPiercing" if supported_enemy_piercing_reduction => {
             MappedEffect::StatModify("hostile_base_piercing_stats_reduction".into(), "add".into(), val)
@@ -3031,7 +3087,7 @@ mod canonical_condition_tests {
     }
 
     #[test]
-    fn unsupported_armor_piercing_abilities_quarantine_instead_of_shield_pierce() {
+    fn armor_piercing_abilities_route_to_single_axis_or_quarantine_never_shield_pierce() {
         let model = build_officer_model_file_default().expect("default officer model");
         let by_id = |id: &str| {
             model
@@ -3041,11 +3097,21 @@ mod canonical_condition_tests {
                 .unwrap_or_else(|| panic!("missing officer {id}"))
         };
 
-        for (officer_id, seat_name) in [
-            ("azetbur-7eff22", "bridge"),
-            ("paul-stamets-4aa6ab", "bridge"),
-            ("m-ral-986e7a", "captain"),
-            ("honorguard-worf-8ac58c", "captain"),
+        // Verified single-axis ArmorPiercing pool mappings (2026-11-26 Fight E).
+        for (officer_id, seat_name, expected_stat) in [
+            ("azetbur-7eff22", "bridge", "base_armor_piercing_bonus"),
+            ("m-ral-986e7a", "captain", "base_armor_piercing_bonus"),
+            (
+                "paul-stamets-4aa6ab",
+                "bridge",
+                "hostile_base_armor_piercing_reduction",
+            ),
+            ("charvanek-0f1b5c", "bridge", "crew_scaled_armor_piercing"),
+            (
+                "honorguard-worf-8ac58c",
+                "captain",
+                "unsupported_officer_effect",
+            ),
         ] {
             let officer = by_id(officer_id);
             let ability = match seat_name {
@@ -3065,26 +3131,11 @@ mod canonical_condition_tests {
                 ability
                     .effects
                     .iter()
-                    .any(|e| e.stat.as_deref() == Some("unsupported_officer_effect")),
-                "{officer_id} {seat_name} should quarantine ArmorPiercing as unsupported_officer_effect: {:?}",
+                    .any(|e| e.stat.as_deref() == Some(expected_stat)),
+                "{officer_id} {seat_name} should map ArmorPiercing to {expected_stat}: {:?}",
                 ability.effects
             );
         }
-
-        // Charvanek (2825675256) remains supported via unified crew_scaled_armor_piercing.
-        let charvanek = by_id("charvanek-0f1b5c");
-        let charvanek_bridge = charvanek
-            .bridge_ability
-            .as_ref()
-            .expect("Charvanek bridge ability");
-        assert!(
-            charvanek_bridge
-                .effects
-                .iter()
-                .any(|e| e.stat.as_deref() == Some("crew_scaled_armor_piercing")),
-            "Charvanek bridge ability must remain mapped to crew_scaled_armor_piercing: {:?}",
-            charvanek_bridge.effects
-        );
     }
 
     #[test]

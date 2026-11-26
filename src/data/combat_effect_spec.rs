@@ -171,6 +171,9 @@ pub enum AbilityModifierSpec {
     /// Fraction added to raw base armor-piercing, shield-piercing and accuracy in the shared
     /// native `MultVal` pool.
     BasePiercingStatsBonus,
+    /// Fraction added only to the raw base armor-piercing `MultVal` pool (e.g. M'Ral launch,
+    /// Azetbur on-hit).
+    BaseArmorPiercingBonus,
     /// Cumulative round-start fraction added to raw base armor-piercing, shield-piercing and
     /// accuracy (e.g. Borg Queen below-decks).
     CumulativeBasePiercingStatsBonus,
@@ -181,6 +184,8 @@ pub enum AbilityModifierSpec {
     /// Fraction subtracted from each opponent raw piercing percentage pool.
     /// Distinct from legacy synthetic damage-through Pierce.
     HostileBasePiercingStatsReduction,
+    /// Fraction subtracted only from opponent raw armor-piercing percentage pool (e.g. Paul Stamets).
+    HostileBaseArmorPiercingReduction,
     /// Raw points added to armor piercing before the defensive-stat curve.
     BaseArmorPiercingAdd,
     /// Coefficient times the effective crew health at combat setup.
@@ -198,6 +203,9 @@ pub enum AbilityModifierSpec {
     CrewScaledAccuracy,
     CrewScaledShieldRepair,
     CrewScaledWeaponDamage,
+    /// Unified `op 6` (`MultiplyBaseSub`) crew-stat-scaled enemy shield drain (`ShieldHPRepair`,
+    /// e.g. Ent-E Troi, Vemet, Six Of Eleven captain, Michael Burnham).
+    CrewScaledEnemyShieldDrain,
     /// Research/catalog `shield_deflection`; compiles identically to [`MitigationAdditive`](AbilityModifierSpec::MitigationAdditive).
     ShieldDeflection,
     Dodge,

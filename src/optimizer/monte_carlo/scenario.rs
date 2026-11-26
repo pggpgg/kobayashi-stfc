@@ -2220,7 +2220,12 @@ fn resolve_crew_stat_effects(
                             CrewStatScaledTarget::AllPiercingPreAll => {
                                 ReactiveDamageTakenKind::PreAllAllPiercingAdd(amount)
                             }
-                            _ => unreachable!("reactive CrewStatScaledDeferred only supports AllDefenses/AllPiercing"),
+                            CrewStatScaledTarget::DefenderShieldDrainFlat => {
+                                ReactiveDamageTakenKind::DrainOpponentShieldFlat(amount)
+                            }
+                            _ => unreachable!(
+                                "reactive CrewStatScaledDeferred only supports AllDefenses/AllPiercing/DefenderShieldDrainFlat"
+                            ),
                         };
                         return AbilityEffect::ReactiveDamageTaken {
                             trigger,
@@ -2230,10 +2235,15 @@ fn resolve_crew_stat_effects(
                         };
                     }
                     if on_hit {
-                        return AbilityEffect::OnHitPreAllPiercingAdd {
-                            armor_piercing: amount,
-                            shield_piercing: amount,
-                            accuracy: amount,
+                        return match target {
+                            CrewStatScaledTarget::DefenderShieldDrainFlat => {
+                                AbilityEffect::OnHitDefenderShieldDrainFlat(amount)
+                            }
+                            _ => AbilityEffect::OnHitPreAllPiercingAdd {
+                                armor_piercing: amount,
+                                shield_piercing: amount,
+                                accuracy: amount,
+                            },
                         };
                     }
                     match target {
@@ -2304,6 +2314,9 @@ fn resolve_crew_stat_effects(
                                 chance,
                                 cumulative,
                             }
+                        }
+                        CrewStatScaledTarget::DefenderShieldDrainFlat => {
+                            AbilityEffect::DefenderShieldDrainFlat(amount)
                         }
                     }
                 })
@@ -3633,6 +3646,11 @@ fn native_combat_start_seats_for_profile(
                 ),
             );
     let rounding = launch_source_present || !seats.is_empty();
+    seats.extend(
+        crate::data::native_research_buffs::combat_start_opponent_weapon_damage_reduction_seats_for_imported_buffs(
+            &imported, now,
+        ),
+    );
     seats.extend(
         crate::data::native_consumable_buffs::combat_start_offense_seats_for_imported_buffs(
             &imported, now,
