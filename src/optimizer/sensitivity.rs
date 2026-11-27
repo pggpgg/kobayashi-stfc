@@ -346,6 +346,7 @@ pub(crate) fn run_one_sim_with_perturbations(
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
+        defender_profile_weapon_damage_fraction: input.defender_profile_weapon_damage_fraction,
         defender_hull_faction_id: shared
             .hostile_rec
             .as_ref()

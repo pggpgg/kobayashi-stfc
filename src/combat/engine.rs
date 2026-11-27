@@ -6626,8 +6626,17 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         } else {
             1.0
         };
-        let counter_effective_attack =
-            defender_weapon_attack * defender_phase_effects.pre_attack_multiplier();
+        let def_g_galaxy = defender_phase_effects.galaxy_additive_weapon_frac();
+        let def_p_prof = config.defender_profile_weapon_damage_fraction;
+        let def_galaxy_dilution =
+            if def_g_galaxy > 0.0 && def_g_galaxy.is_finite() && (1.0 + def_p_prof) > 1e-12 {
+                1.0 + def_g_galaxy / (1.0 + def_p_prof)
+            } else {
+                1.0
+            };
+        let counter_effective_attack = defender_weapon_attack
+            * defender_phase_effects.pre_attack_multiplier()
+            * def_galaxy_dilution;
         let counter_unmitigated_weapon_damage =
             counter_effective_attack * def_crit_mult * def_proc_mult;
         let counter_base_damage = counter_unmitigated_weapon_damage * counter_damage_through;

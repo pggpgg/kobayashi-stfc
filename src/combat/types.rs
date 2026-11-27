@@ -306,9 +306,15 @@ pub struct SimulationConfig {
     pub weapon_damage_profile_additive_pool: Option<f64>,
     /// Profile `weapon_damage` additive bonus `p` (fraction, e.g. `0.65` = +65%), same units as
     /// [`crate::data::profile::apply_profile_to_attacker`]. Used to dilute
-    /// [`crate::combat::abilities::AbilityEffect::GalaxyAdditiveWeaponDamageGrowth`] as `×(1+g/(1+p))`.
+    /// [`crate::combat::abilities::AbilityEffect::GalaxyAdditiveWeaponDamageGrowth`] and
+    /// [`crate::combat::abilities::AbilityEffect::BaseWeaponDamageBonus`] as `×(1+g/(1+p))`.
     #[serde(default)]
     pub profile_weapon_damage_fraction: f64,
+    /// Symmetric PvP defender `weapon_damage` additive pool fraction `p_def` (0.0 for hostiles
+    /// and bare synthetic defenders). Used to dilute defender-side
+    /// [`crate::combat::abilities::AbilityEffect::BaseWeaponDamageBonus`] on counter-fire.
+    #[serde(default)]
+    pub defender_profile_weapon_damage_fraction: f64,
     /// Upstream defender hostile `faction.id` for canonical `EnemyHullFaction` / [`crate::combat::abilities::AbilityCondition::DefenderHullFactionIdIs`]. `0` when unknown or not loaded.
     #[serde(default)]
     pub defender_hull_faction_id: i64,
@@ -376,6 +382,7 @@ impl Default for SimulationConfig {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_profile_weapon_damage_fraction: 0.0,
             defender_hull_faction_id: 0,
             defender_hostile_tag_mask: 0,
             attacker_owner_faction: OpponentFactionTag::Unknown,

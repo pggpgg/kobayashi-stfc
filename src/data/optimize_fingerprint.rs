@@ -217,7 +217,13 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   Seven Of Eleven `3774124358` previously compiling with hardcoded `chance = 1.0`), and align
 ///   `harry-mudd-374d5f` (`677303054`, *"Harcourt Fenton Mudd"*) / `mudd-32546a` (`634330627`,
 ///   *"Harry Mudd"*) display names with STFC `translations-officer_names.json`.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 43;
+/// * 43 → 44 (2026-11): Route native STFC officer `ModAllDamage` `MultiplyAdd` abilities
+///   (`SNW James Kirk`, `Mirror Ezri`/`Troi`, `PIC Picard`/`Riker`/`Worf`, `SNW D'Chok`, `Caleb Mir`,
+///   `Harry Mudd`, `Beckett Mariner`, etc.) into the single additive `BaseWeaponDamageBonus` pool
+///   (`effect_spec_compile.rs`) instead of multiplying on top of the completed profile pool, and
+///   align `profile_weapon_damage_fraction` (`scenario.rs`) with `apply_profile_to_attacker` by
+///   including owner-faction weapon damage and officer Attack breakpoint bonus.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 44;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
