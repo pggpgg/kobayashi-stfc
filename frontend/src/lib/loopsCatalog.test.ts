@@ -3,12 +3,14 @@ import hostilesIndexJson from "../../../data/hostiles/index.json";
 import type { HostileListItem } from "./api";
 import {
   chainGrindForLoopGoal,
+  defaultLoopVariantId,
   FUTURE_PATTERN_EXEMPTIONS,
   hostileLabel,
   hostileMatchesLoop,
   LOOP_CATALOG,
   resolveLoopHostiles,
   resolveLoopHostilesAscending,
+  resolveLoopHostilesForVariant,
 } from "./loopsCatalog";
 
 /**
@@ -260,6 +262,7 @@ describe("loops catalog liveness against the installed hostile catalog", () => {
     const ladder = resolveLoopHostiles(installedHostiles, loop);
 
     expect(loop.specialtyShipIds).toEqual(["uss_reliant"]);
+    expect(defaultLoopVariantId(loop)).toBe("hijacked-d7");
     expect(ladder.length).toBe(96);
     expect(Math.min(...ladder.map((row) => row.level))).toBe(26);
     expect(Math.max(...ladder.map((row) => row.level))).toBe(70);
@@ -272,5 +275,29 @@ describe("loops catalog liveness against the installed hostile catalog", () => {
     ]) {
       expect(ladder.some((row) => hostileLabel(row) === family)).toBe(true);
     }
+
+    // Default variant is Hijacked D7 Class (23 auto-grind pursuit targets, L26..70).
+    const defaultD7 = resolveLoopHostilesForVariant(installedHostiles, loop);
+    expect(defaultD7.length).toBe(23);
+    expect(
+      defaultD7.every((row) => hostileLabel(row) === "Hijacked D7 Class"),
+    ).toBe(true);
+
+    const regular = resolveLoopHostilesForVariant(
+      installedHostiles,
+      loop,
+      "hijacked-regular",
+    );
+    expect(regular.length).toBe(69);
+
+    const dy200 = resolveLoopHostilesForVariant(
+      installedHostiles,
+      loop,
+      "dy-200",
+    );
+    expect(dy200.length).toBe(4);
+
+    const all = resolveLoopHostilesForVariant(installedHostiles, loop, "all");
+    expect(all.length).toBe(96);
   });
 });

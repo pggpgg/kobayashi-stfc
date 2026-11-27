@@ -53,6 +53,26 @@ vi.mock("../lib/api", async (importOriginal) => {
         has_loot: true,
         primary_resource_name: "Tech Module",
       },
+      {
+        id: "565037258",
+        hostile_name: "Hijacked D7 Class",
+        level: 40,
+        ship_class: "interceptor",
+        system_names: ["Philo"],
+        warp: 70,
+        has_loot: true,
+        primary_resource_name: "Common Hijacked Splicer",
+      },
+      {
+        id: "2399975665",
+        hostile_name: "Hijacked D3 Class",
+        level: 40,
+        ship_class: "interceptor",
+        system_names: ["Sandweiss"],
+        warp: 70,
+        has_loot: true,
+        primary_resource_name: "Common Hijacked Splicer",
+      },
     ]),
     fetchShips: vi.fn().mockResolvedValue([
       { id: "mantis", ship_name: "MANTIS", ship_class: "battleship" },
@@ -65,6 +85,11 @@ vi.mock("../lib/api", async (importOriginal) => {
       {
         id: "enterprise_nx_01",
         ship_name: "Enterprise NX-01",
+        ship_class: "explorer",
+      },
+      {
+        id: "uss_reliant",
+        ship_name: "U.S.S. RELIANT",
         ship_class: "explorer",
       },
     ]),
@@ -392,5 +417,34 @@ describe("LoopsWorkspace", () => {
     expect(await screen.findByText(/17\.74M Tech Module/)).toBeTruthy();
     expect(screen.getByText(/100% P\(4-kill\)/)).toBeTruthy();
     expect(screen.getByText(/80% hull/)).toBeTruthy();
+  });
+
+  it("defaults Augment Exiles to Hijacked D7 Class and lets the player switch hostile variants", async () => {
+    render(
+      <MemoryRouter initialEntries={["/loops"]}>
+        <ProfileProvider>
+          <Routes>
+            <Route path="/loops" element={<LoopsWorkspace />} />
+            <Route path="/" element={<WorkspaceStateProbe />} />
+          </Routes>
+        </ProfileProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Augment Exiles" }));
+    await screen.findByText("Hijacked D7 Class");
+    expect(screen.queryByText("Hijacked D3 Class")).toBeNull();
+
+    const targetSelect =
+      screen.getByLabelText<HTMLSelectElement>("Target hostile");
+    expect(targetSelect.value).toBe("hijacked-d7");
+
+    fireEvent.change(targetSelect, { target: { value: "hijacked-regular" } });
+    await screen.findByText("Hijacked D3 Class");
+    expect(screen.queryByText("Hijacked D7 Class")).toBeNull();
+
+    fireEvent.change(targetSelect, { target: { value: "all" } });
+    await screen.findByText("Hijacked D7 Class");
+    expect(screen.getByText("Hijacked D3 Class")).toBeTruthy();
   });
 });

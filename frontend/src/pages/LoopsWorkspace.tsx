@@ -11,13 +11,15 @@ import {
 } from "../lib/api";
 import { loopFrontier } from "../lib/loopRungStatus";
 import {
+  defaultLoopVariantId,
   hostileLabel,
   LOOP_CATALOG,
   LOOP_GOALS,
   type LoopGoalId,
   loopGoal,
-  resolveLoopHostiles,
-  resolveLoopHostilesAscending,
+  resolveLoopHostilesAscendingForVariant,
+  resolveLoopHostilesForVariant,
+  resolveLoopVariant,
 } from "../lib/loopsCatalog";
 import {
   getLoopBestRecord,
@@ -32,6 +34,23 @@ import {
 import { useLoopClimb } from "../lib/useLoopClimb";
 
 const SELECTED_LOOP_KEY = "kobayashi_loops_selected";
+const SELECTED_LOOP_VARIANTS_KEY = "kobayashi_loops_selected_variants";
+
+function loadSelectedLoopVariants(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(SELECTED_LOOP_VARIANTS_KEY);
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const out: Record<string, string> = {};
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v === "string") out[k] = v;
+      }
+      return out;
+    }
+  } catch {}
+  return {};
+}
 
 function initialLoopId(): string {
   try {
@@ -248,6 +267,9 @@ export default function LoopsWorkspace() {
   const navigate = useNavigate();
   const { activeProfileId } = useProfile();
   const [selectedLoopId, setSelectedLoopId] = useState(initialLoopId);
+  const [selectedVariantByLoop, setSelectedVariantByLoop] = useState<
+    Record<string, string>
+  >(loadSelectedLoopVariants);
   const [goalId, setGoalId] = useState<LoopGoalId>("kills_per_hull");
   const [selectedShipId, setSelectedShipId] = useState("");
   const [hostiles, setHostiles] = useState<HostileListItem[]>([]);
@@ -262,6 +284,12 @@ export default function LoopsWorkspace() {
 
   const selectedLoop =
     LOOP_CATALOG.find((loop) => loop.id === selectedLoopId) ?? LOOP_CATALOG[0];
+  const selectedVariant = resolveLoopVariant(
+    selectedLoop,
+    selectedVariantByLoop[selectedLoop.id] ??
+      defaultLoopVariantId(selectedLoop),
+  );
+  const selectedVariantId = selectedVariant?.id ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -341,8 +369,9 @@ export default function LoopsWorkspace() {
   }, [activeProfileId]);
 
   const loopHostiles = useMemo(
-    () => resolveLoopHostiles(hostiles, selectedLoop),
-    [hostiles, selectedLoop],
+    () =>
+      resolveLoopHostilesForVariant(hostiles, selectedLoop, selectedVariantId),
+    [hostiles, selectedLoop, selectedVariantId],
   );
   const levels = useMemo(() => {
     const grouped = new Map<number, HostileListItem[]>();
@@ -363,7 +392,11 @@ export default function LoopsWorkspace() {
    * is sorted for display with the hardest target first.
    */
   const frontier = useMemo(() => {
-    const ascending = resolveLoopHostilesAscending(hostiles, selectedLoop);
+    const ascending = resolveLoopHostilesAscendingForVariant(
+      hostiles,
+      selectedLoop,
+      selectedVariantId,
+    );
     const bestByTargetId = new Map(
       ascending.map((hostile) => [
         hostile.id,
@@ -375,12 +408,25 @@ export default function LoopsWorkspace() {
       bestByTargetId,
       goalId,
     );
-  }, [hostiles, selectedLoop, activeProfileId, goalId, recordsRevision]);
+  }, [
+    hostiles,
+    selectedLoop,
+    selectedVariantId,
+    activeProfileId,
+    goalId,
+    recordsRevision,
+  ]);
+  const visibleTargetIds = useMemo(
+    () => new Set(loopHostiles.map((hostile) => hostile.id)),
+    [loopHostiles],
+  );
   const loopRecords = allRecords.filter(
     (record) => record.loopId === selectedLoop.id,
   );
   const completedTargets = new Set(
-    loopRecords.map((record) => record.targetId),
+    loopRecords
+      .filter((record) => visibleTargetIds.has(record.targetId))
+      .map((record) => record.targetId),
   );
 
   const climb = useLoopClimb(activeProfileId);
@@ -399,6 +445,17 @@ export default function LoopsWorkspace() {
     setSelectedLoopId(id);
     setSelectedShipId("");
     setResetNotice(null);
+  };
+
+  const selectVariant = (variantId: string) => {
+    if (climb.isClimbing) return;
+    setSelectedVariantByLoop((prev) => {
+      const next = { ...prev, [selectedLoop.id]: variantId };
+      try {
+        localStorage.setItem(SELECTED_LOOP_VARIANTS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
   };
 
   const resetLadder = () => {
@@ -428,7 +485,11 @@ export default function LoopsWorkspace() {
       setError("Choose a ship before climbing this loop.");
       return;
     }
-    const ascending = resolveLoopHostilesAscending(hostiles, selectedLoop);
+    const ascending = resolveLoopHostilesAscendingForVariant(
+      hostiles,
+      selectedLoop,
+      selectedVariantId,
+    );
     if (ascending.length === 0) return;
     const ship = ships.find((candidate) => candidate.id === shipId);
     climb.start({
@@ -567,6 +628,29 @@ export default function LoopsWorkspace() {
             </div>
 
             <div className="loop-controls">
+              {selectedLoop.hostileVariants &&
+                selectedLoop.hostileVariants.length > 0 &&
+                selectedVariant && (
+                  <>
+                    <label>
+                      Target hostile
+                      <select
+                        value={selectedVariant.id}
+                        disabled={climb.isClimbing}
+                        onChange={(event) => selectVariant(event.target.value)}
+                      >
+                        {selectedLoop.hostileVariants.map((variant) => (
+                          <option key={variant.id} value={variant.id}>
+                            {variant.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {selectedVariant.description && (
+                      <small>{selectedVariant.description}</small>
+                    )}
+                  </>
+                )}
               <label>
                 Rank crews by
                 <select

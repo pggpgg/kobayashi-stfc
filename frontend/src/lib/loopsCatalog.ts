@@ -91,6 +91,18 @@ interface LoopSystem {
   name: string;
 }
 
+/**
+ * Optional hostile sub-ladder within a loop (e.g. Hijacked D7 Class pursuit ships
+ * vs regular roaming Augment Exile targets). The first entry is the default.
+ */
+export interface LoopHostileVariant {
+  id: string;
+  label: string;
+  description?: string;
+  hostilePatterns: readonly RegExp[];
+  excludePatterns?: readonly RegExp[];
+}
+
 export type LoopDefinition = {
   id: string;
   name: string;
@@ -103,6 +115,7 @@ export type LoopDefinition = {
   specialtyShipLabel?: string;
   goals: readonly LoopGoalId[];
   sourceUrl?: string;
+  hostileVariants?: readonly LoopHostileVariant[];
 } & (
   | {
       hostilePatterns: readonly RegExp[];
@@ -482,7 +495,7 @@ export const LOOP_CATALOG: readonly LoopDefinition[] = [
     id: "augment-exiles",
     name: "Augment Exiles",
     summary:
-      "Hunt Augment Exile [WOK] Hijacked ships and DY-200 pursuit targets in Exile space.",
+      "Auto-grind Hijacked D7 Class pursuit ships (or roaming Augment Exile [WOK] targets) in Exile space.",
     progression:
       "Hijacked Splicers, Augment faction store mega claims, Wrath Credits, and U.S.S. Reliant upgrades",
     engagement: "hostile",
@@ -490,6 +503,41 @@ export const LOOP_CATALOG: readonly LoopDefinition[] = [
     hostilePatterns: [
       /^hijacked (d3 class|d7 class|legionary|u\.s\.s\. mayflower)$/i,
       /^dy-200-class$/i,
+    ],
+    hostileVariants: [
+      {
+        id: "hijacked-d7",
+        label: "Hijacked D7 Class (auto-grind pursuit)",
+        description:
+          "Auto-spawning pursuit ships in Augment Exile space (90% Dilithium Destabilization; blocked by U.S.S. Reliant M/ARA Insulation).",
+        hostilePatterns: [/^hijacked d7 class$/i],
+      },
+      {
+        id: "hijacked-regular",
+        label: "Hijacked D3 / Legionary / Mayflower",
+        description:
+          "Standard roaming Augment Exile hostiles (Interceptor, Battleship, Explorer).",
+        hostilePatterns: [
+          /^hijacked (d3 class|legionary|u\.s\.s\. mayflower)$/i,
+        ],
+      },
+      {
+        id: "dy-200",
+        label: "DY-200-class",
+        description:
+          "Exile survey targets (30% Dilithium Destabilization; blocked by U.S.S. Reliant).",
+        hostilePatterns: [/^dy-200-class$/i],
+      },
+      {
+        id: "all",
+        label: "All Augment Exiles",
+        description:
+          "Combined ladder across all five Augment Exile ship classes.",
+        hostilePatterns: [
+          /^hijacked (d3 class|d7 class|legionary|u\.s\.s\. mayflower)$/i,
+          /^dy-200-class$/i,
+        ],
+      },
     ],
     shipPolicy: "recommended",
     specialtyShipIds: ["uss_reliant"],
@@ -616,6 +664,53 @@ export function resolveLoopHostilesAscending(
   loop: LoopDefinition,
 ): HostileListItem[] {
   return resolveLoopHostiles(hostiles, loop).reverse();
+}
+
+export function defaultLoopVariantId(loop: LoopDefinition): string | null {
+  return loop.hostileVariants?.[0]?.id ?? null;
+}
+
+export function resolveLoopVariant(
+  loop: LoopDefinition,
+  variantId?: string | null,
+): LoopHostileVariant | null {
+  const variants = loop.hostileVariants;
+  if (!variants || variants.length === 0) return null;
+  if (variantId) {
+    const found = variants.find((variant) => variant.id === variantId);
+    if (found) return found;
+  }
+  return variants[0];
+}
+
+function loopWithVariant(
+  loop: LoopDefinition,
+  variantId?: string | null,
+): LoopDefinition {
+  const variant = resolveLoopVariant(loop, variantId);
+  if (!variant) return loop;
+  return {
+    ...loop,
+    hostileSystems: undefined,
+    hostilePatterns: variant.hostilePatterns,
+    excludePatterns: variant.excludePatterns,
+  } as LoopDefinition;
+}
+
+export function resolveLoopHostilesForVariant(
+  hostiles: readonly HostileListItem[],
+  loop: LoopDefinition,
+  variantId?: string | null,
+): HostileListItem[] {
+  return resolveLoopHostiles(hostiles, loopWithVariant(loop, variantId));
+}
+
+export function resolveLoopHostilesAscendingForVariant(
+  hostiles: readonly HostileListItem[],
+  loop: LoopDefinition,
+  variantId?: string | null,
+): HostileListItem[] {
+  return resolveLoopHostilesForVariant(hostiles, loop, variantId).reverse();
 }
 
 export function loopGoal(goalId: LoopGoalId): LoopGoal {
