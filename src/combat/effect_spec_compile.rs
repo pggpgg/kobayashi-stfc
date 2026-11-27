@@ -1858,16 +1858,13 @@ fn compile_officer_combat_spec_impl(
             )?;
             let bonus_pct = fold_operator_to_additive(op, v);
             let duration_rounds = officer_spec_duration_rounds(spec, 1);
-            let chance = if timing == TimingWindow::RoundStart {
-                spec.chance
-                    .as_ref()
-                    .and_then(|c| c.scalar)
-                    .filter(|c| c.is_finite())
-                    .unwrap_or(1.0)
-                    .clamp(0.0, 1.0)
-            } else {
-                1.0
-            };
+            let chance = spec
+                .chance
+                .as_ref()
+                .and_then(|c| c.scalar)
+                .filter(|c| c.is_finite())
+                .unwrap_or(1.0)
+                .clamp(0.0, 1.0);
             Ok((
                 timing,
                 AbilityEffect::ShotsBonus {

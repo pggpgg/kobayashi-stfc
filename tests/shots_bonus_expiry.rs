@@ -299,3 +299,88 @@ fn miles_keeps_the_three_round_roll_window_and_uses_rank_chance() {
         .collect();
     assert_eq!(grants, [(1, Some(0.5)), (2, Some(0.5)), (3, Some(0.5))]);
 }
+
+#[test]
+fn harcourt_fenton_mudd_combat_begin_shots_bonus_uses_ranked_chance_and_expires_after_r1() {
+    let crew = officer_crew("", &["harry-mudd-374d5f".into()], 3);
+    let empty = CrewConfiguration::default();
+    let ship = Combatant {
+        hull_health: 100_000.0,
+        weapons: vec![WeaponStats {
+            attack: 100.0,
+            shots: Some(2),
+            ..Default::default()
+        }],
+        ..Default::default()
+    };
+
+    let mut triggered_count = 0usize;
+    for seed in 1..=40u64 {
+        let config = SimulationConfig {
+            rounds: 3,
+            seed,
+            trace_mode: TraceMode::Events,
+            defender_level: Some(54),
+            ..Default::default()
+        };
+        let setup = build_combat_setup(
+            &ship,
+            &ship,
+            &config,
+            &crew,
+            OpponentFactionTag::Unknown,
+            ShipType::Interceptor,
+            ShipType::Explorer,
+            true,
+            false,
+            &empty,
+        );
+        let result = simulate_combat_from_setup(&setup, seed);
+        let triggers: Vec<_> = result
+            .events
+            .iter()
+            .filter(|e| e.event_type == "shots_bonus_trigger")
+            .collect();
+        assert_eq!(triggers.len(), 1, "expected single CombatBegin roll");
+        let t = triggers[0];
+        assert_eq!(t.phase, "combat_begin");
+        assert_eq!(
+            t.values["chance"].as_f64(),
+            Some(0.4),
+            "tier-3 Harcourt Fenton Mudd must use 40% chance, not 100%"
+        );
+        assert_eq!(t.values["duration_rounds"].as_u64(), Some(1));
+        let triggered = t.values["triggered"].as_bool().unwrap();
+        let shots = shots_by_round(&result, "attack");
+        assert_eq!(shots[0], if triggered { 4 } else { 2 });
+        assert_eq!(shots[1], 2, "round-1 shot doubling must expire in round 2");
+        assert_eq!(shots[2], 2);
+        if triggered {
+            triggered_count += 1;
+        }
+    }
+    assert!(
+        (5..35).contains(&triggered_count),
+        "40% proc across 40 seeds should neither always nor never trigger, got {triggered_count}"
+    );
+}
+
+#[test]
+fn seven_of_eleven_combat_begin_shots_bonus_preserves_ranked_chance() {
+    let crew = officer_crew("seven-of-eleven-e45727", &[], 1);
+    let shots_seat = crew
+        .seats
+        .iter()
+        .find(|s| matches!(s.ability.effect, AbilityEffect::ShotsBonus { .. }))
+        .expect("Seven Of Eleven captain ability should compile to ShotsBonus");
+    assert_eq!(shots_seat.ability.timing, TimingWindow::CombatBegin);
+    match shots_seat.ability.effect {
+        AbilityEffect::ShotsBonus { chance, .. } => {
+            assert!(
+                (chance - 0.2).abs() < 1e-12,
+                "Seven Of Eleven CombatBegin ShotsBonus must retain 0.20 chance, got {chance}"
+            );
+        }
+        other => panic!("expected ShotsBonus, got {other:?}"),
+    }
+}

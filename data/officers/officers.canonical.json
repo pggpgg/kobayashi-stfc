@@ -6343,7 +6343,7 @@
       "faction": "Independent",
       "group": "MUDD'S COMPANY",
       "id": "harry-mudd-374d5f",
-      "name": "Harry Mudd",
+      "name": "Harcourt Fenton Mudd",
       "rarity": "epic",
       "scaling": {
         "rank_chance_model": "ability.chance_by_rank",
@@ -11085,7 +11085,7 @@
       "faction": "Independent",
       "group": "MUDD'S COMPANY",
       "id": "mudd-32546a",
-      "name": "Mudd",
+      "name": "Harry Mudd",
       "rarity": "epic",
       "scaling": {
         "rank_chance_model": "ability.chance_by_rank",
