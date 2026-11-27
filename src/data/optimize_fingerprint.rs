@@ -212,7 +212,12 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   seats (`Section 31 Crit Chance/Damage` `3342225309`/`2900801564`, `KSG Crit Chance Reduction`
 ///   `10304068`), and `Annorax's Datapad` (`1238401736`, non-Armada + Tal-not-on-bridge Apex
 ///   Barrier).
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 42;
+/// * 42 → 43 (2026-11): Preserve `spec.chance` when compiling `CombatBegin` `ShotsBonus` abilities
+///   in `effect_spec_compile.rs` (fixes Harcourt Fenton Mudd `143246507` *"823 ways to die"* and
+///   Seven Of Eleven `3774124358` previously compiling with hardcoded `chance = 1.0`), and align
+///   `harry-mudd-374d5f` (`677303054`, *"Harcourt Fenton Mudd"*) / `mudd-32546a` (`634330627`,
+///   *"Harry Mudd"*) display names with STFC `translations-officer_names.json`.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 43;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
