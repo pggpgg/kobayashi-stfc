@@ -67,3 +67,45 @@ test("project name: shield deflection before dodge / bare deflection", () => {
   assert.equal(inferCombatStatFromProjectName("Shield Mitigation Bonus"), "shield_mitigation");
   assert.equal(inferCombatStatFromProjectName("Dodge Training"), "dodge");
 });
+
+test("description: conditional apex shred is gated or quarantined while Priority 1 stays unconditional", () => {
+  assert.equal(
+    inferCombatStatFromDescription(
+      "Increases base Apex Shred against all Players, Hostiles and Armadas."
+    ),
+    "apex_shred"
+  );
+  assert.equal(
+    inferCombatStatFromDescription(
+      "Increases Apex Shred vs. non-Armada hostiles for Explorers in Wave Defense."
+    ),
+    null
+  );
+  assert.equal(
+    inferCombatStatFromDescription(
+      "Increases Apex Shred vs <color=#E1651F>Origin Sector [OGN]</color> Non-Armada Hostiles."
+    ),
+    null
+  );
+  assert.equal(
+    inferCombatStatFromDescription(
+      "Increases base Apex Shred when fighting Augment Exile [WOK] hostiles."
+    ),
+    null
+  );
+  assert.equal(
+    inferCombatStatFromDescription("Increases base Apex Shred against Aggregation hostiles."),
+    null
+  );
+  assert.deepEqual(
+    inferCombatStatFromDescription(
+      "Increases Apex Shred of all FKR ships vs Romulan Non-Armada Hostiles."
+    ),
+    {
+      stat: "apex_shred",
+      operator: "add",
+      attacker_factions: ["federation", "klingon", "romulan"],
+      defender_faction: "romulan",
+    }
+  );
+});

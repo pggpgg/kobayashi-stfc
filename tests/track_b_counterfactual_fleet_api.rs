@@ -78,7 +78,7 @@ impl Drop for EnvGuard {
 async fn crew_counterfactual_endpoint_returns_ablations_and_legal_substitutes() {
     let payload = json!({
         "ship": "uss_saladin",
-        "hostile": "1140710508",
+        "hostile": "179246187",
         "below_decks_slots": 2,
         "num_sims": 100,
         "seed": 17,
@@ -104,7 +104,7 @@ async fn crew_counterfactual_endpoint_returns_ablations_and_legal_substitutes() 
     assert_eq!(ablations[0]["unavailable"], true);
     assert!(
         ablations[0]["marginal_contribution"].as_f64().unwrap() > 0.0,
-        "Cadet Uhura should positively contribute on Saladin vs 1140710508"
+        "Cadet Uhura should positively contribute on Saladin vs 179246187"
     );
 
     let subs = body["substitutes"].as_array().expect("substitutes");

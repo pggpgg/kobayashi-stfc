@@ -10,7 +10,7 @@ use crate::combat::CrewSeatContext;
 use crate::data::import::GlobalBuffEntry;
 use crate::data::native_consumable_buffs::{
     bonuses_from_catalog_for_group, combat_start_defense_seats_from_catalog_for_group,
-    NativeConsumableBuffCatalog,
+    combat_start_research_and_building_seats_from_catalog_for_group, NativeConsumableBuffCatalog,
 };
 
 const EMBEDDED_CATALOG: &str = include_str!("../../data/native_building_buff_catalog.json");
@@ -81,6 +81,21 @@ pub fn combat_start_defense_seats_for_imported_buffs(
         68,
         imported,
         attacker_ship_class,
+        now_unix_seconds,
+    )
+}
+
+/// Native building CombatStart weapon-damage seats (e.g. `bid=3580741235` vs non-Armada hostiles).
+pub fn combat_start_offense_seats_for_imported_buffs(
+    imported: &[GlobalBuffEntry],
+    ship_grade: Option<u32>,
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
+    combat_start_research_and_building_seats_from_catalog_for_group(
+        embedded_catalog(),
+        68,
+        imported,
+        ship_grade,
         now_unix_seconds,
     )
 }

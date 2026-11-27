@@ -11,9 +11,10 @@ use std::sync::OnceLock;
 
 use serde::Deserialize;
 
+use crate::combat::types::MAX_COMBAT_ROUNDS;
 use crate::combat::{
-    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext, ShipType,
-    TimingWindow, NO_EXPLICIT_CONTRIBUTION_BATCH,
+    Ability, AbilityClass, AbilityCondition, AbilityEffect, CrewSeat, CrewSeatContext,
+    OpponentFactionTag, ShipType, TimingWindow, WeaponTypeScope, NO_EXPLICIT_CONTRIBUTION_BATCH,
 };
 use crate::data::import::GlobalBuffEntry;
 
@@ -599,6 +600,684 @@ pub(crate) fn combat_start_defense_seats_from_catalog_for_group(
         .collect()
 }
 
+/// Verified CombatStart/RoundStart native research (group 66) and building (group 68)
+/// offensive, piercing, isolytic, and hostile crit-damage-reduction seats.
+///
+/// Only reviewed condition codes and SHA-256-bound native BuffSpec definitions are compiled.
+/// Unverified attributes (e.g. `bid=2900801564` Section 31 Critical Hit Damage `attr=[2,8]`)
+/// and unsupported predicates remain quarantined.
+pub(crate) fn combat_start_research_and_building_seats_from_catalog_for_group(
+    catalog: &NativeConsumableBuffCatalog,
+    expected_group: u32,
+    imported: &[GlobalBuffEntry],
+    ship_grade: Option<u32>,
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
+    if catalog.schema_version != 1
+        || catalog.source_group != expected_group
+        || !matches!(expected_group, 66 | 68)
+    {
+        return Vec::new();
+    }
+
+    let make_seat = |bid: i64,
+                     timing: TimingWindow,
+                     effect: AbilityEffect,
+                     condition: Option<AbilityCondition>,
+                     weapon_scope: WeaponTypeScope| CrewSeatContext {
+        seat: CrewSeat::Ship,
+        ability: Ability {
+            name: format!("native_{expected_group}_{bid}"),
+            class: AbilityClass::ShipAbility,
+            timing,
+            boostable: false,
+            effect,
+            condition,
+            weapon_scope,
+        },
+        boosted: false,
+        officer_id: None,
+        contribution_batch: NO_EXPLICIT_CONTRIBUTION_BATCH,
+    };
+
+    let non_armada_hostile = || {
+        AbilityCondition::And(vec![
+            AbilityCondition::DefenderIsNpcHostile,
+            AbilityCondition::Not(Box::new(AbilityCondition::DefenderShipTypeIs(
+                ShipType::Armada,
+            ))),
+        ])
+    };
+    let defender_has_any_state = || {
+        AbilityCondition::Or(vec![
+            AbilityCondition::DefenderBurning,
+            AbilityCondition::DefenderHullBreach,
+            AbilityCondition::DefenderAssimilated,
+        ])
+    };
+    let space_non_armada = || {
+        AbilityCondition::And(vec![
+            AbilityCondition::Not(Box::new(AbilityCondition::DefenderShipTypeIs(
+                ShipType::Armada,
+            ))),
+            AbilityCondition::Not(Box::new(AbilityCondition::AttackerAtStation)),
+        ])
+    };
+
+    active_highest_levels(imported, now_unix_seconds)
+        .into_iter()
+        .filter_map(|(bid, level)| {
+            let spec = catalog.buffs.get(&bid)?;
+            let rank = usize::try_from(level - 1).ok()?;
+            if spec.ranked_value_type != 0
+                || spec.ranked_values.is_empty()
+                || spec.ranked_values.len() > spec.ranked_value_count
+                || rank >= spec.ranked_value_count
+                || spec.ranked_values.iter().any(|v| !v.is_finite())
+                || spec.ranked_chances.is_empty()
+                || spec.ranked_chances.len() > spec.ranked_chance_count
+                || rank >= spec.ranked_chance_count
+                || spec.ranked_chances.iter().any(|v| *v != 1.0)
+                || !spec.unknown_fields.is_empty()
+            {
+                return None;
+            }
+            let value = spec.ranked_values[rank.min(spec.ranked_values.len() - 1)];
+            if !value.is_finite() || value == 0.0 {
+                return None;
+            }
+
+            // 1. Exact SHA-256-bound research rows (group 66) whose native conditions
+            //    use faction attributes, timed round caps, state triggers, or opponent CDR.
+            if expected_group == 66 {
+                if let Some((timing, effect, cond)) = exact_bound_research_combat_seat(
+                    bid,
+                    spec,
+                    value,
+                    &non_armada_hostile,
+                    &defender_has_any_state,
+                    &space_non_armada,
+                ) {
+                    return Some(make_seat(bid, timing, effect, cond, WeaponTypeScope::All));
+                }
+            }
+
+            // General reviewed CombatStart rows require empty attributes, permanent duration,
+            // and self target.
+            if spec.target_code != 1
+                || spec.trigger_code != 25
+                || spec.num_rounds != 0
+                || !spec.attribute_fields.is_empty()
+            {
+                return None;
+            }
+
+            let mut conds = spec.condition_codes.clone();
+            conds.sort_unstable();
+            if conds.windows(2).any(|w| w[0] == w[1]) {
+                return None;
+            }
+
+            // 2. Verified CombatStart Weapon Damage (mod=2, op=3) for group 66 & 68.
+            if spec.modifier_code == 2 && spec.operation_code == 3 {
+                let (condition, weapon_scope) = match conds.as_slice() {
+                    [27] => (
+                        Some(AbilityCondition::DefenderIsNpcHostile),
+                        WeaponTypeScope::All,
+                    ),
+                    [27, 131] => (Some(non_armada_hostile()), WeaponTypeScope::All),
+                    [c @ 0..=3, 27] if expected_group == 66 => (
+                        Some(AbilityCondition::And(vec![
+                            AbilityCondition::AttackerShipTypeIs(native_class_code_to_ship_type(
+                                *c,
+                            )),
+                            AbilityCondition::DefenderIsNpcHostile,
+                        ])),
+                        WeaponTypeScope::All,
+                    ),
+                    // Exact-bound Advantage / Fragile enemy-class research rows (same
+                    // discipline as combat_start_condition for codes 4/5/6).
+                    [0, 5] if expected_group == 66 && bid == 1_503_925_774 => (
+                        Some(AbilityCondition::And(vec![
+                            AbilityCondition::AttackerShipTypeIs(ShipType::Explorer),
+                            AbilityCondition::DefenderShipTypeIs(ShipType::Interceptor),
+                        ])),
+                        WeaponTypeScope::All,
+                    ),
+                    [1, 6] if expected_group == 66 && bid == 1_830_847_139 => (
+                        Some(AbilityCondition::And(vec![
+                            AbilityCondition::AttackerShipTypeIs(ShipType::Interceptor),
+                            AbilityCondition::DefenderShipTypeIs(ShipType::Battleship),
+                        ])),
+                        WeaponTypeScope::All,
+                    ),
+                    [2, 4] if expected_group == 66 && bid == 4_232_981_336 => (
+                        Some(AbilityCondition::And(vec![
+                            AbilityCondition::AttackerShipTypeIs(ShipType::Battleship),
+                            AbilityCondition::DefenderShipTypeIs(ShipType::Explorer),
+                        ])),
+                        WeaponTypeScope::All,
+                    ),
+                    [4, 27] if expected_group == 66 && bid == 3_561_086_526 => (
+                        Some(AbilityCondition::And(vec![
+                            AbilityCondition::DefenderIsNpcHostile,
+                            AbilityCondition::DefenderShipTypeIs(ShipType::Explorer),
+                        ])),
+                        WeaponTypeScope::All,
+                    ),
+                    [5, 27] if expected_group == 66 && bid == 2_304_511_164 => (
+                        Some(AbilityCondition::And(vec![
+                            AbilityCondition::DefenderIsNpcHostile,
+                            AbilityCondition::DefenderShipTypeIs(ShipType::Interceptor),
+                        ])),
+                        WeaponTypeScope::All,
+                    ),
+                    [6, 27] if expected_group == 66 && bid == 2_484_236_851 => (
+                        Some(AbilityCondition::And(vec![
+                            AbilityCondition::DefenderIsNpcHostile,
+                            AbilityCondition::DefenderShipTypeIs(ShipType::Battleship),
+                        ])),
+                        WeaponTypeScope::All,
+                    ),
+                    [39] if expected_group == 66 => (None, WeaponTypeScope::EnergyOnly),
+                    [40] if expected_group == 66 => (None, WeaponTypeScope::KineticOnly),
+                    [39, 123] if expected_group == 66 => (
+                        Some(AbilityCondition::LiteralBool(
+                            ship_grade.is_some_and(|g| g >= 4),
+                        )),
+                        WeaponTypeScope::EnergyOnly,
+                    ),
+                    [40, 123] if expected_group == 66 => (
+                        Some(AbilityCondition::LiteralBool(
+                            ship_grade.is_some_and(|g| g >= 4),
+                        )),
+                        WeaponTypeScope::KineticOnly,
+                    ),
+                    [27, 131, 240] if expected_group == 66 => (
+                        Some(AbilityCondition::And(vec![
+                            AbilityCondition::Or(vec![
+                                AbilityCondition::AttackerOwnerFactionIs(
+                                    OpponentFactionTag::Federation,
+                                ),
+                                AbilityCondition::AttackerOwnerFactionIs(
+                                    OpponentFactionTag::Klingon,
+                                ),
+                                AbilityCondition::AttackerOwnerFactionIs(
+                                    OpponentFactionTag::Romulan,
+                                ),
+                            ]),
+                            AbilityCondition::DefenderIsNpcHostile,
+                            AbilityCondition::Not(Box::new(AbilityCondition::DefenderShipTypeIs(
+                                ShipType::Armada,
+                            ))),
+                        ])),
+                        WeaponTypeScope::All,
+                    ),
+                    _ => return None,
+                };
+                return Some(make_seat(
+                    bid,
+                    TimingWindow::CombatBegin,
+                    AbilityEffect::BaseWeaponDamageBonus(value),
+                    condition,
+                    weapon_scope,
+                ));
+            }
+
+            // 3. Verified CombatStart Armor Piercing vs Hostiles (group 66, e.g. Fascinating).
+            if expected_group == 66
+                && spec.modifier_code == 7
+                && spec.operation_code == 3
+                && conds == [27]
+            {
+                return Some(make_seat(
+                    bid,
+                    TimingWindow::CombatBegin,
+                    AbilityEffect::BaseArmorPiercingBonus(value),
+                    Some(AbilityCondition::DefenderIsNpcHostile),
+                    WeaponTypeScope::All,
+                ));
+            }
+
+            // 4. Verified CombatStart Outbound Crit Damage vs Hostiles (group 66).
+            if expected_group == 66 && spec.modifier_code == 10 && spec.operation_code == 1 {
+                let condition = match conds.as_slice() {
+                    [27] => Some(AbilityCondition::DefenderIsNpcHostile),
+                    [27, 131] => Some(non_armada_hostile()),
+                    _ => return None,
+                };
+                return Some(make_seat(
+                    bid,
+                    TimingWindow::CombatBegin,
+                    AbilityEffect::BaseCritDamageBonus(value),
+                    condition,
+                    WeaponTypeScope::All,
+                ));
+            }
+
+            None
+        })
+        .collect()
+}
+
+fn native_class_code_to_ship_type(code: i64) -> ShipType {
+    match code {
+        0 => ShipType::Explorer,
+        1 => ShipType::Interceptor,
+        2 => ShipType::Battleship,
+        _ => ShipType::Survey,
+    }
+}
+
+fn exact_bound_research_combat_seat(
+    bid: i64,
+    spec: &NativeBuffSpec,
+    value: f64,
+    non_armada_hostile: &impl Fn() -> AbilityCondition,
+    defender_has_any_state: &impl Fn() -> AbilityCondition,
+    space_non_armada: &impl Fn() -> AbilityCondition,
+) -> Option<(TimingWindow, AbilityEffect, Option<AbilityCondition>)> {
+    match bid {
+        // Isolytic Damage vs Augment Exile (rid 3043001700, faction 1306860549).
+        1_934_800_456 => {
+            let exact = spec.sha256
+                == "b59f478b3de5955ef392fc6103ba2d7d5eb4b2afeeda3f4375951a3154530b7a"
+                && spec.modifier_code == 707
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [17]
+                && spec.attribute_fields == [8]
+                && spec.num_rounds == 0
+                && spec.faction_id == 1_306_860_549;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDamageBonus(value),
+                Some(AbilityCondition::DefenderHullFactionIdIs(1_306_860_549)),
+            ))
+        }
+        // Picard's Ressikin Flute (rid 2058951448): +Isolytic Damage vs non-Armada hostiles, first 3 rounds.
+        929_316_566 => {
+            let exact = spec.sha256
+                == "aa90712adfc4b56b833da285a86afbb18030a6763c1704f42685434b33b7d551"
+                && spec.modifier_code == 707
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [27, 131]
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 3;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDamageBonus(value),
+                Some(AbilityCondition::And(vec![
+                    non_armada_hostile(),
+                    AbilityCondition::RoundRange { min: 1, max: 3 },
+                ])),
+            ))
+        }
+        // King M'Benga's Crown / Kataan Telescope / Riker's Trombone: Isolytic Damage vs Explorer/Interceptor/Battleship.
+        1_304_517_723 => {
+            let exact = spec.sha256
+                == "3812b515ebd7d9a238a17396b7a5dee5c3fc2bb0f1e50efe3ca119d2fbab30ba"
+                && spec.modifier_code == 707
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [4]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDamageBonus(value),
+                Some(AbilityCondition::DefenderShipTypeIs(ShipType::Explorer)),
+            ))
+        }
+        2_389_331_294 => {
+            let exact = spec.sha256
+                == "5ea7544da3a190974dcb47c26eb13c60d89b69e3998b9d79baa6f88a91f1747d"
+                && spec.modifier_code == 707
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [5]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDamageBonus(value),
+                Some(AbilityCondition::DefenderShipTypeIs(ShipType::Interceptor)),
+            ))
+        }
+        2_780_769_926 => {
+            let exact = spec.sha256
+                == "a25e8f64ad17ba1de0adb907ed276ffc2f104f09f7e8bcd340a7cfce2f14183f"
+                && spec.modifier_code == 707
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [6]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::IsolyticDamageBonus(value),
+                Some(AbilityCondition::DefenderShipTypeIs(ShipType::Battleship)),
+            ))
+        }
+        // Captain Proton's Blaster (rid 3799864906): Explorer + Morale → +Isolytic Damage at RoundStart.
+        3_619_655_850 => {
+            let exact = spec.sha256
+                == "ba6e2e1e4126387bd7c34fe68b3de7a287d314324efcdf97b3dd1e748c53a4e6"
+                && spec.modifier_code == 707
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 18
+                && spec.condition_codes == [0, 33]
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 1;
+            exact.then_some((
+                TimingWindow::RoundStart,
+                AbilityEffect::IsolyticDamageBonus(value),
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::AttackerShipTypeIs(ShipType::Explorer),
+                    AbilityCondition::MoraleActive,
+                ])),
+            ))
+        }
+        // Strand of Krenim Hair (rid 664643736): opponent has any state → +Isolytic Damage at RoundStart.
+        2_049_749_198 => {
+            let exact = spec.sha256
+                == "6f68aa3671f9d79173f1d74b6c26bbc041002ff13763cc13c3ce59f3fb2fdea4"
+                && spec.modifier_code == 707
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 18
+                && spec.condition_codes == [247]
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 1;
+            exact.then_some((
+                TimingWindow::RoundStart,
+                AbilityEffect::IsolyticDamageBonus(value),
+                Some(defender_has_any_state()),
+            ))
+        }
+        // DTI Temporal Device (rid 3516345493): opponent has any state → +Isolytic Defense at RoundStart.
+        2_079_351_526 => {
+            let exact = spec.sha256
+                == "f84e17437d8161897438dbb7ca00091c6bfec09b1a801cde2bb6f3e6f56ad989"
+                && spec.modifier_code == 808
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 18
+                && spec.condition_codes == [247]
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 1;
+            exact.then_some((
+                TimingWindow::RoundStart,
+                AbilityEffect::IsolyticDefenseBonus(value),
+                Some(defender_has_any_state()),
+            ))
+        }
+        // Inspiring Leader (rid 1284866097): Morale active → +Crit Damage at RoundStart.
+        2_026_294_074 => {
+            let exact = spec.sha256
+                == "acaaf323451ab856e1a9c41d3e7d033c6d3bd097b2f1c1fa171ffa12af891f25"
+                && spec.modifier_code == 10
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 18
+                && spec.condition_codes == [33]
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 1;
+            exact.then_some((
+                TimingWindow::RoundStart,
+                AbilityEffect::BaseCritDamageBonus(value),
+                Some(AbilityCondition::MoraleActive),
+            ))
+        }
+        // Space Critical Resistance (rid 2641112780): additive enemy crit damage reduction in space (non-Armada).
+        1_606_929_203 => {
+            let exact = spec.sha256
+                == "63a0d9bd2dfcd6605995d85db2642cdeba22cba747114ca9a1391bbdfdecdc26"
+                && spec.modifier_code == 10
+                && spec.operation_code == 2
+                && spec.target_code == 6
+                && spec.trigger_code == 25
+                && spec.condition_codes == [131, 137, 236]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: value,
+                    duration_rounds: MAX_COMBAT_ROUNDS,
+                    additive_percentage_points: true,
+                    stacks: false,
+                },
+                Some(space_non_armada()),
+            ))
+        }
+        // Explorer / Interceptor / Battleship Space Critical Resist (op=2 additive enemy CDR).
+        2_477_192_666 => {
+            let exact = spec.sha256
+                == "f3f1597d9c5feae06f345a0bef542adf33066b6409528cb2939c23615a77778c"
+                && spec.modifier_code == 10
+                && spec.operation_code == 2
+                && spec.target_code == 6
+                && spec.trigger_code == 25
+                && spec.condition_codes == [0, 131, 137, 236]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: value,
+                    duration_rounds: MAX_COMBAT_ROUNDS,
+                    additive_percentage_points: true,
+                    stacks: false,
+                },
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::AttackerShipTypeIs(ShipType::Explorer),
+                    space_non_armada(),
+                ])),
+            ))
+        }
+        2_405_624_514 => {
+            let exact = spec.sha256
+                == "05555896c37775628d894daf11f231ac1d71eb9c28035ef15910c376d3bee7de"
+                && spec.modifier_code == 10
+                && spec.operation_code == 2
+                && spec.target_code == 6
+                && spec.trigger_code == 25
+                && spec.condition_codes == [1, 131, 137, 236]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: value,
+                    duration_rounds: MAX_COMBAT_ROUNDS,
+                    additive_percentage_points: true,
+                    stacks: false,
+                },
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::AttackerShipTypeIs(ShipType::Interceptor),
+                    space_non_armada(),
+                ])),
+            ))
+        }
+        1_226_436_064 => {
+            let exact = spec.sha256
+                == "fc588af63be34ea03efc45c35918b041bf7022e6930713b30370edbe14b0a6d6"
+                && spec.modifier_code == 10
+                && spec.operation_code == 2
+                && spec.target_code == 6
+                && spec.trigger_code == 25
+                && spec.condition_codes == [2, 131, 137, 236]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: value,
+                    duration_rounds: MAX_COMBAT_ROUNDS,
+                    additive_percentage_points: true,
+                    stacks: false,
+                },
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::AttackerShipTypeIs(ShipType::Battleship),
+                    space_non_armada(),
+                ])),
+            ))
+        }
+        // Exposed Explorers / Interceptors / Battleships: +Crit Chance vs hostile class.
+        841_751_077 => {
+            let exact = spec.sha256
+                == "8369627f71135c25db95353996d7c478058f80b85cc89e43e6f55eab334f2fac"
+                && spec.modifier_code == 9
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [27, 4]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::CritChanceBonus(value),
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::DefenderIsNpcHostile,
+                    AbilityCondition::DefenderShipTypeIs(ShipType::Explorer),
+                ])),
+            ))
+        }
+        3_486_871_817 => {
+            let exact = spec.sha256
+                == "0c656d65b9373f73f4a5df78dd69720cd761977a00b14dccd044ad66357536d7"
+                && spec.modifier_code == 9
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [27, 5]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::CritChanceBonus(value),
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::DefenderIsNpcHostile,
+                    AbilityCondition::DefenderShipTypeIs(ShipType::Interceptor),
+                ])),
+            ))
+        }
+        1_556_752_219 => {
+            let exact = spec.sha256
+                == "aafbc101b116367973c614ca4b6781da48aba8c4f8d8128b8f4a5e513fe846c4"
+                && spec.modifier_code == 9
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [27, 6]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::CritChanceBonus(value),
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::DefenderIsNpcHostile,
+                    AbilityCondition::DefenderShipTypeIs(ShipType::Battleship),
+                ])),
+            ))
+        }
+        // Orb of the Emissary / Orb of Time / Orb of Prophecy and Change:
+        // +Crit Chance on Explorer vs Interceptor, Interceptor vs Battleship, Battleship vs Explorer
+        // in space combat (not Armadas or stations).
+        3_737_933_898 => {
+            let exact = spec.sha256
+                == "2ada09543b31aa99472bcafd979fe63ec84a8af711b363ae3d7327db3f13e3e1"
+                && spec.modifier_code == 9
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [0, 5, 131, 236, 137]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::CritChanceBonus(value),
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::AttackerShipTypeIs(ShipType::Explorer),
+                    AbilityCondition::DefenderShipTypeIs(ShipType::Interceptor),
+                    space_non_armada(),
+                ])),
+            ))
+        }
+        3_114_023_482 => {
+            let exact = spec.sha256
+                == "28226d43abfe198d067492a9c8fbcd7d7a3e449ef4a73abe75c381f2ace23a3b"
+                && spec.modifier_code == 9
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [1, 6, 131, 236, 137]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::CritChanceBonus(value),
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::AttackerShipTypeIs(ShipType::Interceptor),
+                    AbilityCondition::DefenderShipTypeIs(ShipType::Battleship),
+                    space_non_armada(),
+                ])),
+            ))
+        }
+        4_287_505_335 => {
+            let exact = spec.sha256
+                == "4bb139b800d9c3e5bf1089357d13532c534eb77d393c6c4f4f7ae4b03b81b4d2"
+                && spec.modifier_code == 9
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [2, 4, 131, 236, 137]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::CritChanceBonus(value),
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::AttackerShipTypeIs(ShipType::Battleship),
+                    AbilityCondition::DefenderShipTypeIs(ShipType::Explorer),
+                    space_non_armada(),
+                ])),
+            ))
+        }
+        // Guardian of Forever (rid 2607275605): multiplicative enemy CDR (op=8) in space (non-Armada).
+        2_885_570_825 => {
+            let exact = spec.sha256
+                == "7554a387fa0e6def950b4cc732f46988667d08e20dd780e15cc35a9641681a3d"
+                && spec.modifier_code == 10
+                && spec.operation_code == 8
+                && spec.target_code == 6
+                && spec.trigger_code == 25
+                && spec.condition_codes == [131, 236, 137, 178]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: value,
+                    duration_rounds: MAX_COMBAT_ROUNDS,
+                    additive_percentage_points: false,
+                    stacks: false,
+                },
+                Some(space_non_armada()),
+            ))
+        }
+        _ => None,
+    }
+}
+
 /// Verified CombatStart enemy weapon-damage reduction research (`Defensive Tactics`,
 /// rid `1914017763`, bid `2859405133`: `AllDamage` `MultiplySub` on `EnemyShip` vs
 /// non-Armada hostiles, ranks 1–5 = `5%..30%`). Verified against 2026-11-26 live
@@ -840,8 +1519,10 @@ fn ship_gated_setup_bonuses_from_catalogs(
             continue;
         }
         let rank = usize::try_from(level - 1).unwrap_or(usize::MAX);
-        if !matches!(spec.modifier_code, 11 | 12 | 13 | 60 | 61 | 73)
-            || spec.operation_code != 3
+        if !matches!(
+            spec.modifier_code,
+            2 | 6 | 7 | 8 | 11 | 12 | 13 | 60 | 61 | 73
+        ) || spec.operation_code != 3
             || spec.target_code != 1
             || spec.trigger_code != 24
             || spec.num_rounds != 0
@@ -884,6 +1565,10 @@ fn ship_gated_setup_bonuses_from_catalogs(
         };
         if matches_scope {
             let stats: &[&str] = match spec.modifier_code {
+                2 => &["weapon_damage"],
+                6 => &["accuracy"],
+                7 => &["armor_piercing"],
+                8 => &["shield_piercing"],
                 61 => &["hull_hp"],
                 60 => &["shield_hp"],
                 11 => &["dodge"],
@@ -2614,5 +3299,124 @@ mod tests {
                 .count(),
             114
         );
+    }
+
+    #[test]
+    fn ship_gated_launch_weapon_damage_and_piercing_respect_grade_class_and_faction() {
+        let rows = [
+            entry(1_521_707_639, 10, None), // 4★ Explorer Weaponry [0, 123] -> 1.5
+            entry(749_152_584, 5, None),    // Federation Firepower [124] -> 0.3
+            entry(3_610_365_465, 10, None), // 4★ Targeting Array [123] -> accuracy
+            entry(618_925_636, 10, None),   // 4★ Explorer Targeting Array [0, 123] -> accuracy
+            entry(113_240_864, 10, None),   // 4★ Piercing Shots [123] -> armor_piercing
+            entry(3_390_416_265, 10, None), // 4★ Shield Penetration [123] -> shield_piercing
+        ];
+        let g4_fed_exp = ship_gated_setup_bonuses_for_imported_buffs(
+            &rows,
+            Some(4),
+            Some("federation"),
+            "uss_reliant",
+            Some("explorer"),
+            0,
+        );
+        assert!(g4_fed_exp["weapon_damage"] > 1.7);
+        assert!(g4_fed_exp["accuracy"] > 3.0);
+        assert!(g4_fed_exp["armor_piercing"] > 2.0);
+        assert!(g4_fed_exp["shield_piercing"] > 2.0);
+
+        let g3_kli_int = ship_gated_setup_bonuses_for_imported_buffs(
+            &rows,
+            Some(3),
+            Some("klingon"),
+            "d4",
+            Some("interceptor"),
+            0,
+        );
+        assert!(g3_kli_int.is_empty());
+    }
+
+    #[test]
+    fn combat_start_research_and_building_seats_compile_verified_rows_and_quarantine_unverified() {
+        let res_catalog = crate::data::native_research_buffs::embedded_catalog();
+        let bld_catalog = crate::data::native_building_buffs::embedded_catalog();
+
+        let res_rows = [
+            entry(197_969_115, 1, None),    // Priority 1: Hostile Calibrations [27]
+            entry(525_563_984, 5, None),    // Common Damage vs Hostiles [27, 131]
+            entry(1_194_910_297, 3, None),  // Omega Energy Weaponry [39]
+            entry(547_426_046, 3, None),    // Omega Kinetic Weaponry [40]
+            entry(1_406_350_044, 5, None),  // 4★ Energy Blast [123, 39]
+            entry(1_503_925_774, 5, None),  // Advantage Explorer [0, 5]
+            entry(1_811_839_815, 5, None),  // Fascinating AP [27]
+            entry(3_983_708_462, 3, None),  // Combat Ferocity crit [27]
+            entry(2_026_294_074, 9, None),  // Inspiring Leader Morale crit (+0.80)
+            entry(1_934_800_456, 6, None),  // Isolytic Damage vs Augment Exile (+2.00)
+            entry(929_316_566, 20, None),   // Picard's Ressikin Flute (+0.10, R1-3)
+            entry(2_389_331_294, 2, None),  // Kataan Telescope (+0.015 vs Interceptor)
+            entry(3_619_655_850, 20, None), // Captain Proton's Blaster (+0.08 Exp+Morale)
+            entry(2_049_749_198, 4, None),  // Strand of Krenim Hair (+0.34 opp state)
+            entry(2_079_351_526, 1, None),  // DTI Temporal Device (+0.09 iso def opp state)
+            entry(1_606_929_203, 10, None), // Space Critical Resistance (-0.30 additive CDR)
+            entry(2_477_192_666, 10, None), // Explorer Space Critical Resist (-0.30 additive CDR)
+            entry(2_885_570_825, 4, None),  // Guardian of Forever (0.05 mult CDR)
+            entry(3_486_871_817, 5, None), // Exposed Interceptors (+0.025 crit chance vs hostile int)
+            entry(3_737_933_898, 8, None), // Orb of the Emissary (+0.09 crit chance Exp vs Int)
+            entry(2_900_801_564, 5, None), // Section 31 Crit Hit Damage attr=[2,8] -> QUARANTINED
+        ];
+        let seats = combat_start_research_and_building_seats_from_catalog_for_group(
+            res_catalog,
+            66,
+            &res_rows,
+            Some(4),
+            0,
+        );
+        assert_eq!(
+            seats.len(),
+            20,
+            "all 20 verified rows compile and Section 31 stays quarantined"
+        );
+        assert!(
+            seats
+                .iter()
+                .all(|s| s.ability.name != "native_66_2900801564"),
+            "Section 31 Crit Hit Damage (attr=[2,8]) must stay quarantined"
+        );
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_1194910297"
+                && s.ability.weapon_scope == WeaponTypeScope::EnergyOnly
+        }));
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_547426046"
+                && s.ability.weapon_scope == WeaponTypeScope::KineticOnly
+        }));
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_1934800456"
+                && matches!(s.ability.effect, AbilityEffect::IsolyticDamageBonus(v) if (v - 2.0).abs() < 1e-12)
+                && s.ability.condition == Some(AbilityCondition::DefenderHullFactionIdIs(1_306_860_549))
+        }));
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_2885570825"
+                && matches!(
+                    s.ability.effect,
+                    AbilityEffect::HostileCritDamageReduction {
+                        reduction,
+                        additive_percentage_points: false,
+                        ..
+                    } if (reduction - 0.05).abs() < 1e-12
+                )
+        }));
+
+        let bld_seats = combat_start_research_and_building_seats_from_catalog_for_group(
+            bld_catalog,
+            68,
+            &[entry(3_580_741_235, 2, None)],
+            Some(4),
+            0,
+        );
+        assert_eq!(bld_seats.len(), 1);
+        assert!(matches!(
+            bld_seats[0].ability.effect,
+            AbilityEffect::BaseWeaponDamageBonus(v) if (v - 10.0).abs() < 1e-12
+        ));
     }
 }

@@ -305,6 +305,87 @@
           "source_ref": { "rid": 2392190200, "buff_id": 1478241687, "loca_id": 35006 }
         }
       ]
+    },
+    {
+      "rid": 2329726922,
+      "name": "Explorer Emergency Protocol",
+      "source_note": "Upstream research 2329726922 / buff 325355262 / loca 62011: At the beginning of each round of combat, Explorers with Morale repair [3%, 6%, 9%, 12%, 20%] of hull damage taken from non-Armada Hostiles in the previous round. Live-verified 2026-11-26 in U.S.S. Reliant logs (log[47], log[49]: +20% + 8% Premium Hostile Combat Hull Repair = exact 28.0000% of prior-round gross hull loss).",
+      "effects": [
+        {
+          "id": "research_2329726922_explorer_emergency_protocol",
+          "modifier": "officer_hull_regen_prev_round_fraction",
+          "operation": "add",
+          "by_level": [0.03, 0.06, 0.09, 0.12, 0.2],
+          "snapshot_by_level": true,
+          "trigger": "round_start",
+          "conditions": [
+            { "type": "attacker_ship_type_is", "ship_type": "explorer" },
+            { "type": "morale_active" },
+            { "type": "defender_is_npc_hostile" },
+            { "type": "not", "inner": { "type": "defender_ship_type_is", "ship_type": "armada" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "group_armadas" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "solo_armadas" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "outpost_armadas" } }
+          ],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 2329726922, "buff_id": 325355262, "loca_id": 62011 }
+        }
+      ]
+    },
+    {
+      "rid": 277835639,
+      "name": "Interceptor Emergency Protocol",
+      "source_note": "Upstream research 277835639 / buff 4076962955 / loca 62013: symmetric Interceptor twin of Explorer Emergency Protocol (2329726922). At the beginning of each round of combat, Interceptors fighting non-Armada Hostiles with Hull Breach repair [3%, 6%, 9%, 12%, 20%] of hull damage taken in the previous round.",
+      "effects": [
+        {
+          "id": "research_277835639_interceptor_emergency_protocol",
+          "modifier": "officer_hull_regen_prev_round_fraction",
+          "operation": "add",
+          "by_level": [0.03, 0.06, 0.09, 0.12, 0.2],
+          "snapshot_by_level": true,
+          "trigger": "round_start",
+          "conditions": [
+            { "type": "attacker_ship_type_is", "ship_type": "interceptor" },
+            { "type": "defender_hull_breach" },
+            { "type": "defender_is_npc_hostile" },
+            { "type": "not", "inner": { "type": "defender_ship_type_is", "ship_type": "armada" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "group_armadas" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "solo_armadas" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "outpost_armadas" } }
+          ],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 277835639, "buff_id": 4076962955, "loca_id": 62013 }
+        }
+      ]
+    },
+    {
+      "rid": 997278854,
+      "name": "Battleship Emergency Protocol",
+      "source_note": "Upstream research 997278854 / buff 3961218589 / loca 62012: symmetric Battleship twin of Explorer Emergency Protocol (2329726922). At the beginning of each round of combat, Battleships fighting non-Armada Hostiles with Burning repair [3%, 6%, 9%, 12%, 20%] of hull damage taken in the previous round.",
+      "effects": [
+        {
+          "id": "research_997278854_battleship_emergency_protocol",
+          "modifier": "officer_hull_regen_prev_round_fraction",
+          "operation": "add",
+          "by_level": [0.03, 0.06, 0.09, 0.12, 0.2],
+          "snapshot_by_level": true,
+          "trigger": "round_start",
+          "conditions": [
+            { "type": "attacker_ship_type_is", "ship_type": "battleship" },
+            { "type": "defender_burning" },
+            { "type": "defender_is_npc_hostile" },
+            { "type": "not", "inner": { "type": "defender_ship_type_is", "ship_type": "armada" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "group_armadas" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "solo_armadas" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "outpost_armadas" } }
+          ],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 997278854, "buff_id": 3961218589, "loca_id": 62012 }
+        }
+      ]
     }
   ]
 }

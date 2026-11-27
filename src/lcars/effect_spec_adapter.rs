@@ -522,6 +522,7 @@ fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
         "crit_damage" | "crit_damage_flat" => Some(AbilityModifierSpec::CritDamage),
         "pierce" | "armor_pierce" | "shield_pierce" => Some(AbilityModifierSpec::Pierce),
         "shield_mitigation" => Some(AbilityModifierSpec::ShieldMitigation),
+        "shield_mitigation_bypass" => Some(AbilityModifierSpec::ShieldMitigationBypass),
         "armor" => Some(AbilityModifierSpec::MitigationAdditive),
         "base_mitigation_stats_bonus" => Some(AbilityModifierSpec::BaseMitigationStatsBonus),
         "cumulative_base_mitigation_stats_bonus" => {
@@ -1113,11 +1114,13 @@ pub fn lcars_effect_to_combat_effect_spec_with_report(
                 return None;
             }
         };
-        // Opponent-targeted shield mitigation is the **multiplicative bypass** semantic
-        // ("ignore X% of the opponent's shield"). Emit the explicit `ShieldMitigationBypass`
-        // modifier here rather than leaving the compiler to infer bypass from `target`.
+        // Legacy `shieldmitigation` tags did not distinguish `Sub` vs `MultiplySub`, so keep
+        // opponent-targeted tag rows on multiplicative bypass for backwards compatibility.
+        // Canonical `stat_modify` emits explicit `shield_mitigation_bypass` (`MultiplySub`, e.g.
+        // Harrison) vs additive `shield_mitigation` (`Sub`, e.g. SNW Pike, WOK Scotty).
         let modifier = if modifier == AbilityModifierSpec::ShieldMitigation
             && target == AbilityTargetSpec::DefenderOpponent
+            && tag_mapped_stat.is_some()
         {
             AbilityModifierSpec::ShieldMitigationBypass
         } else {

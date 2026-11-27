@@ -3651,6 +3651,17 @@ fn native_combat_start_seats_for_profile(
             &imported, now,
         ),
     );
+    let ship_grade = ship.and_then(|ship| ship.grade);
+    seats.extend(
+        crate::data::native_research_buffs::combat_start_offense_and_cdr_seats_for_imported_buffs(
+            &imported, ship_grade, now,
+        ),
+    );
+    seats.extend(
+        crate::data::native_building_buffs::combat_start_offense_seats_for_imported_buffs(
+            &imported, ship_grade, now,
+        ),
+    );
     seats.extend(
         crate::data::native_consumable_buffs::combat_start_offense_seats_for_imported_buffs(
             &imported, now,

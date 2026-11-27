@@ -4849,7 +4849,11 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             let mut mitigation_trace_breakdown = None;
             let mut armor_piercing_delta = 0.0;
             let effective_mitigation = if let Some(params) = &defender.hostile_mitigation_params {
-                let mut adjusted_attacker = params.base_attacker_stats;
+                let mut adjusted_attacker = params
+                    .base_attacker_weapon_stats
+                    .get(weapon_index)
+                    .copied()
+                    .unwrap_or(params.base_attacker_stats);
                 let effective_ap_bonus =
                     attacker_base_piercing_bonus + attacker_base_armor_piercing_bonus;
                 if effective_ap_bonus != 0.0 || attacker_base_piercing_bonus != 0.0 {
@@ -6532,6 +6536,12 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         let attacker_hull_breach_active_for_crit = st.attacker_hull_breach_rounds > 0;
         // Existing multiplicative counter-fire reduction is applied below.
         // Native damage-taken reductions subtract from the crit bonus before the floor.
+        let counter_additive_crit_reduction = counter_crit_damage_reduction
+            + if is_polaron_weapon {
+                0.0
+            } else {
+                hostile_crit_reduction.additive_points
+            };
         let def_crit = resolve_vehicle_weapon_crit(
             defender.weapon_crit_chance(weapon_index),
             defender_phase_effects.crit_chance_bonus()
@@ -6542,7 +6552,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
                 + counter_crit_damage_bonus,
             defender_phase_effects.crit_damage_multiplier(),
             0.0,
-            counter_crit_damage_reduction,
+            counter_additive_crit_reduction,
             0.0,
             defender.crit_damage_floor,
             attacker_hull_breach_active_for_crit,
@@ -9220,30 +9230,37 @@ mod reusable_attacker_tests {
                 * (1.0 + MORALE_PIERCING_BONUS);
             assert!((event.values["pierce"].as_f64().unwrap() - expected).abs() < 1e-12);
         }
-        // The mitigation path must continue to use the scaled defense.
-        let mitigation = scaled
+        // The mitigation path must continue to use the scaled defense and each weapon's
+        // per-weapon piercing baseline (not the ship aggregate).
+        let mitigations: Vec<_> = scaled
             .events
             .iter()
-            .find(|e| e.event_type == "mitigation_calc" && e.phase == "defense")
-            .unwrap();
-        let boosted = AttackerStats {
-            armor_piercing: aggregate.armor_piercing + 80.0,
-            ..aggregate
-        };
-        let expected_mitigation = mitigation_breakdown(
-            DefenderStats {
-                armor: 800.0,
-                shield_deflection: 800.0,
-                dodge: 800.0,
-            },
-            apply_morale_piercing(boosted),
-            ShipType::Battleship,
-            0.0,
-        )
-        .raw_mitigation;
-        assert!(
-            (mitigation.values["mitigation"].as_f64().unwrap() - expected_mitigation).abs() < 1e-6
-        );
+            .filter(|e| e.event_type == "mitigation_calc" && e.phase == "defense")
+            .collect();
+        assert_eq!(mitigations.len(), 2);
+        for (index, mitigation) in mitigations.iter().enumerate() {
+            let boosted = AttackerStats {
+                armor_piercing: weapons[index].armor_piercing + 80.0,
+                ..weapons[index]
+            };
+            let expected_mitigation = mitigation_breakdown(
+                DefenderStats {
+                    armor: 800.0,
+                    shield_deflection: 800.0,
+                    dodge: 800.0,
+                },
+                apply_morale_piercing(boosted),
+                ShipType::Battleship,
+                0.0,
+            )
+            .raw_mitigation;
+            assert!(
+                (mitigation.values["mitigation"].as_f64().unwrap() - expected_mitigation).abs()
+                    < 1e-6,
+                "weapon {index}: expected per-weapon mitigation {expected_mitigation}, got {}",
+                mitigation.values["mitigation"]
+            );
+        }
 
         let no_context = Combatant {
             hostile_mitigation_params: None,

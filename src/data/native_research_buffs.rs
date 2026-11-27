@@ -14,7 +14,7 @@ use crate::data::import::{GlobalBuffEntry, ResearchEntry};
 use crate::data::native_consumable_buffs::{
     bonuses_from_catalog_for_ship, combat_start_defense_seats_from_catalog_for_group,
     combat_start_opponent_weapon_damage_reduction_seats_from_catalog_for_group,
-    NativeConsumableBuffCatalog,
+    combat_start_research_and_building_seats_from_catalog_for_group, NativeConsumableBuffCatalog,
 };
 use serde::Deserialize;
 
@@ -235,6 +235,22 @@ pub fn combat_start_opponent_weapon_damage_reduction_seats_for_imported_buffs(
         embedded_catalog(),
         66,
         imported,
+        now_unix_seconds,
+    )
+}
+
+/// Verified native research CombatStart/RoundStart offense, piercing, isolytic,
+/// and hostile critical-damage-reduction seats (group 66).
+pub fn combat_start_offense_and_cdr_seats_for_imported_buffs(
+    imported: &[GlobalBuffEntry],
+    ship_grade: Option<u32>,
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
+    combat_start_research_and_building_seats_from_catalog_for_group(
+        embedded_catalog(),
+        66,
+        imported,
+        ship_grade,
         now_unix_seconds,
     )
 }

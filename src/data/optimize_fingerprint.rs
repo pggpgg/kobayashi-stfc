@@ -192,7 +192,18 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   `DilithiumDestabilizationImmunity`), Hijacked D7 / DY-200 `Not So Wounded` (+5,000 Apex
 ///   Barrier), and WOK Carol Marcus Exile loot routing. Canary `ai_reliant_dilithium_immunity`
 ///   verifies `DilithiumDestabilizationImmunity` suppresses `HostileLethalCombatBegin`.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 40;
+/// * 40 → 41 (2026-11): U.S.S. Reliant live calibration fixes (R1/R2/L48/DY-200/R3) — canonical
+///   `ShieldMitigation` officer rank scaling & `Sub` (additive, SNW Pike / WOK Scotty) vs
+///   `MultiplySub` (multiplicative bypass, Harrison / SNW Kirk); per-weapon piercing in outbound
+///   hostile mitigation (`base_attacker_weapon_stats`); Wave Defense / PvP / Excelsior / Origin
+///   Sector / faction-specific Apex Shred research gating; verified native CombatStart/RoundStart
+///   research & building buffs (4★ ship weaponry/piercing, hostile/energy/kinetic/advantage/fragile/FKR
+///   weapon damage, outbound crit damage + Inspiring Leader, Augment Exile / Ressikin Flute / class /
+///   Captain Proton's Blaster / Strand of Krenim Hair / DTI Temporal Device isolytic, Space Critical
+///   Resistance / Guardian of Forever hostile CDR); and Explorer/Interceptor/Battleship Emergency
+///   Protocol previous-round hull repair. Canary `aj_reliant_calibration_mechanics` covers per-weapon
+///   outbound mitigation, additive `ShieldMitigationBonus`, and counter-fire additive hostile CDR.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 41;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.
@@ -1030,6 +1041,120 @@ fn canary_fight_summaries() -> Vec<String> {
     summaries.push(format!(
         "ai_reliant_dilithium_immunity:dmg={:.6};ahull={:.6};rounds={};",
         reliant_res.total_damage, reliant_res.attacker_hull_remaining, reliant_res.rounds_simulated
+    ));
+
+    // Per-weapon outbound mitigation (`base_attacker_weapon_stats`), additive opponent
+    // `ShieldMitigationBonus(-0.25)`, and counter-fire additive + multiplicative hostile CDR.
+    let mut cal_att = canary_combatant("canary_aj_att");
+    cal_att.hull_health = 50_000.0;
+    cal_att.shield_health = 50_000.0;
+    cal_att.weapons = vec![
+        crate::combat::WeaponStats {
+            attack: 1_000.0,
+            shots: Some(1),
+            crit_chance: Some(0.0),
+            crit_multiplier: Some(1.0),
+            weapon_type: crate::combat::WeaponType::Energy,
+            ..Default::default()
+        },
+        crate::combat::WeaponStats {
+            attack: 1_000.0,
+            shots: Some(1),
+            crit_chance: Some(0.0),
+            crit_multiplier: Some(1.0),
+            weapon_type: crate::combat::WeaponType::Kinetic,
+            ..Default::default()
+        },
+    ];
+    let mut cal_def = canary_combatant("canary_aj_def");
+    cal_def.attack = 1_000.0;
+    cal_def.crit_chance = 1.0;
+    cal_def.crit_multiplier = 2.5;
+    cal_def.hull_health = 50_000.0;
+    cal_def.shield_health = 50_000.0;
+    cal_def.shield_mitigation = 0.80;
+    cal_def.hostile_mitigation_params = Some(crate::combat::HostileMitigationParams {
+        round_native_defense_stats: false,
+        defender_stats: crate::combat::DefenderStats {
+            armor: 10_000.0,
+            shield_deflection: 10_000.0,
+            dodge: 10_000.0,
+        },
+        weapon_pierce_defender_stats: None,
+        base_attacker_stats: crate::combat::AttackerStats {
+            armor_piercing: 50_000.0,
+            shield_piercing: 50_000.0,
+            accuracy: 50_000.0,
+        },
+        profile_piercing_fractions: None,
+        base_attacker_weapon_stats: vec![
+            crate::combat::AttackerStats {
+                armor_piercing: 2_000.0,
+                shield_piercing: 2_000.0,
+                accuracy: 2_000.0,
+            },
+            crate::combat::AttackerStats {
+                armor_piercing: 20_000.0,
+                shield_piercing: 20_000.0,
+                accuracy: 20_000.0,
+            },
+        ],
+        ship_type: crate::combat::ShipType::Interceptor,
+        mystery_mitigation_factor: 0.0,
+        floor: 0.16,
+        ceiling: 0.712,
+    });
+    let cal_crew = CrewConfiguration {
+        seats: vec![
+            canary_seat(
+                CrewSeat::Bridge,
+                AbilityClass::BridgeAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::ShieldMitigationBonus(-0.25),
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: 0.60,
+                    duration_rounds: crate::combat::types::MAX_COMBAT_ROUNDS,
+                    additive_percentage_points: true,
+                    stacks: false,
+                },
+            ),
+            canary_seat(
+                CrewSeat::Ship,
+                AbilityClass::ShipAbility,
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: 0.05,
+                    duration_rounds: crate::combat::types::MAX_COMBAT_ROUNDS,
+                    additive_percentage_points: false,
+                    stacks: false,
+                },
+            ),
+        ],
+    };
+    let cal_cfg = canary_config(2, 104);
+    let cal_res = crate::combat::simulate_combat_with_defender_faction_and_defender_crew(
+        &cal_att,
+        &cal_def,
+        &cal_cfg,
+        &cal_crew,
+        crate::combat::OpponentFactionTag::Unknown,
+        crate::combat::ShipType::Interceptor,
+        crate::combat::ShipType::Explorer,
+        true,
+        false,
+        &CrewConfiguration::default(),
+    );
+    summaries.push(format!(
+        "aj_reliant_calibration_mechanics:dmg={:.6};dhull={:.6};dshd={:.6};ahull={:.6};",
+        cal_res.total_damage,
+        cal_res.defender_hull_remaining,
+        cal_res.defender_shield_remaining,
+        cal_res.attacker_hull_remaining,
     ));
     summaries
 }
@@ -3104,7 +3229,7 @@ mod tests {
     #[test]
     fn canary_fights_are_not_degenerate() {
         let summaries = canary_fight_summaries();
-        assert_eq!(summaries.len(), 42, "expected forty-two canary fights");
+        assert_eq!(summaries.len(), 43, "expected forty-three canary fights");
         assert!(summaries.iter().any(|s| s.starts_with(
             "af_battle_type_and_pvp_defender_perspective:dmg=1250.000000;ahull=9400.000000;dhull=8750.000000;rounds=2;"
         )));
