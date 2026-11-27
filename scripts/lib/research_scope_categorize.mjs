@@ -26,6 +26,31 @@ export function categorizeResearchDescription(desc) {
   ) {
     return "economy_meta";
   }
+  if (/\bwave defense\b/.test(d)) {
+    return "wave_defense_scope";
+  }
+  if (
+    !/\bhostiles?\b/.test(d) &&
+    /(?:against|versus|vs\.?|fighting)\s+players?\b|\bpvp\b|player ships|player targets?|player\s+(?:explorers?|interceptors?|battleships?)|opponent player|grade 5\+ opponent/.test(
+      d
+    )
+  ) {
+    return "pvp_scope";
+  }
+  if (
+    /station defense|defending the station|defense platform|when defending the station|against stations|first round of combat when defending|against defense platforms/.test(
+      d
+    )
+  ) {
+    return "station_defense_scope";
+  }
+  if (
+    /bonus base.*for the |for the u\.s\.s\.|for the stella|for d'vor|for the botany|for all g4 ships|applied by the excelsior/.test(
+      d
+    )
+  ) {
+    return "ship_specific";
+  }
   // Non-Armada hostile bonuses apply in default ship-vs-hostile sim — not a global leak.
   if (
     /\bnon[- ]armada\b|\bnot armadas?\b|\bexcluding armadas?\b/.test(d) &&
@@ -37,19 +62,6 @@ export function categorizeResearchDescription(desc) {
   if (/\bhostiles?\s+and\s+armadas?\b|\bhostiles?\s*\/\s*armadas?\b/.test(d)) {
     return "hostile_and_armada_scope";
   }
-  if (/\bwave defense\b/.test(d)) {
-    return "wave_defense_scope";
-  }
-  if (/against players|pvp|player ships|opponent player|grade 5\+ opponent/.test(d)) {
-    return "pvp_scope";
-  }
-  if (
-    /station defense|defending the station|defense platform|when defending the station|against stations|first round of combat when defending|against defense platforms/.test(
-      d
-    )
-  ) {
-    return "station_defense_scope";
-  }
   if (
     /\bagainst armadas?\b|\bvs\.?\s*armadas?\b|\bversus armadas?\b|\bsolo armadas?\b|\bgroup armadas?\b|\bexchange armadas?\b|\bwhen defending an armada\b|\bfighting armadas?\b/.test(
       d
@@ -59,13 +71,6 @@ export function categorizeResearchDescription(desc) {
   }
   if (/\barmada\b/.test(d) && !/\bhostile/.test(d)) {
     return "armada_scope";
-  }
-  if (
-    /bonus base.*for the |for the u\.s\.s\.|for the stella|for d'vor|for the botany|for all g4 ships/.test(
-      d
-    )
-  ) {
-    return "ship_specific";
   }
   if (/officer/.test(d) && /attack|defense|health/.test(d)) {
     return "officer_stats";

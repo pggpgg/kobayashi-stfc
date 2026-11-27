@@ -1,6 +1,6 @@
 {
   "source": "data.stfc.space",
-  "last_updated": "2026-11-23",
+  "last_updated": "2026-11-26",
   "items": [
     {
       "rid": 2999437,
@@ -600,115 +600,6 @@
       ]
     },
     {
-      "rid": 13087486,
-      "name": "Adversary: Battleship",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.05,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.06,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.08,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.11,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.14,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.18,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.23,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.3,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 9,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.39,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 10,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.5,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "rid": 31812373,
       "name": "Explorer Targeting Array",
       "data_version": "stfcspace-upstream",
@@ -822,135 +713,6 @@
               "value": 2,
               "operator": "add",
               "attacker_ship_class": "explorer"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 112448723,
-      "name": "Khan's Glove",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.05,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.08,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.1,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.13,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.16,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.2,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.23,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.27,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 9,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.31,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 10,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.36,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 11,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.43,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 12,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.5,
-              "operator": "add"
             }
           ]
         }
@@ -1895,135 +1657,6 @@
               "value": 2,
               "operator": "add",
               "attacker_ship_class": "sentinel"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 308351031,
-      "name": "TC PvE Apex Shred",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.05,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.1,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.15,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.2,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.25,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.3,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.35,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.4,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 9,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.45,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 10,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.5,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 11,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.7,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 12,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 1,
-              "operator": "add"
             }
           ]
         }
@@ -3269,115 +2902,6 @@
       ]
     },
     {
-      "rid": 473697723,
-      "name": "▷ Enhanced PvP Apex Shred",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.04,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.08,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.12,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.17,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.22,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.27,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.32,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.37,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 9,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.43,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 10,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.5,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "rid": 482141065,
       "name": "Prime Hull Citadel",
       "data_version": "stfcspace-upstream",
@@ -3569,65 +3093,6 @@
               "value": 5,
               "operator": "add",
               "requires_morale": true
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 551215504,
-      "name": "Traceless Shred",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.4,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.55,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.75,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 1,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 1.5,
-              "operator": "add"
             }
           ]
         }
@@ -9166,115 +8631,6 @@
       ]
     },
     {
-      "rid": 1380073444,
-      "name": "Adversary: Explorer",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.05,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.06,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.08,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.11,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.14,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.18,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.23,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.3,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 9,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.39,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 10,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.5,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "rid": 1392880794,
       "name": "Explorer Warfare",
       "data_version": "stfcspace-upstream",
@@ -9428,7 +8784,13 @@
             {
               "stat": "apex_shred",
               "value": 0.05,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "romulan",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -9438,7 +8800,13 @@
             {
               "stat": "apex_shred",
               "value": 0.07,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "romulan",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -9448,7 +8816,13 @@
             {
               "stat": "apex_shred",
               "value": 0.1,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "romulan",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -9458,7 +8832,13 @@
             {
               "stat": "apex_shred",
               "value": 0.15,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "romulan",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -9468,7 +8848,13 @@
             {
               "stat": "apex_shred",
               "value": 0.2,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "romulan",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -9478,7 +8864,13 @@
             {
               "stat": "apex_shred",
               "value": 0.25,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "romulan",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -9488,7 +8880,13 @@
             {
               "stat": "apex_shred",
               "value": 0.3,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "romulan",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -9498,7 +8896,13 @@
             {
               "stat": "apex_shred",
               "value": 0.35,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "romulan",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -9508,7 +8912,13 @@
             {
               "stat": "apex_shred",
               "value": 0.4,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "romulan",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -9518,7 +8928,13 @@
             {
               "stat": "apex_shred",
               "value": 0.5,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "romulan",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         }
@@ -13406,115 +12822,6 @@
       ]
     },
     {
-      "rid": 1994107144,
-      "name": "Adversary: Interceptor",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.05,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.06,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.08,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.11,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.14,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.18,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.23,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.3,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 9,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.39,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 10,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.5,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "rid": 2004950139,
       "name": "Titan Shield",
       "data_version": "stfcspace-upstream",
@@ -14794,25 +14101,6 @@
       ]
     },
     {
-      "rid": 2153271326,
-      "name": "Prime Apex Hunter",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.25,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "rid": 2165613457,
       "name": "Federation PvE Apex Shred",
       "data_version": "stfcspace-upstream",
@@ -14825,7 +14113,13 @@
             {
               "stat": "apex_shred",
               "value": 0.05,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -14835,7 +14129,13 @@
             {
               "stat": "apex_shred",
               "value": 0.07,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -14845,7 +14145,13 @@
             {
               "stat": "apex_shred",
               "value": 0.1,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -14855,7 +14161,13 @@
             {
               "stat": "apex_shred",
               "value": 0.15,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -14865,7 +14177,13 @@
             {
               "stat": "apex_shred",
               "value": 0.2,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -14875,7 +14193,13 @@
             {
               "stat": "apex_shred",
               "value": 0.25,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -14885,7 +14209,13 @@
             {
               "stat": "apex_shred",
               "value": 0.3,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -14895,7 +14225,13 @@
             {
               "stat": "apex_shred",
               "value": 0.35,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -14905,7 +14241,13 @@
             {
               "stat": "apex_shred",
               "value": 0.4,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -14915,7 +14257,13 @@
             {
               "stat": "apex_shred",
               "value": 0.5,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "federation",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         }
@@ -17855,65 +17203,6 @@
       ]
     },
     {
-      "rid": 2712539962,
-      "name": "Fierce Shred",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.4,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.55,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.75,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 1,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 1.5,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "rid": 2740550300,
       "name": "Interceptor Warfare",
       "data_version": "stfcspace-upstream",
@@ -18602,135 +17891,6 @@
             {
               "stat": "officer_attack_below_decks",
               "value": 1,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 2854400060,
-      "name": "▷ Enhanced PvE Apex Shred",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.1,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.11,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.13,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.15,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.18,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.22,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.27,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.32,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 9,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.37,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 10,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.43,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 11,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.56,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 12,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.87,
               "operator": "add"
             }
           ]
@@ -20640,7 +19800,13 @@
             {
               "stat": "apex_shred",
               "value": 0.05,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "klingon",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -20650,7 +19816,13 @@
             {
               "stat": "apex_shred",
               "value": 0.07,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "klingon",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -20660,7 +19832,13 @@
             {
               "stat": "apex_shred",
               "value": 0.1,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "klingon",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -20670,7 +19848,13 @@
             {
               "stat": "apex_shred",
               "value": 0.15,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "klingon",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -20680,7 +19864,13 @@
             {
               "stat": "apex_shred",
               "value": 0.2,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "klingon",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -20690,7 +19880,13 @@
             {
               "stat": "apex_shred",
               "value": 0.25,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "klingon",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -20700,7 +19896,13 @@
             {
               "stat": "apex_shred",
               "value": 0.3,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "klingon",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -20710,7 +19912,13 @@
             {
               "stat": "apex_shred",
               "value": 0.35,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "klingon",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -20720,7 +19928,13 @@
             {
               "stat": "apex_shred",
               "value": 0.4,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "klingon",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         },
@@ -20730,7 +19944,13 @@
             {
               "stat": "apex_shred",
               "value": 0.5,
-              "operator": "add"
+              "operator": "add",
+              "defender_faction": "klingon",
+              "attacker_factions": [
+                "federation",
+                "klingon",
+                "romulan"
+              ]
             }
           ]
         }
@@ -24462,55 +23682,6 @@
       ]
     },
     {
-      "rid": 3706888599,
-      "name": "Apex Shred vs Aggregation",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 3,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 5,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 8,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 10,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "rid": 3720342250,
       "name": "Station Armor Piercing",
       "data_version": "stfcspace-upstream",
@@ -27301,194 +26472,6 @@
             {
               "stat": "shield_piercing",
               "value": 3,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 4131411574,
-      "name": "Khan's Necklace",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.2,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.25,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.3,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.35,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.4,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 6,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.45,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 7,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.5,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 8,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 1,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 9,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 2,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 10,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 4,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 11,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 7,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 12,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 15,
-              "operator": "add"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "rid": 4150925245,
-      "name": "Acute Shred",
-      "data_version": "stfcspace-upstream",
-      "source_note": "data.stfc.space research API; selected HP/weapon/critical families use source-verified client BuffSpec facts (data/research/client_buff_semantics_2026-10-20.json); unsupported native scope is excluded",
-      "level_value_mode": "snapshot",
-      "levels": [
-        {
-          "level": 1,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.4,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 2,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.55,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 3,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 0.75,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 4,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 1,
-              "operator": "add"
-            }
-          ]
-        },
-        {
-          "level": 5,
-          "bonuses": [
-            {
-              "stat": "apex_shred",
-              "value": 1.5,
               "operator": "add"
             }
           ]

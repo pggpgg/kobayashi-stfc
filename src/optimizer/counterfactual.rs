@@ -1203,7 +1203,10 @@ mod tests {
         };
         let scenario = CounterfactualScenario {
             ship: "uss_saladin",
-            hostile: "1140710508",
+            // Level 47 Federation Patrol (Battleship): realistic progression target for demo
+            // U.S.S. Saladin under per-weapon outbound piercing where Cadet Uhura's mitigation
+            // drives a clear positive marginal contribution (~55-65% baseline win rate).
+            hostile: "179246187",
             ship_tier: None,
             ship_level: None,
             below_decks_slots: 2,
@@ -1230,7 +1233,7 @@ mod tests {
         assert!((out1.baseline.score - out2.baseline.score).abs() < 1e-12);
         assert!(
             out1.seat_ablations[0].marginal_contribution > 0.005,
-            "Cadet Uhura should show positive marginal contribution on Saladin vs 1140710508, got {:?}",
+            "Cadet Uhura should show positive marginal contribution on Saladin vs 179246187, got {:?}",
             out1.seat_ablations[0].marginal_contribution
         );
         assert!(out1.seat_ablations[0].unavailable);

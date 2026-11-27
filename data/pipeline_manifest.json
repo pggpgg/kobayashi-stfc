@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "combined_sha256": "a41e68f8484a759c8d63e91a3b328ac4411d9df45b73faaba98f8ef09639a05c",
+  "combined_sha256": "b20f78ee6a0a63e59a073f9b672da90a243b8b3f01b67c44506dd6a8e64d6a83",
   "upstream": {
     "details_forbidden_tech": {
       "path": "data/upstream/data-stfc-space/forbidden_tech",
@@ -154,8 +154,8 @@
     "research_catalog": {
       "path": "data/research_catalog.json",
       "present": true,
-      "sha256": "0ebd37bb9bacdf9023f1ddc004321acc1b12d95c7303beeb0cd457ff4fa5f375",
-      "records": 243
+      "sha256": "ae2d5c7463854ad6d899dc4b08cbba5cbd265c4fe68389ccbe7c3f56a0e60565",
+      "records": 230
     },
     "ship_ability_catalog": {
       "path": "data/upstream/data-stfc-space/ship_ability_catalog.json",

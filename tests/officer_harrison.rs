@@ -49,50 +49,134 @@ fn harrison_sabotage_compiles_to_shield_mitigation_bypass_fraction() {
         .iter()
         .enumerate()
         .find(|(_, e)| {
-            e.effect_type == "tag"
-                && e.tag.as_deref().unwrap_or("") == "shieldmitigation:unmapped"
+            e.effect_type == "stat_modify"
+                && e.stat.as_deref() == Some("shield_mitigation_bypass")
                 && e.target.as_deref() == Some("enemy")
         })
-        .expect("Harrison bridge has a target=enemy shieldmitigation tag effect");
+        .expect("Harrison bridge has a target=enemy shield_mitigation_bypass stat_modify effect");
 
-    // Rank 1 in the YAML is `value: 0.6` (the per-rank values are 0.6/0.7/0.8/0.9/1.0).
-    let spec = lcars_effect_to_combat_effect_spec(
-        target_effect,
-        &format!("harrison:bridge:{idx}"),
-        &harrison.id,
-        &bridge.name,
-        Some(1),
-        None,
-    )
-    .expect("Harrison shield_mitigation effect should produce a CombatEffectSpec");
+    // Per-rank values are 0.6/0.7/0.8/0.9/1.0 (`MultiplySub` → multiplicative bypass).
+    for (tier, expected) in [(1u8, 0.6), (2u8, 0.7), (5u8, 1.0)] {
+        let spec = lcars_effect_to_combat_effect_spec(
+            target_effect,
+            &format!("harrison:bridge:{idx}"),
+            &harrison.id,
+            &bridge.name,
+            Some(tier),
+            None,
+        )
+        .expect("Harrison shield_mitigation_bypass effect should produce a CombatEffectSpec");
 
-    // Opponent-targeted shield mitigation is the explicit multiplicative-bypass modifier (the
-    // adapter remaps ShieldMitigation+DefenderOpponent → ShieldMitigationBypass).
-    assert_eq!(spec.modifier, AbilityModifierSpec::ShieldMitigationBypass);
-    assert_eq!(spec.target, AbilityTargetSpec::DefenderOpponent);
+        assert_eq!(spec.modifier, AbilityModifierSpec::ShieldMitigationBypass);
+        assert_eq!(spec.target, AbilityTargetSpec::DefenderOpponent);
 
-    let (_, effect, condition) =
-        compile_officer_combat_spec(&spec).expect("compile Harrison shield_mitigation");
-    match effect {
-        AbilityEffect::ShieldMitigationBypassFraction(v) => {
+        let (_, effect, condition) =
+            compile_officer_combat_spec(&spec).expect("compile Harrison shield_mitigation");
+        match effect {
+            AbilityEffect::ShieldMitigationBypassFraction(v) => {
+                assert!(
+                    (v - expected).abs() < 1e-9,
+                    "Rank-{tier} Harrison bypass should be {expected}, got {v}"
+                );
+            }
+            other => panic!("Expected ShieldMitigationBypassFraction, got {other:?}"),
+        }
+        assert!(
+            matches!(
+                &condition,
+                Some(AbilityCondition::And(parts))
+                    if parts.iter().any(|c| matches!(
+                        c,
+                        AbilityCondition::RoundRange { min: 1, max: 1 }
+                    ))
+            ),
+            "Sabotage duration rounds:1 should AND a RoundRange 1..=1 gate, got {condition:?}"
+        );
+    }
+}
+
+#[test]
+fn snw_pike_and_wok_scotty_sub_shield_mitigation_scales_by_rank_and_subtracts_additively() {
+    let Ok(file) = build_officer_model_file_default() else {
+        return;
+    };
+    let officers = index_lcars_officers_by_id(file.officers);
+
+    // SNW Pike (rank 4 bridge) + SNW Spock + Tyler: captain synergy yields +0.09 incoming
+    // shield mitigation (0.04 base + 0.05 one-partner synergy), bridge yields -0.25 additive
+    // opponent shield mitigation (NOT multiplicative bypass, NOT frozen at rank-1 0.10).
+    let mut officer_tiers = std::collections::HashMap::new();
+    officer_tiers.insert("snw-pike-c94ac4".to_string(), 4u8);
+    officer_tiers.insert("wok-scotty-57ed85".to_string(), 5u8);
+    let opts = ResolveOptions {
+        tier: Some(4),
+        officer_tiers: Some(officer_tiers),
+        officer_levels: None,
+    };
+    let resolved = resolve_crew_to_buff_set(
+        "snw-pike-c94ac4",
+        &["snw-spock-a1b1f2".to_string(), "tyler-78c2d0".to_string()],
+        &["wok-scotty-57ed85".to_string()],
+        &officers,
+        &opts,
+    );
+    let pike_bridge = resolved
+        .crew
+        .seats
+        .iter()
+        .find(|s| {
+            s.officer_id.as_deref() == Some("snw-pike-c94ac4")
+                && matches!(s.ability.effect, AbilityEffect::ShieldMitigationBonus(_))
+        })
+        .expect("SNW Pike bridge should emit additive ShieldMitigationBonus");
+    match pike_bridge.ability.effect {
+        AbilityEffect::ShieldMitigationBonus(v) => {
             assert!(
-                (v - 0.6).abs() < 1e-9,
-                "Rank-1 Harrison bypass should be 0.6, got {v}"
+                (v - (-0.25)).abs() < 1e-9,
+                "SNW Pike R4 bridge should emit -0.25 additive ShieldMitigationBonus, got {v}"
             );
         }
-        other => panic!("Expected ShieldMitigationBypassFraction, got {other:?}"),
+        other => panic!("unexpected SNW Pike bridge effect: {other:?}"),
     }
-    assert!(
-        matches!(
-            &condition,
-            Some(AbilityCondition::And(parts))
-                if parts.iter().any(|c| matches!(
-                    c,
-                    AbilityCondition::RoundRange { min: 1, max: 1 }
-                ))
-        ),
-        "Sabotage duration rounds:1 should AND a RoundRange 1..=1 gate, got {condition:?}"
-    );
+    let pike_captain = resolved
+        .crew
+        .seats
+        .iter()
+        .find(|s| {
+            s.officer_id.as_deref() == Some("snw-pike-c94ac4")
+                && matches!(
+                    s.ability.effect,
+                    AbilityEffect::AttackerShieldMitigationBonus(_)
+                )
+        })
+        .expect("SNW Pike captain should emit AttackerShieldMitigationBonus");
+    match pike_captain.ability.effect {
+        AbilityEffect::AttackerShieldMitigationBonus(v) => {
+            assert!(
+                v >= 0.04 - 1e-9,
+                "SNW Pike captain should preserve self shield mitigation bonus, got {v}"
+            );
+        }
+        other => panic!("unexpected SNW Pike captain effect: {other:?}"),
+    }
+    let scotty = resolved
+        .crew
+        .seats
+        .iter()
+        .find(|s| {
+            s.officer_id.as_deref() == Some("wok-scotty-57ed85")
+                && matches!(s.ability.effect, AbilityEffect::ShieldMitigationBonus(_))
+        })
+        .expect("WOK Scotty below-decks should emit additive ShieldMitigationBonus");
+    match scotty.ability.effect {
+        AbilityEffect::ShieldMitigationBonus(v) => {
+            assert!(
+                (v - (-0.40)).abs() < 1e-9,
+                "WOK Scotty R5 below-decks should emit -0.40 additive ShieldMitigationBonus, got {v}"
+            );
+        }
+        other => panic!("unexpected WOK Scotty effect: {other:?}"),
+    }
 }
 
 /// User-supplied worked example: tier-2 Harrison bypasses 70% of the defender's 77.5% shield

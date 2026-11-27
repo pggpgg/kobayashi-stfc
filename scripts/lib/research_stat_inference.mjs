@@ -71,6 +71,21 @@ export function inferCombatStatFromDescription(text) {
     return "apex_barrier";
   }
   if (/\bapex shred\b/i.test(t)) {
+    // Quarantine territory/origin-sector, faction-specific, and special-hostile Apex Shred
+    // projects unless explicitly mapped with verified conditions — never flatten them into
+    // global open-space Apex Shred.
+    if (/origin sector|aggregation|augment exile/.test(t)) {
+      return null;
+    }
+    const fkrVs = t.match(/\bof all fkr ships vs\.?\s+(federation|klingon|romulan)\b/);
+    if (fkrVs) {
+      return {
+        stat: "apex_shred",
+        operator: "add",
+        attacker_factions: ["federation", "klingon", "romulan"],
+        defender_faction: fkrVs[1],
+      };
+    }
     if (/\bmorale\b/i.test(t)) {
       return { stat: "apex_shred", requires_morale: true };
     }

@@ -91,3 +91,36 @@ test("shouldExcludeUnconditionalGlobalMerge keeps non-Armada hostile rows", () =
     })
   );
 });
+
+test("wave defense, PvP player targets, and Excelsior Enhanced take precedence over hostile wording", () => {
+  assert.equal(
+    categorizeResearchDescription(
+      "Increases Apex Shred vs. non-Armada hostiles for Explorers in Wave Defense."
+    ),
+    "wave_defense_scope"
+  );
+  assert.equal(
+    categorizeResearchDescription(
+      "Increases Apex Shred versus Player Explorers for 7+ Battleships (does not apply in Station Combat)."
+    ),
+    "pvp_scope"
+  );
+  assert.equal(
+    categorizeResearchDescription(
+      "Increases base Apex Shred when fighting Player targets (does not apply while defending station)."
+    ),
+    "pvp_scope"
+  );
+  assert.equal(
+    categorizeResearchDescription(
+      "Increases the Apex Shred vs Hostiles and Armadas of your deployed ships, when Enhanced is applied by the Excelsior."
+    ),
+    "ship_specific"
+  );
+  assert.equal(
+    categorizeResearchDescription(
+      "Increases base Apex Shred against all Players, Hostiles and Armadas."
+    ),
+    "hostile_and_armada_scope"
+  );
+});

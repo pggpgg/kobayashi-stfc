@@ -1226,6 +1226,16 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                 num_rounds_from_attributes(a.attributes.as_deref())
                     .map(|n| LcarsDuration::Rounds { rounds: n })
                     .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
+            } else if matches!(
+                stat.as_str(),
+                "shield_mitigation" | "shield_mitigation_bypass"
+            ) {
+                // Honor canonical `num_rounds` (e.g. Harrison `num_rounds=1`, Harry Mudd
+                // `num_rounds=2`, Tiza/Vil Winn Adami `num_rounds=3`, Kathryn Janeway /
+                // WOK Carol / TOS Uhura `num_rounds=1`).
+                num_rounds_from_attributes(a.attributes.as_deref())
+                    .map(|n| LcarsDuration::Rounds { rounds: n })
+                    .unwrap_or(LcarsDuration::Permanent("permanent".to_string()))
             } else {
                 LcarsDuration::Permanent("permanent".to_string())
             };
@@ -2028,14 +2038,18 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "PolaronMitigationMultiplier" => {
             MappedEffect::StatModify("polaron_mitigation_multiplier".into(), "add".into(), val)
         }
-        "ShieldMitigation"
-            if matches!(
-                a.trigger.as_deref(),
-                Some("HullDamageTaken" | "ShieldDamageTaken" | "CriticalShotTaken")
-            ) && op.eq_ignore_ascii_case("Add")
-                && a.target.as_deref() == Some("SelfShip") =>
-        {
-            MappedEffect::StatModify("shield_mitigation".into(), "add".into(), val)
+        "ShieldMitigation" => {
+            if op.eq_ignore_ascii_case("MultiplySub")
+                && matches!(a.target.as_deref(), Some("EnemyShip" | "EnemyAllShips"))
+            {
+                MappedEffect::StatModify("shield_mitigation_bypass".into(), "sub".into(), val)
+            } else {
+                MappedEffect::StatModify(
+                    "shield_mitigation".into(),
+                    map_lcars_operator(op),
+                    val,
+                )
+            }
         }
         "IsolyticDamage" => MappedEffect::StatModify("isolytic_damage".into(), "add".into(), val),
         "IsolyticDefense" => MappedEffect::StatModify("isolytic_defense".into(), "add".into(), val),

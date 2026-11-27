@@ -42,11 +42,11 @@ fn snw_pike_captain_self_shield_mitigation_compiles_to_attacker_bonus() {
         .iter()
         .enumerate()
         .find(|(_, e)| {
-            e.effect_type == "tag"
-                && e.tag.as_deref().unwrap_or("") == "shieldmitigation:unmapped"
+            e.effect_type == "stat_modify"
+                && e.stat.as_deref() == Some("shield_mitigation")
                 && e.target.as_deref() == Some("self")
         })
-        .expect("SNW Pike captain has a target=self shieldmitigation tag effect");
+        .expect("SNW Pike captain has a target=self shield_mitigation stat_modify effect");
 
     let spec = lcars_effect_to_combat_effect_spec(
         target_effect,
