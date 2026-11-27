@@ -129,6 +129,7 @@ pub(crate) fn run_chain_trial(
             initial_attacker_hull_damage: initial_hull_damage,
             weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
+            defender_profile_weapon_damage_fraction: input.defender_profile_weapon_damage_fraction,
             defender_hull_faction_id: shared
                 .hostile_rec
                 .as_ref()
@@ -338,6 +339,7 @@ mod tests {
             base_seed: 0,
             weapon_damage_profile_additive_pool: None,
             profile_weapon_damage_fraction: 0.0,
+            defender_profile_weapon_damage_fraction: 0.0,
             engagement_enemy_types: Default::default(),
             defender_level: None,
             attacker_roster_officer_ids: vec![],

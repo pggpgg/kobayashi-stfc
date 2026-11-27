@@ -28,7 +28,7 @@ use crate::data::import;
 use crate::data::loader::{resolve_hostile, resolve_ship};
 use crate::data::officer::{load_canonical_officers, Officer, DEFAULT_CANONICAL_OFFICERS_PATH};
 use crate::data::profile::{
-    apply_profile_piercing_to_attacker_stats, apply_profile_to_attacker_with_health_pool,
+    apply_profile_piercing_to_attacker_stats,
     apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus,
     apply_static_buffs_to_combatant, borg_alcove_hull_hp_bonus_fraction,
     borg_operating_table_forbidden_tech_seats, forbidden_tech_derived_attack_phase_seats,
@@ -43,8 +43,8 @@ use crate::data::profile::{
     ship_class_gated_torpedo_family_hostile_shield_mitigation_sum_for_resolved_ship,
     ship_class_gated_torpedo_family_hull_hp_bonus_sum_for_resolved_ship,
     silicon_based_parasites_chaos_tech_seats, take_static_health_pool_bonus,
-    temporal_conduit_chaos_tech_seats, PlayerProfile, SupportBuffResearchGateState,
-    USS_VOYAGER_SHIP_ID,
+    take_static_weapon_damage_pool_bonus, temporal_conduit_chaos_tech_seats, PlayerProfile,
+    SupportBuffResearchGateState, USS_VOYAGER_SHIP_ID,
 };
 use crate::data::profile_index::{
     self, profile_path, BUFFS_IMPORTED, BUILDINGS_IMPORTED, FORBIDDEN_TECH_IMPORTED, PROFILE_JSON,
@@ -1164,6 +1164,8 @@ pub(crate) struct CombatSimulationInput {
     pub weapon_damage_profile_additive_pool: Option<f64>,
     /// Profile `weapon_damage` fraction `p` for [`crate::combat::SimulationConfig::profile_weapon_damage_fraction`].
     pub profile_weapon_damage_fraction: f64,
+    /// Symmetric PvP defender `weapon_damage` fraction `p_def` for [`crate::combat::SimulationConfig::defender_profile_weapon_damage_fraction`].
+    pub defender_profile_weapon_damage_fraction: f64,
     /// Copied into [`crate::combat::SimulationConfig::engagement_enemy_types`].
     pub engagement_enemy_types: EnemyTypes,
     /// Copied into [`crate::combat::SimulationConfig::defender_level`].
@@ -1188,13 +1190,14 @@ pub(crate) struct CombatSimulationInput {
 
 /// PvP defender [`Combatant`] with opponent profile + defender crew officer-stat runtime,
 /// including Phase 4c debuffs from the attacker's `target: enemy` pending rows.
+/// Returns `(defender, defender_profile_weapon_damage_fraction)`.
 fn build_pvp_defender_combatant(
     shared: &SharedScenarioData,
     attacker_ship_rec: &ShipRecord,
     defender_mitigation: f64,
     attacker_enemy_target_pending: &[crate::lcars::PendingOfficerStatContribution],
     defender_crew: &CrewConfiguration,
-) -> Combatant {
+) -> (Combatant, f64) {
     let def_ship = shared
         .defender_ship_rec
         .as_ref()
@@ -1233,12 +1236,22 @@ fn build_pvp_defender_combatant(
     );
     let mut dstatic = shared.player_defender_static_buffs.clone();
     let static_health = take_static_health_pool_bonus(&mut dstatic);
-    defender = apply_profile_to_attacker_with_health_pool(
+    let static_weapon_damage_pool = take_static_weapon_damage_pool_bonus(&mut dstatic);
+    defender = apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
         defender,
         def_profile,
         def_ship.faction.as_deref(),
         defender_osr,
         static_health,
+        static_weapon_damage_pool,
+    );
+    let defender_profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(
+        def_profile,
+        def_ship.faction.as_deref(),
+        defender_osr.attack_bonus,
+        static_weapon_damage_pool,
+        false,
+        false,
     );
     apply_profile_player_apex_barrier_tal_gate(
         &mut defender,
@@ -1251,7 +1264,7 @@ fn build_pvp_defender_combatant(
         let _ = take_isolytic_cascade_static_bonus(&mut dstatic);
         defender = apply_static_buffs_to_combatant(defender, &dstatic);
     }
-    defender
+    (defender, defender_profile_weapon_damage_fraction)
 }
 
 fn apply_support_defender_static_if_pvp(shared: &SharedScenarioData, defender: &mut Combatant) {
@@ -1308,6 +1321,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
     }
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut merged_static);
     let static_health = take_static_health_pool_bonus(&mut merged_static);
+    let static_weapon_damage_pool = take_static_weapon_damage_pool_bonus(&mut merged_static);
     let crew = CrewConfiguration { seats: crew_seats };
     let attacker_tal_assigned_captain_or_bridge =
         attacker_crew_tal_assigned_captain_or_bridge(&crew);
@@ -1371,7 +1385,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 shared.cached_pierce.unwrap_or(0.0),
             )
         });
-        let defender = if shared.is_pvp() {
+        let (defender, defender_profile_weapon_damage_fraction) = if shared.is_pvp() {
             build_pvp_defender_combatant(
                 shared,
                 ship_rec,
@@ -1398,7 +1412,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
                 let _ = take_isolytic_cascade_static_bonus(&mut dstatic);
                 d = apply_static_buffs_to_combatant(d, &dstatic);
             }
-            d
+            (d, 0.0)
         };
 
         let cond_ctx = build_officer_stat_condition_context(shared, ship_rec);
@@ -1406,6 +1420,22 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             &shared.profile,
             defender_is_outpost_for_scenario(shared),
             defender_is_armada_hostile_for_scenario(shared),
+        );
+        let attacker_osr = crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
+            officer_stat_totals,
+            bridge_officer_stat_totals,
+            &officer_stat_rows,
+            ship_rec,
+            &shared.profile,
+            ship_rec.faction.as_deref(),
+            &merged_static,
+            &pending_officer_stat_contributions,
+            &cond_ctx,
+            if shared.is_pvp() {
+                &shared.defender_pending_officer_stat_contributions
+            } else {
+                &[]
+            },
         );
         let mut attacker = apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
             Combatant {
@@ -1463,24 +1493,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             },
             &shared.profile,
             ship_rec.faction.as_deref(),
-            crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
-                officer_stat_totals,
-                bridge_officer_stat_totals,
-                &officer_stat_rows,
-                ship_rec,
-                &shared.profile,
-                ship_rec.faction.as_deref(),
-                &merged_static,
-                &pending_officer_stat_contributions,
-                &cond_ctx,
-                if shared.is_pvp() {
-                    &shared.defender_pending_officer_stat_contributions
-                } else {
-                    &[]
-                },
-            ),
+            attacker_osr,
             static_health,
-            extra_target_weapon_damage,
+            extra_target_weapon_damage + static_weapon_damage_pool,
         );
         if let Some(params) = attacker.hostile_mitigation_params.as_mut() {
             params.round_native_defense_stats = shared.native_defense_rounding;
@@ -1567,6 +1582,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             weapon_damage_profile_additive_pool_from_env(&shared.profile);
         let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(
             &shared.profile,
+            ship_rec.faction.as_deref(),
+            attacker_osr.attack_bonus,
+            static_weapon_damage_pool,
             defender_is_outpost_for_scenario(shared),
             defender_is_armada_hostile_for_scenario(shared),
         );
@@ -1600,6 +1618,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
             base_seed,
             weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction,
+            defender_profile_weapon_damage_fraction,
             engagement_enemy_types: shared.engagement_enemy_types.clone(),
             defender_level: shared.defender_level,
             attacker_roster_officer_ids,
@@ -1663,7 +1682,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         // Placeholder combatant path: no real ship_rec, so no officer-stat runtime.
         crate::data::profile::OfficerStatRuntimeBonus::default(),
         static_health,
-        extra_target_weapon_damage,
+        extra_target_weapon_damage + static_weapon_damage_pool,
     );
     if let Some(params) = attacker.hostile_mitigation_params.as_mut() {
         params.round_native_defense_stats = shared.native_defense_rounding;
@@ -1725,6 +1744,9 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         weapon_damage_profile_additive_pool_from_env(&shared.profile);
     let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(
         &shared.profile,
+        None,
+        0.0,
+        static_weapon_damage_pool,
         defender_is_outpost_for_scenario(shared),
         defender_is_armada_hostile_for_scenario(shared),
     );
@@ -1769,6 +1791,7 @@ pub(crate) fn scenario_to_combat_input_from_shared(
         base_seed,
         weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction,
+        defender_profile_weapon_damage_fraction: 0.0,
         engagement_enemy_types: shared.engagement_enemy_types.clone(),
         defender_level: shared.defender_level,
         attacker_roster_officer_ids,
@@ -1831,6 +1854,9 @@ fn profile_target_weapon_damage_bonus_fraction(
 
 fn profile_weapon_damage_fraction_for_combat(
     profile: &PlayerProfile,
+    owner_faction_slug: Option<&str>,
+    officer_attack_bonus: f64,
+    static_weapon_damage_pool: f64,
     defender_is_outpost: bool,
     defender_is_armada_hostile: bool,
 ) -> f64 {
@@ -1839,6 +1865,24 @@ fn profile_weapon_damage_fraction_for_combat(
         p = 0.0;
     } else {
         p = p.max(0.0);
+    }
+    if let Some(fac) = owner_faction_slug.map(str::trim).filter(|s| !s.is_empty()) {
+        if let Some(v) = profile
+            .research_owner_faction_bonuses
+            .get(&fac.to_ascii_lowercase())
+            .and_then(|m| m.get("weapon_damage"))
+            .copied()
+        {
+            if v.is_finite() && v > 0.0 {
+                p += v;
+            }
+        }
+    }
+    if officer_attack_bonus.is_finite() && officer_attack_bonus > 0.0 {
+        p += officer_attack_bonus;
+    }
+    if static_weapon_damage_pool.is_finite() && static_weapon_damage_pool > 0.0 {
+        p += static_weapon_damage_pool;
     }
     p + profile_target_weapon_damage_bonus_fraction(
         profile,
@@ -2584,6 +2628,7 @@ pub(crate) fn scenario_to_combat_input(
     ) = build_crew_and_buffs(candidate, lcars_data, &resolve_opts);
     let static_cascade_bonus = take_isolytic_cascade_static_bonus(&mut static_buffs);
     let static_health = take_static_health_pool_bonus(&mut static_buffs);
+    let static_weapon_damage_pool = take_static_weapon_damage_pool_bonus(&mut static_buffs);
 
     if let (Some(ship_rec), Some(hostile_rec)) = (resolve_ship(ship), resolve_hostile(hostile)) {
         let defender_crew = hostile_defender_crew_for_scenario(&hostile_rec, profile);
@@ -2635,6 +2680,18 @@ pub(crate) fn scenario_to_combat_input(
             combat_ctx.defender_is_outpost,
             combat_ctx.defender_is_armada_hostile,
         );
+        let attacker_osr = crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
+            officer_stat_totals,
+            bridge_officer_stat_totals,
+            &officer_stat_rows,
+            &ship_rec,
+            profile,
+            ship_rec.faction.as_deref(),
+            &static_buffs,
+            &pending_officer_stat_contributions,
+            &cond_ctx,
+            &[],
+        );
         let mut attacker = apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
             Combatant {
                 id: ship.to_string(),
@@ -2671,20 +2728,9 @@ pub(crate) fn scenario_to_combat_input(
             },
             profile,
             ship_rec.faction.as_deref(),
-            crate::data::profile::compute_officer_stat_runtime_bonus_with_officers(
-                officer_stat_totals,
-                bridge_officer_stat_totals,
-                &officer_stat_rows,
-                &ship_rec,
-                profile,
-                ship_rec.faction.as_deref(),
-                &static_buffs,
-                &pending_officer_stat_contributions,
-                &cond_ctx,
-                &[],
-            ),
+            attacker_osr,
             static_health,
-            extra_target_weapon_damage,
+            extra_target_weapon_damage + static_weapon_damage_pool,
         );
         if !static_buffs.is_empty() {
             attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
@@ -2700,6 +2746,9 @@ pub(crate) fn scenario_to_combat_input(
             weapon_damage_profile_additive_pool_from_env(profile);
         let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(
             profile,
+            ship_rec.faction.as_deref(),
+            attacker_osr.attack_bonus,
+            static_weapon_damage_pool,
             combat_ctx.defender_is_outpost,
             combat_ctx.defender_is_armada_hostile,
         );
@@ -2742,6 +2791,7 @@ pub(crate) fn scenario_to_combat_input(
             base_seed,
             weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction,
+            defender_profile_weapon_damage_fraction: 0.0,
             engagement_enemy_types,
             defender_level: Some(hostile_rec.level),
             attacker_roster_officer_ids,
@@ -2761,7 +2811,7 @@ pub(crate) fn scenario_to_combat_input(
     let defender_hull = 260.0 + ((hostile_hash >> 16) % 280) as f64;
     let defender_mitigation = computed_defender_mitigation(ship, hostile);
 
-    let mut attacker = apply_profile_to_attacker_with_health_pool(
+    let mut attacker = apply_profile_to_attacker_with_health_pool_and_target_weapon_bonus(
         Combatant {
             id: ship.to_string(),
             attack: 95.0 + (ship_hash % 70) as f64,
@@ -2792,6 +2842,7 @@ pub(crate) fn scenario_to_combat_input(
         // Placeholder combatant path: no real ship_rec, so no officer-stat runtime.
         crate::data::profile::OfficerStatRuntimeBonus::default(),
         static_health,
+        static_weapon_damage_pool,
     );
     if !static_buffs.is_empty() {
         attacker = apply_static_buffs_to_combatant(attacker, &static_buffs);
@@ -2803,8 +2854,14 @@ pub(crate) fn scenario_to_combat_input(
 
     let defender_crew = CrewConfiguration { seats: Vec::new() };
     let weapon_damage_profile_additive_pool = weapon_damage_profile_additive_pool_from_env(profile);
-    let profile_weapon_damage_fraction =
-        profile_weapon_damage_fraction_for_combat(profile, false, false);
+    let profile_weapon_damage_fraction = profile_weapon_damage_fraction_for_combat(
+        profile,
+        None,
+        0.0,
+        static_weapon_damage_pool,
+        false,
+        false,
+    );
     CombatSimulationInput {
         attacker,
         defender: Combatant {
@@ -2839,6 +2896,7 @@ pub(crate) fn scenario_to_combat_input(
         base_seed,
         weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction,
+        defender_profile_weapon_damage_fraction: 0.0,
         engagement_enemy_types: EnemyTypes::default(),
         defender_level: None,
         attacker_roster_officer_ids,
@@ -5967,7 +6025,9 @@ mod tests {
             bridge: vec![],
             below_decks: vec![],
         };
-        for (ship, shield_bonus) in [("realta", 0.16), ("phindra", 0.10)] {
+        for (ship, shield_bonus, expected_osr_attack) in
+            [("realta", 0.16, 1.0), ("phindra", 0.10, 0.0)]
+        {
             let standalone = build_shared_scenario_data_standalone_for_profile(
                 ship,
                 hostile,
@@ -6026,7 +6086,15 @@ mod tests {
             let input = scenario_to_combat_input_from_shared(&standalone, &candidate, 41);
             let registered_input =
                 scenario_to_combat_input_from_shared(&registered, &candidate, 41);
-            assert!((input.profile_weapon_damage_fraction - 0.67).abs() < 1e-12);
+            let expected_wd_pool = 0.67 + expected_osr_attack;
+            assert!(
+                (input.profile_weapon_damage_fraction - expected_wd_pool).abs() < 1e-12,
+                "{ship}: expected {expected_wd_pool}, got {}",
+                input.profile_weapon_damage_fraction
+            );
+            assert!(
+                (registered_input.profile_weapon_damage_fraction - expected_wd_pool).abs() < 1e-12
+            );
             assert_eq!(
                 input.attacker.hull_health,
                 registered_input.attacker.hull_health
@@ -6345,10 +6413,16 @@ mod tests {
             .bonuses
             .insert("weapon_damage_vs_outpost".to_string(), 0.25);
         assert!(
-            (profile_weapon_damage_fraction_for_combat(&profile, false, false) - 0.1).abs() < 1e-12
+            (profile_weapon_damage_fraction_for_combat(&profile, None, 0.0, 0.0, false, false)
+                - 0.1)
+                .abs()
+                < 1e-12
         );
         assert!(
-            (profile_weapon_damage_fraction_for_combat(&profile, true, false) - 0.35).abs() < 1e-12
+            (profile_weapon_damage_fraction_for_combat(&profile, None, 0.0, 0.0, true, false)
+                - 0.35)
+                .abs()
+                < 1e-12
         );
     }
 
@@ -6360,11 +6434,37 @@ mod tests {
             .bonuses
             .insert("weapon_damage_vs_armada_hostile".to_string(), 0.02);
         assert!(
-            (profile_weapon_damage_fraction_for_combat(&profile, false, false) - 0.1).abs() < 1e-12
+            (profile_weapon_damage_fraction_for_combat(&profile, None, 0.0, 0.0, false, false)
+                - 0.1)
+                .abs()
+                < 1e-12
         );
         assert!(
-            (profile_weapon_damage_fraction_for_combat(&profile, false, true) - 0.12).abs() < 1e-12
+            (profile_weapon_damage_fraction_for_combat(&profile, None, 0.0, 0.0, false, true)
+                - 0.12)
+                .abs()
+                < 1e-12
         );
+    }
+
+    #[test]
+    fn profile_weapon_damage_fraction_includes_owner_faction_officer_attack_and_static_pool() {
+        let mut profile = PlayerProfile::default();
+        profile.bonuses.insert("weapon_damage".to_string(), 10.0);
+        profile
+            .research_owner_faction_bonuses
+            .entry("federation".to_string())
+            .or_default()
+            .insert("weapon_damage".to_string(), 2.5);
+        let got = profile_weapon_damage_fraction_for_combat(
+            &profile,
+            Some("federation"),
+            3.5,
+            21.0,
+            false,
+            false,
+        );
+        assert!((got - 37.0).abs() < 1e-12, "expected 37.0, got {got}");
     }
 
     #[test]

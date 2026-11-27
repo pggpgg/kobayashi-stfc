@@ -361,7 +361,7 @@ fn tmp_sulu_uhura_ilia_activate_on_red_outpost_retaliator_and_stay_inert_on_arma
             42,
             0,
             Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
-            500,
+            50_000,
             SupportBuffScenarioRequest::default(),
             opp,
             None,
@@ -445,7 +445,7 @@ fn tasha_yar_data_worf_honor_exact_battle_type_boundaries_including_qtrial_and_o
             42,
             0,
             Some(NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS),
-            500,
+            50_000,
             SupportBuffScenarioRequest::default(),
             opp,
             None,
@@ -468,22 +468,38 @@ fn tasha_yar_data_worf_honor_exact_battle_type_boundaries_including_qtrial_and_o
     let on_solo = run(EnemyType::SoloArmadas, DefenderOpponent::Hostile);
     let on_outpost = run(EnemyType::OutpostArmadas, DefenderOpponent::Hostile);
 
+    // Both crews can kill DURABLE_HOSTILE (32.03M EHP), making fight-total `total_damage`
+    // sensitive to final-shot overkill. Measure Round 1 outbound post-mitigation damage
+    // (before any kill/overkill) so both Tasha Yar's weapon-damage pool bonus and Data's
+    // piercing bonus are observed cleanly.
+    let round1_outbound_damage = |res: &kobayashi::optimizer::monte_carlo::MonteCarloSeedReplay| {
+        res.trace_events
+            .iter()
+            .filter(|e| {
+                e.round_index == 1 && e.event_type == "damage_application" && e.phase == "damage"
+            })
+            .filter_map(|e| e.values.get("damage_after_apex").and_then(|v| v.as_f64()))
+            .sum::<f64>()
+    };
+
+    let retal_r1 = round1_outbound_damage(&on_retal);
+    let outpost_r1 = round1_outbound_damage(&on_outpost);
+    assert!(retal_r1 > 0.0 && outpost_r1 > 0.0);
+
     // Same non-armada ship class comparison: Red(2), QTrial(3), Boss(3) beat OutpostRetaliator(18)
     for (label, res) in [("red", &on_red), ("qtrial", &on_qtrial), ("boss", &on_boss)] {
+        let r1 = round1_outbound_damage(res);
         assert!(
-            res.total_damage > on_retal.total_damage + 1.0,
-            "Tasha Yar + Data bridge must boost damage on {label} vs OutpostRetaliator (bt=18): {label}={}, retal={}",
-            res.total_damage,
-            on_retal.total_damage
+            r1 > retal_r1 + 1.0,
+            "Tasha Yar + Data bridge must boost round-1 damage on {label} vs OutpostRetaliator (bt=18): {label}={r1}, retal={retal_r1}"
         );
     }
     // Same armada ship class comparison: Group(7) and Solo(8) beat OutpostArmada(17)
     for (label, res) in [("group_armada", &on_group), ("solo_armada", &on_solo)] {
+        let r1 = round1_outbound_damage(res);
         assert!(
-            res.total_damage > on_outpost.total_damage + 1.0,
-            "Tasha Yar + Data bridge must boost damage on {label} vs OutpostArmada (bt=17): {label}={}, outpost={}",
-            res.total_damage,
-            on_outpost.total_damage
+            r1 > outpost_r1 + 1.0,
+            "Tasha Yar + Data bridge must boost round-1 damage on {label} vs OutpostArmada (bt=17): {label}={r1}, outpost={outpost_r1}"
         );
     }
 

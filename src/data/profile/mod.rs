@@ -1571,6 +1571,19 @@ pub fn take_static_health_pool_bonus(
     }
 }
 
+/// Consume launch-time native `AllDamage` MULT fractions (`weapon_damage_additive_pool`)
+/// so scenario builders fold them into the shared `1 + MULT` weapon-damage pool once.
+pub fn take_static_weapon_damage_pool_bonus(static_buffs: &mut HashMap<String, f64>) -> f64 {
+    let v = static_buffs
+        .remove("weapon_damage_additive_pool")
+        .unwrap_or(0.0);
+    if v.is_finite() && v > 0.0 {
+        v
+    } else {
+        0.0
+    }
+}
+
 /// Apply LCARS/officer static buffs to a Combatant (e.g. from [BuffSet::static_buffs]).
 /// Intended for use when building a Combatant from ship/hostile + crew where crew is resolved via
 /// [crate::lcars::resolve_crew_to_buff_set]. Keys applied: isolytic_damage, isolytic_defense,
@@ -1604,6 +1617,11 @@ pub fn apply_static_buffs_to_combatant(
     let shield_mult = static_buffs.get("shield_hp").copied().unwrap_or(1.0);
     // Standalone callers have no profile pool. Scenario construction consumes
     // these keys before applying the profile so they enter that shared pool once.
+    let weapon_pool = static_buffs
+        .get("weapon_damage_additive_pool")
+        .copied()
+        .unwrap_or(0.0);
+    let effective_weapon_mult = (1.0 + weapon_pool) * weapon_mult;
     let hull_pool = static_buffs
         .get("hull_hp_additive_pool")
         .copied()
@@ -1633,14 +1651,14 @@ pub fn apply_static_buffs_to_combatant(
 
     apply_bonuses_to_weapon_rows(
         &mut combatant.weapons,
-        weapon_mult,
+        effective_weapon_mult,
         crit_chance_add,
         crit_damage_mult,
         crit_damage_flat,
     );
 
     Combatant {
-        attack: combatant.attack * weapon_mult,
+        attack: combatant.attack * effective_weapon_mult,
         hull_health: (combatant.hull_health + hull_flat) * (1.0 + hull_pool) * hull_mult,
         shield_health: (combatant.shield_health + shield_flat) * (1.0 + shield_pool) * shield_mult,
         pierce: (combatant.pierce + pierce_add).max(0.0),

@@ -510,7 +510,9 @@ pub fn known_officer_stat(stat: &str) -> bool {
 
 fn stat_to_officer_modifier(stat: &str) -> Option<AbilityModifierSpec> {
     match stat.trim() {
-        "weapon_damage" | "attack" => Some(AbilityModifierSpec::WeaponDamage),
+        "weapon_damage" | "attack" | "weapon_damage_additive_pool" => {
+            Some(AbilityModifierSpec::WeaponDamage)
+        }
         "opponent_weapon_damage_reduction" => {
             Some(AbilityModifierSpec::OpponentWeaponDamageReduction)
         }

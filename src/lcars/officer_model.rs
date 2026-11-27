@@ -1126,6 +1126,7 @@ fn convert_ability_to_effect(a: &CanonicalAbility, officer_name: &str) -> Option
                         "unsupported_officer_effect"
                             | "hull_hp_additive_pool"
                             | "shield_hp_additive_pool"
+                            | "weapon_damage_additive_pool"
                             | "hostile_base_defense_stats_reduction"
                     ) || stat.starts_with("crew_scaled_")
                     {
@@ -1868,6 +1869,19 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
         "AllDamage" if supported_enemy_weapon_damage_reduction => {
             MappedEffect::StatModify("opponent_weapon_damage_reduction".into(), "add".into(), val)
         }
+        "AllDamage"
+            if op.eq_ignore_ascii_case("MultiplyAdd")
+                && a.trigger.as_deref() == Some("ShipLaunched")
+                && a.target.as_deref() == Some("SelfShip")
+                && a.conditions.is_empty()
+                && a.attributes.as_deref().is_none_or(|s| s.trim().is_empty())
+                && a.chance_by_rank.iter().all(|chance| *chance == 1.0) =>
+        {
+            // Native launch-time MULT weapon-damage percentages (e.g. SNW D'Chok
+            // +3000%, Beckett Mariner +180%, Carol +40%) join research/building/crew
+            // Attack in the single `1 + MULT` pool rather than multiplying it again.
+            MappedEffect::StatModify("weapon_damage_additive_pool".into(), "add".into(), val)
+        }
         "AllDamage" => {
             let (op_str, v) = if op.eq_ignore_ascii_case("MultiplyAdd") {
                 ("multiply", 1.0 + val)
@@ -2599,6 +2613,7 @@ mod canonical_condition_tests {
         for (modifier, stat) in [
             ("HullHPMax", "hull_hp_additive_pool"),
             ("ShieldHPMax", "shield_hp_additive_pool"),
+            ("AllDamage", "weapon_damage_additive_pool"),
         ] {
             let mut a: CanonicalAbility = serde_json::from_value(serde_json::json!({
                 "slot":"below_decks", "modifier":modifier, "operation":"MultiplyAdd",

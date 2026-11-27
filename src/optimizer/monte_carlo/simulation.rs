@@ -824,6 +824,7 @@ fn run_candidate_monte_carlo(
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
+        defender_profile_weapon_damage_fraction: input.defender_profile_weapon_damage_fraction,
         defender_hull_faction_id: shared
             .hostile_rec
             .as_ref()
@@ -1190,6 +1191,7 @@ impl CandidateTrialAccumulator {
             initial_attacker_hull_damage: 0.0,
             weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
             profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
+            defender_profile_weapon_damage_fraction: input.defender_profile_weapon_damage_fraction,
             defender_hull_faction_id: shared
                 .hostile_rec
                 .as_ref()
@@ -2074,6 +2076,7 @@ pub fn replay_optimize_iteration_with_registry_and_context(
         initial_attacker_hull_damage: 0.0,
         weapon_damage_profile_additive_pool: input.weapon_damage_profile_additive_pool,
         profile_weapon_damage_fraction: input.profile_weapon_damage_fraction,
+        defender_profile_weapon_damage_fraction: input.defender_profile_weapon_damage_fraction,
         defender_hull_faction_id: shared
             .hostile_rec
             .as_ref()

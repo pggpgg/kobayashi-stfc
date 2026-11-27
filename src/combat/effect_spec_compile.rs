@@ -856,6 +856,32 @@ fn compile_officer_combat_spec_impl(
                 "sub" | "mul_sub" | "multiplysub" | "multiply_base_sub" | "multiplybasesub" => -v,
                 _ => v,
             };
+            // Native STFC officer `ModAllDamage` `MultiplyAdd` abilities (canonical
+            // `AllDamage` + `MultiplyAdd`, emitted by `officer_model.rs` as LCARS
+            // `stat_modify weapon_damage multiply (1 + val)`) contribute to the same
+            // single additive `1 + MULT` weapon-damage pool as profile research,
+            // buildings, officer Attack breakpoints, and reactive `BaseWeaponDamageBonus`
+            // seats (verified 2026-11-27 in live U.S.S. Reliant vs L52 Hijacked D7 logs:
+            // SNW James Kirk rank-2 `+600%` increased non-crit weapon damage by +10%–16%
+            // vs solo Stonn, matching `(1 + p + g + 6.0) / (1 + p + g)` rather than `×7.0`).
+            if spec.source == crate::data::combat_effect_spec::EffectSource::LcarsOfficer
+                && matches!(
+                    op,
+                    "multiply"
+                        | "mul_add"
+                        | "multiplyadd"
+                        | "multiply_base_add"
+                        | "multiplybaseadd"
+                )
+                && add.is_finite()
+                && add >= 0.0
+            {
+                return Ok((
+                    timing,
+                    AbilityEffect::BaseWeaponDamageBonus(add),
+                    compiled_condition.clone(),
+                ));
+            }
             Ok((
                 timing,
                 AbilityEffect::AttackMultiplier(add),

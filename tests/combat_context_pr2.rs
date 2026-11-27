@@ -283,9 +283,12 @@ fn auto_inferred_outpost_retaliator_activates_caleb_mir_without_override() {
     let res_auto = &res_auto_vec[0];
     let res_group = &res_group_vec[0];
 
+    let auto_dmg_frac = 1.0 - res_auto.avg_defender_hull_remaining;
+    let group_dmg_frac = 1.0 - res_group.avg_defender_hull_remaining;
     assert!(
-        res_auto.avg_defender_hull_remaining < res_group.avg_defender_hull_remaining - 1e-4,
-        "Caleb Mir's EnemyOutpostOrRetaliator BDA should auto-fire on Outpost Retaliator 1028117720 without manual override: auto_def_hull={} vs group_def_hull={}",
+        res_auto.avg_defender_hull_remaining < res_group.avg_defender_hull_remaining
+            && auto_dmg_frac > group_dmg_frac * 1.05,
+        "Caleb Mir's EnemyOutpostOrRetaliator BDA should auto-fire on Outpost Retaliator 1028117720 without manual override: auto_def_hull={} (dmg={auto_dmg_frac:.6}) vs group_def_hull={} (dmg={group_dmg_frac:.6})",
         res_auto.avg_defender_hull_remaining,
         res_group.avg_defender_hull_remaining
     );
