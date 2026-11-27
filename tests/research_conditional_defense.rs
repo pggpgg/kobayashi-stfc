@@ -492,16 +492,18 @@ fn morale_research_repairs_max_shield_fraction_once_at_round_start() {
         2,
     ));
     let active = run(&owner, &crew, 2);
-    // R1 repair is capped at full SHP; R2 restores 1% of MAX SHP = 10 before fire.
-    close(active.attacker_shield_remaining, 610.0);
+    // Live combat logs confirm round-start ModShieldHpRepair (NS Morale SHP) overfills
+    // above max SHP: R1 adds 1% of MAX SHP = 10 on top of full 1,000, and R2 adds
+    // another 10 before fire (1,000 + 10 - 200 + 10 - 200 = 620).
+    close(active.attacker_shield_remaining, 620.0);
     assert_eq!(
         active.total_damage, inactive.total_damage,
         "repair cannot become crit damage"
     );
-    // Double max SHP doubles the repair, independent of the identical damage taken.
+    // Double max SHP doubles both round-start repairs (2,000 + 20 - 200 + 20 - 200 = 1,640).
     owner.shield_health = 2_000.0;
     let larger = run(&owner, &crew, 2);
-    close(larger.attacker_shield_remaining, 1_620.0);
+    close(larger.attacker_shield_remaining, 1_640.0);
 }
 
 #[test]

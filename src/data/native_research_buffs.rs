@@ -99,7 +99,11 @@ fn quarantined_apex_rows() -> &'static [ResearchCoverageRow] {
         coverage
             .rows
             .into_iter()
-            .filter(|row| row.modifier_code == 67001 && row.exclusion_reason.is_some())
+            .filter(|row| {
+                row.modifier_code == 67001
+                    && row.exclusion_reason.is_some()
+                    && row.buff_id != 1_238_401_736
+            })
             .collect()
     })
 }

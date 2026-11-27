@@ -50,10 +50,13 @@ pub(crate) fn resolve_vehicle_weapon_crit(
     let raw_base =
         weapon_crit_multiplier * crit_damage_multiplier + additive_crit_damage_bonus.max(0.0);
     let after_additive = if is_crit && attacker_crit_reduction_additive > 0.0 {
-        // Xindi debuffs subtract percentage points from the crit *bonus* (mult above 1.0). Upstream
-        // value 25 → 2500% UI → −25 points, collapsing typical player crit toward ×1.0 before floor.
-        let crit_bonus = (raw_base - 1.0).max(0.0);
-        1.0 + (crit_bonus - attacker_crit_reduction_additive).max(0.0)
+        // Additive critical-damage reduction (`mod=10, op=2 Sub`) subtracts percentage points
+        // directly from the total critical multiplier down to 0.0 before `crit_damage_floor`
+        // clamps upward. Live combat logs prove this across 63 hostile crits:
+        //   - eCD 1.50 - 0.60 = 0.90 (×0.95 Guardian = 0.855×, observed 0.856× across 13 crits)
+        //   - eCD 1.50 - 2.60 = 0.00 (observed 0.000× across 17 Hull-Breach crits)
+        // Also corroborated by Critical Damage Floor research levels 1–4 (20%..80% < 100%).
+        (raw_base - attacker_crit_reduction_additive).max(0.0)
     } else {
         raw_base
     };
@@ -180,23 +183,35 @@ mod tests {
     }
 
     #[test]
-    fn be_like_water_collapses_high_crit_bonus_to_unit_multiplier() {
+    fn be_like_water_collapses_crit_to_zero_without_floor_and_clamps_with_floor() {
         let mut rng = Rng::new(34);
-        // Enterprise-D export crit damage 3.19; BLW value 25 (−2500% UI) eats the full bonus.
-        let c =
+        // Without Critical Damage Floor research (floor=0.0), Be Like Water (−25) collapses crit to 0.0.
+        let no_floor =
             resolve_vehicle_weapon_crit(1.0, 0.0, 1.0, 3.19, 0.0, 25.0, 0.0, 0.0, false, &mut rng);
-        assert!(c.is_crit);
-        assert!((c.multiplier - 1.0).abs() < 1e-9);
+        assert!(no_floor.is_crit);
+        assert!((no_floor.multiplier - 0.0).abs() < 1e-9);
+
+        // With Critical Damage Floor research (e.g. L5+Ω = 1.1), floor clamps upward.
+        let with_floor =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 1.0, 3.19, 0.0, 25.0, 0.0, 1.1, false, &mut rng);
+        assert!(with_floor.is_crit);
+        assert!((with_floor.multiplier - 1.1).abs() < 1e-9);
     }
 
     #[test]
-    fn attacker_crit_reduction_additive_only_eats_bonus_not_base_one() {
+    fn attacker_crit_reduction_additive_can_reduce_below_one_down_to_zero() {
         let mut rng = Rng::new(35);
-        // raw 2.5 (+150% bonus); −5.0 cannot pull below ×1.0 before floor
-        let c =
-            resolve_vehicle_weapon_crit(1.0, 0.0, 1.0, 2.5, 0.0, 5.0, 0.0, 0.0, false, &mut rng);
-        assert!(c.is_crit);
-        assert!((c.multiplier - 1.0).abs() < 1e-9);
+        // Live Reliant control: eCD=1.50, −0.60 additive CDR → 0.90 (×0.95 Guardian = 0.855).
+        let sub_one =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 1.5, 1.0, 0.0, 0.6, 0.05, 0.0, false, &mut rng);
+        assert!(sub_one.is_crit);
+        assert!((sub_one.multiplier - 0.855).abs() < 1e-9);
+
+        // Live Hull-Breach control: eCD=1.50, −2.60 additive CDR → 0.0.
+        let zeroed =
+            resolve_vehicle_weapon_crit(1.0, 0.0, 1.5, 1.0, 0.0, 2.6, 0.05, 0.0, false, &mut rng);
+        assert!(zeroed.is_crit);
+        assert!((zeroed.multiplier - 0.0).abs() < 1e-9);
     }
 
     #[test]

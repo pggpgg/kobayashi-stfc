@@ -203,7 +203,16 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   Resistance / Guardian of Forever hostile CDR); and Explorer/Interceptor/Battleship Emergency
 ///   Protocol previous-round hull repair. Canary `aj_reliant_calibration_mechanics` covers per-weapon
 ///   outbound mitigation, additive `ShieldMitigationBonus`, and counter-fire additive hostile CDR.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 41;
+/// * 41 → 42 (2026-11): Live-verified U.S.S. Reliant L50–L58 ladder & 63-crit hostile/player
+///   critical-damage calibration — native `CritModifier` / `CriticalDamage` projected directly as
+///   final multiplier without `+1.0` (`critical_damage_to_multiplier`), additive CDR subtracts down
+///   to `0.0` before `crit_damage_floor` (`crit.rs`), RoundStart `ModShieldHpRepair` (`NS Morale
+///   SHP`) overfills above `max_ship_shps` (`engine.rs`), and exact SHA-256-bound non-Armada
+///   condition-57 (`Hostile Stakeout` `1450484905`, `Court of Q` `1768821190`), 2-round timed crit
+///   seats (`Section 31 Crit Chance/Damage` `3342225309`/`2900801564`, `KSG Crit Chance Reduction`
+///   `10304068`), and `Annorax's Datapad` (`1238401736`, non-Armada + Tal-not-on-bridge Apex
+///   Barrier).
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 42;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.

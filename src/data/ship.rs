@@ -1158,13 +1158,17 @@ impl ShipRecord {
     }
 }
 
-/// Preserve final-factor legacy values while translating explicitly native bonuses.
-pub(crate) fn critical_damage_to_multiplier(value: f64, is_bonus: bool) -> f64 {
-    if is_bonus {
-        1.0 + value
-    } else {
-        value
-    }
+/// Convert a ship/hostile critical-damage stat to a combat multiplier.
+///
+/// Live combat logs across 63 hostile critical hits in 26 fights (`eCD = 1.50, 1.80, 2.00`,
+/// including the frozen `realta_exchange_baseline` / `realta_exchange_tom` fixtures) and player
+/// outgoing crits confirm that native `CritModifier` / `CriticalDamage` (`1.50`, `1.80`, `2.00`)
+/// is already the **final** critical-hit factor in combat (`1.50×`, `1.80×`, `2.00×`), not a
+/// `+1.0` bonus over normal damage. (Scopely's ThreatConfig UI DPR display formula
+/// `base + base * CC * CD` omits `-1`, which previously motivated `crit_damage_is_bonus`; we keep
+/// the field for JSON backwards compatibility without adding `+1.0` at combat projection.)
+pub(crate) fn critical_damage_to_multiplier(value: f64, _is_bonus: bool) -> f64 {
+    value
 }
 
 pub const DEFAULT_SHIPS_INDEX_PATH: &str = "data/ships/index.json";
@@ -1365,8 +1369,8 @@ mod tests {
             .expect("native component override resolves");
         assert_eq!(ship.crit_damage_is_bonus, Some(true));
         assert_eq!(ship.crit_damage, 2.0, "raw native value is retained");
-        assert_eq!(ship.combat_crit_multiplier(), 3.0);
-        assert_eq!(ship.to_weapons()[0].crit_multiplier, Some(3.0));
+        assert_eq!(ship.combat_crit_multiplier(), 2.0);
+        assert_eq!(ship.to_weapons()[0].crit_multiplier, Some(2.0));
     }
 
     #[test]
