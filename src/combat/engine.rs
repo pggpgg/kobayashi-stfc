@@ -4292,11 +4292,22 @@ fn apply_attacker_round_start_regen(
         || att_rs_shield_frac != 0.0
         || att_rs_hull_frac != 0.0
     {
-        let shield_heal = att_rs_shield + att_rs_shield_frac * attacker.shield_health.max(0.0);
+        let max_shield = attacker.shield_health.max(0.0);
+        if att_rs_shield != 0.0 {
+            *attacker_shield_remaining = (*attacker_shield_remaining + att_rs_shield)
+                .min(max_shield.max(*attacker_shield_remaining));
+        }
+        if att_rs_shield_frac != 0.0 {
+            // Live STFC Morale captures (5/5 U.S.S. Reliant logs) show RoundStart
+            // ModShieldHpRepair (`NS Morale SHP`, +10% max SHP) overfills shields
+            // above max_ship_shps (e.g. 31.16M -> 34.27M in R1, 32.33M -> 35.45M in R2).
+            *attacker_shield_remaining =
+                (*attacker_shield_remaining + att_rs_shield_frac * max_shield).max(0.0);
+        }
         let hull_heal = att_rs_hull + att_rs_hull_frac * attacker.hull_health.max(0.0);
-        *attacker_shield_remaining =
-            (*attacker_shield_remaining + shield_heal).min(attacker.shield_health.max(0.0));
-        *total_attacker_hull_damage = (*total_attacker_hull_damage - hull_heal).max(0.0);
+        if hull_heal != 0.0 {
+            *total_attacker_hull_damage = (*total_attacker_hull_damage - hull_heal).max(0.0);
+        }
     }
     phase_effects.clear_shield_hull_regen_stacks();
 

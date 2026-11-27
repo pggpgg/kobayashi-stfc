@@ -57,7 +57,7 @@ fn native_gorn_hunter_registry_preserves_component_rows_and_only_verified_effect
     assert_eq!(weapons.len(), 6);
     assert_eq!(raw.len(), 6);
     assert_eq!(record.crit_damage_is_bonus, Some(true));
-    assert_eq!(record.combat_crit_multiplier(), 2.5);
+    assert_eq!(record.combat_crit_multiplier(), 1.5);
     let counter_weapons = record.weapons_for_counter_attack(
         ShipType::Explorer,
         DefenderStats {
@@ -84,8 +84,8 @@ fn native_gorn_hunter_registry_preserves_component_rows_and_only_verified_effect
         assert_eq!(weapon.crit_chance, Some(0.009999999776482582));
         assert_eq!(
             weapon.crit_multiplier,
-            Some(2.5),
-            "native1.5 is a bonus fraction"
+            Some(1.5),
+            "native 1.5 is the final crit multiplier in combat"
         );
         assert_eq!(stats.armor_piercing, 58_523.0);
         assert_eq!(

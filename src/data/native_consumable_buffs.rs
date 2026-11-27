@@ -601,11 +601,10 @@ pub(crate) fn combat_start_defense_seats_from_catalog_for_group(
 }
 
 /// Verified CombatStart/RoundStart native research (group 66) and building (group 68)
-/// offensive, piercing, isolytic, and hostile crit-damage-reduction seats.
+/// offensive, piercing, isolytic, crit, and hostile crit-damage-reduction seats.
 ///
 /// Only reviewed condition codes and SHA-256-bound native BuffSpec definitions are compiled.
-/// Unverified attributes (e.g. `bid=2900801564` Section 31 Critical Hit Damage `attr=[2,8]`)
-/// and unsupported predicates remain quarantined.
+/// Unverified attributes and unsupported predicates remain quarantined.
 pub(crate) fn combat_start_research_and_building_seats_from_catalog_for_group(
     catalog: &NativeConsumableBuffCatalog,
     expected_group: u32,
@@ -687,8 +686,9 @@ pub(crate) fn combat_start_research_and_building_seats_from_catalog_for_group(
                 return None;
             }
 
-            // 1. Exact SHA-256-bound research rows (group 66) whose native conditions
-            //    use faction attributes, timed round caps, state triggers, or opponent CDR.
+            // 1. Exact SHA-256-bound research (group 66) and building (group 68) rows whose
+            //    native conditions use faction attributes, timed round caps, state triggers,
+            //    non-Armada condition 57, or opponent crit debuffs.
             if expected_group == 66 {
                 if let Some((timing, effect, cond)) = exact_bound_research_combat_seat(
                     bid,
@@ -699,6 +699,29 @@ pub(crate) fn combat_start_research_and_building_seats_from_catalog_for_group(
                     &space_non_armada,
                 ) {
                     return Some(make_seat(bid, timing, effect, cond, WeaponTypeScope::All));
+                }
+            } else if expected_group == 68 {
+                // Court of Q (bid 1768821190): +Crit Damage vs non-Armada hostiles (`conds=[57, 131]`).
+                // Live-verified across Reliant Stonn/Morale R1-6 and Survey controls alongside
+                // Hostile Stakeout (bid 1450484905, also `conds=[57, 131]`).
+                if bid == 1_768_821_190
+                    && spec.sha256
+                        == "1d5530998472d07734043be95b874d3bce1459932ea0c74d6950fdcd50e22802"
+                    && spec.modifier_code == 10
+                    && spec.operation_code == 1
+                    && spec.target_code == 1
+                    && spec.trigger_code == 25
+                    && spec.condition_codes == [57, 131]
+                    && spec.attribute_fields.is_empty()
+                    && spec.num_rounds == 0
+                {
+                    return Some(make_seat(
+                        bid,
+                        TimingWindow::CombatBegin,
+                        AbilityEffect::BaseCritDamageBonus(value),
+                        Some(non_armada_hostile()),
+                        WeaponTypeScope::All,
+                    ));
                 }
             }
 
@@ -1272,6 +1295,97 @@ fn exact_bound_research_combat_seat(
                     stacks: false,
                 },
                 Some(space_non_armada()),
+            ))
+        }
+        // Hostile Stakeout (rid 3815065966, Fleet Commander On Duty Selectable):
+        // +Crit Chance vs non-Armada hostiles (`conds=[57, 131]`).
+        1_450_484_905 => {
+            let exact = spec.sha256
+                == "5023edefe5c627b32645d71d5cf4e6d4bbcc2a5d7cbbe684a56bb926006affb2"
+                && spec.modifier_code == 9
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [57, 131]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::CritChanceBonus(value),
+                Some(non_armada_hostile()),
+            ))
+        }
+        // Section 31 Critical Hit Chance (rid 3288612092): +Crit Chance for first 2 rounds.
+        3_342_225_309 => {
+            let exact = spec.sha256
+                == "acb97d3b1afcb9b9ddb4cfcbb5c0d9d81715ef131f37d8de4b4d18e95f4245a3"
+                && spec.modifier_code == 9
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes.is_empty()
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 2;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::CritChanceBonus(value),
+                Some(AbilityCondition::RoundRange { min: 1, max: 2 }),
+            ))
+        }
+        // Section 31 Critical Hit Damage (rid 1699482325): +Crit Damage for first 2 rounds.
+        2_900_801_564 => {
+            let exact = spec.sha256
+                == "0fcde8a0ad02c1f2edd392a55b5874c769e2089414dd98b7a1eb61792dd24864"
+                && spec.modifier_code == 10
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes.is_empty()
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 2;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseCritDamageBonus(value),
+                Some(AbilityCondition::RoundRange { min: 1, max: 2 }),
+            ))
+        }
+        // KSG Critical Chance Reduction (rid 2808040372): -Opponent Crit Chance for first 2 rounds.
+        10_304_068 => {
+            let exact = spec.sha256
+                == "a17e3cec4aa69b3565e7db27f26d92194f554fc1ff83ce06626ab46f2c2c406b"
+                && spec.modifier_code == 9
+                && spec.operation_code == 2
+                && spec.target_code == 6
+                && spec.trigger_code == 25
+                && spec.condition_codes.is_empty()
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 2;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::HostileCritChanceReduction(value),
+                Some(AbilityCondition::RoundRange { min: 1, max: 2 }),
+            ))
+        }
+        // Annorax's Datapad (rid 263993849): +Apex Barrier vs non-Armada hostiles when Tal is
+        // not on the bridge (`conds=[74005, 246]`). Live-verified across 12/12 non-Armada fights
+        // (Realta/Vi'dar/AB Hostile +800, Reliant 50,000+800=50,800) and 3/3 Armada controls (0).
+        1_238_401_736 => {
+            let exact = spec.sha256
+                == "1b435bb3b76903ecc2f8b3bdb93b1ebfc4f73471b200829d861047bc6a3cbd3b"
+                && spec.modifier_code == 67001
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [74005, 246]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::ApexBarrierBonus(value),
+                Some(AbilityCondition::And(vec![
+                    non_armada_hostile(),
+                    AbilityCondition::AttackerOfficerTalNotOnBridge,
+                ])),
             ))
         }
         _ => None,
@@ -3361,7 +3475,12 @@ mod tests {
             entry(2_885_570_825, 4, None),  // Guardian of Forever (0.05 mult CDR)
             entry(3_486_871_817, 5, None), // Exposed Interceptors (+0.025 crit chance vs hostile int)
             entry(3_737_933_898, 8, None), // Orb of the Emissary (+0.09 crit chance Exp vs Int)
-            entry(2_900_801_564, 5, None), // Section 31 Crit Hit Damage attr=[2,8] -> QUARANTINED
+            entry(1_450_484_905, 14, None), // Hostile Stakeout (+0.08 crit chance vs non-Armada)
+            entry(3_342_225_309, 5, None), // Section 31 Crit Hit Chance (+0.025, R1-2)
+            entry(2_900_801_564, 5, None), // Section 31 Crit Hit Damage (+0.25, R1-2)
+            entry(10_304_068, 5, None),    // KSG Critical Chance Reduction (-0.025, R1-2)
+            entry(1_238_401_736, 4, None), // Annorax's Datapad (+800 Apex Barrier vs non-Armada, no Tal)
+            entry(3_677_857_189, 3, None), // Seek and Destroy Crit Dmg [83001,27,131,83002] -> QUARANTINED
         ];
         let seats = combat_start_research_and_building_seats_from_catalog_for_group(
             res_catalog,
@@ -3372,15 +3491,33 @@ mod tests {
         );
         assert_eq!(
             seats.len(),
-            20,
-            "all 20 verified rows compile and Section 31 stays quarantined"
+            25,
+            "all 25 verified rows compile and unverified ship-ability-gated rows stay quarantined"
         );
         assert!(
             seats
                 .iter()
-                .all(|s| s.ability.name != "native_66_2900801564"),
-            "Section 31 Crit Hit Damage (attr=[2,8]) must stay quarantined"
+                .all(|s| s.ability.name != "native_66_3677857189"),
+            "Seek and Destroy Crit Damage (unknown 83001/83002) must stay quarantined"
         );
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_1450484905"
+                && matches!(s.ability.effect, AbilityEffect::CritChanceBonus(v) if (v - 0.08).abs() < 1e-12)
+        }));
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_2900801564"
+                && matches!(s.ability.effect, AbilityEffect::BaseCritDamageBonus(v) if (v - 0.25).abs() < 1e-12)
+                && s.ability.condition == Some(AbilityCondition::RoundRange { min: 1, max: 2 })
+        }));
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_10304068"
+                && matches!(s.ability.effect, AbilityEffect::HostileCritChanceReduction(v) if (v - 0.025).abs() < 1e-12)
+                && s.ability.condition == Some(AbilityCondition::RoundRange { min: 1, max: 2 })
+        }));
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_1238401736"
+                && matches!(s.ability.effect, AbilityEffect::ApexBarrierBonus(v) if (v - 800.0).abs() < 1e-12)
+        }));
         assert!(seats.iter().any(|s| {
             s.ability.name == "native_66_1194910297"
                 && s.ability.weapon_scope == WeaponTypeScope::EnergyOnly
@@ -3409,14 +3546,21 @@ mod tests {
         let bld_seats = combat_start_research_and_building_seats_from_catalog_for_group(
             bld_catalog,
             68,
-            &[entry(3_580_741_235, 2, None)],
+            &[
+                entry(3_580_741_235, 2, None),
+                entry(1_768_821_190, 62, None),
+            ],
             Some(4),
             0,
         );
-        assert_eq!(bld_seats.len(), 1);
-        assert!(matches!(
-            bld_seats[0].ability.effect,
-            AbilityEffect::BaseWeaponDamageBonus(v) if (v - 10.0).abs() < 1e-12
-        ));
+        assert_eq!(bld_seats.len(), 2);
+        assert!(bld_seats.iter().any(|s| {
+            s.ability.name == "native_68_3580741235"
+                && matches!(s.ability.effect, AbilityEffect::BaseWeaponDamageBonus(v) if (v - 10.0).abs() < 1e-12)
+        }));
+        assert!(bld_seats.iter().any(|s| {
+            s.ability.name == "native_68_1768821190"
+                && matches!(s.ability.effect, AbilityEffect::BaseCritDamageBonus(v) if (v - 1.9).abs() < 1e-12)
+        }));
     }
 }
