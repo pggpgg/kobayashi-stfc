@@ -316,6 +316,48 @@ pub fn select_hostile_farming_drops(
     Some((primary_id, primary_name, primary_mean, other_mean))
 }
 
+/// True when `ability` is a loot or cargo modifier that can actually contribute positive payout
+/// against the scenario's target hostile and player ship (for `max_expected_loot` optimization).
+pub(crate) fn ability_applies_to_scenario_loot(
+    ability: &OfficerAbility,
+    shared: &SharedScenarioData,
+) -> bool {
+    if !shared.defender_opponent.defender_is_npc_hostile() {
+        return false;
+    }
+    let Some(hostile) = shared.hostile_rec.as_ref() else {
+        return false;
+    };
+    let Some(modifier) = ability.modifier.as_deref() else {
+        return false;
+    };
+    let defender_is_armada = shared.defender_ship_type_for_combat() == ShipType::Armada;
+    let ship_id = shared
+        .ship_rec
+        .as_ref()
+        .map(|s| s.id.as_str())
+        .unwrap_or(shared.ship.as_str());
+    if !loot_ability_conditions_match(&ability.conditions, ship_id, true, defender_is_armada) {
+        return false;
+    }
+    if modifier.eq_ignore_ascii_case("CargoCapacity") {
+        return true;
+    }
+    let Some((_, resource_name, _, _)) =
+        select_hostile_farming_drops(hostile, shared.resource_names.as_ref())
+    else {
+        return false;
+    };
+    let defender_faction = hostile.opponent_faction_tag();
+    loot_modifier_applies(
+        modifier,
+        hostile,
+        defender_faction,
+        defender_is_armada,
+        &resource_name,
+    )
+}
+
 /// Resolve the farming loot & cargo profile for one crew candidate against the shared scenario.
 /// Returns `None` when the defender is not an NPC hostile or has no positive catalog drops.
 pub(crate) fn resolve_crew_loot_profile(

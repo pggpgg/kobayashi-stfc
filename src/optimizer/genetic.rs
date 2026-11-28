@@ -684,6 +684,13 @@ fn run_genetic_optimizer_with_shared_result(
 ) {
     let mut stats = GeneticRunStats::default();
     let bd_slots = config.below_decks_slots;
+    // Build scenario data once and reuse across every generation and chunk. Without this hoist
+    // every Monte Carlo chunk would re-load officers/profile/forbidden-tech/research from disk.
+    let shared = build_shared_for_genetic(ship, hostile, config, registry);
+
+    let loot_objective_active = config.chain_grind.as_ref().is_some_and(|c| {
+        c.secondary == crate::optimizer::chain::ChainSecondaryObjective::MaxExpectedLoot
+    });
     let pools = match registry {
         Some(reg) => build_officer_pools_with_constraints_from_registry(
             reg,
@@ -692,7 +699,18 @@ fn run_genetic_optimizer_with_shared_result(
             bd_slots,
             config.roster_profile_id.as_deref(),
             None,
-        ),
+        )
+        .map(|p| {
+            crate::optimizer::crew_generator::filter_officer_pools_for_scenario(
+                reg,
+                &shared,
+                p,
+                config.below_decks_pool_mode,
+                bd_slots,
+                loot_objective_active,
+                config.constraints.as_ref(),
+            )
+        }),
         None => build_officer_pools(
             config.below_decks_pool_mode,
             config.pvp_mode,
@@ -716,10 +734,6 @@ fn run_genetic_optimizer_with_shared_result(
     if population.is_empty() {
         return (Vec::new(), false, stats, None);
     }
-
-    // Build scenario data once and reuse across every generation and chunk. Without this hoist
-    // every Monte Carlo chunk would re-load officers/profile/forbidden-tech/research from disk.
-    let shared = build_shared_for_genetic(ship, hostile, config, registry);
 
     // Count distinct crew compositions visited across the entire run for throughput reporting.
     let mut seen_crews: HashSet<u64> = HashSet::with_capacity(config.population_size * 2);

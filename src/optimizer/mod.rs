@@ -1637,17 +1637,6 @@ fn run_local_refinement_pass(
     if ranked.is_empty() {
         return LocalRefinementPassReport::default();
     }
-    let elig_tags = scenario.eligibility_enemy_types();
-    let Some(pools) = build_officer_pools_from_registry_for_tags(
-        registry,
-        scenario.below_decks_pool_mode,
-        Some(elig_tags.as_slice()),
-        scenario.profile_id,
-        scenario.below_decks_slots,
-        scenario.constraints.as_ref(),
-    ) else {
-        return LocalRefinementPassReport::default();
-    };
     let shared = build_shared_scenario_data_from_registry_with_context(
         registry,
         scenario.ship,
@@ -1660,6 +1649,29 @@ fn run_local_refinement_pass(
         scenario.player_defender_officer_crew.clone(),
         scenario.pvp.clone(),
         scenario.effective_engagement_override(),
+    );
+    let elig_tags = scenario.eligibility_enemy_types();
+    let Some(raw_pools) = build_officer_pools_from_registry_for_tags(
+        registry,
+        scenario.below_decks_pool_mode,
+        Some(elig_tags.as_slice()),
+        scenario.profile_id,
+        scenario.below_decks_slots,
+        scenario.constraints.as_ref(),
+    ) else {
+        return LocalRefinementPassReport::default();
+    };
+    let loot_objective_active = scenario.chain_grind.as_ref().is_some_and(|c| {
+        c.secondary == crate::optimizer::chain::ChainSecondaryObjective::MaxExpectedLoot
+    });
+    let pools = crate::optimizer::crew_generator::filter_officer_pools_for_scenario(
+        registry,
+        &shared,
+        raw_pools,
+        scenario.below_decks_pool_mode,
+        scenario.below_decks_slots,
+        loot_objective_active,
+        scenario.constraints.as_ref(),
     );
     // The climb starts from the leading seed_crews, but every already-ranked crew is
     // excluded from its neighborhood so a lower finalist is never confirmed twice.

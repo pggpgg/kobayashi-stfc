@@ -30,9 +30,7 @@ use crate::lcars::{resolve_officer_ability, LcarsOfficer};
 use crate::optimizer::constraints::{
     filter_candidates, normalize_officer_name, CrewSearchConstraints,
 };
-use crate::optimizer::crew_generator::{
-    build_officer_pools_from_registry_for_tags, CrewCandidate, OfficerPools, BRIDGE_SLOTS,
-};
+use crate::optimizer::crew_generator::{CrewCandidate, OfficerPools, BRIDGE_SLOTS};
 use crate::optimizer::monte_carlo::crew_candidate_stable_hash;
 use crate::optimizer::monte_carlo::scenario::SharedScenarioData;
 use crate::optimizer::qd_archive::{captain_group_lookup_from_registry, resolve_captain_group};
@@ -87,7 +85,7 @@ struct RoleProfile {
     officer_power: f64,
 }
 
-fn static_context_from_shared(shared: &SharedScenarioData) -> CombatContext {
+pub(crate) fn static_context_from_shared(shared: &SharedScenarioData) -> CombatContext {
     let defender_faction = shared.defender_faction_for_combat();
     let defender_hull_faction_id = shared
         .hostile_rec
@@ -763,6 +761,7 @@ pub(crate) struct RankedOfficerSeats {
 
 /// Propose legal, constraint-compliant, tactically diverse crews using slot-by-slot beam search
 /// over the full legal officer pools, also returning scenario-ranked per-seat officer lists.
+#[cfg(test)]
 pub(crate) fn propose_diversity_beam_crews_with_seats(
     registry: &DataRegistry,
     shared: &SharedScenarioData,
@@ -775,7 +774,7 @@ pub(crate) fn propose_diversity_beam_crews_with_seats(
     if !tags.contains(&params.enemy_type) {
         tags.push(params.enemy_type);
     }
-    let Some(pools) = build_officer_pools_from_registry_for_tags(
+    let Some(pools) = crate::optimizer::crew_generator::build_officer_pools_from_registry_for_tags(
         registry,
         params.below_decks_pool_mode,
         Some(tags.as_slice()),
@@ -785,6 +784,15 @@ pub(crate) fn propose_diversity_beam_crews_with_seats(
     ) else {
         return (Vec::new(), RankedOfficerSeats::default());
     };
+    let pools = crate::optimizer::crew_generator::filter_officer_pools_for_scenario(
+        registry,
+        shared,
+        pools,
+        params.below_decks_pool_mode,
+        params.below_decks_slots,
+        false,
+        params.constraints,
+    );
     propose_diversity_beam_crews_from_pools_with_seats(registry, shared, &pools, params)
 }
 

@@ -368,6 +368,201 @@ pub fn build_officer_pools_from_registry_for_tags(
     }
 }
 
+/// Collect normalized officer names explicitly referenced as required/pinned in search constraints
+/// so scenario-level pruning never drops a user-requested officer.
+fn constraint_pinned_officer_norms(constraints: Option<&CrewSearchConstraints>) -> HashSet<String> {
+    let mut pinned = HashSet::new();
+    let Some(c) = constraints else {
+        return pinned;
+    };
+    let mut insert = |name: &str| {
+        let norm = pool_display_name_norm(name);
+        if !norm.is_empty() {
+            pinned.insert(norm);
+        }
+    };
+    for n in &c.must_include {
+        insert(n);
+    }
+    for n in &c.captain_must_be {
+        insert(n);
+    }
+    for n in &c.bridge_must_include {
+        insert(n);
+    }
+    for n in &c.below_decks_must_include {
+        insert(n);
+    }
+    for g in &c.groups {
+        for n in &g.officers {
+            insert(n);
+        }
+    }
+    pinned
+}
+
+/// Refine scenario-eligible [`OfficerPools`] against a concrete combat matchup (`SharedScenarioData`).
+///
+/// Drops officers from a seat when:
+/// 1. Every canonical ability in that seat is a pure non-combat / economy / loot modifier
+///    ([`crate::data::heuristics::is_non_combat_officer_modifier`]) and either loot optimization
+///    (`max_expected_loot`) is inactive or none of those loot/cargo modifiers applies to this
+///    specific hostile and ship (e.g. Gorn-only `SNW Nurse Chapel` bridge, Broken-Parts-only
+///    `PIC Beverly Crusher` below decks, or Hirogen/8472-only `Trip Tucker` below decks against
+///    a Mirror Universe Survey).
+/// 2. Every compiled LCARS ability in that seat statically folds to `FoldedCondition::AlwaysFalse`
+///    against the scenario's invariant context — e.g. wrong defender hull class (`Zeph`
+///    `EnemyInterceptor`, `Alok Sahar` `EnemyExplorer`, `Rachel Garrett` `EnemyBattleship` against
+///    a `Survey`), wrong player ship class/hull, or wrong hostile faction.
+///
+/// Officers explicitly referenced in `constraints` are never pruned. Under
+/// [`BelowDecksPoolMode::Relaxed`], the below-decks pool is preserved so stat-stick exploration
+/// remains available. Each seat falls back to its unfiltered list if pruning would leave fewer
+/// officers than required to form a legal crew.
+pub(crate) fn filter_officer_pools_for_scenario(
+    registry: &DataRegistry,
+    shared: &crate::optimizer::monte_carlo::scenario::SharedScenarioData,
+    pools: OfficerPools,
+    below_decks_pool_mode: BelowDecksPoolMode,
+    below_decks_slots: usize,
+    loot_objective_active: bool,
+    constraints: Option<&CrewSearchConstraints>,
+) -> OfficerPools {
+    use crate::combat::condition::{fold_static_condition, FoldedCondition};
+    use crate::combat::{AbilityClass, CrewSeat, NO_EXPLICIT_CONTRIBUTION_BATCH};
+    use crate::data::heuristics::is_non_combat_officer_modifier;
+    use crate::lcars::resolve_officer_ability;
+    use crate::optimizer::beam::static_context_from_shared;
+    use crate::optimizer::loot::ability_applies_to_scenario_loot;
+
+    let pinned = constraint_pinned_officer_norms(constraints);
+    let static_ctx = static_context_from_shared(shared);
+    let officer_index = registry.officer_index();
+
+    let mut lcars_by_norm: HashMap<String, &LcarsOfficer> = HashMap::new();
+    if let Some(lcars) = registry.lcars_officers() {
+        for officer in lcars {
+            let key = pool_display_name_norm(&officer.name);
+            if !key.is_empty() {
+                lcars_by_norm.insert(key, officer);
+            }
+        }
+    }
+
+    let seat_relevant = |name: &str, seat: CrewSeat, slot_str: &str| -> bool {
+        let norm = pool_display_name_norm(name);
+        if pinned.contains(&norm) {
+            return true;
+        }
+        // 1. Canonical non-combat / loot modifier gate.
+        if let Some(off) = officer_index.get(&officer_lookup_key(name)) {
+            let slot_abilities: Vec<&crate::data::officer::OfficerAbility> = off
+                .abilities
+                .iter()
+                .filter(|a| a.slot.eq_ignore_ascii_case(slot_str))
+                .collect();
+            if !slot_abilities.is_empty()
+                && slot_abilities.iter().all(|a| {
+                    a.modifier
+                        .as_deref()
+                        .map(str::trim)
+                        .filter(|s| !s.is_empty())
+                        .is_some_and(is_non_combat_officer_modifier)
+                })
+            {
+                if loot_objective_active {
+                    return slot_abilities
+                        .iter()
+                        .any(|a| ability_applies_to_scenario_loot(a, shared));
+                }
+                return false;
+            }
+        }
+        // 2. Compiled LCARS static condition gate (hull class, faction, ship id, engagement, etc.).
+        if let Some(lcars_off) = lcars_by_norm.get(&norm) {
+            let (lcars_ab, class) = match seat {
+                CrewSeat::Captain => (
+                    lcars_off.captain_ability.as_ref(),
+                    AbilityClass::CaptainManeuver,
+                ),
+                CrewSeat::Bridge => (
+                    lcars_off.bridge_ability.as_ref(),
+                    AbilityClass::BridgeAbility,
+                ),
+                CrewSeat::BelowDeck => (
+                    lcars_off.below_decks_ability.as_ref(),
+                    AbilityClass::BelowDeck,
+                ),
+                CrewSeat::Ship => (None, AbilityClass::ShipAbility),
+            };
+            if let Some(ab) = lcars_ab {
+                let compiled = resolve_officer_ability(
+                    lcars_off,
+                    ab,
+                    seat,
+                    class,
+                    &shared.resolve_options,
+                    NO_EXPLICIT_CONTRIBUTION_BATCH,
+                );
+                if !compiled.is_empty()
+                    && compiled.iter().all(|sc| {
+                        sc.ability.condition.as_ref().is_some_and(|c| {
+                            matches!(
+                                fold_static_condition(c, &static_ctx),
+                                FoldedCondition::AlwaysFalse
+                            )
+                        })
+                    })
+                {
+                    return false;
+                }
+            }
+        }
+        true
+    };
+
+    let filtered_captains: Vec<String> = pools
+        .captains
+        .iter()
+        .filter(|n| seat_relevant(n, CrewSeat::Captain, "captain"))
+        .cloned()
+        .collect();
+    let filtered_bridge: Vec<String> = pools
+        .bridge
+        .iter()
+        .filter(|n| seat_relevant(n, CrewSeat::Bridge, "officer"))
+        .cloned()
+        .collect();
+    let filtered_below: Vec<String> = if below_decks_pool_mode == BelowDecksPoolMode::Relaxed {
+        pools.below_decks.clone()
+    } else {
+        pools
+            .below_decks
+            .iter()
+            .filter(|n| seat_relevant(n, CrewSeat::BelowDeck, "below_decks"))
+            .cloned()
+            .collect()
+    };
+
+    OfficerPools {
+        captains: if filtered_captains.is_empty() {
+            pools.captains
+        } else {
+            filtered_captains
+        },
+        bridge: if filtered_bridge.len() < BRIDGE_SLOTS {
+            pools.bridge
+        } else {
+            filtered_bridge
+        },
+        below_decks: if filtered_below.len() < below_decks_slots {
+            pools.below_decks
+        } else {
+            filtered_below
+        },
+    }
+}
+
 /// Registry officer name key (alphanumeric only, lowercase) — matches [`DataRegistry::officer_index`].
 /// See note in `crate::data::officer::normalize_officer_lookup_key` about the four duplicate copies.
 #[inline]
@@ -2784,5 +2979,142 @@ mod tests {
         for c in &candidates {
             assert_eq!(c.below_decks.len(), 2, "{c:?}");
         }
+    }
+
+    #[test]
+    fn scenario_pool_filter_prunes_irrelevant_loot_and_wrong_class_vs_mu_survey() {
+        use crate::combat::EnemyType;
+        use crate::optimizer::monte_carlo::scenario::{
+            build_shared_scenario_data_from_registry_with_context, DefenderOpponent,
+            ScenarioEngagementOverride,
+        };
+
+        let registry = DataRegistry::load().expect("registry");
+        let profile = Some(super::NO_ROSTER_IMPORT_PROFILE_ID_FOR_TESTS);
+        let shared = build_shared_scenario_data_from_registry_with_context(
+            &registry,
+            "uss_dauntless",
+            "1381341814", // L65 Imperial Starfleet Planet Harvester (Survey, Mirror Universe)
+            Some(6),
+            Some(30),
+            profile,
+            Default::default(),
+            DefenderOpponent::Hostile,
+            None,
+            None,
+            ScenarioEngagementOverride::default(),
+        );
+        let raw_pools = build_officer_pools_from_registry(
+            &registry,
+            BelowDecksPoolMode::Strict,
+            Some(EnemyType::RedMovingSpace),
+            profile,
+            4,
+            None,
+        )
+        .expect("raw pools");
+
+        let contains = |pool: &[String], name: &str| {
+            pool.iter()
+                .any(|c| pool_display_name_norm(c) == pool_display_name_norm(name))
+        };
+
+        // Survival / combat optimization (`loot_objective_active = false`):
+        let combat_pools = super::filter_officer_pools_for_scenario(
+            &registry,
+            &shared,
+            raw_pools.clone(),
+            BelowDecksPoolMode::Strict,
+            4,
+            false,
+            None,
+        );
+        // SNW Nurse Chapel: Gorn-only loot on bridge -> pruned from bridge, kept below decks (IsolyticCascadeDamage).
+        assert!(
+            !contains(&combat_pools.bridge, "SNW Nurse Chapel"),
+            "SNW Nurse Chapel (Gorn-only bridge loot) must be pruned from bridge in combat optimization"
+        );
+        assert!(
+            contains(&combat_pools.below_decks, "SNW Nurse Chapel"),
+            "SNW Nurse Chapel (combat IsolyticCascadeDamage BD) must remain in below_decks"
+        );
+        // PIC Beverly Crusher & Trip Tucker: loot-only below decks -> pruned from below_decks, kept on bridge.
+        assert!(
+            !contains(&combat_pools.below_decks, "PIC Beverly Crusher"),
+            "PIC Beverly Crusher (BrokenShipPartsLoot BD) must be pruned from combat below_decks"
+        );
+        assert!(
+            !contains(&combat_pools.below_decks, "Trip Tucker"),
+            "Trip Tucker (Hirogen/8472 loot BD) must be pruned from combat below_decks"
+        );
+        assert!(
+            !contains(&combat_pools.below_decks, "The Doctor"),
+            "The Doctor (CombatPveRewards BD) must be pruned from non-loot combat below_decks"
+        );
+        // Zeph (EnemyInterceptor), Alok Sahar (EnemyExplorer), Rachel Garrett (EnemyBattleship) vs Survey -> pruned!
+        assert!(
+            !contains(&combat_pools.below_decks, "Zeph"),
+            "Zeph (EnemyInterceptor BD) must be pruned against a Survey hostile"
+        );
+        assert!(
+            !contains(&combat_pools.below_decks, "Alok Sahar"),
+            "Alok Sahar (EnemyExplorer BD) must be pruned against a Survey hostile"
+        );
+        assert!(
+            !contains(&combat_pools.below_decks, "Rachel Garrett"),
+            "Rachel Garrett (EnemyBattleship BD) must be pruned against a Survey hostile"
+        );
+        // Genuine combat matches stay in their active seats:
+        assert!(contains(&combat_pools.captains, "SNW Pike"));
+        assert!(contains(&combat_pools.bridge, "SNW Hemmer"));
+        assert!(contains(&combat_pools.below_decks, "Tom Paris"));
+
+        // Loot optimization (`loot_objective_active = true`) on L65 Harvester:
+        // Universal PvE loot officers like The Doctor / Byr Ch'Kelrer stay eligible,
+        // while target-mismatched loot (Gorn / Hirogen / Broken Ship Parts) and wrong-class Zeph stay pruned!
+        let loot_pools = super::filter_officer_pools_for_scenario(
+            &registry,
+            &shared,
+            raw_pools.clone(),
+            BelowDecksPoolMode::Strict,
+            4,
+            true,
+            None,
+        );
+        assert!(
+            contains(&loot_pools.below_decks, "The Doctor"),
+            "The Doctor (CombatPveRewards) must stay available in max_expected_loot mode"
+        );
+        assert!(
+            !contains(&loot_pools.bridge, "SNW Nurse Chapel"),
+            "Gorn-only loot bridge must stay pruned against Mirror Universe Harvester even in loot mode"
+        );
+        assert!(
+            !contains(&loot_pools.below_decks, "Trip Tucker"),
+            "Hirogen/8472-only loot BD must stay pruned against Mirror Universe Harvester even in loot mode"
+        );
+        assert!(
+            !contains(&loot_pools.below_decks, "Zeph"),
+            "EnemyInterceptor BD must stay pruned against Survey even in loot mode"
+        );
+
+        // Explicit user constraints always override scenario pruning:
+        let pinned = CrewSearchConstraints {
+            below_decks_must_include: vec!["Zeph".into()],
+            ..Default::default()
+        };
+        let pinned_pools = super::filter_officer_pools_for_scenario(
+            &registry,
+            &shared,
+            raw_pools,
+            BelowDecksPoolMode::Strict,
+            4,
+            false,
+            Some(&pinned),
+        );
+        assert!(
+            contains(&pinned_pools.below_decks, "Zeph"),
+            "explicit below_decks_must_include constraint must never be pruned"
+        );
     }
 }

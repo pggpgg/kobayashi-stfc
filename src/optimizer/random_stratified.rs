@@ -195,6 +195,18 @@ pub fn sample_stratified_random_crews_for_tags(
     ) else {
         return Vec::new();
     };
+    sample_stratified_random_crews_from_pools(registry, &pools, params)
+}
+
+/// Sample stratified random crews from pre-built (and optionally scenario-filtered) [`OfficerPools`].
+pub(crate) fn sample_stratified_random_crews_from_pools(
+    registry: &DataRegistry,
+    pools: &crate::optimizer::crew_generator::OfficerPools,
+    params: &StratifiedSampleParams<'_>,
+) -> Vec<CrewCandidate> {
+    if params.count == 0 {
+        return Vec::new();
+    }
     let metadata = StrataMetadata::from_registry(registry);
     let captain_strata = build_strata(&pools.captains, |name| metadata.faction_rarity(name));
     let bd_family_strata = build_strata(&pools.below_decks, |name| metadata.group(name));

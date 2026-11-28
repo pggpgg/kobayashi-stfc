@@ -607,6 +607,9 @@ pub fn analyze_crew_counterfactual_with_registry(
         effective_override,
     );
     let fidelity_eval = CrewFidelityEvaluator::from_registry(registry);
+    let loot_objective_active = scenario.chain_grind.as_ref().is_some_and(|c| {
+        c.secondary == crate::optimizer::chain::ChainSecondaryObjective::MaxExpectedLoot
+    });
     let pools = build_officer_pools_from_registry_for_tags(
         registry,
         scenario.below_decks_pool_mode,
@@ -615,6 +618,17 @@ pub fn analyze_crew_counterfactual_with_registry(
         scenario.below_decks_slots,
         None,
     )
+    .map(|p| {
+        crate::optimizer::crew_generator::filter_officer_pools_for_scenario(
+            registry,
+            &shared,
+            p,
+            scenario.below_decks_pool_mode,
+            scenario.below_decks_slots,
+            loot_objective_active,
+            None,
+        )
+    })
     .unwrap_or(OfficerPools {
         captains: Vec::new(),
         bridge: Vec::new(),
