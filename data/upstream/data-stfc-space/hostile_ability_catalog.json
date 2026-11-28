@@ -1617,10 +1617,11 @@
     },
     "849650945": {
       "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "effect_type": "hull_breach",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "duration_rounds": 100,
+      "value_override": 1
     },
     "855529086": {
       "timing": "combat_begin",
@@ -1677,11 +1678,21 @@
       "ignore_upstream_value_is_percentage": true
     },
     "910140799": {
-      "timing": "combat_begin",
-      "effect_type": "combat_noop",
+      "timing": "round_start",
+      "effect_type": "attack_multiplier",
       "value_is_percentage": false,
       "ignore_upstream_value_is_percentage": true,
-      "value_override": 0
+      "condition_attacker_hull_breach": true,
+      "extra_seats": [
+        {
+          "timing": "round_start",
+          "effect_type": "isolytic_damage",
+          "value_is_percentage": false,
+          "ignore_upstream_value_is_percentage": true,
+          "condition_attacker_hull_breach": true,
+          "value_override": 0.1
+        }
+      ]
     },
     "917025890": {
       "timing": "combat_begin",

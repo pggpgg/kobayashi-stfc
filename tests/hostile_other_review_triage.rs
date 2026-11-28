@@ -464,3 +464,107 @@ fn energy_focused_beam_does_not_fire_on_the_round_it_dies() {
         "the attacker must survive its own winning round"
     );
 }
+
+/// Mirror Universe Deadlock (`849650945`) + Dismantlement/Photophobia (`910140799`):
+/// - Deadlock applies Hull Breach to the attacking player at combat start for the duration of combat.
+/// - While the player is Hull Breached, Dismantlement adds +20% counter weapon damage and
+///   Photophobia adds +10% counter Isolytic Damage at each round start.
+#[test]
+fn mirror_universe_deadlock_dismantlement_and_photophobia_fire_on_harvester_counter() {
+    let rec = resolve_hostile("1381341814").expect("L65 Imperial Starfleet Planet Harvester");
+    let catalog = hostile_ability_catalog_for_default_path();
+    let crew = hostile_abilities_to_defender_crew(&rec.ability, catalog, rec.level);
+
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::HullBreach {
+                duration_rounds: 100,
+                ..
+            }
+        )),
+        "expected Deadlock combat-begin HullBreach seat on 1381341814, got: {:?}",
+        crew.seats
+    );
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::ProcAttackMultiplier { multiplier, .. }
+                if (multiplier - 1.2).abs() < 1e-9
+        )),
+        "expected Dismantlement +20% attack_multiplier seat on 1381341814, got: {:?}",
+        crew.seats
+    );
+    assert!(
+        crew.seats.iter().any(|s| matches!(
+            s.ability.effect,
+            AbilityEffect::IsolyticDamageBonus(v) if (v - 0.1).abs() < 1e-9
+        )),
+        "expected Photophobia +10% isolytic_damage seat on 1381341814, got: {:?}",
+        crew.seats
+    );
+
+    let attacker = combatant(
+        "att",
+        10_000_000.0,
+        WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        },
+    );
+    let defender = combatant(
+        "1381341814",
+        50_000_000.0,
+        WeaponStats {
+            attack: 100_000.0,
+            shots: Some(1),
+            crit_chance: Some(0.0),
+            crit_multiplier: Some(1.5),
+            ..Default::default()
+        },
+    );
+    let empty = CrewConfiguration { seats: vec![] };
+    let cfg = pve_config(1, 17);
+    let base = run(&attacker, &defender, &cfg, ShipType::Explorer, &empty);
+    let with_mu = run(&attacker, &defender, &cfg, ShipType::Explorer, &crew);
+
+    let base_dmg = attacker.hull_health - base.attacker_hull_remaining;
+    let mu_dmg = attacker.hull_health - with_mu.attacker_hull_remaining;
+    // Base counter shot = 100,000. With Deadlock + Dismantlement (+20% => 120,000) + Photophobia
+    // (+10% isolytic on 120,000 => +12,000) total = 132,000 (1.32x baseline).
+    assert!(
+        (base_dmg - 100_000.0).abs() < 1.0,
+        "baseline counter damage should be 100,000, got {base_dmg}"
+    );
+    assert!(
+        (mu_dmg - 132_000.0).abs() < 1.0,
+        "MU Deadlock+Dismantlement+Photophobia counter damage should be 132,000, got {mu_dmg}"
+    );
+
+    // Crit shot: Deadlock's Hull Breach amplifies crit damage by 1.5x (1.5 * 1.5 = 2.25x).
+    let crit_defender = combatant(
+        "1381341814",
+        50_000_000.0,
+        WeaponStats {
+            attack: 100_000.0,
+            shots: Some(1),
+            crit_chance: Some(1.0),
+            crit_multiplier: Some(1.5),
+            ..Default::default()
+        },
+    );
+    let base_crit = run(&attacker, &crit_defender, &cfg, ShipType::Explorer, &empty);
+    let mu_crit = run(&attacker, &crit_defender, &cfg, ShipType::Explorer, &crew);
+    let base_crit_dmg = attacker.hull_health - base_crit.attacker_hull_remaining;
+    let mu_crit_dmg = attacker.hull_health - mu_crit.attacker_hull_remaining;
+    // Base crit = 150,000. MU crit = 100,000 * 1.2 * 2.25 * 1.1 = 297,000.
+    assert!(
+        (base_crit_dmg - 150_000.0).abs() < 1.0,
+        "baseline crit damage should be 150,000, got {base_crit_dmg}"
+    );
+    assert!(
+        (mu_crit_dmg - 297_000.0).abs() < 1.0,
+        "MU crit damage with Deadlock+Dismantlement+Photophobia should be 297,000, got {mu_crit_dmg}"
+    );
+}

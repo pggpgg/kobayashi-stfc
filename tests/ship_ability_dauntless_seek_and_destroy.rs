@@ -102,28 +102,135 @@ fn ctx_vs(defender_ship_type: ShipType) -> CombatContext {
 }
 
 #[test]
-fn active_sweep_resolves_as_non_armada_gated_attack_multiplier() {
-    // Level 1: stfc.space renders 145,000% ⇒ upstream values[0] = 1450 is the bonus fraction.
+fn active_sweep_resolves_as_non_armada_gated_component_base_weapon_damage() {
+    // Level 1: stfc.space renders 145,000% ⇒ upstream values[0] = 1450 is the component-base bonus
+    // coefficient (same additive-to-component-base family as Borg Sphere Omicron, NX-01, Monaveen;
+    // verified against live T6 L30 U.S.S. Dauntless vs L65 Imperial Starfleet Planet Harvester).
     match dauntless_seat(1, 1, ACTIVE_SWEEP).ability.effect {
-        AbilityEffect::AttackMultiplier(v) => assert!(
+        AbilityEffect::ComponentBaseWeaponDamageBonus(v) => assert!(
             (v - 1450.0).abs() < 1e-6,
             "Active Sweep at T1/L1 resolved to {v}; expected 1450 (145,000% render)"
         ),
-        ref other => panic!("expected AttackMultiplier, got {other:?}"),
+        ref other => panic!("expected ComponentBaseWeaponDamageBonus, got {other:?}"),
+    }
+    // Level 30: values[29] = 5335 (533,500% component-base damage).
+    match dauntless_seat(6, 30, ACTIVE_SWEEP).ability.effect {
+        AbilityEffect::ComponentBaseWeaponDamageBonus(v) => assert!(
+            (v - 5335.0).abs() < 1e-6,
+            "Active Sweep at T6/L30 resolved to {v}; expected 5335 (533,500% render)"
+        ),
+        ref other => panic!("expected ComponentBaseWeaponDamageBonus, got {other:?}"),
     }
     // Max level: 1,200,000% render ⇒ values[74] = 12000.
     let seat = dauntless_seat(15, 75, ACTIVE_SWEEP);
     match seat.ability.effect {
-        AbilityEffect::AttackMultiplier(v) => assert!(
+        AbilityEffect::ComponentBaseWeaponDamageBonus(v) => assert!(
             (v - 12_000.0).abs() < 1e-6,
             "Active Sweep at T15/L75 resolved to {v}; expected 12000 (1,200,000% render)"
         ),
-        ref other => panic!("expected AttackMultiplier, got {other:?}"),
+        ref other => panic!("expected ComponentBaseWeaponDamageBonus, got {other:?}"),
     }
     assert_eq!(
         seat.ability.condition,
         Some(seek_and_destroy_gate()),
         "Active Sweep must gate on non-armada NPC hostiles"
+    );
+}
+
+#[test]
+fn active_sweep_adds_component_base_damage_without_multiplying_profile_pool() {
+    use kobayashi::combat::{
+        simulate_combat_with_defender_faction_and_defender_crew, Combatant, SimulationConfig,
+        TraceMode, WeaponStats,
+    };
+
+    // Component base 13,053.5 scaled by ~72.57x profile pool -> attack 947,325.6.
+    // With Active Sweep L30 (+5335 * component_base), expected effective_attack is
+    // 947,325.6 + 5335 * 13,053.5 = 70,587,748.1 (NOT 947,325.6 * 5336 = 5.05 billion).
+    let seat = dauntless_seat(6, 30, ACTIVE_SWEEP);
+    let attacker = Combatant {
+        id: DAUNTLESS.into(),
+        attack: 947_325.6,
+        mitigation: 0.0,
+        armor: 0.0,
+        shield_deflection: 0.0,
+        dodge: 0.0,
+        damage_reduction: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        crit_damage_floor: 0.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 100_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 947_325.6,
+            component_base_attack: Some(13_053.5),
+            shots: Some(1),
+            ..Default::default()
+        }],
+        hostile_mitigation_params: None,
+    };
+    let defender = Combatant {
+        id: "1381341814".into(),
+        attack: 0.0,
+        mitigation: 0.0,
+        armor: 0.0,
+        shield_deflection: 0.0,
+        dodge: 0.0,
+        damage_reduction: 0.0,
+        pierce: 0.0,
+        crit_chance: 0.0,
+        crit_multiplier: 1.0,
+        crit_damage_floor: 0.0,
+        proc_chance: 0.0,
+        proc_multiplier: 1.0,
+        end_of_round_damage: 0.0,
+        hull_health: 1_000_000_000.0,
+        shield_health: 0.0,
+        shield_mitigation: 0.0,
+        apex_barrier: 0.0,
+        apex_shred: 0.0,
+        isolytic_damage: 0.0,
+        isolytic_defense: 0.0,
+        weapons: vec![WeaponStats {
+            attack: 0.0,
+            shots: Some(1),
+            ..Default::default()
+        }],
+        hostile_mitigation_params: None,
+    };
+    let cfg = SimulationConfig {
+        rounds: 1,
+        seed: 7,
+        trace_mode: TraceMode::Off,
+        ..Default::default()
+    };
+    let res = simulate_combat_with_defender_faction_and_defender_crew(
+        &attacker,
+        &defender,
+        &cfg,
+        &CrewConfiguration { seats: vec![seat] },
+        OpponentFactionTag::MirrorUniverse,
+        ShipType::Survey,
+        ShipType::Explorer,
+        true,
+        false,
+        &CrewConfiguration { seats: vec![] },
+    );
+    let expected = 947_325.6 + 5335.0 * 13_053.5;
+    assert!(
+        (res.total_damage - expected).abs() < 1.0,
+        "Active Sweep L30 dealt {:.1}, expected {:.1} (component_base_weapon_damage)",
+        res.total_damage,
+        expected
     );
 }
 

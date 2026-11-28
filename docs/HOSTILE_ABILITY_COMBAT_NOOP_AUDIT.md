@@ -240,10 +240,10 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Conqueror Borg lane B | 4 | 17 | **Keep noop in catalog** — Quantum Resonance Beam / Evolutionary Assimilation are modeled out of catalog via hostile tags (rows stay noop so the lane is not double-applied) |
 | Borg cube flavor | 6 | 6 | **Keep noop** — Gravimetric Torpedoes (narrative Foreknowledge / Vi'dar Talios mechanic) |
 | Q Trials flavor (1v1) | 1 | 23 | **Keep noop** — Q Junior's Twist 1v1 variant (loca 73051), no modelable single-ship mechanic |
-| Player hull breach at combat start | 1 | 17 | **Modeled (2026-07-08)** — Hole Puncher → `hull_breach` on the player for rest of combat |
+| Player hull breach at combat start | 2 | 211 | **Modeled (2026-07-08 / 2026-11-28)** — Hole Puncher + Mirror Universe Deadlock (`849650945`) → `hull_breach` on the player for duration of combat |
 | Player burning at combat start (Immolator) | 1 | 17 | **Modeled (2026-07-08)** — Immolator → `burning` on the player for rest of combat |
-| Weapon damage conditional | 1 | 13 | **Partial** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` |
-| PvP enemy player | 2 | 388 | **Keep noop** on default ship-vs-hostile path (Deadlock / Dismantlement) |
+| Weapon damage conditional | 2 | 207 | **Modeled** — `attack_multiplier` where text matches; hull-breach gates use `condition_defender_hull_breach` (self/target) or `condition_attacker_hull_breach` (Mirror Universe Dismantlement + Photophobia `910140799`: +20% counter weapon damage + +10% counter isolytic damage when player is hull breached) |
+| PvP enemy player | 1 | 6 | **Keep noop** on default ship-vs-hostile path (Mirror Data `Reflections` `3669273787`) |
 | Armada | 125 | 260 | **Keep noop** — no armada scenario |
 | Outpost | 56 | 163 | **Keep noop** — station/outpost scope |
 | Hyperthermic review | 3 | 15 | **Keep noop** — resonance-beam / non-uniform value scales, manual review |
@@ -257,8 +257,8 @@ Full regen-safe noop id list: run `python3 scripts/generate_full_hostile_ability
 | Ability id | Hostiles | Bucket | Catalog `effect_type` | Text (plain snippet) |
 | --- | ---: | --- | --- | --- |
 | `2291206649` | 325 | crit_multi_stat_modeled | `crit_chance` + `crit_damage` / `hostile_crit_damage_floor` extra seats | Critical Training — crit chance + damage + floor at combat start |
-| `849650945` | 194 | pvp_player_target | `combat_noop` | Deadlock — hull breach enemy player |
-| `910140799` | 194 | pvp_player_target | `combat_noop` | Dismantlement — weapon damage if enemy player hull breached |
+| `849650945` | 194 | player_hull_breach_combat_start | `hull_breach` | Deadlock — hull breach attacking player for duration of combat |
+| `910140799` | 194 | player_hull_breach_conditional_counter | `attack_multiplier` + `isolytic_damage` extra seat | Dismantlement (+20% weapon damage) + Photophobia (+10% isolytic damage) at round start if player is hull breached |
 | `2486538514` | 162 | crit_floor_modeled | `hostile_crit_damage_floor` | Diverted Power — crit damage floor |
 | `788454016` | 111 | crit_floor_modeled | `hostile_crit_damage_floor` | Diverted Power — crit damage floor |
 | `3172395625` | 90 | isolytic_combat | `isolytic_damage` | Elite Assassin Training — isolytic at combat start |

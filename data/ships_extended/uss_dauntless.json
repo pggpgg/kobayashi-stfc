@@ -1692,7 +1692,7 @@
     {
       "id": "1905773933",
       "timing": "combat_begin",
-      "effect_type": "attack_multiplier",
+      "effect_type": "component_base_weapon_damage",
       "value": 1450.0,
       "duration_rounds": null,
       "condition_morale": false,
