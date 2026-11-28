@@ -59,7 +59,11 @@ describe("supportBuffOptionsForSide", () => {
     const defender = supportBuffOptionsForSide("defender").map((o) => o.id);
     const debuff = supportBuffOptionsForSide("debuff").map((o) => o.id);
 
-    expect(attacker).toEqual(["cerritos_support"]);
+    expect(attacker).toEqual([
+      "titan_a_fortification",
+      "titan_a_max_fortification",
+      "cerritos_support",
+    ]);
     expect(defender).toEqual([
       "titan_a_fortification",
       "titan_a_max_fortification",
@@ -67,6 +71,9 @@ describe("supportBuffOptionsForSide", () => {
     ]);
     expect(debuff).toEqual(["mantis_sting"]);
     expect(isDefenderRoutedWhenPlayerSupportBuff("mantis_sting")).toBe(false);
+    expect(isDefenderRoutedWhenPlayerSupportBuff("defiant_reinforce")).toBe(
+      true,
+    );
     expect(isAttackerDebuffWhenPlayerSupportBuff("mantis_sting")).toBe(true);
   });
 });

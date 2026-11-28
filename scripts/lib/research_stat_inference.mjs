@@ -128,7 +128,16 @@ export function inferCombatStatFromDescription(text) {
   if (/\bmitigation stats\b/.test(t)) return null;
   // Shield Deflection is its own stat; do not conflate with dodge or engine shield_mitigation.
   if (/\bshield deflection\b/.test(t)) return "shield_deflection";
-  if (/\bshield mitigation\b/.test(t)) return "shield_mitigation";
+  // Opponent shield-mitigation reductions (e.g. Titan Shield, Immortal, Dark Frontier) and
+  // Shield Mitigation Floor projects must never be inferred as flat self shield_mitigation.
+  if (
+    /\bshield mitigation\b/.test(t) &&
+    !/\bshield mitigation floor\b/.test(t) &&
+    !/\b(?:decreases?|reduces?|lowers?)\b/.test(t) &&
+    !/\bopponent'?s?\b/.test(t)
+  ) {
+    return "shield_mitigation";
+  }
   if (/\bdodge\b/.test(t)) return "dodge";
   if (/\barmor\b/.test(t) && !/piercing|pierce/.test(t)) {
     if (/ship|hull|all ships|your ships|franklin|vessel/.test(t)) return "armor";

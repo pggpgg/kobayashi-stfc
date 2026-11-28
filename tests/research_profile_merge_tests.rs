@@ -474,6 +474,7 @@ fn canonical_override_takes_priority_over_catalog_for_ns_burning_damage() {
                 by_level: vec![0.01, 0.0145],
                 conditions: vec![AbilityConditionSpec::DefenderBurning],
                 trigger: None,
+                duration: None,
                 category: None,
                 confidence: None,
                 source_ref: None,

@@ -68,7 +68,9 @@ interface SupportBuffGroup {
 
 const statLabels: Record<string, string> = {
   crit_damage: "Crit damage",
+  crit_damage_flat: "Crit damage",
   weapon_damage: "Weapon damage",
+  weapon_damage_additive_pool: "Weapon damage",
 };
 
 function sourceGroupFor(
@@ -152,7 +154,10 @@ function formatStatTarget(option: SupportBuffOption): string | null {
   return option.statTargets
     .map((target) => {
       const label = statLabels[target.stat] ?? target.stat;
-      const pct = Math.round((target.value - 1) * 100);
+      const pct =
+        target.stacking === "additive"
+          ? Math.round(target.value * 100)
+          : Math.round((target.value - 1) * 100);
       return pct > 0 ? `+${pct}% ${label.toLowerCase()}` : label.toLowerCase();
     })
     .join(", ");

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::data::import::ResearchEntry;
 use crate::data::profile::{
-    combat_research_bonuses_for_rid_subset, merge_research_bonuses_into_profile,
+    combat_research_bonuses_for_rid_subset_excluding, merge_research_bonuses_into_profile,
     profile_combat_bonuses_to_static_style, PlayerProfile, SupportBuffResearchGateState,
     CERRITOS_SUPPORT_GATED_RESEARCH_RIDS, DEFIANT_REINFORCE_GATED_RESEARCH_RIDS,
     TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS, TITAN_CERRITOS_FORTIFIED_DUAL_RESEARCH_RID,
@@ -44,6 +44,9 @@ pub enum SupportBuffStaticBonusTarget {
     /// Merge with crew static buffs on the optimizing attacker (default when field omitted).
     #[default]
     Attacker,
+    /// Applies to whichever side selected the buff: attacker in PvE/PvP (`support_buffs`), and
+    /// PvP defender when passed via `defender_support_buffs` (e.g. Titan-A Fortify / Max Fortification).
+    SelectedShip,
     /// Merge only onto the defender [`crate::combat::Combatant`] when [`DefenderOpponent::Player`] (PvP-shaped).
     DefenderIfPlayerOpponent,
     /// Alliance debuff on the attacker in PvP-shaped scenarios (e.g. Mantis sting placeholder).
@@ -143,10 +146,12 @@ fn support_static_key_is_supported(key: &str) -> bool {
     matches!(
         key,
         "weapon_damage"
+            | "weapon_damage_additive_pool"
             | "hull_hp"
             | "shield_hp"
             | "crit_chance"
             | "crit_damage"
+            | "crit_damage_flat"
             | "shield_pierce"
             | "armor_pierce"
             | "shield_mitigation"
@@ -564,7 +569,7 @@ pub fn aggregate_support_static_bonuses_split(
             continue;
         };
         match def.static_bonus_target_effective() {
-            SupportBuffStaticBonusTarget::Attacker => {
+            SupportBuffStaticBonusTarget::Attacker | SupportBuffStaticBonusTarget::SelectedShip => {
                 merge_def_static_bonuses_into(&mut attacker, def)
             }
             SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent => {
@@ -576,17 +581,17 @@ pub fn aggregate_support_static_bonuses_split(
     (attacker, defender_player)
 }
 
-fn aggregate_support_static_for_target(
+fn aggregate_support_static_matching(
     catalog: &SupportBuffCatalog,
     resolved_ids: &[String],
-    target: SupportBuffStaticBonusTarget,
+    predicate: impl Fn(SupportBuffStaticBonusTarget) -> bool,
 ) -> HashMap<String, f64> {
     let mut out: HashMap<String, f64> = HashMap::new();
     for id in resolved_ids {
         let Some(def) = catalog.get(id) else {
             continue;
         };
-        if def.static_bonus_target_effective() == target {
+        if predicate(def.static_bonus_target_effective()) {
             merge_def_static_bonuses_into(&mut out, def);
         }
     }
@@ -598,11 +603,12 @@ pub fn aggregate_support_static_for_attacker(
     catalog: &SupportBuffCatalog,
     resolved_ids: &[String],
 ) -> HashMap<String, f64> {
-    aggregate_support_static_for_target(
-        catalog,
-        resolved_ids,
-        SupportBuffStaticBonusTarget::Attacker,
-    )
+    aggregate_support_static_matching(catalog, resolved_ids, |t| {
+        matches!(
+            t,
+            SupportBuffStaticBonusTarget::Attacker | SupportBuffStaticBonusTarget::SelectedShip
+        )
+    })
 }
 
 /// Defender-routed static bonuses for PvP (`defender_support_buffs`).
@@ -610,11 +616,13 @@ pub fn aggregate_support_static_for_defender(
     catalog: &SupportBuffCatalog,
     resolved_ids: &[String],
 ) -> HashMap<String, f64> {
-    aggregate_support_static_for_target(
-        catalog,
-        resolved_ids,
-        SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent,
-    )
+    aggregate_support_static_matching(catalog, resolved_ids, |t| {
+        matches!(
+            t,
+            SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent
+                | SupportBuffStaticBonusTarget::SelectedShip
+        )
+    })
 }
 
 /// Alliance debuffs on the attacker in PvP (`defender_alliance_debuffs`).
@@ -622,11 +630,9 @@ pub fn aggregate_support_static_debuffs_on_attacker(
     catalog: &SupportBuffCatalog,
     resolved_ids: &[String],
 ) -> HashMap<String, f64> {
-    aggregate_support_static_for_target(
-        catalog,
-        resolved_ids,
-        SupportBuffStaticBonusTarget::AttackerDebuffIfPlayerOpponent,
-    )
+    aggregate_support_static_matching(catalog, resolved_ids, |t| {
+        t == SupportBuffStaticBonusTarget::AttackerDebuffIfPlayerOpponent
+    })
 }
 
 /// Aggregate attacker-routed `static_bonuses` only (same as split `.0`).
@@ -752,8 +758,31 @@ pub fn augment_static_buffs_with_support_gated_research(
     catalog: &ResearchCatalog,
     gates: &SupportBuffResearchGateState,
 ) {
+    augment_static_buffs_with_support_gated_research_excluding(
+        support_static,
+        imported,
+        catalog,
+        gates,
+        None,
+    );
+}
+
+/// Like [`augment_static_buffs_with_support_gated_research`], skipping `exclude_catalog_rids`
+/// owned by `data/research_canonical.json` so canonical overrides cannot also leak into static buffs.
+pub fn augment_static_buffs_with_support_gated_research_excluding(
+    support_static: &mut HashMap<String, f64>,
+    imported: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    gates: &SupportBuffResearchGateState,
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+) {
     let mut merge_layer = |rids: &[i64]| {
-        let m = combat_research_bonuses_for_rid_subset(imported, catalog, rids);
+        let m = combat_research_bonuses_for_rid_subset_excluding(
+            imported,
+            catalog,
+            rids,
+            exclude_catalog_rids,
+        );
         if m.is_empty() {
             return;
         }
@@ -838,12 +867,26 @@ mod tests {
     }
 
     #[test]
-    fn aggregate_split_routes_fortify_static_to_defender_map() {
+    fn aggregate_split_routes_fortify_static_to_attacker_and_defender_sidecar() {
         let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
         let (att, def) =
             aggregate_support_static_bonuses_split(&c, &["titan_a_fortification".to_string()]);
-        assert!(!att.contains_key("crit_damage"));
-        assert!((def.get("crit_damage").copied().unwrap_or(0.0) - 1.25).abs() < 1e-9);
+        assert!((att.get("crit_damage_flat").copied().unwrap_or(0.0) - 0.25).abs() < 1e-9);
+        assert!(def.is_empty());
+
+        let (max_att, max_def) =
+            aggregate_support_static_bonuses_split(&c, &["titan_a_max_fortification".to_string()]);
+        assert!((max_att.get("crit_damage_flat").copied().unwrap_or(0.0) - 0.25).abs() < 1e-9);
+        assert!(
+            (max_att
+                .get("weapon_damage_additive_pool")
+                .copied()
+                .unwrap_or(0.0)
+                - 2.5)
+                .abs()
+                < 1e-9
+        );
+        assert!(max_def.is_empty());
     }
 
     #[test]
@@ -869,10 +912,10 @@ mod tests {
         assert_eq!(out.resolved_alliance_debuffs, vec!["mantis_sting"]);
         assert!(
             (out.defender_static
-                .get("crit_damage")
+                .get("crit_damage_flat")
                 .copied()
                 .unwrap_or(0.0)
-                - 1.25)
+                - 0.25)
                 .abs()
                 < 1e-9
         );
@@ -889,17 +932,33 @@ mod tests {
 
     #[test]
     fn inactive_defender_labels_only_when_static_present_and_npc_defender() {
-        let c = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
-        let labels = inactive_defender_static_support_buff_labels(
-            &c,
-            &["titan_a_fortification".to_string()],
-            false,
+        let mut buffs = HashMap::new();
+        buffs.insert(
+            "pvp_only_def".into(),
+            SupportBuffDef {
+                id: Some("pvp_only_def".into()),
+                display_name: Some("PvP Defender Buff".into()),
+                static_bonus_target: Some(SupportBuffStaticBonusTarget::DefenderIfPlayerOpponent),
+                static_bonuses: HashMap::from([("crit_damage_flat".into(), 0.25)]),
+                ..Default::default()
+            },
         );
-        assert_eq!(labels, vec!["Fortification".to_string()]);
+        let c = SupportBuffCatalog { buffs };
+        let labels =
+            inactive_defender_static_support_buff_labels(&c, &["pvp_only_def".to_string()], false);
+        assert_eq!(labels, vec!["PvP Defender Buff".to_string()]);
         assert!(inactive_defender_static_support_buff_labels(
             &c,
-            &["titan_a_fortification".to_string()],
-            true,
+            &["pvp_only_def".to_string()],
+            true
+        )
+        .is_empty());
+        // Bundled Titan-A Fortify applies in both PvE and PvP (selected_ship) so it must not warn.
+        let bundled = SupportBuffCatalog::load(DEFAULT_SUPPORT_BUFFS_PATH).unwrap();
+        assert!(inactive_defender_static_support_buff_labels(
+            &bundled,
+            &["titan_a_max_fortification".to_string()],
+            false,
         )
         .is_empty());
     }

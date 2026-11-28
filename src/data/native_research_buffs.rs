@@ -14,8 +14,10 @@ use crate::data::import::{GlobalBuffEntry, ResearchEntry};
 use crate::data::native_consumable_buffs::{
     bonuses_from_catalog_for_ship, combat_start_defense_seats_from_catalog_for_group,
     combat_start_opponent_weapon_damage_reduction_seats_from_catalog_for_group,
-    combat_start_research_and_building_seats_from_catalog_for_group, NativeConsumableBuffCatalog,
+    combat_start_research_and_building_seats_from_catalog_for_group_with_support_gates,
+    NativeConsumableBuffCatalog,
 };
+use crate::data::profile::SupportBuffResearchGateState;
 use serde::Deserialize;
 
 const EMBEDDED_CATALOG: &str =
@@ -261,12 +263,32 @@ pub fn combat_start_offense_and_cdr_seats_for_ship(
     ship_id: Option<&str>,
     now_unix_seconds: i64,
 ) -> Vec<CrewSeatContext> {
-    combat_start_research_and_building_seats_from_catalog_for_group(
+    combat_start_offense_and_cdr_seats_for_ship_with_support_gates(
+        imported,
+        ship_grade,
+        ship_id,
+        &SupportBuffResearchGateState::default(),
+        now_unix_seconds,
+    )
+}
+
+/// Ship- and support-buff-aware variant enabling Titan-A Fortified / Max Fortified / dual
+/// Cerritos+Fortified native research seats (`cond 242` / `cond 241` / `cond [242, 194]`) only
+/// when the matching alliance support buff is active in the scenario.
+pub fn combat_start_offense_and_cdr_seats_for_ship_with_support_gates(
+    imported: &[GlobalBuffEntry],
+    ship_grade: Option<u32>,
+    ship_id: Option<&str>,
+    support_gates: &SupportBuffResearchGateState,
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
+    combat_start_research_and_building_seats_from_catalog_for_group_with_support_gates(
         embedded_catalog(),
         66,
         imported,
         ship_grade,
         ship_id,
+        support_gates,
         now_unix_seconds,
     )
 }

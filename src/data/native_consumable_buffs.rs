@@ -613,6 +613,26 @@ pub(crate) fn combat_start_research_and_building_seats_from_catalog_for_group(
     ship_id: Option<&str>,
     now_unix_seconds: i64,
 ) -> Vec<CrewSeatContext> {
+    combat_start_research_and_building_seats_from_catalog_for_group_with_support_gates(
+        catalog,
+        expected_group,
+        imported,
+        ship_grade,
+        ship_id,
+        &crate::data::profile::SupportBuffResearchGateState::default(),
+        now_unix_seconds,
+    )
+}
+
+pub(crate) fn combat_start_research_and_building_seats_from_catalog_for_group_with_support_gates(
+    catalog: &NativeConsumableBuffCatalog,
+    expected_group: u32,
+    imported: &[GlobalBuffEntry],
+    ship_grade: Option<u32>,
+    ship_id: Option<&str>,
+    support_gates: &crate::data::profile::SupportBuffResearchGateState,
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
     if catalog.schema_version != 1
         || catalog.source_group != expected_group
         || !matches!(expected_group, 66 | 68)
@@ -696,6 +716,7 @@ pub(crate) fn combat_start_research_and_building_seats_from_catalog_for_group(
                     spec,
                     value,
                     ship_id,
+                    support_gates,
                     &non_armada_hostile,
                     &defender_has_any_state,
                     &space_non_armada,
@@ -894,11 +915,13 @@ fn native_class_code_to_ship_type(code: i64) -> ShipType {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn exact_bound_research_combat_seat(
     bid: i64,
     spec: &NativeBuffSpec,
     value: f64,
     ship_id: Option<&str>,
+    support_gates: &crate::data::profile::SupportBuffResearchGateState,
     non_armada_hostile: &impl Fn() -> AbilityCondition,
     defender_has_any_state: &impl Fn() -> AbilityCondition,
     space_non_armada: &impl Fn() -> AbilityCondition,
@@ -1487,6 +1510,157 @@ fn exact_bound_research_combat_seat(
                 TimingWindow::CombatBegin,
                 AbilityEffect::BaseCritDamageBonus(value),
                 Some(non_armada_hostile()),
+            ))
+        }
+        // Titan-A Fortified (cond 242), Max Fortified (cond 241), and dual Cerritos+Fortified
+        // (conds [242, 194]) native research seats, strictly gated on `support_gates`.
+        // Live-verified 2026-11-28 across 6 U.S.S. Dauntless vs L65 Planet Harvester fights with
+        // Max Fortification: crit chance 30% + 30% (Titan's Fortune) = 60% vs 57.8% observed;
+        // R3+ crit mult 9.46 + 1.00 (Titan's Spear) + 0.25 (Fortify) = 10.71x vs 10.71x midpoint;
+        // Titan Force +12% SHP vs hostiles verified to 5 digits in journal initial_ship_shps.
+        // Titan's Fist (rid 1110389612): +base weapon damage while Fortified.
+        1_045_432_573 => {
+            let exact = support_gates.titan_fortify
+                && spec.sha256
+                    == "5abc153b745ce7fface5ddf6536120251cfb4eb5d80283c1cef55c1d813cf96d"
+                && spec.modifier_code == 2
+                && spec.operation_code == 3
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [242]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseWeaponDamageBonus(value),
+                None,
+            ))
+        }
+        // Clash of Titan (rid 3414721139): +base weapon damage vs Armadas while Fortified.
+        444_897_346 => {
+            let exact = support_gates.titan_fortify
+                && spec.sha256
+                    == "35026066579edf95b5404b0f4b3b7af40dc8bf170e18f0eb6d60b913beabc059"
+                && spec.modifier_code == 2
+                && spec.operation_code == 3
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [242, 129]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseWeaponDamageBonus(value),
+                Some(AbilityCondition::DefenderShipTypeIs(ShipType::Armada)),
+            ))
+        }
+        // Titan Force (rid 2448831923): +SHP vs Hostiles while Fortified.
+        2_177_587_410 => {
+            let exact = support_gates.titan_fortify
+                && spec.sha256
+                    == "21bd3933a19b0f25db71287edebd95ad4c65a15270c1b1f1fb833578aab744c3"
+                && spec.modifier_code == 60
+                && spec.operation_code == 3
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [242, 27]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::ShieldHpMultiplier(value),
+                Some(AbilityCondition::DefenderIsNpcHostile),
+            ))
+        }
+        // Titan Power (rid 3591450656): +SHP vs Players while Fortified.
+        1_605_616_822 => {
+            let exact = support_gates.titan_fortify
+                && spec.sha256
+                    == "b7ebd70c3cb4a49fe713e41c779341f0a77e767181c5e4803c1a32842feb1d88"
+                && spec.modifier_code == 60
+                && spec.operation_code == 3
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [242, 28]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::ShieldHpMultiplier(value),
+                Some(AbilityCondition::DefenderIsPlayerShip),
+            ))
+        }
+        // Titan's Fortune (rid 1724539590): +Crit Chance while Fortified.
+        2_819_655_580 => {
+            let exact = support_gates.titan_fortify
+                && spec.sha256
+                    == "f280b1803921c1e012838e5f1b1f546d0f778a314ee8ca6d7f3da64e65c15af1"
+                && spec.modifier_code == 9
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [242]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::CritChanceBonus(value),
+                None,
+            ))
+        }
+        // Titan's Spear (rid 122225579): +Crit Damage while Max Fortified.
+        1_478_449_249 => {
+            let exact = support_gates.titan_max_fortification
+                && spec.sha256
+                    == "08ee9d5ba246bf19aa605def3ce917f923461ce78f6ba5da9ba7447598f819cd"
+                && spec.modifier_code == 10
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [241]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseCritDamageBonus(value),
+                None,
+            ))
+        }
+        // Dynamic Efficiency (rid 1231049311): +base weapon damage while Max Fortified.
+        1_125_188_134 => {
+            let exact = support_gates.titan_max_fortification
+                && spec.sha256
+                    == "e159a1fc2c6dd67e63e16d693b5386a2a9a9ae7ead2421450a81a2a42ba90ab4"
+                && spec.modifier_code == 2
+                && spec.operation_code == 3
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [241]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseWeaponDamageBonus(value),
+                None,
+            ))
+        }
+        // Titan Wrecker (rid 1212216403): +Crit Damage while simultaneously Cerritos-supported and Fortified.
+        2_226_262_548 => {
+            let exact = support_gates.titan_fortify
+                && support_gates.cerritos_support
+                && spec.sha256
+                    == "71f21adfed20986c892627e5d6f1337752efa0df0c94a64311dce3bc98424e77"
+                && spec.modifier_code == 10
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [242, 194]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseCritDamageBonus(value),
+                None,
             ))
         }
         _ => None,
@@ -3720,6 +3894,112 @@ mod tests {
         assert!(bld_seats.iter().any(|s| {
             s.ability.name == "native_68_1768821190"
                 && matches!(s.ability.effect, AbilityEffect::BaseCritDamageBonus(v) if (v - 1.9).abs() < 1e-12)
+        }));
+    }
+
+    #[test]
+    fn titan_fortify_and_max_fortified_native_research_seats_gate_strictly_on_support_state() {
+        use crate::data::profile::SupportBuffResearchGateState;
+
+        let res_catalog = crate::data::native_research_buffs::embedded_catalog();
+        let rows = [
+            entry(1_045_432_573, 10, None), // Titan's Fist (+1.50 WD, Fortified)
+            entry(444_897_346, 8, None),    // Clash of Titan (+1.10 WD vs Armada, Fortified)
+            entry(2_177_587_410, 2, None),  // Titan Force (+0.12 SHP vs Hostile, Fortified)
+            entry(1_605_616_822, 1, None),  // Titan Power (+0.10 SHP vs Player, Fortified)
+            entry(2_819_655_580, 10, None), // Titan's Fortune (+0.30 CC, Fortified)
+            entry(1_478_449_249, 8, None),  // Titan's Spear (+1.00 CD, Max Fortified)
+            entry(1_125_188_134, 7, None),  // Dynamic Efficiency (+1.20 WD, Max Fortified)
+            entry(2_226_262_548, 1, None),  // Titan Wrecker (+0.15 CD, Cerritos + Fortified)
+        ];
+
+        // No support buffs active: none of the 8 may activate.
+        let none =
+            combat_start_research_and_building_seats_from_catalog_for_group_with_support_gates(
+                res_catalog,
+                66,
+                &rows,
+                Some(4),
+                Some("uss_dauntless"),
+                &SupportBuffResearchGateState::default(),
+                0,
+            );
+        assert!(
+            none.is_empty(),
+            "expected 0 Fortified seats without support buff, got {}",
+            none.len()
+        );
+
+        // Fortified only: 5 Fortified seats activate; Max-only (Spear, Dynamic Efficiency) and dual (Wrecker) stay off.
+        let fort =
+            combat_start_research_and_building_seats_from_catalog_for_group_with_support_gates(
+                res_catalog,
+                66,
+                &rows,
+                Some(4),
+                Some("uss_dauntless"),
+                &SupportBuffResearchGateState {
+                    titan_fortify: true,
+                    ..Default::default()
+                },
+                0,
+            );
+        assert_eq!(fort.len(), 5);
+        assert!(fort.iter().any(|s| {
+            s.ability.name == "native_66_2819655580"
+                && matches!(s.ability.effect, AbilityEffect::CritChanceBonus(v) if (v - 0.30).abs() < 1e-12)
+        }));
+        assert!(fort.iter().any(|s| {
+            s.ability.name == "native_66_2177587410"
+                && matches!(s.ability.effect, AbilityEffect::ShieldHpMultiplier(v) if (v - 0.12).abs() < 1e-12)
+                && s.ability.condition == Some(AbilityCondition::DefenderIsNpcHostile)
+        }));
+
+        // Max Fortified: 7 seats activate (5 Fortified + Titan's Spear + Dynamic Efficiency); dual Wrecker stays off.
+        let max_fort =
+            combat_start_research_and_building_seats_from_catalog_for_group_with_support_gates(
+                res_catalog,
+                66,
+                &rows,
+                Some(4),
+                Some("uss_dauntless"),
+                &SupportBuffResearchGateState {
+                    titan_fortify: true,
+                    titan_max_fortification: true,
+                    ..Default::default()
+                },
+                0,
+            );
+        assert_eq!(max_fort.len(), 7);
+        assert!(max_fort.iter().any(|s| {
+            s.ability.name == "native_66_1478449249"
+                && matches!(s.ability.effect, AbilityEffect::BaseCritDamageBonus(v) if (v - 1.0).abs() < 1e-12)
+        }));
+        assert!(max_fort.iter().any(|s| {
+            s.ability.name == "native_66_1125188134"
+                && matches!(s.ability.effect, AbilityEffect::BaseWeaponDamageBonus(v) if (v - 1.2).abs() < 1e-12)
+        }));
+
+        // Max Fortified + Cerritos: all 8 activate including Titan Wrecker (+0.15 CD).
+        let dual =
+            combat_start_research_and_building_seats_from_catalog_for_group_with_support_gates(
+                res_catalog,
+                66,
+                &rows,
+                Some(4),
+                Some("uss_dauntless"),
+                &SupportBuffResearchGateState {
+                    titan_fortify: true,
+                    titan_max_fortification: true,
+                    cerritos_support: true,
+                    ..Default::default()
+                },
+                0,
+            );
+        assert_eq!(dual.len(), 8);
+        assert!(dual.iter().any(|s| {
+            s.ability.name == "native_66_2226262548"
+                && matches!(s.ability.effect, AbilityEffect::BaseCritDamageBonus(v) if (v - 0.15).abs() < 1e-12)
         }));
     }
 }

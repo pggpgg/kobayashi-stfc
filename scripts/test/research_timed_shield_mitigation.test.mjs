@@ -4,11 +4,22 @@ import test from "node:test";
 import {resolveBuffStatMappings} from "../lib/research_buff_resolve.mjs";
 
 test("native timed self/opponent shield mitigation cannot become flat own-profile rows",()=>{
-  const ctx={researchBuffMapping:{1478241687:"shield_mitigation",1856737936:"shield_mitigation"},
+  const ctx={researchBuffMapping:{1478241687:"shield_mitigation",1856737936:"shield_mitigation",171306920:"shield_mitigation"},
     researchBuffById:{},commonBuffNormalization:{},locaIdToStat:{}};
-  for(const id of[1478241687,1856737936])assert.deepEqual(resolveBuffStatMappings(ctx,{id},35012),[]);
+  for(const id of[1478241687,1856737936,171306920])assert.deepEqual(resolveBuffStatMappings(ctx,{id},35012),[]);
   const catalog=JSON.parse(fs.readFileSync(new URL("../../data/research_catalog.json",import.meta.url)));
-  assert.ok(!catalog.items.some(r=>[2392190200,4147903968].includes(r.rid)));
+  assert.ok(!catalog.items.some(r=>[2392190200,4147903968,2004950139].includes(r.rid)));
+});
+
+test("canonical Titan Shield retains negative opponent subtraction vs non-Armada hostiles",()=>{
+  const canonical=JSON.parse(fs.readFileSync(new URL("../../data/research_canonical.json",import.meta.url)));
+  const titan=canonical.overrides.find(r=>r.rid===2004950139).effects[0];
+  assert.equal(titan.target,"defender_opponent");
+  assert.equal(titan.trigger,"combat_begin");
+  assert.equal(titan.snapshot_by_level,true);
+  const upstream=JSON.parse(fs.readFileSync(new URL("../../data/upstream/data-stfc-space/research/2004950139.json",import.meta.url)));
+  const buff=upstream.buffs.find(b=>b.id===171306920);
+  assert.deepEqual(buff.values.slice(0,10).map(r=>-r.value),titan.by_level);
 });
 
 test("canonical Immortal retains opponent subtraction and two-round scope beside KSG self bonus",()=>{

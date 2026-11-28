@@ -181,7 +181,7 @@ fn compile_canonical_override_seats(
                 officer_stat_scaling: None,
             }),
             chance: None,
-            duration: None,
+            duration: effect.duration.clone(),
             decay: None,
             accumulate: None,
             conditions: effect.conditions.clone(),
@@ -516,6 +516,7 @@ mod tests {
                     by_level: vec![0.005, 0.01, 0.015, 0.02, 0.025],
                     conditions: vec![],
                     trigger: None,
+                    duration: None,
                     category: None,
                     confidence: None,
                     source_ref: None,
@@ -531,5 +532,97 @@ mod tests {
             "expected 2.5% tier snapshot, got {bonus}"
         );
         assert_eq!(rounds, 2);
+    }
+
+    #[test]
+    fn titan_shield_trigger_and_patch_canonical_overrides_compile_and_gate_on_fortify() {
+        use crate::data::profile::{
+            research_derived_attack_phase_seats, SupportBuffResearchGateState,
+        };
+        use crate::data::research::ResearchCatalog;
+
+        let canonical: crate::data::research::ResearchCanonicalFile =
+            serde_json::from_str(include_str!("../../data/research_canonical.json")).unwrap();
+        let overrides: HashMap<i64, ResearchCanonicalOverride> = canonical
+            .overrides
+            .into_iter()
+            .map(|o| (o.rid, o))
+            .collect();
+        let imported = vec![
+            ResearchEntry {
+                rid: 2_004_950_139,
+                level: 10,
+            }, // Titan Shield (-0.30 opponent SM)
+            ResearchEntry {
+                rid: 1_947_967_502,
+                level: 5,
+            }, // Titan Trigger (+1.55 shots for 3 rounds)
+            ResearchEntry {
+                rid: 3_706_606_658,
+                level: 10,
+            }, // Titan Patch (+0.30 SHP/round)
+        ];
+        let empty_catalog = ResearchCatalog {
+            source: None,
+            last_updated: None,
+            items: Vec::new(),
+        };
+
+        // Unfortified: none of the three may compile.
+        let none_seats = research_derived_attack_phase_seats(
+            &imported,
+            &empty_catalog,
+            &SupportBuffResearchGateState::default(),
+            &overrides,
+        );
+        assert!(none_seats.is_empty());
+
+        // Fortified only: Titan Shield compiles (-0.30 opponent SM); Max-only Trigger/Patch stay off.
+        let fort_only = SupportBuffResearchGateState {
+            titan_fortify: true,
+            ..Default::default()
+        };
+        let fort_seats =
+            research_derived_attack_phase_seats(&imported, &empty_catalog, &fort_only, &overrides);
+        assert_eq!(fort_seats.len(), 1);
+        assert_eq!(
+            fort_seats[0].ability.effect,
+            AbilityEffect::ShieldMitigationBonus(-0.3)
+        );
+        assert_eq!(fort_seats[0].ability.timing, TimingWindow::CombatBegin);
+        assert!(fort_seats[0].ability.condition.is_some());
+
+        // Max Fortified: all three compile with exact effects and 3-round ShotsBonus duration.
+        let max_fort = SupportBuffResearchGateState {
+            titan_fortify: true,
+            titan_max_fortification: true,
+            ..Default::default()
+        };
+        let max_seats =
+            research_derived_attack_phase_seats(&imported, &empty_catalog, &max_fort, &overrides);
+        assert_eq!(max_seats.len(), 3);
+        assert!(max_seats.iter().any(|s| {
+            s.ability.timing == TimingWindow::CombatBegin
+                && matches!(
+                    s.ability.effect,
+                    AbilityEffect::ShotsBonus {
+                        chance,
+                        bonus_pct,
+                        duration_rounds: 3,
+                    } if (chance - 1.0).abs() < 1e-12 && (bonus_pct - 1.55).abs() < 1e-12
+                )
+        }));
+        assert!(max_seats.iter().any(|s| {
+            s.ability.timing == TimingWindow::RoundStart
+                && matches!(
+                    s.ability.effect,
+                    AbilityEffect::ShieldRegenMaxFraction(v) if (v - 0.30).abs() < 1e-12
+                )
+        }));
+        // Titan Shield must never contribute to attacker incoming shield mitigation.
+        assert_eq!(
+            incoming_shield_mitigation_for_combat(&imported, &overrides),
+            (0.0, 0)
+        );
     }
 }

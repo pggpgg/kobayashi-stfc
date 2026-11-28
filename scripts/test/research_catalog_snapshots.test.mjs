@@ -134,6 +134,10 @@ test("bundled canonical overrides select snapshots of their referenced upstream 
     [2329726922, [325355262, 62011, 1]],
     [277835639, [4076962955, 62013, 1]],
     [997278854, [3961218589, 62012, 1]],
+    // Titan-A Fortify / Max Fortification: opponent shield mitigation SUB, 3-round ShotsBonus, shield regen.
+    [2004950139, [171306920, 53010, -1]],
+    [1947967502, [3645831022, 53021, 1]],
+    [3706606658, [2604396570, 53017, 1]],
   ]);
   const canonical = readJson("../../data/research_canonical.json");
   assert.equal(canonical.overrides.length, reviewedSources.size);
