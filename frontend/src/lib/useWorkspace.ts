@@ -91,6 +91,45 @@ function seatAllowsRole(
   }
 }
 
+function normalizeOfficerRef(
+  raw: string | null | undefined,
+  idByKey: ReadonlyMap<string, string>,
+): string | null {
+  const trimmed = raw?.trim();
+  if (!trimmed) {
+    return null;
+  }
+  return idByKey.get(trimmed.toLowerCase()) ?? trimmed;
+}
+
+function normalizeCrewOfficerIds(
+  current: CrewState,
+  idByKey: ReadonlyMap<string, string>,
+): CrewState {
+  if (idByKey.size === 0) {
+    return current;
+  }
+  const captain = normalizeOfficerRef(current.captain, idByKey);
+  const bridge0 = normalizeOfficerRef(current.bridge[0], idByKey);
+  const bridge1 = normalizeOfficerRef(current.bridge[1], idByKey);
+  const belowDeck = current.belowDeck.map((slot) =>
+    normalizeOfficerRef(slot, idByKey),
+  );
+  const changed =
+    captain !== current.captain ||
+    bridge0 !== current.bridge[0] ||
+    bridge1 !== current.bridge[1] ||
+    belowDeck.some((slot, idx) => slot !== current.belowDeck[idx]);
+  if (!changed) {
+    return current;
+  }
+  return {
+    captain,
+    bridge: [bridge0, bridge1],
+    belowDeck,
+  };
+}
+
 export function useWorkspace() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -293,6 +332,10 @@ export function useWorkspace() {
   const [officerSeatById, setOfficerSeatById] = useState<Map<string, string>>(
     new Map(),
   );
+  const [officerIdByKey, setOfficerIdByKey] = useState<Map<string, string>>(
+    new Map(),
+  );
+  const officerIdByKeyRef = useRef<Map<string, string>>(new Map());
   const [rosterLoadState, setRosterLoadState] = useState<
     "idle" | "loading" | "done" | "error"
   >("idle");
@@ -386,10 +429,16 @@ export function useWorkspace() {
       setScenarioId(preset.scenario);
       const c = preset.crew;
       const bridge = c?.bridge ?? [];
+      const idByKey = officerIdByKeyRef.current;
       setCrew({
-        captain: c?.captain ?? null,
-        bridge: [bridge[0] ?? null, bridge[1] ?? null],
-        belowDeck: c?.below_deck ?? [],
+        captain: normalizeOfficerRef(c?.captain, idByKey),
+        bridge: [
+          normalizeOfficerRef(bridge[0], idByKey),
+          normalizeOfficerRef(bridge[1], idByKey),
+        ],
+        belowDeck: (c?.below_deck ?? []).map((slot) =>
+          normalizeOfficerRef(slot, idByKey),
+        ),
       });
     }
     if (preset || loopRun) navigate(".", { replace: true, state: {} });
@@ -568,20 +617,34 @@ export function useWorkspace() {
         if (cancelled) {
           return;
         }
-        const next = new Map<string, string>();
+        const nextSeats = new Map<string, string>();
+        const nextIdByKey = new Map<string, string>();
         for (const officer of list) {
-          if (officer.id.trim()) {
-            next.set(officer.id, officer.slot ?? "");
+          const id = officer.id.trim();
+          if (!id) {
+            continue;
+          }
+          nextSeats.set(id, officer.slot ?? "");
+          nextIdByKey.set(id.toLowerCase(), id);
+          const name = officer.name?.trim();
+          if (name) {
+            nextIdByKey.set(name.toLowerCase(), id);
           }
         }
-        setOfficerSeatById(next);
+        officerIdByKeyRef.current = nextIdByKey;
+        setOfficerSeatById(nextSeats);
+        setOfficerIdByKey(nextIdByKey);
+        setCrew((current) => normalizeCrewOfficerIds(current, nextIdByKey));
         setRosterLoadState("done");
       })
       .catch(() => {
         if (cancelled) {
           return;
         }
-        setOfficerSeatById(new Map());
+        const empty = new Map<string, string>();
+        officerIdByKeyRef.current = empty;
+        setOfficerSeatById(empty);
+        setOfficerIdByKey(empty);
         setRosterLoadState("error");
       });
     return () => {
@@ -624,15 +687,13 @@ export function useWorkspace() {
   // Handle running a simulation
   const rosterAnchoringError = (): string | null => {
     const bdSlots = belowDeckSlotCount(shipLevel, belowDeckUnlockLevels);
+    const resolveOfficer = (raw: string | null | undefined): string | null =>
+      normalizeOfficerRef(raw, officerIdByKey);
     const selectedCrewIds = [
-      crew.captain,
-      ...crew.bridge,
-      ...crew.belowDeck.slice(0, bdSlots),
-    ]
-      .filter(
-        (id): id is string => typeof id === "string" && id.trim().length > 0,
-      )
-      .map((id) => id.trim());
+      resolveOfficer(crew.captain),
+      ...crew.bridge.map(resolveOfficer),
+      ...crew.belowDeck.slice(0, bdSlots).map(resolveOfficer),
+    ].filter((id): id is string => id !== null);
 
     const uniqueCrewIds = new Set(selectedCrewIds);
     if (uniqueCrewIds.size !== selectedCrewIds.length) {
@@ -656,10 +717,11 @@ export function useWorkspace() {
     }
 
     const validateSeat = (
-      officerId: string | null,
+      rawOfficer: string | null,
       role: "captain_or_bridge" | "below_decks",
       label: string,
     ): string | null => {
+      const officerId = resolveOfficer(rawOfficer);
       if (!officerId) {
         return null;
       }
