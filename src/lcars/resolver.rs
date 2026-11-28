@@ -2888,4 +2888,56 @@ mod tests {
             "self_count + enemy_count should equal total"
         );
     }
+
+    #[test]
+    fn snw_sam_kirk_compiles_to_additive_base_crit_damage_while_picard_stays_multiplicative() {
+        let Ok(file) = super::super::build_officer_model_file_default() else {
+            return;
+        };
+        let by_id = super::super::index_lcars_officers_by_id(file.officers);
+        let sam_buff = resolve_crew_to_buff_set(
+            "",
+            &["snw-sam-kirk-0a77f9".to_string()],
+            &[],
+            &by_id,
+            &ResolveOptions {
+                tier: Some(2),
+                ..Default::default()
+            },
+        );
+        assert!(
+            sam_buff.crew.seats.iter().any(|s| matches!(
+                s.ability.effect,
+                crate::combat::AbilityEffect::BaseCritDamageBonus(v) if (v - 0.9).abs() < 1e-12
+            )),
+            "SNW Sam Kirk R2 (CritDamage op=Add) must compile to BaseCritDamageBonus(0.9), got {:?}",
+            sam_buff.crew.seats
+        );
+        assert!(
+            sam_buff.crew.seats.iter().all(|s| !matches!(
+                s.ability.effect,
+                crate::combat::AbilityEffect::CritDamageMultiplier(_)
+            )),
+            "SNW Sam Kirk must not compile to multiplicative CritDamageMultiplier"
+        );
+
+        let picard_buff = resolve_crew_to_buff_set(
+            "",
+            &["jean-luc-picard-e0515c".to_string()],
+            &[],
+            &by_id,
+            &ResolveOptions {
+                tier: Some(5),
+                ..Default::default()
+            },
+        );
+        assert!(
+            picard_buff.crew.seats.iter().any(|s| matches!(
+                s.ability.effect,
+                crate::combat::AbilityEffect::CritDamageMultiplier(m) if (m - 1.25).abs() < 1e-12
+            )),
+            "Jean-Luc Picard R5 (CritDamage op=MultiplyAdd) must compile to CritDamageMultiplier(1.25), got {:?}",
+            picard_buff.crew.seats
+        );
+    }
 }

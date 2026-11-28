@@ -229,7 +229,17 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   Universe `Deadlock` (`849650945`, combat-start player Hull Breach) and `Dismantlement` +
 ///   `Photophobia` (`910140799`, round-start +20% counter weapon damage and +10% counter isolytic
 ///   damage gated on `AttackerHullBreach`) across 194 MU hostiles.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 45;
+/// * 45 → 46 (2026-11): Route native STFC officer `CritDamage` `op=Add` abilities (`SNW Sam Kirk`,
+///   `Ent-E Troi`, `Seven of Nine`, `Suder`, etc.) to additive `BaseCritDamageBonus` instead of
+///   multiplicative `CritDamageMultiplier`; fix backwards `IsolyticDefenseBonus` application so
+///   attacker isolytic defense protects against inbound counter-fire rather than defender outbound
+///   shots (and vice versa); evaluate attacker counter-fire CDR and Apex Barrier on live `combat_ctx`
+///   rather than status-zeroed `aux_ctx`; and add exact-bound native research seats for
+///   `NS HB Crit Damage Reduction` (`981948123`), `Blade of Tkon` (`2917329560`),
+///   `Vidiian Honatta Organ Harvester` (`3696141147`), Dauntless `Seek and Destroy Critical
+///   Damage` (`3677857189`), and Dauntless launch HP gate `[83001]` (`Dauntless Hull/Shield
+///   Upgrade` `1730696589` / `1535845511`). Verified against 11 live L61 Harvester fights + L65 control.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 46;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.

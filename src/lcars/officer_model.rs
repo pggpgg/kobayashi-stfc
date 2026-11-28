@@ -660,7 +660,14 @@ fn captain_source_matches(a: &CanonicalAbility, source: &UpstreamCaptainAbility)
 /// (same rules as [map_modifier] for [MappedEffect::StatModify]).
 fn transform_canonical_to_lcars_value(modifier: &str, op: &str, val: f64) -> f64 {
     match modifier {
-        "CritChance" | "CritDamage" => val,
+        "CritChance" => val,
+        "CritDamage" => {
+            if op.eq_ignore_ascii_case("MultiplyAdd") {
+                1.0 + val
+            } else {
+                val
+            }
+        }
         "AllDamage" => {
             if op.eq_ignore_ascii_case("MultiplyAdd") {
                 1.0 + val
@@ -1860,8 +1867,11 @@ fn map_modifier(modifier: &str, a: &CanonicalAbility) -> Option<MappedEffect> {
             MappedEffect::StatModify("unsupported_officer_effect".into(), "add".into(), val)
         }
         "CritChance" => MappedEffect::StatModify("crit_chance".into(), "add".into(), val),
-        // Native critical damage is an additive bonus over a noncritical hit. Keep this
-        // contribution in the flat-addition pool; `crit_damage` is a multiplier key.
+        // Native `CritDamage` with `MultiplyAdd` (e.g. Jean-Luc Picard) scales the critical
+        // multiplier; `Add`/`Sub` rows contribute additive percentage points in the flat pool.
+        "CritDamage" if op.eq_ignore_ascii_case("MultiplyAdd") => {
+            MappedEffect::StatModify("crit_damage".into(), "multiply".into(), 1.0 + val)
+        }
         "CritDamage" => {
             let operation = if stacks_on_damage_taken(a) && op == "Sub" { "sub" } else { "add" };
             MappedEffect::StatModify("crit_damage_flat".into(), operation.into(), val)

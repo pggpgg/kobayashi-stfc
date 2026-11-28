@@ -2672,7 +2672,6 @@ fn simulate_combat_from_setup_inner(
                         attacker_base_armor_piercing_reduction,
                         defender_base_piercing_bonus,
                         defender_base_armor_piercing_bonus,
-                        weapon_round_base: &weapon_round_base,
                         phase_effects: &phase_effects,
                         defender_shield_break_effects,
                         defender_shield_break_carry,
@@ -5441,11 +5440,13 @@ fn fire_attacker_weapon(p: FireAttackerWeapon) {
             let effective_isolytic_damage = (attacker.isolytic_damage
                 + phase_effects.composed_isolytic_damage_bonus())
             .max(0.0);
-            let effective_isolytic_defense = (defender.isolytic_defense
-                + hostile_combat_begin_isolytic_defense
-                + phase_effects.composed_isolytic_defense_bonus()
-                + inb_iso_def)
-                .max(0.0);
+            // Defender's isolytic defense only: `phase_effects` holds the *attacker's* own
+            // `IsolyticDefenseBonus` (e.g. DTI Temporal Device, Mara Dalen), which protects
+            // the attacker against inbound counter-fire and must never shield the defender
+            // from the attacker's outbound shots.
+            let effective_isolytic_defense =
+                (defender.isolytic_defense + hostile_combat_begin_isolytic_defense + inb_iso_def)
+                    .max(0.0);
             let effective_isolytic_cascade = phase_effects
                 .composed_isolytic_cascade_damage_bonus()
                 .max(0.0);
@@ -5786,7 +5787,6 @@ struct FireDefenderCounter<'a> {
     attacker_base_armor_piercing_reduction: f64,
     defender_base_piercing_bonus: f64,
     defender_base_armor_piercing_bonus: f64,
-    weapon_round_base: &'a EffectAccumulator,
     phase_effects: &'a EffectAccumulator,
     defender_shield_break_effects: &'a [ActiveAbilityEffect],
     defender_shield_break_carry: &'a [usize],
@@ -5860,7 +5860,6 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         attacker_base_armor_piercing_reduction,
         defender_base_piercing_bonus,
         defender_base_armor_piercing_bonus,
-        weapon_round_base,
         phase_effects,
         defender_shield_break_effects,
         defender_shield_break_carry,
@@ -5929,9 +5928,7 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         || !defender_round_start_effects.is_empty()
         || !defender_attack_phase_effects.is_empty()
         || !defender_defense_phase_effects.is_empty();
-    let need_attacker_counter_ctx = attacker_has_hostile_crit_damage_reduction
-        || attacker_has_apex_barrier_bonus
-        || (!defender_is_player_ship && need_defender_effects_ctx);
+    let need_attacker_counter_ctx = !defender_is_player_ship && need_defender_effects_ctx;
     if need_attacker_counter_ctx {
         set_ctx_dynamic(
             aux_ctx,
@@ -6158,9 +6155,11 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         && st.defender_on_hit_stack_entries.is_empty();
 
     // Crew-derived CDR for this round (per-round sum of active seats, already
-    // clamped to [0, 0.95] inside the resolver — see PR #188).
+    // clamped to [0, 0.95] inside the resolver — see PR #188). Evaluate on the
+    // live attacker `combat_ctx` so post-proc status gates (e.g. NS HB Crit Damage
+    // Reduction `DefenderHullBreach`, Morale-gated CDR) see this round's active states.
     let hostile_crit_reduction = if attacker_has_hostile_crit_damage_reduction {
-        hostile_crit_damage_reduction_active_at_round(attacker_crew, aux_ctx, round_index)
+        hostile_crit_damage_reduction_active_at_round(attacker_crew, combat_ctx, round_index)
     } else {
         ActiveHostileCritReduction::default()
     };
@@ -6303,7 +6302,10 @@ fn fire_defender_counter(p: FireDefenderCounter) {
     // (e.g. Mirror Uhura).
     let mut counter_apex_barrier = if attacker_has_apex_barrier_bonus {
         (attacker.apex_barrier
-            + crate::combat::abilities::attacker_apex_barrier_bonus_active(attacker_crew, aux_ctx))
+            + crate::combat::abilities::attacker_apex_barrier_bonus_active(
+                attacker_crew,
+                combat_ctx,
+            ))
         .max(0.0)
     } else {
         attacker.apex_barrier.max(0.0)
@@ -6644,17 +6646,16 @@ fn fire_defender_counter(p: FireDefenderCounter) {
         let counter_pre_attack_damage = defender_phase_effects.composed_pre_attack_damage();
         let counter_after_attack_phase =
             defender_phase_effects.compose_attack_phase_damage(counter_pre_attack_damage);
-        // Attacker CombatBegin / RoundStart isolytic defense (e.g. Mara Dalen bridge)
-        // must reduce isolytic taken on counter-fire, not only on outbound shots.
-        let attacker_static_iso_def_bonus = weapon_round_base.composed_isolytic_defense_bonus();
+        // Attacker CombatBegin / RoundStart / DefensePhase isolytic defense (e.g. Mara Dalen
+        // bridge, DTI Temporal Device) reduces isolytic taken on counter-fire. Never add
+        // `defender_phase_effects.composed_isolytic_defense_bonus()` here — that is the
+        // *defender's* own isolytic defense, not the attacker's.
+        let attacker_iso_def_bonus = phase_effects.composed_isolytic_defense_bonus();
         let counter_iso_taken = compute_isolytic_taken(
             defender_phase_effects.compose_isolytic_base_damage(counter_unmitigated_weapon_damage),
             (defender.isolytic_damage + defender_phase_effects.composed_isolytic_damage_bonus())
                 .max(0.0),
-            (attacker.isolytic_defense
-                + attacker_static_iso_def_bonus
-                + defender_phase_effects.composed_isolytic_defense_bonus())
-            .max(0.0),
+            (attacker.isolytic_defense + attacker_iso_def_bonus).max(0.0),
             defender_phase_effects
                 .composed_isolytic_cascade_damage_bonus()
                 .max(0.0),
@@ -9376,5 +9377,248 @@ mod reusable_attacker_tests {
             .collect();
         let reused = simulate_combat_batch(&setup, &seeds);
         assert_eq!(reused, fresh);
+    }
+
+    #[test]
+    fn attacker_isolytic_defense_protects_inbound_and_never_reduces_outbound_isolytic() {
+        let attacker = Combatant {
+            id: "att".into(),
+            attack: 1_000.0,
+            hull_health: 100_000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.0,
+            isolytic_damage: 1.0,
+            isolytic_defense: 0.0,
+            weapons: vec![WeaponStats {
+                attack: 1_000.0,
+                shots: Some(1),
+                ..WeaponStats::default()
+            }],
+            ..Combatant::default()
+        };
+        let defender = Combatant {
+            id: "def".into(),
+            attack: 500.0,
+            hull_health: 100_000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.0,
+            isolytic_damage: 0.5,
+            isolytic_defense: 0.0,
+            weapons: vec![WeaponStats {
+                attack: 500.0,
+                shots: Some(1),
+                ..WeaponStats::default()
+            }],
+            ..Combatant::default()
+        };
+        let config = SimulationConfig {
+            rounds: 1,
+            seed: 19,
+            trace_mode: TraceMode::Off,
+            ..SimulationConfig::default()
+        };
+        let empty = CrewConfiguration::default();
+        let attacker_iso_def_crew = CrewConfiguration {
+            seats: vec![CrewSeatContext::legacy(
+                CrewSeat::Ship,
+                Ability {
+                    weapon_scope: WeaponTypeScope::All,
+                    name: "dti_temporal_device_style".into(),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::RoundStart,
+                    boostable: false,
+                    effect: AbilityEffect::IsolyticDefenseBonus(1.0),
+                    condition: None,
+                },
+                false,
+            )],
+        };
+        let defender_iso_def_crew = CrewConfiguration {
+            seats: vec![CrewSeatContext::legacy(
+                CrewSeat::Ship,
+                Ability {
+                    weapon_scope: WeaponTypeScope::All,
+                    name: "hostile_iso_def".into(),
+                    class: AbilityClass::ShipAbility,
+                    timing: TimingWindow::CombatBegin,
+                    boostable: false,
+                    effect: AbilityEffect::IsolyticDefenseBonus(1.0),
+                    condition: None,
+                },
+                false,
+            )],
+        };
+
+        let base = simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            &defender,
+            &config,
+            &empty,
+            OpponentFactionTag::Unknown,
+            ShipType::Survey,
+            ShipType::Interceptor,
+            true,
+            false,
+            &empty,
+        );
+        let with_att_def = simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            &defender,
+            &config,
+            &attacker_iso_def_crew,
+            OpponentFactionTag::Unknown,
+            ShipType::Survey,
+            ShipType::Interceptor,
+            true,
+            false,
+            &empty,
+        );
+        let with_def_def = simulate_combat_with_defender_faction_and_defender_crew(
+            &attacker,
+            &defender,
+            &config,
+            &empty,
+            OpponentFactionTag::Unknown,
+            ShipType::Survey,
+            ShipType::Interceptor,
+            true,
+            false,
+            &defender_iso_def_crew,
+        );
+
+        // Attacker's own IsolyticDefenseBonus must NOT reduce attacker's outbound isolytic damage,
+        // and MUST reduce inbound counter isolytic damage taken by the attacker.
+        assert!(
+            (with_att_def.total_isolytic_damage - base.total_isolytic_damage).abs() < 1e-6,
+            "attacker IsolyticDefenseBonus must not shrink outbound isolytic: base={} with={}",
+            base.total_isolytic_damage,
+            with_att_def.total_isolytic_damage
+        );
+        assert!(
+            with_att_def.attacker_hull_remaining > base.attacker_hull_remaining,
+            "attacker IsolyticDefenseBonus must protect attacker from counter isolytic"
+        );
+
+        // Defender's own IsolyticDefenseBonus MUST reduce attacker's outbound isolytic damage,
+        // and must NOT reduce defender's own counter isolytic damage against the attacker.
+        assert!(
+            (with_def_def.total_isolytic_damage - base.total_isolytic_damage * 0.5).abs() < 1e-6,
+            "defender IsolyticDefenseBonus(1.0) must halve outbound isolytic: base={} with={}",
+            base.total_isolytic_damage,
+            with_def_def.total_isolytic_damage
+        );
+        assert!(
+            (with_def_def.attacker_hull_remaining - base.attacker_hull_remaining).abs() < 1e-6,
+            "defender IsolyticDefenseBonus must not shield the attacker from counter isolytic"
+        );
+    }
+
+    #[test]
+    fn counter_fire_hostile_cdr_sees_live_round_start_defender_hull_breach() {
+        let attacker = Combatant {
+            id: "dauntless".into(),
+            attack: 10.0,
+            hull_health: 100_000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.0,
+            weapons: vec![WeaponStats {
+                attack: 10.0,
+                shots: Some(1),
+                ..WeaponStats::default()
+            }],
+            ..Combatant::default()
+        };
+        let defender = Combatant {
+            id: "harvester".into(),
+            attack: 1_000.0,
+            crit_chance: 1.0,
+            crit_multiplier: 1.5,
+            hull_health: 100_000.0,
+            shield_health: 0.0,
+            shield_mitigation: 0.0,
+            weapons: vec![WeaponStats {
+                attack: 1_000.0,
+                crit_chance: Some(1.0),
+                crit_multiplier: Some(1.5),
+                shots: Some(1),
+                ..WeaponStats::default()
+            }],
+            ..Combatant::default()
+        };
+        let config = SimulationConfig {
+            rounds: 1,
+            seed: 31,
+            trace_mode: TraceMode::Off,
+            ..SimulationConfig::default()
+        };
+
+        let ns_hb_cdr = CrewSeatContext::legacy(
+            CrewSeat::Ship,
+            Ability {
+                weapon_scope: WeaponTypeScope::All,
+                name: "native_66_981948123".into(),
+                class: AbilityClass::ShipAbility,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::HostileCritDamageReduction {
+                    reduction: 2.0,
+                    duration_rounds: 1,
+                    additive_percentage_points: true,
+                    stacks: false,
+                },
+                condition: Some(AbilityCondition::And(vec![
+                    AbilityCondition::DefenderHullBreach,
+                    AbilityCondition::Not(Box::new(AbilityCondition::AttackerAtStation)),
+                ])),
+            },
+            false,
+        );
+        let apply_hb = CrewSeatContext::legacy(
+            CrewSeat::BelowDeck,
+            Ability {
+                weapon_scope: WeaponTypeScope::All,
+                name: "belanna_hb".into(),
+                class: AbilityClass::BelowDeck,
+                timing: TimingWindow::RoundStart,
+                boostable: false,
+                effect: AbilityEffect::HullBreach {
+                    chance: 1.0,
+                    duration_rounds: 1,
+                    requires_critical: false,
+                },
+                condition: None,
+            },
+            false,
+        );
+
+        let without_hb = simulate_combat(
+            &attacker,
+            &defender,
+            &config,
+            &CrewConfiguration {
+                seats: vec![ns_hb_cdr.clone()],
+            },
+        );
+        let with_hb = simulate_combat(
+            &attacker,
+            &defender,
+            &config,
+            &CrewConfiguration {
+                seats: vec![apply_hb, ns_hb_cdr],
+            },
+        );
+
+        // Without Hull Breach: hostile crits for 1_000 * 1.5 = 1_500 damage.
+        assert!(
+            ((attacker.hull_health - without_hb.attacker_hull_remaining) - 1_500.0).abs() < 1e-6,
+            "without Hull Breach, NS HB CDR must stay inert (took {})",
+            attacker.hull_health - without_hb.attacker_hull_remaining
+        );
+        // With RoundStart Hull Breach: NS HB CDR (-2.00) drives hostile crit 1.50 - 2.00 -> 0.00.
+        assert!(
+            (attacker.hull_health - with_hb.attacker_hull_remaining).abs() < 1e-6,
+            "with RoundStart Hull Breach, NS HB CDR must zero hostile crit damage (took {})",
+            attacker.hull_health - with_hb.attacker_hull_remaining
+        );
     }
 }

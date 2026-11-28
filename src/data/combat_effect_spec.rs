@@ -146,7 +146,13 @@ pub enum AbilityModifierSpec {
     HostileCritChanceReduction,
     /// Source coefficient and proc are retained, but the combat mechanic is unverified.
     UnsupportedOfficerEffect,
+    /// Multiplicative critical-damage factor (`op=multiply`, legacy hostile/ship/officer rows
+    /// such as `Critical Training` and `Jean-Luc Picard`).
     CritDamage,
+    /// Additive critical-damage percentage points (`op=add` / `op=sub`, native STFC `CritDamage`
+    /// officer abilities such as `SNW Sam Kirk`, `Ent-E Troi`, `Seven of Nine`, `Suder`, etc.;
+    /// compiles to [`crate::combat::abilities::AbilityEffect::BaseCritDamageBonus`]).
+    CritDamageFlat,
     Pierce,
     /// Additive shield-mitigation bonus. `target=AttackerSelf` buffs the attacker's own mitigation
     /// on counter-fire; otherwise it buffs the defender's mitigation. The *multiplicative* "ignore X%

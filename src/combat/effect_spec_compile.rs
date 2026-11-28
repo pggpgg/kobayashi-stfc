@@ -565,7 +565,7 @@ fn try_compile_reactive_damage_taken(
                 duration_rounds,
             )
         }
-        AbilityModifierSpec::CritDamage => {
+        AbilityModifierSpec::CritDamage | AbilityModifierSpec::CritDamageFlat => {
             if !is_self_target || op != "add" {
                 return Some(unsupported());
             }
@@ -1067,7 +1067,7 @@ fn compile_officer_combat_spec_impl(
                 compiled_condition.clone(),
             ))
         }
-        AbilityModifierSpec::CritDamage => {
+        AbilityModifierSpec::CritDamage | AbilityModifierSpec::CritDamageFlat => {
             let v = scalar_fraction(
                 spec.value
                     .as_ref()
@@ -1127,6 +1127,36 @@ fn compile_officer_combat_spec_impl(
                             compiled_condition.clone(),
                         ));
                     }
+                }
+            }
+            if spec.modifier == AbilityModifierSpec::CritDamageFlat {
+                // Native STFC `CritDamage` with `op=Add` (e.g. SNW Sam Kirk, Ent-E Troi,
+                // Seven of Nine, Suder, Kerla) adds percentage points to the base critical
+                // multiplier before Hull Breach rather than multiplying the entire crit factor.
+                // Live-verified across 187 outbound crits in L61 Harvester logs:
+                //   (base 10.06 + 0.90 Sam Kirk R2) × 1.50 HB = 16.44× (R1–R2) / 16.065× (R3+)
+                //   vs multiplicative 9.26 × 1.90 × 1.50 = 26.39×.
+                let additive = match op {
+                    "add" => v,
+                    "sub" => -v,
+                    _ => {
+                        return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                            modifier: spec.modifier,
+                            operation: spec.operation,
+                        });
+                    }
+                };
+                if additive.is_finite() {
+                    return Ok((
+                        timing,
+                        AbilityEffect::BaseCritDamageBonus(additive),
+                        compiled_condition.clone(),
+                    ));
+                } else {
+                    return Err(EffectSpecCompileError::UnsupportedModifierOperation {
+                        modifier: spec.modifier,
+                        operation: spec.operation,
+                    });
                 }
             }
             let mult = match op {
@@ -2355,6 +2385,7 @@ pub fn compile_research_attack_effect(
         AbilityModifierSpec::CritDamage => Ok(AbilityEffect::CritDamageMultiplier(
             (1.0 + v).max(crate::combat::EPSILON),
         )),
+        AbilityModifierSpec::CritDamageFlat => Ok(AbilityEffect::BaseCritDamageBonus(v)),
         AbilityModifierSpec::ApexShred => Ok(AbilityEffect::ApexShredBonus(v)),
         AbilityModifierSpec::ApexBarrier => Ok(AbilityEffect::ApexBarrierBonus(v)),
         AbilityModifierSpec::CritMitigationRating => {
