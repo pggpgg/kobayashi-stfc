@@ -3710,9 +3710,10 @@ fn native_combat_start_seats_for_profile(
         ),
     );
     let ship_grade = ship.and_then(|ship| ship.grade);
+    let ship_id = ship.map(|ship| ship.id.as_str());
     seats.extend(
-        crate::data::native_research_buffs::combat_start_offense_and_cdr_seats_for_imported_buffs(
-            &imported, ship_grade, now,
+        crate::data::native_research_buffs::combat_start_offense_and_cdr_seats_for_ship(
+            &imported, ship_grade, ship_id, now,
         ),
     );
     seats.extend(

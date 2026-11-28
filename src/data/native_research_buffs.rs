@@ -250,11 +250,23 @@ pub fn combat_start_offense_and_cdr_seats_for_imported_buffs(
     ship_grade: Option<u32>,
     now_unix_seconds: i64,
 ) -> Vec<CrewSeatContext> {
+    combat_start_offense_and_cdr_seats_for_ship(imported, ship_grade, None, now_unix_seconds)
+}
+
+/// Ship-aware variant enabling ship-gated Seek and Destroy research seats
+/// (`bid=3677857189` on `uss_dauntless` vs non-Armada hostiles).
+pub fn combat_start_offense_and_cdr_seats_for_ship(
+    imported: &[GlobalBuffEntry],
+    ship_grade: Option<u32>,
+    ship_id: Option<&str>,
+    now_unix_seconds: i64,
+) -> Vec<CrewSeatContext> {
     combat_start_research_and_building_seats_from_catalog_for_group(
         embedded_catalog(),
         66,
         imported,
         ship_grade,
+        ship_id,
         now_unix_seconds,
     )
 }

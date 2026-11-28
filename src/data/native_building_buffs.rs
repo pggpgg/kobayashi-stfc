@@ -96,6 +96,7 @@ pub fn combat_start_offense_seats_for_imported_buffs(
         68,
         imported,
         ship_grade,
+        None,
         now_unix_seconds,
     )
 }

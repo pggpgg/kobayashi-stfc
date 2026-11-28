@@ -239,7 +239,7 @@
     {
       "rid": 3407808029,
       "name": "NS HB Crit Damage Reduction",
-      "source_note": "Quarantined: client BuffSpec 981948123 targets code6 and contains conditions37 AND137, plus one-round duration at RoundStart. The prior override silently omitted condition137 and used a different timing. Empty override prevents reintroducing that unsupported scope. Source values/conditions remain in data/research/client_buff_semantics_2026-10-20.json.",
+      "source_note": "Handled via exact SHA-256-bound native BuffSpec 981948123 in src/data/native_consumable_buffs.rs (target=6 EnemyShip, trig=18 RoundStart, num_rounds=1, conds=[37 DefenderHullBreach, 137 !AtStation], op=2 additive enemy CDR). Live-verified across 27/27 zero-damage hostile crits in L61 Harvester logs vs 7/7 1.28x crits in L65 control without Hull Breach. Empty canonical override prevents legacy catalog duplication.",
       "effects": []
     },
     {

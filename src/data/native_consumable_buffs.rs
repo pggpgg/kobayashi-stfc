@@ -610,6 +610,7 @@ pub(crate) fn combat_start_research_and_building_seats_from_catalog_for_group(
     expected_group: u32,
     imported: &[GlobalBuffEntry],
     ship_grade: Option<u32>,
+    ship_id: Option<&str>,
     now_unix_seconds: i64,
 ) -> Vec<CrewSeatContext> {
     if catalog.schema_version != 1
@@ -694,6 +695,7 @@ pub(crate) fn combat_start_research_and_building_seats_from_catalog_for_group(
                     bid,
                     spec,
                     value,
+                    ship_id,
                     &non_armada_hostile,
                     &defender_has_any_state,
                     &space_non_armada,
@@ -896,6 +898,7 @@ fn exact_bound_research_combat_seat(
     bid: i64,
     spec: &NativeBuffSpec,
     value: f64,
+    ship_id: Option<&str>,
     non_armada_hostile: &impl Fn() -> AbilityCondition,
     defender_has_any_state: &impl Fn() -> AbilityCondition,
     space_non_armada: &impl Fn() -> AbilityCondition,
@@ -1005,6 +1008,50 @@ fn exact_bound_research_combat_seat(
                 Some(AbilityCondition::And(vec![
                     AbilityCondition::AttackerShipTypeIs(ShipType::Explorer),
                     AbilityCondition::MoraleActive,
+                ])),
+            ))
+        }
+        // Blade of Tkon (rid 4095357598): Interceptor + Hull Breach → +Isolytic Damage at RoundStart.
+        // Live-verified across 567 outbound shots in 11 Dauntless vs L61 Harvester logs:
+        // R1–R3 isolytic ratio 3.41000 (base 1.23 + 0.10 Flute + 0.20 NS Morale + 0.20 NS HB
+        // + 0.34 Strand + 0.08 Blade of Tkon = 2.15000, ×1.40 Chapel cascade + 0.40 = 3.41000).
+        2_917_329_560 => {
+            let exact = spec.sha256
+                == "dca812a1f84ae526e88bf778d98a64a83678e376cecd4404e7b382ecd9e66ac7"
+                && spec.modifier_code == 707
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 18
+                && spec.condition_codes == [1, 37]
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 1;
+            exact.then_some((
+                TimingWindow::RoundStart,
+                AbilityEffect::IsolyticDamageBonus(value),
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::AttackerShipTypeIs(ShipType::Interceptor),
+                    AbilityCondition::DefenderHullBreach,
+                ])),
+            ))
+        }
+        // Vidiian Honatta Organ Harvester (rid 428645899): Battleship + Burning → +Isolytic Damage at RoundStart.
+        // Symmetric Battleship twin of Captain Proton's Blaster (3619655850) and Blade of Tkon (2917329560).
+        3_696_141_147 => {
+            let exact = spec.sha256
+                == "43651f70c765284db828e6d77ee4dc0d7152f7ba40893457fc891c74e2559fc9"
+                && spec.modifier_code == 707
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 18
+                && spec.condition_codes == [2, 38]
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 1;
+            exact.then_some((
+                TimingWindow::RoundStart,
+                AbilityEffect::IsolyticDamageBonus(value),
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::AttackerShipTypeIs(ShipType::Battleship),
+                    AbilityCondition::DefenderBurning,
                 ])),
             ))
         }
@@ -1388,6 +1435,60 @@ fn exact_bound_research_combat_seat(
                 ])),
             ))
         }
+        // NS HB Crit Damage Reduction (rid 3407808029): additive enemy crit-damage reduction
+        // (`mod=10, op=2 Sub, target=6 EnemyShip, trig=18 RoundStart, num_rounds=1`) when the
+        // target has Hull Breach (cond 37) in space (cond 137 = !AtStation).
+        // Live-verified across 27/27 zero-damage hostile crits in L61 Harvester logs with
+        // B'Elanna Hull Breach (`1.50 - 0.60 - 2.00 -> 0.00`) vs 7/7 1.28× hostile crits in
+        // L65 Harvester control without Hull Breach (`(1.50 - 0.60) * 0.95 * 1.50 = 1.2825`).
+        981_948_123 => {
+            let exact = spec.sha256
+                == "14b30497734e8d846e25a6bd5350e1ae9c4682a691c5b97794b0fde2ab50c313"
+                && spec.modifier_code == 10
+                && spec.operation_code == 2
+                && spec.target_code == 6
+                && spec.trigger_code == 18
+                && spec.condition_codes == [37, 137]
+                && spec.attribute_fields == [2, 8]
+                && spec.num_rounds == 1;
+            exact.then_some((
+                TimingWindow::RoundStart,
+                AbilityEffect::HostileCritDamageReduction {
+                    reduction: value,
+                    duration_rounds: 1,
+                    additive_percentage_points: true,
+                    stacks: false,
+                },
+                Some(AbilityCondition::And(vec![
+                    AbilityCondition::DefenderHullBreach,
+                    AbilityCondition::Not(Box::new(AbilityCondition::AttackerAtStation)),
+                ])),
+            ))
+        }
+        // Seek and Destroy Critical Damage (rid 3072782009): +Crit Damage on U.S.S. Dauntless
+        // (cond 83001) while Seek and Destroy is active (cond 83002) vs non-Armada hostiles
+        // (conds 27, 131). Strictly gated on `ship_id == Some("uss_dauntless")` alongside the
+        // Dauntless ship abilities (`1905773933` Active Sweep and `985810609` Apex Barrier).
+        // Live-verified across 223 outbound crits: L65 Harvester control (`8.21 + 0.80 = 9.01×`
+        // vs observed `9.02×`) and 11 L61 Harvester fights (`(9.01 + 0.80 + 0.90) * 1.5 = 16.065×`
+        // R3+ / `16.440×` R1–R2 vs observed `16.18×` / `16.63×`).
+        3_677_857_189 => {
+            let exact = ship_id == Some("uss_dauntless")
+                && spec.sha256
+                    == "22830a50b35e90eeec642aad87a3cbce3496e53688d764bbb5a3f6fb15053a8b"
+                && spec.modifier_code == 10
+                && spec.operation_code == 1
+                && spec.target_code == 1
+                && spec.trigger_code == 25
+                && spec.condition_codes == [83001, 27, 131, 83002]
+                && spec.attribute_fields.is_empty()
+                && spec.num_rounds == 0;
+            exact.then_some((
+                TimingWindow::CombatBegin,
+                AbilityEffect::BaseCritDamageBonus(value),
+                Some(non_armada_hostile()),
+            ))
+        }
         _ => None,
     }
 }
@@ -1665,6 +1766,7 @@ fn ship_gated_setup_bonuses_from_catalogs(
             [126] => owner.as_deref() == Some("klingon"),
             [240] => matches!(owner.as_deref(), Some("federation" | "klingon" | "romulan")),
             [217] => ship_id == "uss_enterprise_d",
+            [83001] => ship_id == "uss_dauntless",
             [class @ (0..=3), 123] => {
                 ship_grade.is_some_and(|grade| grade >= 4)
                     && ship_class
@@ -2026,6 +2128,8 @@ mod tests {
             (240, None, None, "unknown", false),
             (217, None, None, "uss_enterprise_d", true),
             (217, None, None, "uss_enterprise", false),
+            (83001, None, None, "uss_dauntless", true),
+            (83001, None, None, "uss_reliant", false),
         ] {
             let mut row = spec();
             row.condition_codes = vec![condition];
@@ -3468,11 +3572,14 @@ mod tests {
             entry(929_316_566, 20, None),   // Picard's Ressikin Flute (+0.10, R1-3)
             entry(2_389_331_294, 2, None),  // Kataan Telescope (+0.015 vs Interceptor)
             entry(3_619_655_850, 20, None), // Captain Proton's Blaster (+0.08 Exp+Morale)
+            entry(2_917_329_560, 20, None), // Blade of Tkon (+0.08 Int+HB)
+            entry(3_696_141_147, 20, None), // Vidiian Honatta Organ Harvester (+0.08 BS+Burning)
             entry(2_049_749_198, 4, None),  // Strand of Krenim Hair (+0.34 opp state)
             entry(2_079_351_526, 1, None),  // DTI Temporal Device (+0.09 iso def opp state)
             entry(1_606_929_203, 10, None), // Space Critical Resistance (-0.30 additive CDR)
             entry(2_477_192_666, 10, None), // Explorer Space Critical Resist (-0.30 additive CDR)
-            entry(2_885_570_825, 4, None),  // Guardian of Forever (0.05 mult CDR)
+            entry(981_948_123, 10, None), // NS HB Crit Damage Reduction (-2.00 additive CDR, HB+space)
+            entry(2_885_570_825, 4, None), // Guardian of Forever (0.05 mult CDR)
             entry(3_486_871_817, 5, None), // Exposed Interceptors (+0.025 crit chance vs hostile int)
             entry(3_737_933_898, 8, None), // Orb of the Emissary (+0.09 crit chance Exp vs Int)
             entry(1_450_484_905, 14, None), // Hostile Stakeout (+0.08 crit chance vs non-Armada)
@@ -3480,25 +3587,76 @@ mod tests {
             entry(2_900_801_564, 5, None), // Section 31 Crit Hit Damage (+0.25, R1-2)
             entry(10_304_068, 5, None),    // KSG Critical Chance Reduction (-0.025, R1-2)
             entry(1_238_401_736, 4, None), // Annorax's Datapad (+800 Apex Barrier vs non-Armada, no Tal)
-            entry(3_677_857_189, 3, None), // Seek and Destroy Crit Dmg [83001,27,131,83002] -> QUARANTINED
+            entry(3_677_857_189, 3, None), // Seek and Destroy Crit Dmg [83001,27,131,83002] -> Dauntless only
         ];
         let seats = combat_start_research_and_building_seats_from_catalog_for_group(
             res_catalog,
             66,
             &res_rows,
             Some(4),
+            None,
             0,
         );
         assert_eq!(
             seats.len(),
-            25,
-            "all 25 verified rows compile and unverified ship-ability-gated rows stay quarantined"
+            28,
+            "all 28 verified non-ship-specific rows compile; Dauntless-only rows stay gated off for None/other ships"
         );
         assert!(
             seats
                 .iter()
                 .all(|s| s.ability.name != "native_66_3677857189"),
-            "Seek and Destroy Crit Damage (unknown 83001/83002) must stay quarantined"
+            "Seek and Destroy Crit Damage must not activate when ship_id is None"
+        );
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_2917329560"
+                && s.ability.timing == TimingWindow::RoundStart
+                && matches!(s.ability.effect, AbilityEffect::IsolyticDamageBonus(v) if (v - 0.08).abs() < 1e-12)
+        }));
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_3696141147"
+                && s.ability.timing == TimingWindow::RoundStart
+                && matches!(s.ability.effect, AbilityEffect::IsolyticDamageBonus(v) if (v - 0.08).abs() < 1e-12)
+        }));
+        assert!(seats.iter().any(|s| {
+            s.ability.name == "native_66_981948123"
+                && s.ability.timing == TimingWindow::RoundStart
+                && matches!(
+                    s.ability.effect,
+                    AbilityEffect::HostileCritDamageReduction {
+                        reduction,
+                        duration_rounds: 1,
+                        additive_percentage_points: true,
+                        stacks: false,
+                    } if (reduction - 2.0).abs() < 1e-12
+                )
+        }));
+        let dauntless_seats = combat_start_research_and_building_seats_from_catalog_for_group(
+            res_catalog,
+            66,
+            &res_rows,
+            Some(4),
+            Some("uss_dauntless"),
+            0,
+        );
+        assert_eq!(dauntless_seats.len(), 29);
+        assert!(dauntless_seats.iter().any(|s| {
+            s.ability.name == "native_66_3677857189"
+                && matches!(s.ability.effect, AbilityEffect::BaseCritDamageBonus(v) if (v - 0.80).abs() < 1e-12)
+        }));
+        let reliant_seats = combat_start_research_and_building_seats_from_catalog_for_group(
+            res_catalog,
+            66,
+            &res_rows,
+            Some(4),
+            Some("uss_reliant"),
+            0,
+        );
+        assert!(
+            reliant_seats
+                .iter()
+                .all(|s| s.ability.name != "native_66_3677857189"),
+            "Seek and Destroy Crit Damage must stay off for non-Dauntless ships"
         );
         assert!(seats.iter().any(|s| {
             s.ability.name == "native_66_1450484905"
@@ -3551,6 +3709,7 @@ mod tests {
                 entry(1_768_821_190, 62, None),
             ],
             Some(4),
+            None,
             0,
         );
         assert_eq!(bld_seats.len(), 2);
