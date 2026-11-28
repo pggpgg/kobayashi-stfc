@@ -457,6 +457,65 @@ describe("useWorkspace", () => {
     });
   });
 
+  it("normalizes officer display names from Loops Re-optimize preset into canonical IDs so Run Optimize and Simulate succeed", async () => {
+    const preset: Preset = {
+      id: "loop-mu-rep-grind-1883361634",
+      name: "MU Rep Grind L65",
+      ship: "uss_dauntless",
+      scenario: "1883361634",
+      crew: {
+        captain: "Officer 1",
+        bridge: ["Bridge 1"],
+        below_deck: ["Below 1"],
+      },
+      schema_version: 2,
+      provenance: {
+        saved_at: "2026-11-27T00:00:00Z",
+        kobayashi_version: "loops-workspace",
+      },
+    };
+    const loopRun = {
+      loopId: "mu-rep-grind",
+      loopName: "MU Rep Grind",
+      targetId: "1883361634",
+      targetName: "Imperial Starfleet Planet Harvester",
+      targetLevel: 65,
+      goalId: "kills_per_hull" as const,
+      shipId: "uss_dauntless",
+      shipPolicy: "required" as const,
+      specialtyShipIds: ["uss_dauntless"],
+    };
+
+    const { result } = renderHook(() => useWorkspace(), {
+      wrapper: ({ children }) => (
+        <MemoryRouter
+          initialEntries={[{ pathname: "/", state: { preset, loopRun } }]}
+        >
+          <ProfileProvider>
+            <WorkspaceModeProvider>{children}</WorkspaceModeProvider>
+          </ProfileProvider>
+        </MemoryRouter>
+      ),
+    });
+
+    await waitFor(() => {
+      expect(result.current.crew.captain).toBe("officer-1");
+      expect(result.current.crew.bridge).toEqual(["bridge-1", null]);
+      expect(result.current.crew.belowDeck[0]).toBe("below-1");
+    });
+
+    await act(async () => {
+      await result.current.handleRunOptimize();
+    });
+    expect(apiMocks.mockOptimizeStart).toHaveBeenCalled();
+
+    await act(async () => {
+      await result.current.handleRunSim();
+    });
+    expect(apiMocks.mockSimulate).toHaveBeenCalled();
+    expect(result.current.error).toBeNull();
+  });
+
   it("resumes persisted job: fetches status and clears storage when job is already done", async () => {
     sessionStorage.setItem(
       "kobayashi_active_optimize_job_v1",
