@@ -38,9 +38,9 @@ function formatHostileDiscriminator(h: HostileListItem): string {
 function hostileRowLabel(h: HostileListItem, disambiguate = false): string {
   const base = hostileSortLabel(h);
   if (!disambiguate) {
-    return `${base} (Lvl ${h.level})`;
+    return `Lvl ${h.level} · ${base}`;
   }
-  return `${base} (Lvl ${h.level} · ${formatHostileDiscriminator(h)})`;
+  return `Lvl ${h.level} · ${base} (${formatHostileDiscriminator(h)})`;
 }
 
 interface HostilePickerProps {
@@ -195,8 +195,8 @@ export default memo(function HostilePicker({
     <div
       style={{
         position: "relative",
-        minWidth: 200,
-        maxWidth: 280,
+        minWidth: 240,
+        maxWidth: 380,
         ...style,
       }}
     >
@@ -205,6 +205,7 @@ export default memo(function HostilePicker({
         type="text"
         role="combobox"
         value={loading ? "" : displayValue}
+        title={selectedLabel || undefined}
         readOnly={loading || disabled}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -231,6 +232,7 @@ export default memo(function HostilePicker({
           borderRadius: 6,
           color: "var(--text)",
           fontSize: "0.9rem",
+          textOverflow: "ellipsis",
         }}
       />
       {open && !loading && !disabled && (
@@ -240,7 +242,9 @@ export default memo(function HostilePicker({
           style={{
             position: "absolute",
             left: 0,
-            right: 0,
+            minWidth: "100%",
+            width: "max-content",
+            maxWidth: "min(520px, 90vw)",
             top: "100%",
             marginTop: 2,
             maxHeight: 220,

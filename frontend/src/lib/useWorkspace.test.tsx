@@ -482,6 +482,8 @@ describe("useWorkspace", () => {
       targetLevel: 65,
       goalId: "kills_per_hull" as const,
       shipId: "uss_dauntless",
+      shipTier: 6,
+      shipLevel: 30,
       shipPolicy: "required" as const,
       specialtyShipIds: ["uss_dauntless"],
     };
@@ -499,6 +501,8 @@ describe("useWorkspace", () => {
     });
 
     await waitFor(() => {
+      expect(result.current.shipTier).toBe(6);
+      expect(result.current.shipLevel).toBe(30);
       expect(result.current.crew.captain).toBe("officer-1");
       expect(result.current.crew.bridge).toEqual(["bridge-1", null]);
       expect(result.current.crew.belowDeck[0]).toBe("below-1");

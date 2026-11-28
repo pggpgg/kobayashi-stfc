@@ -36,6 +36,8 @@ export interface LoopRunContext {
   targetLevel: number;
   goalId: LoopGoalId;
   shipId: string;
+  shipTier?: number;
+  shipLevel?: number;
   shipPolicy: "required" | "recommended" | "open";
   specialtyShipIds: string[];
 }

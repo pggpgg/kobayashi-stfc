@@ -526,6 +526,12 @@ export default function LoopsWorkspace() {
       setError("Choose a ship before opening this ladder rung.");
       return;
     }
+    const ownedShip = ships.find((candidate) => candidate.id === shipId);
+    const shipTier =
+      ownedShip?.tier ?? (best?.shipId === shipId ? best.shipTier : undefined);
+    const shipLevel =
+      ownedShip?.level ??
+      (best?.shipId === shipId ? best.shipLevel : undefined);
     const context: LoopRunContext = {
       loopId: selectedLoop.id,
       ladderRevision: getLoopLadderRevision(activeProfileId, selectedLoop.id),
@@ -535,6 +541,8 @@ export default function LoopsWorkspace() {
       targetLevel: hostile.level,
       goalId,
       shipId,
+      ...(shipTier != null ? { shipTier } : {}),
+      ...(shipLevel != null ? { shipLevel } : {}),
       shipPolicy: selectedLoop.shipPolicy,
       specialtyShipIds: [...selectedLoop.specialtyShipIds],
     };
