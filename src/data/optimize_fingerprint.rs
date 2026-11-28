@@ -239,7 +239,17 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   `Vidiian Honatta Organ Harvester` (`3696141147`), Dauntless `Seek and Destroy Critical
 ///   Damage` (`3677857189`), and Dauntless launch HP gate `[83001]` (`Dauntless Hull/Shield
 ///   Upgrade` `1730696589` / `1535845511`). Verified against 11 live L61 Harvester fights + L65 control.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 46;
+/// * 46 → 47 (2026-11): Fix inverted `Titan Shield` (`2004950139`/`171306920`) mapping so it
+///   subtracts opponent shield mitigation vs non-Armada hostiles while Fortified instead of adding
+///   +0.30 to attacker's own shield mitigation (which clamped attacker shield mitigation to 100%
+///   and predicted 100% hull remaining); compile verified Titan-A Fortify & Max Fortification
+///   research seats (`Titan Trigger` 3-round `ShotsBonus`, `Titan Patch` shield regen, `Titan's
+///   Fortune`, `Titan's Spear`, `Titan's Fist`, `Clash of Titan`, `Dynamic Efficiency`, `Titan
+///   Wrecker`, `Titan Force`, `Titan Power`); and model `titan_a_fortification` /
+///   `titan_a_max_fortification` direct stats as additive (`crit_damage_flat: 0.25`,
+///   `weapon_damage_additive_pool: 2.5`) on `selected_ship` in both PvE and PvP. Live-verified
+///   against 6 consecutive U.S.S. Dauntless vs L65 Harvester fights with Max Fortification.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 47;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.

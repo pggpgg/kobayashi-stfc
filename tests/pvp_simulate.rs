@@ -187,12 +187,14 @@ fn pvp_defender_support_buffs_sidecar_resolves() {
         vec!["titan_a_fortification"]
     );
     assert!(
-        resolution
+        (resolution
             .defender_static
-            .get("crit_damage")
+            .get("crit_damage_flat")
             .copied()
-            .unwrap_or(1.0)
-            > 1.0,
-        "titan_a_fortification should raise defender crit_damage static bonus"
+            .unwrap_or(0.0)
+            - 0.25)
+            .abs()
+            < 1e-9,
+        "titan_a_fortification should raise defender crit_damage_flat static bonus by +0.25"
     );
 }

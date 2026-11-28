@@ -386,6 +386,71 @@
           "source_ref": { "rid": 997278854, "buff_id": 3961218589, "loca_id": 62012 }
         }
       ]
+    },
+    {
+      "rid": 2004950139,
+      "name": "Titan Shield",
+      "source_note": "Upstream research 2004950139 / buff 171306920 / loca 53010: Decreases opponent's Shield Mitigation against non-Armada Hostiles while Fortified (ranks 1-10: 0.04..0.30). Gated on Titan-A Fortify via TITAN_A_FORTIFY_GATED_COMBAT_RESEARCH_RIDS. Live-verified 2026-11-28 across 6 U.S.S. Dauntless vs L65 Imperial Starfleet Planet Harvester fights with Max Fortification: outbound shield mitigation 0.3750 (R1-R2) / 0.4000 (R3+: 0.80 - 0.10 WOK Scotty - 0.30 Titan Shield), inbound shield mitigation 0.8250 (R1-R2) / 0.8000 (R3+: untouched by Titan Shield). Negative additive scalar subtracts from opponent shield mitigation; never an own shield bonus.",
+      "effects": [
+        {
+          "id": "research_2004950139_titan_shield_opponent_sm",
+          "modifier": "shield_mitigation",
+          "target": "defender_opponent",
+          "operation": "add",
+          "by_level": [-0.04, -0.06, -0.08, -0.1, -0.12, -0.14, -0.17, -0.2, -0.24, -0.3],
+          "snapshot_by_level": true,
+          "trigger": "combat_begin",
+          "conditions": [
+            { "type": "defender_is_npc_hostile" },
+            { "type": "not", "inner": { "type": "defender_ship_type_is", "ship_type": "armada" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "group_armadas" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "solo_armadas" } },
+            { "type": "not", "inner": { "type": "engagement_includes", "enemy_type": "outpost_armadas" } }
+          ],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 2004950139, "buff_id": 171306920, "loca_id": 53010 }
+        }
+      ]
+    },
+    {
+      "rid": 1947967502,
+      "name": "Titan Trigger",
+      "source_note": "Upstream research 1947967502 / buff 3645831022 / loca 53021: Increases number of shots per weapon for 3 rounds while Max Fortified (ranks 1-5: 0.30, 0.55, 0.80, 1.05, 1.55). Gated on Titan-A Max Fortification via TITAN_MAX_FORTIFICATION_GATED_RESEARCH_RIDS. Live-verified 2026-11-28 across 6 U.S.S. Dauntless vs L65 Imperial Starfleet Planet Harvester fights (lv5 = +1.55): kinetic weapons fired round_half_even(2 * 2.55) = 5 shots and energy weapons fired round_half_even(3 * 2.55) = 8 shots in rounds 1-3, reverting to 2 and 3 shots in round 4+.",
+      "effects": [
+        {
+          "id": "research_1947967502_titan_trigger_shots",
+          "modifier": "shots_bonus",
+          "operation": "add",
+          "by_level": [0.3, 0.55, 0.8, 1.05, 1.55],
+          "snapshot_by_level": true,
+          "trigger": "combat_begin",
+          "duration": { "type": "rounds", "rounds": 3 },
+          "conditions": [],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 1947967502, "buff_id": 3645831022, "loca_id": 53021 }
+        }
+      ]
+    },
+    {
+      "rid": 3706606658,
+      "name": "Titan Patch",
+      "source_note": "Upstream research 3706606658 / buff 2604396570 / loca 53017: Restores Shield Health every round while Max Fortified (ranks 1-10: 0.05..0.30). Gated on Titan-A Max Fortification via TITAN_MAX_FORTIFICATION_GATED_RESEARCH_RIDS. Live-verified 2026-11-28 across 6 U.S.S. Dauntless vs L65 Imperial Starfleet Planet Harvester fights: 0.04 (SNW M'Benga) + 0.16 (Seska) + 0.30 (Titan Patch lv10) = 0.50 * max SHP restored every round.",
+      "effects": [
+        {
+          "id": "research_3706606658_titan_patch_shield_regen",
+          "modifier": "officer_shield_regen_max_fraction",
+          "operation": "add",
+          "by_level": [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.17, 0.2, 0.24, 0.3],
+          "snapshot_by_level": true,
+          "trigger": "round_start",
+          "conditions": [],
+          "category": "combat",
+          "confidence": "authoritative",
+          "source_ref": { "rid": 3706606658, "buff_id": 2604396570, "loca_id": 53017 }
+        }
+      ]
     }
   ]
 }

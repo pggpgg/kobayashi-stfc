@@ -3241,11 +3241,12 @@ fn build_shared_scenario_data_standalone_for_profile(
         None => (HashMap::new(), HashMap::new()),
     };
     if let Some(ref cat) = shared_research_catalog {
-        support_buffs::augment_static_buffs_with_support_gated_research(
+        support_buffs::augment_static_buffs_with_support_gated_research_excluding(
             &mut support_static_buffs,
             &imported_research,
             cat,
             &support_research_gates,
+            Some(&exclude_canonical_rids),
         );
     }
     if let Some(ref cat) = support_cat {
@@ -3431,6 +3432,7 @@ fn build_shared_scenario_data_standalone_for_profile(
             ship_rec.as_ref(),
             profile.syndicate_level,
             defender_opponent.defender_is_player_ship(),
+            &support_research_gates,
         );
 
     let asset_root = crate::runtime_paths::asset_root();
@@ -3657,6 +3659,7 @@ fn native_combat_start_seats_for_profile(
     ship: Option<&ShipRecord>,
     syndicate_level: Option<u32>,
     opponent_is_player: bool,
+    support_gates: &SupportBuffResearchGateState,
 ) -> (Vec<CrewSeatContext>, bool) {
     let imported =
         import::load_imported_buffs(&profile_path(pid, BUFFS_IMPORTED).to_string_lossy())
@@ -3712,8 +3715,12 @@ fn native_combat_start_seats_for_profile(
     let ship_grade = ship.and_then(|ship| ship.grade);
     let ship_id = ship.map(|ship| ship.id.as_str());
     seats.extend(
-        crate::data::native_research_buffs::combat_start_offense_and_cdr_seats_for_ship(
-            &imported, ship_grade, ship_id, now,
+        crate::data::native_research_buffs::combat_start_offense_and_cdr_seats_for_ship_with_support_gates(
+            &imported,
+            ship_grade,
+            ship_id,
+            support_gates,
+            now,
         ),
     );
     seats.extend(
@@ -4081,11 +4088,12 @@ pub(crate) fn build_shared_scenario_data_from_registry_with_context(
             None => (HashMap::new(), HashMap::new()),
         };
     if let Some(cat) = registry.research_catalog() {
-        support_buffs::augment_static_buffs_with_support_gated_research(
+        support_buffs::augment_static_buffs_with_support_gated_research_excluding(
             &mut support_static_buffs,
             &imported_research,
             cat,
             &support_research_gates,
+            Some(&exclude_canonical_rids),
         );
     }
     if let Some(cat) = registry.support_buffs_catalog() {
@@ -4359,6 +4367,7 @@ pub(crate) fn build_shared_scenario_data_from_registry_with_context(
             ship_rec.as_ref(),
             profile.syndicate_level,
             defender_opponent.defender_is_player_ship(),
+            &support_research_gates,
         );
 
     let ship_cargo_capacity =

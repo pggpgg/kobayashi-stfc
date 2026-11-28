@@ -336,6 +336,10 @@ pub struct ResearchCanonicalEffectEntry {
     /// When set, overrides default [`AbilityTriggerSpec::AttackPhase`] in canonical compile.
     #[serde(default)]
     pub trigger: Option<AbilityTriggerSpec>,
+    /// Optional duration forwarded into [`crate::data::combat_effect_spec::CombatEffectSpec::duration`]
+    /// (e.g. `Titan Trigger` 3-round `shots_bonus`).
+    #[serde(default)]
+    pub duration: Option<crate::data::combat_effect_spec::DurationSpec>,
     #[serde(default)]
     pub category: Option<EffectCategory>,
     #[serde(default)]

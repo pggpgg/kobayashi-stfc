@@ -12,6 +12,7 @@ interface SupportBuffCatalogEntry {
   stat_targets?: SupportBuffStatTarget[];
   static_bonus_target?:
     | "attacker"
+    | "selected_ship"
     | "defender_if_player_opponent"
     | "attacker_debuff_if_player_opponent";
 }
@@ -62,11 +63,10 @@ export const DEFIANT_REINFORCE_BUFF_ID = "defiant_reinforce" as const;
 export const MANTIS_STING_BUFF_ID = "mantis_sting" as const;
 
 /**
- * Ids whose direct `static_bonuses` merge onto the defender in PvP-shaped runs.
+ * Ids whose direct `static_bonuses` merge onto the defender only in PvP-shaped runs.
  * Keep aligned with `static_bonus_target: defender_if_player_opponent` in `data/support_buffs.json`.
  */
 export const SUPPORT_BUFF_DEFENDER_ROUTED_WHEN_PLAYER_IDS = [
-  ...TITAN_A_FORTIFY_SUPPORT_BUFF_IDS,
   DEFIANT_REINFORCE_BUFF_ID,
 ] as const;
 
@@ -140,10 +140,12 @@ export function supportBuffOptionsForSide(
   return SUPPORT_BUFF_OPTIONS.filter((option) => {
     const target = staticBonusTargetFor(option.id);
     if (side === "attacker") {
-      return target === "attacker";
+      return target === "attacker" || target === "selected_ship";
     }
     if (side === "defender") {
-      return target === "defender_if_player_opponent";
+      return (
+        target === "defender_if_player_opponent" || target === "selected_ship"
+      );
     }
     return target === "attacker_debuff_if_player_opponent";
   });

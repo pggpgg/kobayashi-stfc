@@ -1001,12 +1001,23 @@ pub fn combat_research_bonuses_for_rid_subset(
     catalog: &ResearchCatalog,
     rids: &[i64],
 ) -> HashMap<String, f64> {
+    combat_research_bonuses_for_rid_subset_excluding(imported_research, catalog, rids, None)
+}
+
+/// Like [`combat_research_bonuses_for_rid_subset`], excluding `exclude_catalog_rids` (canonical
+/// overrides that compile through `research_derived_attack_phase_seats` rather than static buffs).
+pub fn combat_research_bonuses_for_rid_subset_excluding(
+    imported_research: &[ResearchEntry],
+    catalog: &ResearchCatalog,
+    rids: &[i64],
+    exclude_catalog_rids: Option<&HashSet<i64>>,
+) -> HashMap<String, f64> {
     let only: Vec<ResearchEntry> = imported_research
         .iter()
         .filter(|e| rids.contains(&e.rid))
         .cloned()
         .collect();
-    combat_research_bonuses_from_entries_slice(&only, catalog, None)
+    combat_research_bonuses_from_entries_slice(&only, catalog, exclude_catalog_rids)
 }
 
 fn combat_research_bonuses_from_entries_slice(

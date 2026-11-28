@@ -4,59 +4,59 @@
       "id": "titan_a_fortification",
       "label": "Fortification",
       "display_name": "Fortification",
-      "description": "Titan-A Fortify: Fortifies your ships and 2-13 alliance ships (+25% Critical Hit Damage). Checking this marks you Fortified for combat research that requires Fortify.",
+      "description": "Titan-A Fortify: Fortifies your ships and 2-13 alliance ships (+25% additive Critical Hit Damage). Checking this marks you Fortified for combat research that requires Fortify.",
       "source": "Titan-A Fortify alliance support",
       "provenance_notes": [
-        "Static +25% critical hit damage comes from the player-facing Titan-A Fortify support text.",
-        "Fortified-gated combat research is curated separately in src/data/profile.rs and applied only when this support buff resolves."
+        "Static +25% additive critical hit damage (`crit_damage_flat: 0.25`) comes from Titan-A Fortify and was live-verified 2026-11-28 across 297 outbound crits in U.S.S. Dauntless vs L65 Planet Harvester logs (R3+ midpoint 10.71x = 9.46x baseline + 1.00 Titan's Spear + 0.25 Fortify).",
+        "Fortified-gated combat research is curated separately in src/data/profile/mod.rs, data/research_canonical.json, and src/data/native_consumable_buffs.rs and applied only when this support buff resolves."
       ],
       "exclusive_group": "titan_a_fort",
       "priority": 1,
-      "static_bonus_target": "defender_if_player_opponent",
+      "static_bonus_target": "selected_ship",
       "stat_targets": [
         {
-          "stat": "crit_damage",
-          "value": 1.25,
-          "stacking": "multiplicative",
+          "stat": "crit_damage_flat",
+          "value": 0.25,
+          "stacking": "additive",
           "layer": "static_bonuses"
         }
       ],
       "research_levels": [],
       "static_bonuses": {
-        "crit_damage": 1.25
+        "crit_damage_flat": 0.25
       }
     },
     "titan_a_max_fortification": {
       "id": "titan_a_max_fortification",
       "label": "Max fortification",
       "display_name": "Max fortification",
-      "description": "Titan-A Fortify (max): all Fortified effects +250% base weapon damage. Checking this marks you Fortified for combat research that requires Fortify.",
+      "description": "Titan-A Fortify (max): all Fortified effects +250% additive base weapon damage. Checking this marks you Max Fortified for combat research that requires Fortify or Max Fortification.",
       "source": "Titan-A Fortify max alliance support",
       "provenance_notes": [
-        "Max Fortification keeps the Fortify critical damage slice and adds the player-facing +250% base weapon damage support text.",
-        "Max-only Fortified combat research is curated separately in src/data/profile.rs and applied only when this support buff resolves."
+        "Max Fortification keeps the +25% additive critical hit damage (`crit_damage_flat: 0.25`) and adds +250% additive base weapon damage (`weapon_damage_additive_pool: 2.5`) into the shared base weapon-damage pool (live-verified 2026-11-28 not multiplicative 3.5x).",
+        "Max-only Fortified combat research is curated separately in src/data/profile/mod.rs, data/research_canonical.json, and src/data/native_consumable_buffs.rs and applied only when this support buff resolves."
       ],
       "exclusive_group": "titan_a_fort",
       "priority": 2,
-      "static_bonus_target": "defender_if_player_opponent",
+      "static_bonus_target": "selected_ship",
       "stat_targets": [
         {
-          "stat": "crit_damage",
-          "value": 1.25,
-          "stacking": "multiplicative",
+          "stat": "crit_damage_flat",
+          "value": 0.25,
+          "stacking": "additive",
           "layer": "static_bonuses"
         },
         {
-          "stat": "weapon_damage",
-          "value": 3.5,
-          "stacking": "multiplicative",
+          "stat": "weapon_damage_additive_pool",
+          "value": 2.5,
+          "stacking": "additive",
           "layer": "static_bonuses"
         }
       ],
       "research_levels": [],
       "static_bonuses": {
-        "crit_damage": 1.25,
-        "weapon_damage": 3.5
+        "crit_damage_flat": 0.25,
+        "weapon_damage_additive_pool": 2.5
       }
     },
     "cerritos_support": {

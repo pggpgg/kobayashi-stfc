@@ -21,6 +21,18 @@ test("description: shield mitigation phrase maps to shield_mitigation", () => {
     inferCombatStatFromDescription("Increases Shield Mitigation for all ships."),
     "shield_mitigation"
   );
+  assert.equal(
+    inferCombatStatFromDescription(
+      "Decreases opponent's Shield Mitigation against non-Armada Hostiles while Fortified"
+    ),
+    null
+  );
+  assert.equal(
+    inferCombatStatFromDescription(
+      "Increases your base Shield Mitigation Floor on FKR Battleships against players."
+    ),
+    null
+  );
 });
 
 test("description: mitigation stats UI line does not collapse to a single stat", () => {
