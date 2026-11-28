@@ -417,6 +417,108 @@ describe("LoopsWorkspace", () => {
     expect(await screen.findByText(/17\.74M Tech Module/)).toBeTruthy();
     expect(screen.getByText(/100% P\(4-kill\)/)).toBeTruthy();
     expect(screen.getByText(/80% hull/)).toBeTruthy();
+    expect(screen.getByText(/Below decks:/)).toBeTruthy();
+    expect(screen.getByText(/Ent-E Data/)).toBeTruthy();
+  });
+
+  it("displays saved below-decks officers on each ladder rung and omits the row when empty", async () => {
+    localStorage.setItem(
+      loopWorkspaceStorageKey("p1"),
+      JSON.stringify({
+        version: 2,
+        records: {
+          "actian|actian-49|kills_per_hull": [
+            {
+              id: "with-bd",
+              loopId: "actian",
+              targetId: "actian-49",
+              targetName: "Actian Apex",
+              targetLevel: 49,
+              goalId: "kills_per_hull",
+              shipId: "mantis",
+              shipTier: 6,
+              shipLevel: 30,
+              crew: {
+                captain: "SNW M'Benga",
+                bridge: ["SNW James Kirk", "Moreau"],
+                belowDecks: ["SNW Nurse Chapel", "Hugh", "B'Elanna Torres"],
+              },
+              winRate: 1,
+              winRateCiLow: 0.99,
+              winRateCiHigh: 1,
+              roundOneKillRate: 0.93,
+              roundOneKillRateCiLow: 0.9,
+              roundOneKillRateCiHigh: 0.95,
+              averageHullRemaining: 0.72,
+              averageHullRemainingCiLow: 0.7,
+              averageHullRemainingCiHigh: 0.74,
+              averageDefenderHullRemaining: 0,
+              averageDefenderHullRemainingCiLow: 0,
+              averageDefenderHullRemainingCiHigh: 0,
+              chainSuccessRate: 1,
+              chainSuccessRateCiLow: 0.99,
+              chainSuccessRateCiHigh: 1,
+              chainKillsTarget: 5,
+              chainEndingHull: 0.72,
+              recordedAt: "2026-11-27T00:00:00Z",
+            },
+          ],
+          "actian|actian-40|kills_per_hull": [
+            {
+              id: "without-bd",
+              loopId: "actian",
+              targetId: "actian-40",
+              targetName: "Actian Instigator",
+              targetLevel: 40,
+              goalId: "kills_per_hull",
+              shipId: "mantis",
+              shipTier: 6,
+              shipLevel: 30,
+              crew: {
+                captain: "Khan",
+                bridge: ["Spock", "Kirk"],
+                belowDecks: [],
+              },
+              winRate: 1,
+              winRateCiLow: 0.99,
+              winRateCiHigh: 1,
+              roundOneKillRate: 1,
+              roundOneKillRateCiLow: 0.99,
+              roundOneKillRateCiHigh: 1,
+              averageHullRemaining: 0.95,
+              averageHullRemainingCiLow: 0.94,
+              averageHullRemainingCiHigh: 0.96,
+              averageDefenderHullRemaining: 0,
+              averageDefenderHullRemainingCiLow: 0,
+              averageDefenderHullRemainingCiHigh: 0,
+              chainSuccessRate: 1,
+              chainSuccessRateCiLow: 0.99,
+              chainSuccessRateCiHigh: 1,
+              chainKillsTarget: 5,
+              chainEndingHull: 0.95,
+              recordedAt: "2026-11-27T00:00:00Z",
+            },
+          ],
+        },
+      }),
+    );
+
+    render(
+      <MemoryRouter initialEntries={["/loops"]}>
+        <ProfileProvider>
+          <LoopsWorkspace />
+        </ProfileProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Actian.*2 saved/ }),
+    );
+    await screen.findByText("SNW M'Benga · SNW James Kirk · Moreau");
+    expect(
+      screen.getByText(/SNW Nurse Chapel · Hugh · B'Elanna Torres/),
+    ).toBeTruthy();
+    expect(screen.getAllByText("Below decks:")).toHaveLength(1);
   });
 
   it("defaults Augment Exiles to Hijacked D7 Class and lets the player switch hostile variants", async () => {

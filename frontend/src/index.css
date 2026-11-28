@@ -558,6 +558,18 @@ textarea:focus-visible,
   white-space: nowrap;
 }
 
+.loop-best__below-decks {
+  margin: 0.1rem 0 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.loop-best__below-decks-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .loop-best__metrics {
   display: flex;
   flex-wrap: wrap;

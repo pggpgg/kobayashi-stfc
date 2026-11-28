@@ -110,6 +110,12 @@ function BestCrewSummary({ record }: { record: LoopBestRecord }) {
           ? ` · ${record.crew.bridge.join(" · ")}`
           : ""}
       </div>
+      {record.crew.belowDecks && record.crew.belowDecks.length > 0 && (
+        <div className="loop-best__below-decks">
+          <span className="loop-best__below-decks-label">Below decks:</span>{" "}
+          {record.crew.belowDecks.join(" · ")}
+        </div>
+      )}
       <div className="loop-best__metrics">
         {hasFarmingLoot ? (
           <>
