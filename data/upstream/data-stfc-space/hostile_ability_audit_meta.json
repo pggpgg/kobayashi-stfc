@@ -1857,13 +1857,13 @@
       "effect_type": "hostile_counter_pierce_multiplier"
     },
     "849650945": {
-      "bucket": "pvp_player_target",
+      "bucket": "player_hull_breach_combat_start",
       "loca_id": 67101,
       "hostile_count": 194,
       "sample_hostile_id": "1010410431",
       "sample_level": 68,
       "text_snippet": "deadlock\nat combat start, hull breach enemy player for duration of combat\nship abilities are always active.",
-      "effect_type": "combat_noop"
+      "effect_type": "hull_breach"
     },
     "855529086": {
       "bucket": "ship_class_damage_combat",
@@ -1938,13 +1938,13 @@
       "effect_type": "apex_barrier"
     },
     "910140799": {
-      "bucket": "pvp_player_target",
+      "bucket": "player_hull_breach_conditional_counter",
       "loca_id": 67100,
       "hostile_count": 194,
       "sample_hostile_id": "1010410431",
       "sample_level": 68,
       "text_snippet": "dismantlement\nat the start of the round, if the enemy player is hull breached, this ship increases its weapon damage by {0:#.#%} for 1 round.\n\nphotophobia\nat the start of the round, if the enemy player is hull breached, this ship increases ",
-      "effect_type": "combat_noop"
+      "effect_type": "attack_multiplier"
     },
     "917025890": {
       "bucket": "pierce_combat",

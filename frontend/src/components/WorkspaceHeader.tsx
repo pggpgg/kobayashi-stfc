@@ -261,8 +261,12 @@ export default memo(function WorkspaceHeader({
   // request started; otherwise their initial empty-prop closure picks row zero.
   const latestShipId = useRef(shipId);
   const latestScenarioId = useRef(scenarioId);
+  const latestShipTier = useRef(shipTier);
+  const latestShipLevel = useRef(shipLevel);
   latestShipId.current = shipId;
   latestScenarioId.current = scenarioId;
+  latestShipTier.current = shipTier;
+  latestShipLevel.current = shipLevel;
   const selectedRosterShip = useMemo(
     () => ships.find((s) => s.id === shipId),
     [ships, shipId],
@@ -376,8 +380,12 @@ export default memo(function WorkspaceHeader({
             : [1, 10, 20, 30, 40, 50, 60];
           setTiers(t);
           setLevels(l);
-          if (!t.includes(shipTier)) onShipTierChange(t[0] ?? 1);
-          if (!l.includes(shipLevel)) onShipLevelChange(l[0] ?? 1);
+          if (!t.includes(latestShipTier.current)) {
+            onShipTierChange(t[0] ?? 1);
+          }
+          if (!l.includes(latestShipLevel.current)) {
+            onShipLevelChange(l[0] ?? 1);
+          }
           const rows = data.crew_slots as
             | { unlock_level: number }[]
             | undefined;
@@ -511,6 +519,7 @@ export default memo(function WorkspaceHeader({
         hostiles={hostiles}
         value={scenarioId}
         onChange={onScenarioIdChange}
+        style={{ flex: "1 1 280px", maxWidth: 420 }}
       />
       <ScenarioSelect
         value={enemyType}

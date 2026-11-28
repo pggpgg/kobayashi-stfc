@@ -400,6 +400,12 @@ export function useWorkspace() {
       setLoopRunContext(loopRun);
       savePendingLoopRun(activeProfileId, loopRun);
       setShipId(loopRun.shipId);
+      if (loopRun.shipTier != null && loopRun.shipTier > 0) {
+        setShipTier(loopRun.shipTier);
+      }
+      if (loopRun.shipLevel != null && loopRun.shipLevel > 0) {
+        setShipLevel(loopRun.shipLevel);
+      }
       setScenarioId(loopRun.targetId);
       if (loopRun.goalId === "kills_per_hull") {
         setChainGrindEnabled(true);
@@ -453,6 +459,12 @@ export function useWorkspace() {
       loopRunContextRef.current = pending;
       setLoopRunContext(pending);
       setShipId(pending.shipId);
+      if (pending.shipTier != null && pending.shipTier > 0) {
+        setShipTier(pending.shipTier);
+      }
+      if (pending.shipLevel != null && pending.shipLevel > 0) {
+        setShipLevel(pending.shipLevel);
+      }
       setScenarioId(pending.targetId);
       if (pending.goalId === "kills_per_hull") {
         setChainGrindEnabled(true);

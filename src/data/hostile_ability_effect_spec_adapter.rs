@@ -58,6 +58,15 @@ pub fn hostile_ability_to_combat_effect_spec(
     let p = crate::data::ship_ability_resolve::normalize_probability(chance);
 
     let mut conditions = Vec::new();
+    if entry.condition_defender_burning {
+        conditions.push(crate::data::combat_effect_spec::AbilityConditionSpec::DefenderBurning);
+    }
+    if entry.condition_defender_hull_breach {
+        conditions.push(crate::data::combat_effect_spec::AbilityConditionSpec::DefenderHullBreach);
+    }
+    if entry.condition_attacker_hull_breach {
+        conditions.push(crate::data::combat_effect_spec::AbilityConditionSpec::AttackerHullBreach);
+    }
     if let Some(cap) = entry.round_cap.filter(|c| *c > 0) {
         conditions.push(
             crate::data::combat_effect_spec::AbilityConditionSpec::RoundRange { min: 1, max: cap },
@@ -134,6 +143,7 @@ mod tests {
             shots: None,
             condition_defender_burning: false,
             condition_defender_hull_breach: false,
+            condition_attacker_hull_breach: false,
             crit_reduction_additive_points: false,
             crit_debuff_stacks: false,
             prevent_when_defender_assimilated: false,

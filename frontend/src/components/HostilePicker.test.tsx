@@ -23,7 +23,7 @@ describe("HostilePicker", () => {
     Element.prototype.scrollIntoView = vi.fn();
   });
 
-  it("shows selected hostile label when closed", () => {
+  it("shows level-first selected hostile label with full title when closed", () => {
     render(
       <HostilePicker
         hostiles={hostiles}
@@ -32,16 +32,19 @@ describe("HostilePicker", () => {
       />,
     );
     const input = screen.getByRole("combobox") as HTMLInputElement;
-    expect(input.value).toBe("Borg Probe (Lvl 30)");
+    expect(input.value).toBe("Lvl 30 · Borg Probe");
+    expect(input.title).toBe("Lvl 30 · Borg Probe");
   });
 
-  it("filters list and selects on click", () => {
+  it("filters list by name or level and selects on click", () => {
     const onChange = vi.fn();
     render(<HostilePicker hostiles={hostiles} value="" onChange={onChange} />);
     const input = screen.getByRole("combobox");
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "klingon" } });
-    const option = screen.getByRole("option", { name: /Klingon Bird/ });
+    const option = screen.getByRole("option", {
+      name: /Lvl 20 · Klingon Bird/,
+    });
     fireEvent.mouseDown(option);
     fireEvent.click(option);
     expect(onChange).toHaveBeenCalledWith("hostile_b");
@@ -79,12 +82,13 @@ describe("HostilePicker", () => {
       />,
     );
     const input = screen.getByRole("combobox") as HTMLInputElement;
-    expect(input.value).toBe("Xindi-Aquatic Cruiser (Lvl 62 · Yoton, W1000)");
+    expect(input.value).toBe("Lvl 62 · Xindi-Aquatic Cruiser (Yoton, W1000)");
+    expect(input.title).toBe("Lvl 62 · Xindi-Aquatic Cruiser (Yoton, W1000)");
 
     fireEvent.focus(input);
     expect(
       screen.getByRole("option", {
-        name: "Xindi-Aquatic Cruiser (Lvl 62 · no system, no loot · #3294438884)",
+        name: "Lvl 62 · Xindi-Aquatic Cruiser (no system, no loot · #3294438884)",
       }),
     ).toBeTruthy();
 
@@ -92,7 +96,7 @@ describe("HostilePicker", () => {
     const options = screen.getAllByRole("option");
     expect(options).toHaveLength(1);
     expect(options[0].textContent).toBe(
-      "Xindi-Aquatic Cruiser (Lvl 62 · Yoton, W1000)",
+      "Lvl 62 · Xindi-Aquatic Cruiser (Yoton, W1000)",
     );
   });
 });

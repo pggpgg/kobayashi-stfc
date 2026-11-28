@@ -223,7 +223,13 @@ pub const OPTIMIZE_REUSE_FINGERPRINT_SCHEMA: u32 = 1;
 ///   (`effect_spec_compile.rs`) instead of multiplying on top of the completed profile pool, and
 ///   align `profile_weapon_damage_fraction` (`scenario.rs`) with `apply_profile_to_attacker` by
 ///   including owner-faction weapon damage and officer Attack breakpoint bonus.
-pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 44;
+/// * 44 → 45 (2026-11): Fix U.S.S. Dauntless `Active Sweep` (`1905773933`) from multiplicative
+///   `attack_multiplier` to additive `component_base_weapon_damage` (verified to <0.6% across all 4
+///   weapons against live L65 Imperial Starfleet Planet Harvester battle log), and model Mirror
+///   Universe `Deadlock` (`849650945`, combat-start player Hull Breach) and `Dismantlement` +
+///   `Photophobia` (`910140799`, round-start +20% counter weapon damage and +10% counter isolytic
+///   damage gated on `AttackerHullBreach`) across 194 MU hostiles.
+pub const COMBAT_ENGINE_BEHAVIOR_VERSION: u32 = 45;
 
 /// Env vars that change simulated outcomes. Their values go into the `engine` segment because they
 /// alter stored numbers with nothing else recording them.

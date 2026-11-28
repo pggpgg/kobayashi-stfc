@@ -74,6 +74,7 @@ def modeled(
     ignore_upstream_value_is_percentage: bool = True,
     duration_rounds: int | None = None,
     condition_defender_hull_breach: bool = False,
+    condition_attacker_hull_breach: bool = False,
     condition_defender_burning: bool = False,
     round_cap: int | None = None,
     round_interval: int | None = None,
@@ -100,6 +101,8 @@ def modeled(
         d["duration_rounds"] = duration_rounds
     if condition_defender_hull_breach:
         d["condition_defender_hull_breach"] = True
+    if condition_attacker_hull_breach:
+        d["condition_attacker_hull_breach"] = True
     if condition_defender_burning:
         d["condition_defender_burning"] = True
     if round_interval is not None and round_interval > 0:
@@ -207,28 +210,28 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
     if "neutral temporal dreadnoughts have no phase alignment" in p:
         return dict(NOOP), "temporal_dreadnought_flavor"
 
-    # Combat-start player burn/breach (Xindi Hole Puncher / Immolator). Must run BEFORE the
-    # broad "enemy player" PvP short-circuit so these NPC texts are not bucketed as PvP.
+    # Combat-start player burn/breach (Xindi Hole Puncher / Immolator, Mirror Universe Deadlock).
+    # Must run BEFORE the broad "enemy player" PvP short-circuit so these NPC texts are not bucketed as PvP.
     if (
-        "on combat start" in p
+        ("on combat start" in p or "at combat start" in p)
         and "hull breach" in p
         and "enemy player" in p
-        and "rest of combat" in p
+        and ("rest of combat" in p or "duration of combat" in p)
     ):
         return (
             modeled(
                 "combat_begin",
                 "hull_breach",
-                value_override=1.0,
+                value_override=1,
                 duration_rounds=100,  # MAX_COMBAT_ROUNDS
             ),
             "player_hull_breach_combat_start",
         )
     if (
-        "on combat start" in p
+        ("on combat start" in p or "at combat start" in p)
         and "burning" in p
         and "enemy player" in p
-        and "rest of combat" in p
+        and ("rest of combat" in p or "duration of combat" in p)
     ):
         return (
             modeled(
@@ -238,6 +241,43 @@ def classify_hostile_ability(_loca: int, text: str) -> tuple[dict, str]:
                 duration_rounds=100,  # MAX_COMBAT_ROUNDS
             ),
             "player_burning_combat_start",
+        )
+
+    # Mirror Universe Dismantlement + Photophobia (loca 67100): at round start, if the attacking
+    # player is hull breached, increase weapon damage by {0:#.#%} (additive fraction in counter-fire)
+    # and increase Isolytic Damage by 10% for 1 round. Verified against live L65 Imperial Starfleet
+    # Planet Harvester (1381341814) capture. Must run BEFORE the "enemy player" PvP guard.
+    if (
+        "if the enemy player is hull breached" in p
+        and "increases its weapon damage" in p
+        and "start of the round" in p
+    ):
+        extras = []
+        iso_match = re.search(
+            r"increases its isolytic damage by\s+(\d+(?:\.\d+)?)%",
+            p,
+        )
+        if iso_match:
+            extras.append(
+                modeled(
+                    "round_start",
+                    "isolytic_damage",
+                    value_is_percentage=False,
+                    ignore_upstream_value_is_percentage=True,
+                    value_override=float(iso_match.group(1)) / 100.0,
+                    condition_attacker_hull_breach=True,
+                )
+            )
+        return (
+            modeled(
+                "round_start",
+                "attack_multiplier",
+                value_is_percentage=not frac,
+                ignore_upstream_value_is_percentage=frac,
+                condition_attacker_hull_breach=True,
+                extra_seats=extras or None,
+            ),
+            "player_hull_breach_conditional_counter",
         )
 
     # PvP-only (default PvE path is ship vs hostile NPC). Word-boundary match so Xindi NPC

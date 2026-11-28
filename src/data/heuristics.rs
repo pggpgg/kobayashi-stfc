@@ -36,8 +36,9 @@ pub const MAX_HEURISTIC_SEED_NAME_BYTES: usize = 64;
 pub const MAX_HEURISTIC_SEEDS_PER_REQUEST: usize = 32;
 const BRIDGE_SLOTS: usize = 2;
 
-/// Canonical ability `modifier` strings treated as economy / non-combat for heuristic below-decks picks.
-/// Keep in sync with `generate_lcars` `MappedEffect::Tag(…:non_combat)` arms and loot/exploration rows.
+/// Canonical ability `modifier` strings treated as economy / non-combat for heuristic picks and
+/// combat-only optimizer pools. Keep in sync with `src/lcars/officer_model.rs` `:non_combat` arms
+/// plus loot, economy, mining, travel, and overworld modifiers.
 const NON_COMBAT_BELOW_DECKS_MODIFIERS: &[&str] = &[
     "ActianVenomAndNanoprobeLoot",
     "ArmadaLoot",
@@ -51,6 +52,7 @@ const NON_COMBAT_BELOW_DECKS_MODIFIERS: &[&str] = &[
     "CombatScavenger",
     "CombatTritaniumReward",
     "CombatXPReward",
+    "CuttingBeamCharge",
     "FactionPointsGain",
     "GornHostileVolatileLoot",
     "HirogenRelicAndBiotoxinLoot",
@@ -60,13 +62,19 @@ const NON_COMBAT_BELOW_DECKS_MODIFIERS: &[&str] = &[
     "MiningRate",
     "MiningReward",
     "Omega13Cooldown",
+    "OutpostMedalsAndPlunderLoot",
+    "PolaronIonsLoot",
     "PveChestLootMultiplierLimitedResources",
     "RepairCostsPost",
+    "RepairSpeedCascade",
     "RepairTime",
+    "SigmaDilithiumRaidProportion",
+    "SigmaTritaniumRaidProportion",
     "SkillCloakingCooldown",
     "SkillCloakingDuration",
     "SkillCuttingBeamAbilityCost",
     "SkillCuttingBeamPvPBaseDamagePercentage",
+    "TechnologicalDistinctivenessLoot",
     "TrelliumRewards",
     "VoyagerAsaCE",
     "WarpDistance",
@@ -330,11 +338,18 @@ pub fn bridge_synergy_prefilter_score(
     }
 }
 
+/// True when a canonical officer ability `modifier` is purely non-combat (loot, cargo, mining,
+/// travel, repair, XP, faction rep, or overworld utility with no in-fight combat effect).
 #[inline]
-fn canonical_modifier_is_heuristic_non_combat(modifier: &str) -> bool {
+pub fn is_non_combat_officer_modifier(modifier: &str) -> bool {
     NON_COMBAT_BELOW_DECKS_MODIFIERS
         .iter()
         .any(|m| modifier.eq_ignore_ascii_case(m))
+}
+
+#[inline]
+fn canonical_modifier_is_heuristic_non_combat(modifier: &str) -> bool {
+    is_non_combat_officer_modifier(modifier)
 }
 
 /// True when an officer has a below-decks ability gated on fighting a player ship.

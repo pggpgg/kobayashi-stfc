@@ -368,7 +368,7 @@ engine-ready bonus fractions under the `{0:#.#%}` ×100 convention — same as A
 
 | id | Ability | Catalog `effect_type` | Change (2026-07-17) |
 | --- | --- | --- | --- |
-| `1905773933` | Active Sweep | `attack_multiplier` (non-armada-gated, per-level curve) | Was a mis-classified second flat `apex_barrier` (1450 → 12000): loca 83002's combined description also contains the Active Apex Barrier paragraph, and the generator's "apex barrier … increas" pattern matched first — silently discarding the ship's headline damage bonus (+145,000% → +1,200,000% base damage). |
+| `1905773933` | Active Sweep | `component_base_weapon_damage` (non-armada-gated, per-level curve) | Updated 2026-11-28 from `attack_multiplier` to `component_base_weapon_damage` (matching Borg Sphere Omicron, NX-01, Monaveen): live T6 L30 U.S.S. Dauntless vs L65 Imperial Starfleet Planet Harvester capture confirms +5,335× adds to unscaled component base damage (`0.04%–0.55%` error across all 4 weapons) rather than multiplying the profile-scaled weapon pool. |
 | `985810609` | Active Apex Barrier | `apex_barrier` (non-armada-gated) | Type/value were correct (flat 40,000); gained the non-armada gate. |
 | `3658971555` | Aft Expansion | `combat_noop` | Loot economy row — unchanged. |
 | `915894112` | Aggregation Plunder | `combat_noop` | Loot economy row — unchanged. |

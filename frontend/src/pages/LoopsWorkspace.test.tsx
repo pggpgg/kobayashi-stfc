@@ -81,6 +81,8 @@ vi.mock("../lib/api", async (importOriginal) => {
         id: "uss_dauntless",
         ship_name: "USS Dauntless",
         ship_class: "interceptor",
+        tier: 6,
+        level: 30,
       },
       {
         id: "enterprise_nx_01",
@@ -105,10 +107,20 @@ vi.mock("../lib/api", async (importOriginal) => {
 function WorkspaceStateProbe() {
   const location = useLocation();
   const state = location.state as {
-    loopRun?: { loopId: string; targetId: string; shipId: string };
+    loopRun?: {
+      loopId: string;
+      targetId: string;
+      shipId: string;
+      shipTier?: number;
+      shipLevel?: number;
+    };
   } | null;
   return (
-    <div data-ship={state?.loopRun?.shipId}>
+    <div
+      data-ship={state?.loopRun?.shipId}
+      data-tier={state?.loopRun?.shipTier ?? ""}
+      data-level={state?.loopRun?.shipLevel ?? ""}
+    >
       handoff:{state?.loopRun?.loopId}:{state?.loopRun?.targetId}
     </div>
   );
@@ -195,6 +207,8 @@ describe("LoopsWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
     const handoff = await screen.findByText("handoff:mu-rep-grind:607623533");
     expect(handoff.getAttribute("data-ship")).toBe("uss_dauntless");
+    expect(handoff.getAttribute("data-tier")).toBe("6");
+    expect(handoff.getAttribute("data-level")).toBe("30");
   });
 
   it("asks before resetting the selected ladder and returns it to the first rung", async () => {

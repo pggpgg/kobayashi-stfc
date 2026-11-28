@@ -57,6 +57,8 @@ pub struct HostileAbilityCatalogEntry {
     #[serde(default)]
     pub condition_defender_hull_breach: bool,
     #[serde(default)]
+    pub condition_attacker_hull_breach: bool,
+    #[serde(default)]
     pub crit_reduction_additive_points: bool,
     #[serde(default)]
     pub crit_debuff_stacks: bool,
@@ -543,6 +545,9 @@ fn ability_condition_from_hostile_entry(
     }
     if entry.condition_defender_hull_breach {
         parts.push(AbilityCondition::DefenderHullBreach);
+    }
+    if entry.condition_attacker_hull_breach {
+        parts.push(AbilityCondition::AttackerHullBreach);
     }
     if let Some(cap) = entry.round_cap.filter(|c| *c > 0) {
         parts.push(AbilityCondition::RoundRange { min: 1, max: cap });

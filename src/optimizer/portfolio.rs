@@ -24,13 +24,17 @@ use tracing::info;
 
 use crate::data::data_registry::DataRegistry;
 use crate::optimizer::beam::{
-    propose_diversity_beam_crews_with_seats, BeamSearchParams, RankedOfficerSeats,
+    propose_diversity_beam_crews_from_pools_with_seats, BeamSearchParams, RankedOfficerSeats,
     METHOD_BEAM_DIVERSITY,
 };
+use crate::optimizer::chain::ChainSecondaryObjective;
 use crate::optimizer::constraints::{
     filter_candidates, normalize_officer_name, CrewSearchConstraints,
 };
-use crate::optimizer::crew_generator::{CrewCandidate, BRIDGE_SLOTS};
+use crate::optimizer::crew_generator::{
+    build_officer_pools_from_registry_for_tags, filter_officer_pools_for_scenario, CrewCandidate,
+    BRIDGE_SLOTS,
+};
 use crate::optimizer::monte_carlo::scenario::{
     build_shared_scenario_data_from_registry_with_context, SharedScenarioData,
 };
@@ -377,19 +381,54 @@ where
         }
     }
 
-    // Lane 2: 6-beam slot-by-slot LCARS Diversity Beam Search over full legal pools.
-    let (beam_crews, ranked_seats) = propose_diversity_beam_crews_with_seats(
+    // Build scenario-filtered pools once so Beam, Stratified Random, and Neighbor Swap all avoid
+    // non-combat loot officers (unless `max_expected_loot` is active and the loot applies) and
+    // statically impossible seats (e.g. `EnemyInterceptor` against a `Survey` target).
+    let mut elig_tags = shared.engagement_enemy_types.0.clone();
+    if !elig_tags.contains(&scenario.enemy_type) {
+        elig_tags.push(scenario.enemy_type);
+    }
+    let loot_objective_active = scenario
+        .chain_grind
+        .as_ref()
+        .is_some_and(|c| c.secondary == ChainSecondaryObjective::MaxExpectedLoot);
+    let scenario_pools = build_officer_pools_from_registry_for_tags(
         registry,
-        &shared,
-        &BeamSearchParams {
-            target_count: beam_target,
-            below_decks_slots: scenario.below_decks_slots,
-            below_decks_pool_mode: scenario.below_decks_pool_mode,
-            enemy_type: scenario.enemy_type,
-            profile_id: scenario.profile_id,
-            constraints: scenario.constraints.as_ref(),
-        },
-    );
+        scenario.below_decks_pool_mode,
+        Some(elig_tags.as_slice()),
+        scenario.profile_id,
+        scenario.below_decks_slots,
+        scenario.constraints.as_ref(),
+    )
+    .map(|pools| {
+        filter_officer_pools_for_scenario(
+            registry,
+            &shared,
+            pools,
+            scenario.below_decks_pool_mode,
+            scenario.below_decks_slots,
+            loot_objective_active,
+            scenario.constraints.as_ref(),
+        )
+    });
+
+    // Lane 2: 6-beam slot-by-slot LCARS Diversity Beam Search over scenario-filtered legal pools.
+    let (beam_crews, ranked_seats) = match scenario_pools.as_ref() {
+        Some(pools) => propose_diversity_beam_crews_from_pools_with_seats(
+            registry,
+            &shared,
+            pools,
+            &BeamSearchParams {
+                target_count: beam_target,
+                below_decks_slots: scenario.below_decks_slots,
+                below_decks_pool_mode: scenario.below_decks_pool_mode,
+                enemy_type: scenario.enemy_type,
+                profile_id: scenario.profile_id,
+                constraints: scenario.constraints.as_ref(),
+            },
+        ),
+        None => (Vec::new(), RankedOfficerSeats::default()),
+    };
     let beam_crews = apply_crew_constraints(beam_crews, scenario);
     let beam_count = beam_crews.len();
     for crew in beam_crews {
@@ -400,26 +439,31 @@ where
         }
     }
 
-    // Lane 3: Stratified Random exploration over full legal pools (bypasses static bias).
+    // Lane 3: Stratified Random exploration over scenario-filtered legal pools (bypasses static bias).
     // If beam produced fewer crews than `beam_target` (e.g. tight constraints), hand leftover
     // candidate slots to stratified random so total breadth stays high.
     let effective_random_target = target_total
         .saturating_sub(initial_candidates.len())
         .max(random_target);
-    let random_crews = crate::optimizer::random_stratified::sample_stratified_random_crews_for_tags(
-        registry,
-        &StratifiedSampleParams {
-            count: effective_random_target,
-            seed: scenario.seed,
-            below_decks_slots: scenario.below_decks_slots,
-            below_decks_pool_mode: scenario.below_decks_pool_mode,
-            enemy_type: scenario.enemy_type,
-            profile_id: scenario.profile_id,
-            constraints: scenario.constraints.as_ref(),
-            exclude_hashes: Some(&seen_hashes),
-        },
-        &shared.engagement_enemy_types.0,
-    );
+    let random_crews = match scenario_pools.as_ref() {
+        Some(pools) => {
+            crate::optimizer::random_stratified::sample_stratified_random_crews_from_pools(
+                registry,
+                pools,
+                &StratifiedSampleParams {
+                    count: effective_random_target,
+                    seed: scenario.seed,
+                    below_decks_slots: scenario.below_decks_slots,
+                    below_decks_pool_mode: scenario.below_decks_pool_mode,
+                    enemy_type: scenario.enemy_type,
+                    profile_id: scenario.profile_id,
+                    constraints: scenario.constraints.as_ref(),
+                    exclude_hashes: Some(&seen_hashes),
+                },
+            )
+        }
+        None => Vec::new(),
+    };
     let random_crews = apply_crew_constraints(random_crews, scenario);
     let mut random_exploration_hashes: HashSet<u64> = HashSet::with_capacity(random_crews.len());
     for crew in random_crews {
